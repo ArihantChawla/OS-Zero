@@ -573,7 +573,7 @@ meminitbigbuf(struct membuf *buf,
 }
 
 void *
-memgetblktls(struct membuf *head, volatile struct membkt *bkt,
+memgetblktls(struct membuf *head, volatile struct membkt *tbkt,
              MEMUWORD_T size, MEMUWORD_T align)
 {
     void       *ptr = NULL;
@@ -603,11 +603,11 @@ memgetblktls(struct membuf *head, volatile struct membkt *bkt,
         if (head->next) {
             head->next->prev = NULL;
         }
-        bkt->nbuf--;
+        tbkt->nbuf--;
 #if (MEMDEBUGDEADLOCK)
-        bkt->line = __LINE__;
+        tbkt->line = __LINE__;
 #endif
-        bkt->list = head->next;
+        tbkt->list = head->next;
         head->bkt = NULL;
         head->prev = NULL;
         head->next = NULL;
@@ -778,6 +778,23 @@ memfindbuf(void *ptr, long rel)
 
 #elif (MEMNEWHASH)
 
+#if (MEMNEWHASHTAB)
+static void
+meminithashitem(MEMPTR_T data)
+{
+    struct memhash *item = (struct memhash *)data;
+    MEMUWORD_T     *uptr;
+
+    data += offsetof(struct memhash, data);
+    item->chain = NULL;
+    uptr = (MEMUWORD_T *)data;
+    item->ntab = 0;
+    item->tab = (struct memhashitem *)uptr;
+    item->list = NULL;
+
+    return;
+}
+#else
 static void
 meminithashitem(MEMPTR_T data)
 {
@@ -794,6 +811,7 @@ meminithashitem(MEMPTR_T data)
 
     return;
 }
+#endif
 
 static struct memhash *
 memgethashitem(void)

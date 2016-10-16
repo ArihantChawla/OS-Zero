@@ -387,37 +387,6 @@ struct memhashlist {
 #define MEMHASHNOTFOUND  0
 #define MEMHASHFOUND     (~(MEMADR_T)0)
 
-/*
- * - we have a 4-word header; adding total of 52 words as 13 hash-table entries
- *   lets us cache-color the table by adding a modulo-9 value to the pointer
- */
-#define MEMHASHBITS     20
-#define MEMHASHITEMS    (1U << MEMHASHBITS)
-#if (MEMBIGHASHTAB)
-#define MEMHASHSIZE     (256 * WORDSIZE)
-#if defined(MEMHASHNREF) && (MEMHASHNREF)                               \
-    && defined(MEMHASHNACT) && (MEMHASHNACT)
-#define MEMHASHTABITEMS 32      // allow a bit of table-address randomization
-#elif ((defined(MEMHASHNREF) && (MEMHASHNREF))                          \
-       ||  defined(MEMHASNACT) && (MEMHASHNACT))
-#define MEMHASHTABITEMS 42      // allow a bit of table-address randomization
-#else
-#define MEMHASHTABITEMS 64      // allow a bit of table-address randomization
-#endif
-#else
-#define MEMHASHSIZE     (128 * WORDSIZE)
-#if defined(MEMHASHNREF) && (MEMHASHNREF)                               \
-    && defined(MEMHASHNACT) && (MEMHASHNACT)
-#define MEMHASHTABITEMS 24
-#elif ((defined(MEMHASHNREF) && (MEMHASHNREF))                          \
-       ||  defined(MEMHASNACT) && (MEMHASHNACT))
-#define MEMHASHTABITEMS 32
-#else
-#define MEMHASHTABITEMS 48
-#endif
-#endif
-#define memhashsize()   MEMHASHSIZE
-
 struct memhashitem {
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
     MEMUWORD_T nref;            // reference count for the page
@@ -437,7 +406,40 @@ struct memhash {
     MEMUWORD_T          data;   // base address for generating table address
 };
 
+/*
+ * - we have a 4-word header; adding total of 52 words as 13 hash-table entries
+ *   lets us cache-color the table by adding a modulo-9 value to the pointer
+ */
+#define MEMHASHBITS     20
+#define MEMHASHITEMS    (1U << MEMHASHBITS)
+#if (MEMBIGHASHTAB)
+#define MEMHASHSIZE     (256 * WORDSIZE)
+#else
+#define MEMHASHSIZE     (128 * WORDSIZE)
 #endif
+#if (MEMNEWHASHTAB)
+#define MEMHASHTABITEMS                                                 \
+    ((MEMHASHSIZE - offsetof(struct memhash, data))                     \
+     / sizeof(struct memhashitem))
+#elif defined(MEMHASHNREF) && (MEMHASHNREF)                             \
+    && defined(MEMHASHNACT) && (MEMHASHNACT)
+#define MEMHASHTABITEMS 32      // allow a bit of table-address randomization
+#elif ((defined(MEMHASHNREF) && (MEMHASHNREF))                          \
+       ||  defined(MEMHASNACT) && (MEMHASHNACT))
+#define MEMHASHTABITEMS 42      // allow a bit of table-address randomization
+#else
+#define MEMHASHTABITEMS 64      // allow a bit of table-address randomization
+#endif
+#elif defined(MEMHASHNREF) && (MEMHASHNREF)                             \
+    && defined(MEMHASHNACT) && (MEMHASHNACT)
+#define MEMHASHTABITEMS 24
+#elif ((defined(MEMHASHNREF) && (MEMHASHNREF))                          \
+       ||  defined(MEMHASNACT) && (MEMHASHNACT))
+#define MEMHASHTABITEMS 32
+#else
+#define MEMHASHTABITEMS 48
+#endif
+#define memhashsize()   MEMHASHSIZE
 
 /*
  * NOTE: the arenas are mmap()'d as PAGESIZE-allocations so there's going
