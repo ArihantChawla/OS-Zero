@@ -1174,7 +1174,7 @@ memtryblk(MEMWORD_T slot, MEMWORD_T type,
             }
             if (nblk > 1) {
                 if (dest == tbkt) {
-                    upval = dest->list;
+                    upval = (MEMADR_T)dest->list;
                 } else {
 #if (MEMDEBUGDEADLOCK)
                     memlkbitln(dest);
@@ -1298,6 +1298,8 @@ memdequeuebufglob(struct membuf *buf, volatile struct membkt *src)
  * -----
  * - freed buffers always come from an existing list; bkt is always non-NULL
  *   and the bin it points to has its list locked
+ * - setting the recl-argument to a non-zero value enables possible unmapping
+ *   of the buffer
  */
 void
 memqueuebuf(MEMWORD_T slot, MEMWORD_T type,
