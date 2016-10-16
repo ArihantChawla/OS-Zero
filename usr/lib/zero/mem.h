@@ -271,9 +271,9 @@ struct membkt {
     (((buf)->info >> MEMBUFSLOTSHIFT) & ((MEMWORD(1) << MEMBUFSLOTBITS) - 1))
 
 struct membufvals {
-    MEMUWORD_T *nblk[MEMBUFTYPES];
-    MEMUWORD_T *ntls[MEMBUFTYPES];
-    MEMUWORD_T *nglob[MEMBUFTYPES];
+    MEMWORD_T *nblk[MEMBUFTYPES];
+    MEMWORD_T *ntls[MEMBUFTYPES];
+    MEMWORD_T *nglob[MEMBUFTYPES];
 };
 
 #define MEMINITBIT   (1L << 0)
