@@ -1545,6 +1545,7 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
 
         return;
     } else if (nfree == 1) {
+        /* queue but do not reclaim buffer */
         memqueuebuf(slot, type, buf, bkt, 0);
 
         return;
