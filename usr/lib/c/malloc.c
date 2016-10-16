@@ -67,24 +67,23 @@ _malloc(size_t size, size_t align, long flg)
 static void
 _free(void *ptr)
 {
-    MEMADR_T       adr = 0;
+    MEMADR_T       desc;
 #if (MEMMULTITAB)
     struct membuf *buf;
 #endif
     
     if (!g_memtlsinit) {
-//        _sysfree(ptr);
 
         return;
     } else {
 #if (MEMMULTITAB)
         memfindbuf(ptr, 1);
 #else
-        adr = membufop(ptr, MEMHASHDEL, NULL, 0);
-        if (adr) {
-#endif
+        desc = membufop(ptr, MEMHASHDEL, NULL, 0);
+        if (desc) {
             VALGRINDFREE(ptr);
         }
+#endif
     }
 
     return;
@@ -129,7 +128,7 @@ _realloc(void *ptr,
     } else {
         desc = membufop(ptr, MEMHASHCHK, NULL, 0);
         buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
-        if (buf) {
+        if (desc) {
             type = memgetbuftype(buf);
             slot = memgetbufslot(buf);
             sz = membufblksize(buf, type, slot);

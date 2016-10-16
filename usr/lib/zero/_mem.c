@@ -24,6 +24,7 @@ memprintstat(void)
     fprintf(stderr, "big\t%llu KB\n",  stat->nbbig >> 10);
     fprintf(stderr, "heap\t%llu KB\n",  stat->nbheap >> 10);
     fprintf(stderr, "map\t%llu KB\n",  stat->nbmap >> 10);
+    fprintf(stderr, "unmap\t%llu KB\n",  stat->nbunmap >> 10);
     fprintf(stderr, "book\t%llu KB\n",  stat->nbbook >> 10);
     fprintf(stderr, "hash\t%llu KB\n",  stat->nbhash >> 10);
 }

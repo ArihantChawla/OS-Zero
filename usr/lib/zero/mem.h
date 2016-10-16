@@ -187,23 +187,24 @@ typedef zerospin      MEMLK_T;
 #define MEMMAXBUFSLOT       (PTRBITS - 1)
 /* number of words in buf freemap */
 //#define MEMBUFFREEMAPWORDS  (CLSIZE / WORDSIZE)
-#define MEMBUFFREEMAPWORDS  16
+#define MEMBUFFREEMAPWORDS  8
 /* number of block-bits in buf freemap */
 #define MEMBUFMAXBLKS       (MEMBUFFREEMAPWORDS * WORDSIZE * CHAR_BIT)
 /* minimum allocation block size in bigbins */
 //#define MEMBIGMINSIZE      (2 * PAGESIZE)
-#define MEMPAGESLOTS        (MEMWORD(1) << MEMBUFSLOTBITS)
+//#define MEMPAGESLOTS        (MEMWORD(1) << MEMBUFSLOTBITS)
+#define MEMPAGESLOTS        32
 
-#define MEMSMALLSLOT        7
-#define MEMMIDSLOT          10
+#define MEMSMALLSLOT        5
+#define MEMMIDSLOT          8
 //#define MEMBIGSLOT          (MEMSMALLSLOTS - 1)
-#define MEMSMALLPAGESLOT    32
-#define MEMMIDPAGESLOT      64
-#define MEMBIGPAGESLOT      128
+#define MEMSMALLPAGESLOT    16
+#define MEMMIDPAGESLOT      32
+#define MEMBIGPAGESLOT      64
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
-#define MEMSMALLMAPSHIFT    23
+#define MEMSMALLMAPSHIFT    16
 //#define MEMBUFMIDMAPSHIFT 22
-#define MEMBIGMAPSHIFT      26
+#define MEMBIGMAPSHIFT      20
 //#define MEMBUFHUGEMAPSHIFT  26
 
 struct membkt {
@@ -711,6 +712,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #define membigbufsize(slot, nblk)                                       \
     (rounduppow2(membufblkofs(nblk) + (MEMUWORD(1) << (slot)) * (nblk), \
                  PAGESIZE))
+#if 0
 #define memnbufblk(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
      ? (((slot) <= MEMSMALLSLOT)                                        \
@@ -731,13 +733,13 @@ memgenhashtabadr(MEMUWORD_T *adr)
               : 1))))
 #define memnbuftls(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
-     ? 4                                                                \
+     ? 1                                                                \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMMIDPAGESLOT)                                   \
-           ? 8                                                          \
+           ? 4                                                          \
            : (((slot) <= MEMBIGPAGESLOT)                                \
-              ? 4                                                       \
-              : 2))                                                     \
+              ? 2                                                       \
+              : 1))                                                     \
         : (((slot) <= MEMSMALLMAPSHIFT)                                 \
            ? 4                                                          \
            : (((slot) <= MEMBIGMAPSHIFT)                                \
@@ -745,10 +747,49 @@ memgenhashtabadr(MEMUWORD_T *adr)
               : 1))))
 #define memnbufglob(slot, type)                                         \
     (((type) == MEMSMALLBUF)                                            \
-     ? 32                                                               \
+     ? 4                                                                \
      : (((type) == MEMPAGEBUF)                                          \
-        ? 16                                                            \
-        : 8))
+        ? 2                                                             \
+        : 1))
+#endif
+#define memnbufblk(slot, type)                                          \
+    (((type) == MEMSMALLBUF)                                            \
+     ? (((slot) <= MEMSMALLSLOT)                                        \
+        ? (MEMBUFMAXBLKS)                                               \
+        : (((slot) <= MEMMIDSLOT)                                       \
+           ? (MEMBUFMAXBLKS >> 2)                                       \
+           : (MEMBUFMAXBLKS >> 4)))                                     \
+     : (((type) == MEMPAGEBUF)                                          \
+        ? (((slot) <= MEMMIDPAGESLOT)                                   \
+           ? 4                                                          \
+           : (((slot) <= MEMBIGPAGESLOT)                                \
+              ? 2                                                       \
+              : 1))                                                     \
+        : (((slot) <= MEMSMALLMAPSHIFT)                                 \
+           ? 4                                                          \
+           : (((slot) <= MEMBIGMAPSHIFT)                                \
+              ? 2                                                       \
+              : 1))))
+#define memnbuftls(slot, type)                                          \
+    (((type) == MEMSMALLBUF)                                            \
+     ? 4                                                                \
+     : (((type) == MEMPAGEBUF)                                          \
+        ? (((slot) <= MEMMIDPAGESLOT)                                   \
+           ? 2                                                          \
+           : (((slot) <= MEMBIGPAGESLOT)                                \
+              ? 1                                                       \
+              : 0))                                                     \
+        : (((slot) <= MEMSMALLMAPSHIFT)                                 \
+           ? 2                                                          \
+           : (((slot) <= MEMBIGMAPSHIFT)                                \
+              ? 1                                                       \
+              : 0))))
+#define memnbufglob(slot, type)                                         \
+    (((type) == MEMSMALLBUF)                                            \
+     ? 4                                                                \
+     : (((type) == MEMPAGEBUF)                                          \
+        ? 2                                                             \
+        : 1))
 
 #define membufblkadr(buf, ndx)                                          \
     ((buf)->base + ((ndx) << memgetbufslot(buf)))
@@ -815,6 +856,7 @@ struct memstat {
     MEMUWORD_T nbbig;
     MEMUWORD_T nbheap;
     MEMUWORD_T nbmap;
+    MEMUWORD_T nbunmap;
     MEMUWORD_T nbbook;
     MEMUWORD_T nbhash;
 };

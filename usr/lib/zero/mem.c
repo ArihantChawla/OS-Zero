@@ -232,7 +232,7 @@ mempostfork(void)
 void
 memexit(int sig)
 {
-#if (MEMSTAT)
+#if (MEMSTAT) && 0
     memprintstat();
 #endif
 
@@ -242,7 +242,7 @@ memexit(int sig)
 void
 memquit(int sig)
 {
-#if (MEMSTAT)
+#if (MEMSTAT) && 0
     memprintstat();
 #endif
     fprintf(stderr, "CAUGHT signal %d, aborting\n", sig);
@@ -1323,8 +1323,7 @@ memqueuebuf(MEMWORD_T slot, MEMWORD_T type, struct membuf *buf)
         gbkt = &g_mem.bigbin[slot];
     }
     nbuf = memgetnbuftls(type, slot);
-    if (type != MEMBIGBUF
-        && tbkt->nbuf < nbuf) {
+    if (type != MEMBIGBUF && !tbkt->nbuf) {
         /* add buffer in front of the thread-local list */
         upval = (MEMADR_T)tbkt->list;
         buf->prev = NULL;
@@ -1362,6 +1361,7 @@ memqueuebuf(MEMWORD_T slot, MEMWORD_T type, struct membuf *buf)
     return;
 }
 
+#if 0
 /*
  * NOTES
  * -----
@@ -1525,6 +1525,7 @@ memrelbuf(MEMWORD_T slot, MEMWORD_T type,
 #if (MEMSTAT)
 //                g_memstat.nbmap -= buf->size;
                 g_memstat.nbpage -= buf->size;
+                g_memstat.nbunmap += buf->size;
                 g_memstat.nbbook -= membufblkofs(nblk);
 #endif
                 unmapanon(buf, buf->size);
@@ -1581,6 +1582,230 @@ memrelbuf(MEMWORD_T slot, MEMWORD_T type,
 #if (MEMSTAT)
 //            g_memstat.nbmap -= buf->size;
             g_memstat.nbbig -= buf->size;
+            g_memstat.nbunmap += buf->size;
+            g_memstat.nbbook -= membufblkofs(nblk);
+#endif
+            unmapanon(buf, buf->size);
+        }
+    }
+                
+    return;
+}
+#endif
+
+/*
+ * NOTES
+ * -----
+ * - freed buffers always come from an existing list; bkt is always non-NULL
+ *   and the bin it points to has its list locked
+ * - setting the recl-argument to a non-zero value enables possible unmapping
+ *   of the buffer
+ * - bkt will be NULL in case of a newly-queued buffer with 1 item free
+ */
+void
+memrelbuf(MEMWORD_T slot, MEMWORD_T type,
+          struct membuf *buf, volatile struct membkt *bkt)
+{
+#if (MEMSTAT)
+    MEMWORD_T               nblk = memgetbufnblk(buf);
+#endif
+    volatile struct membkt *tbkt;
+    volatile struct membkt *gbkt;
+    MEMADR_T                upval;
+    
+    if (type == MEMSMALLBUF) {
+        tbkt = &g_memtls->smallbin[slot];
+        gbkt = &g_mem.smallbin[slot];
+        if (tbkt->nbuf <= 2 || (bkt != tbkt && tbkt->nbuf <= 1)) {
+            if (bkt != tbkt) {
+                /* dequeue from global list, queue to thread-local one */
+                memdequeuebufglob(buf, bkt);
+                /* release caller-acquired lock from the global list */
+#if (MEMDEBUGDEADLOCK)
+                memrelbitln(bkt);
+#else
+                memrelbit(&bkt->list);
+#endif
+                /* add buffer in front of the thread-local list */
+                upval = (MEMADR_T)tbkt->list;
+                buf->prev = NULL;
+                buf->bkt = tbkt;
+                if (upval) {
+                    ((struct membuf *)upval)->prev = buf;
+                }
+                buf->next = (struct membuf *)upval;
+                tbkt->nbuf++;
+                tbkt->list = buf;
+            }
+        } else if (bkt == gbkt) {
+            /* the buffer is already on the global list; just unlock */
+#if (MEMDEBUGDEADLOCK)
+            memrelbitln(bkt);
+#else
+            memrelbit(&bkt->list);
+#endif
+        } else {
+            /* dequeue from thread-local list */
+            memdequeuebuftls(buf, bkt);
+            /* acquire lock for global list */
+#if (MEMDEBUGDEADLOCK)
+            memlkbitln(gbkt);
+#else
+            memlkbit(&gbkt->list);
+#endif
+            /* add buffer in front of the global list */
+            upval = (MEMADR_T)gbkt->list;
+            buf->prev = NULL;
+            upval &= ~MEMLKBIT;
+            buf->bkt = gbkt;
+            if (upval) {
+                ((struct membuf *)upval)->prev = buf;
+            }
+            buf->next = (struct membuf *)upval;
+            gbkt->nbuf++;
+#if (MEMDEBUGDEADLOCK)
+            gbkt->line = __LINE__;
+#endif
+            /* this will unlock the list (set the low-bit to zero) */
+            m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
+        }
+        
+        return;
+    } else if (type == MEMPAGEBUF) {
+        tbkt = &g_memtls->pagebin[slot];
+        gbkt = &g_mem.pagebin[slot];
+        if (tbkt->nbuf <= 1 || (bkt != tbkt && !tbkt->nbuf)) {
+            if (bkt != tbkt) {
+                /* dequeue buffer from the global list */
+                memdequeuebufglob(buf, bkt);
+                /* release caller-acquired lock */
+#if (MEMDEBUGDEADLOCK)
+                memrelbitln(bkt);
+#else
+                memrelbit(&bkt->list);
+#endif
+                /* add buffer in front of the thread-local list */
+                upval = (MEMADR_T)tbkt->list;
+                buf->prev = NULL;
+                buf->bkt = tbkt;
+                if (upval) {
+                    ((struct membuf *)upval)->prev = buf;
+                }
+                buf->next = (struct membuf *)upval;
+                tbkt->nbuf++;
+                tbkt->list = buf;
+            }
+        } else {
+            if (g_memstat.nbpage < (1L << 20)) {
+                if (bkt == gbkt) {
+                    /* the buffer is already on the global list; just unlock */
+#if (MEMDEBUGDEADLOCK)
+                    memrelbitln(bkt);
+#else
+                    memrelbit(&bkt->list);
+#endif
+                } else {
+                    /* dequeue from thread-local list */
+                    memdequeuebuftls(buf, bkt);
+                    /* acquire lock for the global list */
+#if (MEMDEBUGDEADLOCK)
+                    memlkbitln(gbkt);
+#else
+                    memlkbit(&gbkt->list);
+#endif
+                    /* add buffer in front of the global list */
+                    upval = (MEMADR_T)gbkt->list;
+                    buf->prev = NULL;
+                    upval &= ~MEMLKBIT;
+                    buf->bkt = gbkt;
+                    if (upval) {
+                        ((struct membuf *)upval)->prev = buf;
+                    }
+                    buf->next = (struct membuf *)upval;
+                    gbkt->nbuf++;
+#if (MEMDEBUGDEADLOCK)
+                    gbkt->line = __LINE__;
+#endif
+                    /* this will unlock the list (set the low-bit to zero) */
+                    m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
+                }
+            } else {
+                /* remove buffer from a list if on one */
+                if (bkt == tbkt) {
+                    /* dequeue from thread-local list */
+                    memdequeuebuftls(buf, bkt);
+                } else if (bkt) {
+                    /* dequeue from global list */
+                    memdequeuebufglob(buf, bkt);
+                    /* release caller-acquired global-list lock */
+#if (MEMDEBUGDEADLOCK)
+                    memrelbitln(bkt);
+#else
+                    memrelbit(&bkt->list);
+#endif
+                }
+                /* unmap the buffer */
+                VALGRINDRMPOOL(buf->base);
+#if (MEMSTAT)
+//                g_memstat.nbmap -= buf->size;
+                g_memstat.nbpage -= buf->size;
+                g_memstat.nbunmap += buf->size;
+                g_memstat.nbbook -= membufblkofs(nblk);
+#endif
+                unmapanon(buf, buf->size);
+            }
+        }
+            
+        return;
+    } else {
+        /* type == MEMBIGBUF */
+        gbkt = &g_mem.bigbin[slot];
+        if (g_memstat.nbmap < (1L << 24)) {
+            if (bkt == gbkt) {
+                /* the buffer is already on the global list; just unlock */
+#if (MEMDEBUGDEADLOCK)
+                memrelbitln(bkt);
+#else
+                memrelbit(&bkt->list);
+#endif
+            } else {
+                /* acquire lock for the global list */
+#if (MEMDEBUGDEADLOCK)
+                memlkbitln(gbkt);
+#else
+                memlkbit(&gbkt->list);
+#endif
+                /* add buffer in front of the global list */
+                upval = (MEMADR_T)gbkt->list;
+                buf->prev = NULL;
+                upval &= ~MEMLKBIT;
+                buf->bkt = gbkt;
+                if (upval) {
+                    ((struct membuf *)upval)->prev = buf;
+                }
+                buf->next = (struct membuf *)upval;
+                gbkt->nbuf++;
+#if (MEMDEBUGDEADLOCK)
+                gbkt->line = __LINE__;
+#endif
+                /* this will unlock the list (set the low-bit to zero) */
+                m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
+            }
+        } else {
+            /* dequeue from global list */
+            memdequeuebufglob(buf, bkt);
+            /* release caller-acquired lock */
+#if (MEMDEBUGDEADLOCK)
+            memrelbitln(bkt);
+#else
+            memrelbit(&bkt->list);
+#endif
+            /* unmap the buffer */
+            VALGRINDRMPOOL(buf->base);
+#if (MEMSTAT)
+//            g_memstat.nbmap -= buf->size;
+            g_memstat.nbbig -= buf->size;
+            g_memstat.nbunmap += buf->size;
             g_memstat.nbbook -= membufblkofs(nblk);
 #endif
             unmapanon(buf, buf->size);
@@ -1603,20 +1828,22 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
 #if (MEMTEST)
     _memchkptr(buf, ptr);
 #endif
-    if (type == MEMSMALLBUF) {
-        gbkt = &g_mem.smallbin[slot];
-    } else if (type == MEMPAGEBUF) {
-        gbkt = &g_mem.pagebin[slot];
-    } else {
-        gbkt = &g_mem.bigbin[slot];
-    }
-    if (bkt == gbkt) {
-        /* buffer is on global list; lock the list */
+    if (bkt) {
+        if (type == MEMSMALLBUF) {
+            gbkt = &g_mem.smallbin[slot];
+        } else if (type == MEMPAGEBUF) {
+            gbkt = &g_mem.pagebin[slot];
+        } else {
+            gbkt = &g_mem.bigbin[slot];
+        }
+        if (bkt == gbkt) {
+            /* buffer is on global list; lock the list */
 #if (MEMDEBUGDEADLOCK)
-        memlkbitln(bkt);
+            memlkbitln(bkt);
 #else
-        memlkbit(&bkt->list);
+            memlkbit(&bkt->list);
 #endif
+        }
     }
     nblk = memgetbufnblk(buf);
     nfree = memgetbufnfree(buf);
