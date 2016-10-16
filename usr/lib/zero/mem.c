@@ -911,8 +911,36 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
         src = blk->tab;
         prev = NULL;
         do {
-            n = min(lim, 4);
+            n = min(lim, 8);
             switch (n) {
+                case 8:
+                    slot = &src[7];
+                    if (slot->page == page) {
+                        found++;
+                        
+                        break;
+                    }
+                case 7:
+                    slot = &src[6];
+                    if (slot->page == page) {
+                        found++;
+                        
+                        break;
+                    }
+                case 6:
+                    slot = &src[5];
+                    if (slot->page == page) {
+                        found++;
+                        
+                        break;
+                    }
+                case 5:
+                    slot = &src[4];
+                    if (slot->page == page) {
+                        found++;
+                        
+                        break;
+                    }
                 case 4:
                     slot = &src[3];
                     if (slot->page == page) {
