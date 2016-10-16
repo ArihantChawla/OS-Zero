@@ -779,17 +779,13 @@ memgenhashtabadr(MEMUWORD_T *adr)
            : (((slot) <= MEMBIGPAGESLOT)                                \
               ? 2                                                       \
               : 1))                                                     \
-        : (((slot) <= MEMSMALLMAPSHIFT)                                 \
-           ? 2                                                          \
-           : (((slot) <= MEMBIGMAPSHIFT)                                \
-              ? 1                                                       \
-              : 0))))
+        : 0))
 #define memnbufglob(slot, type)                                         \
     (((type) == MEMSMALLBUF)                                            \
-     ? 4                                                                \
+     ? 8                                                                \
      : (((type) == MEMPAGEBUF)                                          \
-        ? 2                                                             \
-        : 1))
+        ? 4                                                             \
+        : 2))
 
 #define membufblkadr(buf, ndx)                                          \
     ((buf)->base + ((ndx) << memgetbufslot(buf)))
