@@ -618,8 +618,8 @@ memgetblktls(struct membuf *head, volatile struct membkt *bkt,
 
 /* NOTE: caller holds a lock on the global bin; we unlock it, though */
 void *
-memgetblkglob(struct membuf *head, volatile struct membkt *bkt,
-              MEMUWORD_T size, MEMUWORD_T align)
+memgetblkglob(struct membuf *head, volatile struct membkt *gbkt,
+              MEMUWORD_T size, MEMUWORD_T align, volatile struct membkt *tbkt)
 {
     void       *ptr = NULL;
     MEMPTR_T    adr;
@@ -643,24 +643,26 @@ memgetblkglob(struct membuf *head, volatile struct membkt *bkt,
     _memchkptr(head, ptr);
 #endif
     VALGRINDPOOLALLOC(head->base, ptr, size);
-    if (!nfree) {
+    if ((tbkt) || !nfree) {
         if (head->next) {
             head->next->prev = NULL;
         }
-        bkt->nbuf--;
+        gbkt->nbuf--;
 #if (MEMDEBUGDEADLOCK)
-        bkt->line = __LINE__;
+        gbkt->line = __LINE__;
 #endif
-        m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)head->next);
-        head->bkt = NULL;
-        head->prev = NULL;
-        head->next = NULL;
-    } else {
-#if (MEMDEBUGDEADLOCK)
-        memrelbitln(bkt);
-#else
-        memrelbit(&bkt->list);
-#endif
+        m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t)head->next);
+        if (!nfree) {
+            head->bkt = NULL;
+            head->prev = NULL;
+            head->next = NULL;
+        } else if (tbkt) {
+            head->next = tbkt->list;
+            if (head->next) {
+                head->next->prev = head;
+            }
+            tbkt->list = head;
+        }
     }
 
     return ptr;
@@ -1155,7 +1157,11 @@ memtryblk(MEMWORD_T slot, MEMWORD_T type,
         buf = (struct membuf *)upval;
         nblk = memgetnbufblk(type, slot);
         if (buf) {
-            ptr = memgetblkglob(buf, gbkt, size, align);
+            if (tbkt) {
+                ptr = memgetblkglob(buf, gbkt, size, align, tbkt);
+            } else {
+                ptr = memgetblkglob(buf, gbkt, size, align, NULL);
+            }
         } else {
             if (type == MEMSMALLBUF) {
                 buf = memallocsmallbuf(slot, nblk);
