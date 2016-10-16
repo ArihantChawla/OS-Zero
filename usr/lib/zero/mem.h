@@ -757,8 +757,8 @@ memgenhashtabadr(MEMUWORD_T *adr)
      ? (((slot) <= MEMSMALLSLOT)                                        \
         ? (MEMBUFMAXBLKS)                                               \
         : (((slot) <= MEMMIDSLOT)                                       \
-           ? (MEMBUFMAXBLKS >> 2)                                       \
-           : (MEMBUFMAXBLKS >> 4)))                                     \
+           ? (MEMBUFMAXBLKS >> 1)                                       \
+           : (MEMBUFMAXBLKS >> 2)))                                     \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMMIDPAGESLOT)                                   \
            ? 4                                                          \
@@ -775,10 +775,10 @@ memgenhashtabadr(MEMUWORD_T *adr)
      ? 4                                                                \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMMIDPAGESLOT)                                   \
-           ? 2                                                          \
+           ? 4                                                          \
            : (((slot) <= MEMBIGPAGESLOT)                                \
-              ? 1                                                       \
-              : 0))                                                     \
+              ? 2                                                       \
+              : 1))                                                     \
         : (((slot) <= MEMSMALLMAPSHIFT)                                 \
            ? 2                                                          \
            : (((slot) <= MEMBIGMAPSHIFT)                                \
