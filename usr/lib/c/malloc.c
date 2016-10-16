@@ -75,10 +75,12 @@ _free(void *ptr)
 
         return;
     }
+#if 0
     if (!g_memtlsinit) {
 
         return;
     }
+#endif
 #if (MEMMULTITAB)
     memfindbuf(ptr, 1);
 #else
@@ -524,4 +526,38 @@ malloc_size(void *ptr)
 
     return sz;
 }
+
+#if (GNUMALLOC)
+void *
+hookmalloc(size_t size, const void *caller)
+{
+    void *ptr = _malloc(size, 0, 0);
+
+    return ptr;
+}
+
+void
+hookfree(void *ptr, const void *caller)
+{
+    _free(ptr);
+
+    return;
+}
+
+void *
+hookrealloc(void *ptr, size_t size, const void *caller)
+{
+    void *retptr = _realloc(ptr, size, 0);
+
+    return retptr;
+}
+
+void *
+hookmemalign(size_t align, size_t size, const void *caller)
+{
+    void *ptr = _malloc(size, align, 0);
+
+    return ptr;
+}
+#endif
 

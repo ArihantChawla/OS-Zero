@@ -14,6 +14,16 @@
 #include <zero/spin.h>
 #include <zero/mem.h>
 #include <zero/hash.h>
+#if (GNUMALLOC)
+#include <malloc.h>
+#endif
+
+#if (GNUMALLOC)
+void * hookmalloc(size_t size, const void *caller);
+void   hookfree(void *ptr, const void *caller);
+void * hookrealloc(void *ptr, size_t size, const void *caller);
+void * hookmemalign(size_t align, size_t size, const void *caller);
+#endif
 
 static pthread_once_t               g_initonce = PTHREAD_ONCE_INIT;
 static pthread_key_t                g_thrkey;
@@ -259,6 +269,12 @@ meminit(void)
     MEMPTR_T   *adr;
     MEMUWORD_T  slot;
 
+#if (GNUMALLOC)
+    __malloc_hook = hookmalloc;
+    __free_hook = hookfree;
+    __realloc_hook = hookrealloc;
+    __memalign_hook = hookmemalign;
+#endif
     spinlk(&g_mem.initlk);
     signal(SIGQUIT, memexit);
     signal(SIGINT, memexit);
@@ -433,7 +449,7 @@ meminitsmallbuf(struct membuf *buf,
     membufinitfree(buf);
     buf->base = ptr;
     nblk--;
-    VALGRINDMKPOOL(ptr, 0, 0);
+//    VALGRINDMKPOOL(ptr, 0, 0);
     memsetbufnfree(buf, nblk);
     ptr = memsetadr(buf, ptr, size, align, 0);
     memsetbuf(ptr, buf, 0);
@@ -492,7 +508,7 @@ meminitpagebuf(struct membuf *buf,
     membufinitfree(buf);
     buf->base = ptr;
     nblk--;
-    VALGRINDMKPOOL(ptr, 0, 0);
+//    VALGRINDMKPOOL(ptr, 0, 0);
     memsetbufnfree(buf, nblk);
     ptr = memsetadr(buf, ptr, size, align, 0);
     memsetbuf(ptr, buf, 0);
@@ -550,7 +566,7 @@ meminitbigbuf(struct membuf *buf,
     membufinitfree(buf);
     buf->base = ptr;
     nblk--;
-    VALGRINDMKPOOL(ptr, 0, 0);
+//    VALGRINDMKPOOL(ptr, 0, 0);
     memsetbufnfree(buf, nblk);
     ptr = memsetadr(buf, ptr, size, align, 0);
     memsetbuf(ptr, buf, 0);
@@ -586,7 +602,7 @@ memgetblktls(struct membuf *head, volatile struct membkt *bkt,
 #if (MEMTEST)
     _memchkptr(head, ptr);
 #endif
-    VALGRINDPOOLALLOC(head->base, ptr, size);
+//    VALGRINDPOOLALLOC(head->base, ptr, size);
     if (!nfree) {
         /* head shall be disconnected from all lists */
         if (head->next) {
@@ -631,7 +647,7 @@ memgetblkglob(struct membuf *head, volatile struct membkt *bkt,
 #if (MEMTEST)
     _memchkptr(head, ptr);
 #endif
-    VALGRINDPOOLALLOC(head->base, ptr, size);
+//    VALGRINDPOOLALLOC(head->base, ptr, size);
     if (!nfree) {
         if (head->next) {
             head->next->prev = NULL;
@@ -1454,7 +1470,7 @@ memrelbuf(MEMWORD_T slot, MEMWORD_T type,
 #endif
                 }
                 /* unmap the buffer */
-                VALGRINDRMPOOL(buf->base);
+//                VALGRINDRMPOOL(buf->base);
 #if (MEMSTAT)
 //                g_memstat.nbmap -= buf->size;
                 g_memstat.nbpage -= buf->size;
@@ -1510,7 +1526,7 @@ memrelbuf(MEMWORD_T slot, MEMWORD_T type,
             memrelbit(&bkt->list);
 #endif
             /* unmap the buffer */
-            VALGRINDRMPOOL(buf->base);
+//            VALGRINDRMPOOL(buf->base);
 #if (MEMSTAT)
 //            g_memstat.nbmap -= buf->size;
             g_memstat.nbbig -= buf->size;
@@ -1571,7 +1587,7 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
     }
     setbit(buf->freemap, id);
     memsetbufnfree(buf, nfree);
-    VALGRINDPOOLFREE(buf->base, ptr);
+//    VALGRINDPOOLFREE(buf->base, ptr);
     if (nfree != 1 && nfree != nblk) {
         /* no need to reclaim or requeue, just unlock if on global list */
 #if (MEMDEBUGDEADLOCK)
