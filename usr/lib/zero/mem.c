@@ -1302,6 +1302,7 @@ memdequeuebufglob(struct membuf *buf, volatile struct membkt *src)
  *   and the bin it points to has its list locked
  * - setting the recl-argument to a non-zero value enables possible unmapping
  *   of the buffer
+ * - bkt will be NULL in case of a newly-queued buffer with 1 item free
  */
 void
 memqueuebuf(MEMWORD_T slot, MEMWORD_T type,
@@ -1320,7 +1321,7 @@ memqueuebuf(MEMWORD_T slot, MEMWORD_T type,
         if (tbkt->nbuf < nbuf
             || (bkt == tbkt && tbkt->nbuf <= nbuf)) {
             if (bkt != tbkt) {
-                if (bkt == gbkt) {
+                if (bkt) {
                     /* dequeue from global list, queue to thread-local one */
                     memdequeuebufglob(buf, bkt);
                     /* release caller-acquired lock from the global list */
@@ -1447,21 +1448,19 @@ memqueuebuf(MEMWORD_T slot, MEMWORD_T type,
                     m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
                 }
             } else {
-                if (bkt) {
-                    /* remove buffer from a list */
-                    if (bkt == tbkt) {
-                        /* dequeue from thread-local list */
-                        memdequeuebuftls(buf, bkt);
-                    } else {
-                        /* dequeue from global list */
-                        memdequeuebufglob(buf, bkt);
-                        /* release caller-acquired global-list lock */
+                /* remove buffer from a list if on one */
+                if (bkt == tbkt) {
+                    /* dequeue from thread-local list */
+                    memdequeuebuftls(buf, bkt);
+                } else if (bkt) {
+                    /* dequeue from global list */
+                    memdequeuebufglob(buf, bkt);
+                    /* release caller-acquired global-list lock */
 #if (MEMDEBUGDEADLOCK)
-                        memrelbitln(bkt);
+                    memrelbitln(bkt);
 #else
-                        memrelbit(&bkt->list);
+                    memrelbit(&bkt->list);
 #endif
-                    }
                 }
                 /* unmap the buffer */
                 VALGRINDRMPOOL(buf->base);
@@ -1489,12 +1488,14 @@ memqueuebuf(MEMWORD_T slot, MEMWORD_T type,
                 memrelbit(&bkt->list);
 #endif
             } else {
-                /* acquire lock for the global list */
+                if (!bkt) {
+                    /* acquire lock for the global list */
 #if (MEMDEBUGDEADLOCK)
-                memlkbitln(gbkt);
+                    memlkbitln(gbkt);
 #else
-                memlkbit(&gbkt->list);
+                    memlkbit(&gbkt->list);
 #endif
+                }
                 /* add buffer in front of the global list */
                 upval = (MEMADR_T)gbkt->list;
                 buf->prev = NULL;
@@ -1512,7 +1513,7 @@ memqueuebuf(MEMWORD_T slot, MEMWORD_T type,
                 m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
             }
         } else {
-            if (bkt == gbkt) {
+            if (bkt) {
                 /* dequeue from global list */
                 memdequeuebufglob(buf, bkt);
                 /* release caller-acquired lock */
@@ -1580,8 +1581,8 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
     setbit(buf->freemap, id);
     memsetbufnfree(buf, nfree);
     VALGRINDPOOLFREE(buf->base, ptr);
-    if (nfree != nblk) {
-        /* no need to reclaim or requeue, just unlock the global list */
+    if (nfree != 1 && nfree != nblk) {
+        /* no need to reclaim or requeue, just unlock if on global list */
 #if (MEMDEBUGDEADLOCK)
         memrelbitln(bkt);
 #else
@@ -1592,7 +1593,7 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
         memqueuebuf(slot, type, buf, bkt, 0);
 
         return;
-    } else {
+    } else if (nfree == nblk) {
         /* unmap or requeue completely free buffer */
         memqueuebuf(slot, type, buf, bkt, 1);
 
