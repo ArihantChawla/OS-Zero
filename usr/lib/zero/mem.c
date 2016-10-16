@@ -19,6 +19,8 @@
 #endif
 
 #if (GNUMALLOC)
+void meminit(void);
+void (*__MALLOC_HOOK_VOLATILE __malloc_initialize_hook)(void) = meminit;
 void * hookmalloc(size_t size, const void *caller);
 void   hookfree(void *ptr, const void *caller);
 void * hookrealloc(void *ptr, size_t size, const void *caller);
@@ -269,13 +271,13 @@ meminit(void)
     MEMPTR_T   *adr;
     MEMUWORD_T  slot;
 
+    spinlk(&g_mem.initlk);
 #if (GNUMALLOC)
     __malloc_hook = hookmalloc;
     __free_hook = hookfree;
     __realloc_hook = hookrealloc;
     __memalign_hook = hookmemalign;
 #endif
-    spinlk(&g_mem.initlk);
     signal(SIGQUIT, memexit);
     signal(SIGINT, memexit);
 #if 0
@@ -339,6 +341,7 @@ meminit(void)
 #elif (MEMHASH) || (MEMARRAYHASH) || (MEMNEWHASH)
     g_mem.hash = ptr;
 #endif
+#if !defined(MEMNOSBRK) || !(MEMNOSBRK)
 //    memgetlk(&g_mem.heaplk);
     heap = growheap(0);
     ofs = (1UL << PAGESIZELOG2) - ((long)heap & (PAGESIZE - 1));
@@ -346,6 +349,7 @@ meminit(void)
         growheap(ofs);
     }
 //    memrellk(&g_mem.heaplk);
+#endif
     spinunlk(&g_mem.initlk);
 
     return;
@@ -384,6 +388,7 @@ memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
     MEMUWORD_T     flg = 0;
     struct membuf *buf;
 
+#if !defined(MEMNOSBRK) || !(MEMNOSBRK)
     if (!(g_mem.flg & MEMNOHEAPBIT)) {
         /* try to allocate from heap (sbrk()) */
         memgetlk(&g_mem.heaplk);
@@ -399,6 +404,7 @@ memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
             memrellk(&g_mem.heaplk);
         }
     }
+#endif
     if (adr == SBRK_FAILED) {
         /* sbrk() failed or was skipped, let's try mmap() */
         adr = mapanon(0, bufsz);
@@ -1177,6 +1183,7 @@ memtryblk(MEMWORD_T slot, MEMWORD_T type,
                 }
             }
             if (ptr) {
+#if !defined(MEMNOSBRK) || !(MEMNOSBRK)
                 if (type == MEMSMALLBUF) {
                     flg = buf->flg;
                     if (flg & MEMHEAPBIT) {          
@@ -1189,6 +1196,7 @@ memtryblk(MEMWORD_T slot, MEMWORD_T type,
                         memrellk(&g_mem.heaplk);
                     }
                 }
+#endif
                 if (nblk > 1) {
                     if (dest == tbkt) {
                         upval = (MEMADR_T)dest->list;
@@ -1322,7 +1330,7 @@ memdequeuebufglob(struct membuf *buf, volatile struct membkt *src)
  */
 void
 memrelbuf(MEMWORD_T slot, MEMWORD_T type,
-          struct membuf *buf, struct membkt *bkt)
+          struct membuf *buf, volatile struct membkt *bkt)
 {
 #if (MEMSTAT)
     MEMWORD_T               nblk = memgetbufnblk(buf);

@@ -1,3 +1,4 @@
+#define _GNU_SOURCE 1
 #include <features.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +9,7 @@
 #endif
 #include <errno.h>
 #include <malloc.h>
+#include <dlfcn.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/mem.h>
@@ -15,10 +17,65 @@
 #include <zero/trix.h>
 #include "_malloc.h"
 
-extern THREADLOCAL volatile struct memtls *g_memtls;
-static zerospin                            g_memtlsinitlk;
-extern THREADLOCAL volatile MEMUWORD_T     g_memtlsinit;
-extern struct mem                          g_mem;
+extern THREADLOCAL volatile struct memtls  *g_memtls;
+static zerospin                             g_memtlsinitlk;
+extern THREADLOCAL volatile MEMUWORD_T      g_memtlsinit;
+extern struct mem                           g_mem;
+static volatile void *                    (*g_sysmalloc)(size_t);
+static volatile void                      (*g_sysfree)(void *);
+static volatile void *                    (*g_sysrealloc)(void *, size_t);
+
+static void *
+_sysmalloc(size_t size)
+{
+    void *ptr = NULL;
+
+    if (!size) {
+        size++;
+    }
+    if (!g_sysmalloc) {
+        g_sysmalloc = dlsym(RTLD_NEXT, "malloc");
+    }
+    if (g_sysmalloc) {
+        ptr = g_sysmalloc(size);
+    }
+
+    return ptr;
+}
+
+static void
+_sysfree(void *ptr)
+{
+    if (!g_sysfree) {
+        g_sysfree = dlsym(RTLD_NEXT, "free");
+    }
+    if (g_sysfree) {
+        g_sysfree(ptr);
+    }
+
+    return;
+}
+
+static void *
+_sysrealloc(void *ptr, size_t size)
+{
+    void *retptr = NULL;
+    
+    if (!ptr) {
+        retptr = _sysmalloc(size);
+        
+        return retptr;
+    } else if (size) {
+        if (!g_sysrealloc) {
+            g_sysrealloc = dlsym(RTLD_NEXT, "realloc");
+        }
+        if (g_sysrealloc) {
+            retptr = g_sysrealloc(ptr, size);
+        }
+    }
+
+    return retptr;
+}
 
 static void *
 _malloc(size_t size, size_t align, long flg)
@@ -67,26 +124,25 @@ _malloc(size_t size, size_t align, long flg)
 static void
 _free(void *ptr)
 {
+    MEMADR_T       adr = 0;
 #if (MEMMULTITAB)
     struct membuf *buf;
 #endif
     
-    if (!ptr) {
-
-        return;
-    }
-#if 0
     if (!g_memtlsinit) {
+//        _sysfree(ptr);
 
         return;
-    }
-#endif
+    } else {
 #if (MEMMULTITAB)
-    memfindbuf(ptr, 1);
+        memfindbuf(ptr, 1);
 #else
-    membufop(ptr, MEMHASHDEL, NULL, 0);
+        adr = membufop(ptr, MEMHASHDEL, NULL, 0);
+        if (adr) {
 #endif
-    VALGRINDFREE(ptr);
+            VALGRINDFREE(ptr);
+        }
+    }
 
     return;
 }
@@ -104,43 +160,61 @@ _realloc(void *ptr,
 #if (MEMMULTITAB)
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
 #else
-    MEMADR_T       desc = ((ptr)
-                           ? membufop(ptr, MEMHASHCHK, NULL, 0)
-                           : 0);
-    struct membuf *buf = (struct membuf *)desc;
+    MEMADR_T       desc = 0;
+    struct membuf *buf;
 #endif
 //    MEMPTR_T       oldptr = (buf) ? membufgetptr(buf, ptr) : NULL;
     MEMUWORD_T     type;
     MEMUWORD_T     slot;
     size_t         sz;
 
-    if (ptr) {
-        type = memgetbuftype(buf);
-        slot = memgetbufslot(buf);
-        sz = membufblksize(buf, type, slot);
-        if (size <= sz) {
+    if (!g_memtlsinit) {
+        spinlk(&g_memtlsinitlk);
+        if (!g_memtlsinit) {
+            meminittls();
+        }
+        spinunlk(&g_memtlsinitlk);
+        retptr = _sysrealloc(ptr, size);
 
-            return ptr;
-        }
+        return retptr;
     }
-    retptr = _malloc(size, 0, 0);
-    if (retptr) {
-        if (ptr) {
-            memcpy(retptr, ptr, sz);
+    if (!ptr) {
+        retptr = _malloc(size, 0, 0);
+        
+        return retptr;
+    } else if (!size) {
+        free(ptr);
+        
+        return NULL;
+    } else {
+        desc = membufop(ptr, MEMHASHCHK, NULL, 0);
+        buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
+        if (buf) {
+            type = memgetbuftype(buf);
+            slot = memgetbufslot(buf);
+            sz = membufblksize(buf, type, slot);
+            if (size <= sz) {
+                
+                return ptr;
+            }
+            retptr = _malloc(size, 0, 0);
+            if (retptr) {
+                memcpy(retptr, ptr, sz);
+                _free(ptr);
+                ptr = NULL;
+            }
+        }
+        if ((rel) && (ptr)) {
             _free(ptr);
-            ptr = NULL;
         }
-    }
-    if ((rel) && (ptr)) {
-        _free(ptr);
-    }
 #if (MEMDEBUG)
-    crash(retptr != NULL);
+        crash(retptr != NULL);
 #endif
-    if (!retptr) {
+        if (!retptr) {
 #if defined(ENOMEM)
-        errno = ENOMEM;
+            errno = ENOMEM;
 #endif
+        }
     }
 
     return retptr;
@@ -191,13 +265,8 @@ __attribute__ ((assume_aligned(MEMMINALIGN)))
 #endif
 realloc(void *ptr, size_t size)
 {
-    void *retptr = NULL;
+    void *retptr = _realloc(ptr, size, 0);
 
-    if (!size && (ptr)) {
-        _free(ptr);
-    } else {
-        retptr = _realloc(ptr, size, 0);
-    }
 #if (MEMDEBUG)
     crash(retptr != NULL);
 #endif
@@ -241,7 +310,9 @@ posix_memalign(void **ret,
 void
 free(void *ptr)
 {
-    _free(ptr);
+    if (ptr) {
+        _free(ptr);
+    }
 
     return;
 }
