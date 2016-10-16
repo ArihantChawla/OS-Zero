@@ -1539,23 +1539,23 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
     setbit(buf->freemap, id);
     memsetbufnfree(buf, nfree);
     VALGRINDPOOLFREE(buf->base, ptr);
-    if (nfree == nblk) {
-        /* unmap or requeue completely free buffer */
-        memqueuebuf(slot, type, buf, bkt, 1);
-
-        return;
-    } else if (nfree == 1) {
-        /* queue but do not reclaim buffer */
-        memqueuebuf(slot, type, buf, bkt, 0);
-
-        return;
-    } else if (bkt == gbkt) {
+    if (nfree != nblk) {
         /* no need to reclaim or requeue, just unlock the global list */
 #if (MEMDEBUGDEADLOCK)
         memrelbitln(bkt);
 #else
         memrelbit(&bkt->list);
 #endif
+    } else if (nfree == 1) {
+        /* queue but do not reclaim buffer */
+        memqueuebuf(slot, type, buf, bkt, 0);
+
+        return;
+    } else {
+        /* unmap or requeue completely free buffer */
+        memqueuebuf(slot, type, buf, bkt, 1);
+
+        return;
     }
     
     return;
