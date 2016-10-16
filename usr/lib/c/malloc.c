@@ -81,15 +81,6 @@ _free(void *ptr)
 
         return;
     }
-#if 0
-    if (!g_memtlsinit) {
-        memgetlk(&g_memtlsinitlk);
-        if (!g_memtlsinit) {
-            meminittls();
-        }
-        memrellk(&g_memtlsinitlk);
-    }
-#endif
 #if (MEMMULTITAB)
     memfindbuf(ptr, 1);
 #else
