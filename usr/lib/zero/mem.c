@@ -253,8 +253,10 @@ memquit(int sig)
 void
 meminit(void)
 {
+#if !defined(MEMNOSBRK) || !(MEMNOSBRK)
     void       *heap;
     intptr_t    ofs;
+#endif
     void       *ptr;
     MEMPTR_T   *adr;
     MEMUWORD_T  slot;
@@ -1135,7 +1137,9 @@ memtryblk(MEMWORD_T slot, MEMWORD_T type,
     MEMADR_T                upval = (tbkt) ? (MEMADR_T)tbkt->list : 0;
     struct membuf          *buf = (struct membuf *)upval;
     MEMPTR_T                ptr = NULL;
+#if !defined(MEMNOSBRK) || !(MEMNOSBRK)
     MEMUWORD_T              flg = 0;
+#endif
     MEMWORD_T               nblk;
     volatile struct membkt *dest = (tbkt) ? tbkt : gbkt;
 
@@ -1593,11 +1597,8 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
     volatile struct membkt *bkt = buf->bkt;
     MEMUWORD_T              type = memgetbuftype(buf);
     MEMUWORD_T              slot = memgetbufslot(buf);
-    MEMADR_T                upval;
     MEMWORD_T               nblk;
     MEMWORD_T               nfree;
-    MEMWORD_T               nbuf;
-//    MEMUWORD_T     id;
 
 #if (MEMTEST)
     _memchkptr(buf, ptr);
@@ -1633,12 +1634,14 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
     memsetbufnfree(buf, nfree);
     VALGRINDPOOLFREE(buf->base, ptr);
     if (nfree != 1 && nfree != nblk) {
-        /* no need to reclaim or requeue, just unlock if on global list */
+        if (bkt == gbkt) {
+            /* no need to reclaim or requeue, just unlock if on global list */
 #if (MEMDEBUGDEADLOCK)
-        memrelbitln(bkt);
+            memrelbitln(bkt);
 #else
-        memrelbit(&bkt->list);
+            memrelbit(&bkt->list);
 #endif
+        }
     } else if (nfree == 1) {
         /* queue an unchained buffer */
         memqueuebuf(slot, type, buf);
