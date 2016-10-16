@@ -16,7 +16,7 @@
 #include "_malloc.h"
 
 extern THREADLOCAL volatile struct memtls *g_memtls;
-static zerofmtx                            g_memtlsinitlk;
+static zerospin                            g_memtlsinitlk;
 extern THREADLOCAL volatile MEMUWORD_T     g_memtlsinit;
 extern struct mem                          g_mem;
 
@@ -35,11 +35,11 @@ _malloc(size_t size, size_t align, long flg)
     void     *ptr;
 
     if (!g_memtlsinit) {
-        fmtxlk(&g_memtlsinitlk);
+        spinlk(&g_memtlsinitlk);
         if (!g_memtlsinit) {
             meminittls();
         }
-        fmtxunlk(&g_memtlsinitlk);
+        spinunlk(&g_memtlsinitlk);
     }
     if (type != MEMPAGEBUF) {
         memcalcslot(asz, slot);
@@ -54,11 +54,9 @@ _malloc(size_t size, size_t align, long flg)
     } else if (flg & MALLOCZEROBIT) {
         memset(ptr, 0, size);
     }
-#if 0
     if (ptr) {
         VALGRINDALLOC(ptr, size, 0, flg & MALLOCZEROBIT);
     }
-#endif
 #if (MEMDEBUG)
     crash(ptr != NULL);
 #endif
@@ -86,9 +84,7 @@ _free(void *ptr)
 #else
     membufop(ptr, MEMHASHDEL, NULL, 0);
 #endif
-#if 0
     VALGRINDFREE(ptr);
-#endif
 
     return;
 }

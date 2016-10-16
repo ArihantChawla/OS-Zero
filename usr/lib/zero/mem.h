@@ -215,9 +215,11 @@ struct membkt {
 #if (MEMDEBUGDEADLOCK)
     MEMUWORD_T     line;
 #endif
-    MEMWORD_T      nblk;        // # of per-buffer blocks; 0 for default
     MEMWORD_T      nbuf;        // number of bufs in list
+#if 0
+    MEMWORD_T      nblk;        // # of per-buffer blocks; 0 for default
     MEMWORD_T      nmax;        // max # to buffer; 0 for default
+#endif
     uint8_t        _pad[CLSIZE
 #if (MEMLFDEQ)
                         - sizeof(struct lfdeq)
@@ -227,7 +229,7 @@ struct membkt {
 #if (MEMDEBUGDEADLOCK)
                         - sizeof(MEMUWORD_T)
 #endif
-                        - 3 * sizeof(MEMUWORD_T)];
+                        - sizeof(MEMUWORD_T)];
 };
 
 /* type-bits for allocation buffers */
@@ -336,7 +338,8 @@ struct membuf {
     MEMUWORD_T              flg;  // flags + buffer type
 //    MEMPTR_T               *ptrtab; // original pointers for aligned blocks
     MEMUWORD_T              freemap[MEMBUFFREEMAPWORDS];
-    MEMPTR_T                ptrtab[MEMBUFMAXBLKS];
+    MEMPTR_T                ptrtab[EMPTY];
+//    MEMPTR_T                ptrtab[MEMBUFMAXBLKS];
 };
 
 #if (MEMMULTITAB)
@@ -692,21 +695,21 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #define membufhdrsize()        (sizeof(struct membuf))
 //#define membufptrtabsize(nblk) (MEMBUFMAXBLKS * sizeof(MEMPTR_T))
 //#define membufslot(buf)       (memgetbufslot(buf))
-#define membufblkofs()                                                  \
-    (rounduppow2(membufhdrsize(), PAGESIZE))
+#define membufblkofs(nblk)                                              \
+    (rounduppow2(membufhdrsize() + (nblk) * sizeof(MEMPTR_T), PAGESIZE))
 #define memusesmallbuf(sz)     ((sz) <= (MEMUWORD(1) << MEMMAXSMALLSHIFT))
 #define memusepagebuf(sz)      ((sz) <= (PAGESIZE * MEMPAGESLOTS))
 /* allocations of PAGESIZE * slot */
 #define memsmallbufsize(slot, nblk)                                     \
-    (rounduppow2(membufblkofs() + ((nblk) << (slot)),                   \
+    (rounduppow2(membufblkofs(nblk) + ((nblk) << (slot)),               \
                  PAGESIZE))
 #define mempagebufsize(slot, nblk)                                      \
-    (rounduppow2(membufblkofs()                                         \
+    (rounduppow2(membufblkofs(nblk)                                     \
                  + (MEMUWORD(PAGESIZE) + MEMUWORD(PAGESIZE) * (slot))   \
                  * (nblk),                                              \
                  PAGESIZE))
 #define membigbufsize(slot, nblk)                                       \
-    (rounduppow2(membufblkofs() + (MEMUWORD(1) << (slot)) * (nblk),     \
+    (rounduppow2(membufblkofs(nblk) + (MEMUWORD(1) << (slot)) * (nblk), \
                  PAGESIZE))
 #define memnbufblk(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
@@ -766,12 +769,20 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #define membufsetpageadr(buf, ndx, adr)                                 \
     ((buf)->ptrtab[(ndx)] = (adr))
 
+#if 0
 #define memgetnbufblk(bkt, type, slot)                                  \
     ((bkt)->nblk ? (bkt)->nblk : g_mem.bufvals.nblk[type][slot])
 #define memgetnbuftls(bkt, type, slot)                                  \
     ((bkt)->nmax ? (bkt)->nmax : g_mem.bufvals.ntls[type][slot])
 #define memgetnbufglob(bkt, type, slot)                                 \
     ((bkt)->nmax ? (bkt)->nmax : g_mem.bufvals.nglob[type][slot])
+#endif
+#define memgetnbufblk(type, slot)                                       \
+    (g_mem.bufvals.nblk[type][slot])
+#define memgetnbuftls(type, slot)                                       \
+    (g_mem.bufvals.ntls[type][slot])
+#define memgetnbufglob(type, slot)                                      \
+    (g_mem.bufvals.nglob[type][slot])
 
 void            meminit(void);
 struct memtls * meminittls(void);
