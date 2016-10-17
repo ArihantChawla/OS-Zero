@@ -1332,11 +1332,13 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
     volatile struct membkt *bkt = buf->bkt;
     MEMUWORD_T              type;
     MEMUWORD_T              slot;
+    MEMUWORD_T              bufsz;
+    MEMUWORD_T              lim;
     MEMADR_T                upval;
     MEMWORD_T               nblk;
     MEMWORD_T               nfree;
-    MEMWORD_T               nbuf;
     MEMWORD_T               glob;
+    MEMWORD_T               val;
     MEMWORD_T               recl = 0;
 
 #if (MEMTEST)
@@ -1413,10 +1415,32 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
         m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
     } else if (nfree == nblk) {
         /* queue or reclaim a free buffer */
-        nbuf = memgetnbufglob(type, slot);
-        if (!glob && bkt->nbuf > nbuf) {
+        if (type == MEMSMALLBUF) {
+            bufsz = nblk << slot;
+            lim = MEMSMALLTLSLIM;
+            val = (g_memtls->nbsmall > lim);
+        } else if (type == MEMPAGEBUF) {
+            bufsz = PAGESIZE + PAGESIZE * slot;
+            lim = MEMPAGETLSLIM;
+            val = (g_memtls->nbpage > lim);
+        }
+        if (!glob && (val)) {
+            if (type == MEMSMALLBUF) {
+                g_memtls->nbsmall -= nblk << slot;
+            } else if (type == MEMPAGEBUF) {
+                g_memtls->nbpage -= PAGESIZE + PAGESIZE * slot;
+            }
             memdequeuebuftls(buf, bkt);
-            if (type == MEMSMALLBUF || gbkt->nbuf < nbuf) {
+            if (type == MEMPAGEBUF) {
+                lim = MEMPAGEGLOBLIM;
+                val = (g_mem.nbpage + bufsz < lim);
+            }
+            if (type == MEMSMALLBUF || (val)) {
+                if (type == MEMSMALLBUF) {
+                    g_mem.nbsmall += bufsz;
+                } else if (type == MEMPAGEBUF) {
+                    g_mem.nbpage += bufsz;
+                }
                 /* acquire lock for the global list */
 #if (MEMDEBUGDEADLOCK)
                 memlkbitln(gbkt);
@@ -1438,20 +1462,39 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
 #endif
                 /* this will unlock the list (set the low-bit to zero) */
                 m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
-            } else if (gbkt->nbuf >= nbuf) {
+            } else  if (type == MEMPAGEBUF) {
+                val = (g_mem.nbpage > lim);
+                if (val) {
+                    g_mem.nbpage -= bufsz;
+                    recl = 1;
+                }
+            }
+        } else if ((glob) && type != MEMSMALLBUF) {
+            if (type == MEMPAGEBUF) {
+                lim = MEMPAGEGLOBLIM;
+                val = (g_mem.nbpage > lim);
+                if (val) {
+                    g_mem.nbpage -= bufsz;
+                }
+            } else if (type == MEMBIGBUF) {
+                lim = MEMBIGGLOBLIM;
+                val = (g_mem.nbbig > lim);
+                if (val) {
+                    g_mem.nbbig -= bufsz;
+                }
+            }
+            if (val) {
+                memdequeuebufglob(buf, bkt);
                 recl = 1;
             }
-        } else if ((glob) && type != MEMSMALLBUF && gbkt->nbuf > nbuf) {
-            memdequeuebufglob(buf, bkt);
-            recl = 1;
         }
         if (recl) {
             /* unmap the buffer */
-            VALGRINDRMPOOL(buf->base);
-            unmapanon(buf, buf->size);
 #if (MEMSTAT)
             g_memstat.nbunmap += buf->size;
 #endif
+            VALGRINDRMPOOL(buf->base);
+            unmapanon(buf, buf->size);
         }
     } else {
         if (bkt == gbkt) {
