@@ -1453,13 +1453,18 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
             g_memstat.nbunmap += buf->size;
 #endif
         }
-    } else if (bkt == gbkt) {
-        /* no need to reclaim or requeue, just unlock if on global list */
+    } else {
+        if (bkt == gbkt) {
+            buf->bkt = gbkt;
+            /* no need to reclaim or requeue, just unlock if on global list */
 #if (MEMDEBUGDEADLOCK)
-        memrelbitln(bkt);
+            memrelbitln(bkt);
 #else
-        memrelbit(&bkt->list);
+            memrelbit(&bkt->list);
 #endif
+        } else {
+            m_atomwrite(&buf->bkt, bkt);
+        }
     }
         
     return;

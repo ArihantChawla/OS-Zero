@@ -726,19 +726,19 @@ memgenhashtabadr(MEMUWORD_T *adr)
         : 1))
 #define memnbuftls(type, slot)                                          \
     (((type) == MEMSMALLBUF)                                            \
-     ? 4                                                                \
+     ? 2                                                                \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMMIDPAGESLOT)                                   \
-           ? 4                                                          \
+           ? 2                                                          \
            : (((slot) <= MEMBIGPAGESLOT)                                \
-              ? 2                                                       \
-              : 1))                                                     \
+              ? 1                                                       \
+              : 0))                                                     \
         : 0))
 #define memnbufglob(type, slot)                                         \
     (((type) == MEMSMALLBUF)                                            \
-     ? 2                                                                \
+     ? 8                                                                \
      : (((type) == MEMPAGEBUF)                                          \
-        ? 1                                                             \
+        ? 4                                                             \
         : 0))
 
 #define membufblkadr(buf, ndx)                                          \
