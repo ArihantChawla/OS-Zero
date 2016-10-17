@@ -210,7 +210,7 @@ m_cmpxchgu64(volatile uint64_t *p,
  */
 static __inline__ long
 m_cmpxchg64ptr(m_atomic64_t *p,
-               long *want,
+               m_atomic64_t *want,
                void *val)
 {
     long *res;
