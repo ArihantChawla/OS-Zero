@@ -1391,7 +1391,19 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
     setbit(buf->freemap, id);
     memsetbufnfree(buf, nfree);
     VALGRINDPOOLFREE(buf->base, ptr);
-    if (nfree == 1) {
+    if (nfree != 1 && nfree != nblk) {
+        if (bkt == gbkt) {
+            buf->bkt = gbkt;
+            /* no need to reclaim or requeue, just unlock if on global list */
+#if (MEMDEBUGDEADLOCK)
+            memrelbitln(bkt);
+#else
+            memrelbit(&bkt->list);
+#endif
+        } else {
+            m_atomwrite(&buf->bkt, bkt);
+        }
+    } else if (nfree == 1 && nblk != 1) {
         /* acquire lock for the global list */
 #if (MEMDEBUGDEADLOCK)
         memlkbitln(gbkt);
@@ -1418,11 +1430,23 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
         if (type == MEMSMALLBUF) {
             bufsz = nblk << slot;
             lim = MEMSMALLTLSLIM;
-            val = (g_memtls->nbsmall > lim);
+            if (!glob) {
+                val = (g_memtls->nbsmall > lim);
+            } else {
+                val = 0;
+            }
         } else if (type == MEMPAGEBUF) {
             bufsz = PAGESIZE + PAGESIZE * slot;
             lim = MEMPAGETLSLIM;
-            val = (g_memtls->nbpage > lim);
+            if (!glob) {
+                val = (g_memtls->nbpage > lim);
+            } else {
+                val = (g_mem.nbpage > lim);
+            }
+        } else if (type == MEMBIGBUF) {
+            bufsz = nblk << slot;
+            lim = MEMBIGGLOBLIM;
+            val = (g_mem.nbbig > lim);
         }
         if (!glob && (val)) {
             if (type == MEMSMALLBUF) {
@@ -1430,7 +1454,9 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
             } else if (type == MEMPAGEBUF) {
                 g_memtls->nbpage -= PAGESIZE + PAGESIZE * slot;
             }
-            memdequeuebuftls(buf, bkt);
+            if (nfree != 1) {
+                memdequeuebuftls(buf, bkt);
+            }
             if (type == MEMPAGEBUF) {
                 lim = MEMPAGEGLOBLIM;
                 val = (g_mem.nbpage + bufsz < lim);
@@ -1466,6 +1492,9 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
                 val = (g_mem.nbpage > lim);
                 if (val) {
                     g_mem.nbpage -= bufsz;
+#if (MEMSTAT)
+                    g_memstat.nbpage -= bufsz;
+#endif
                     recl = 1;
                 }
             }
@@ -1474,17 +1503,25 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
                 lim = MEMPAGEGLOBLIM;
                 val = (g_mem.nbpage > lim);
                 if (val) {
+#if (MEMSTAT)
+                    g_memstat.nbpage -= bufsz;
+#endif
                     g_mem.nbpage -= bufsz;
                 }
             } else if (type == MEMBIGBUF) {
                 lim = MEMBIGGLOBLIM;
                 val = (g_mem.nbbig > lim);
                 if (val) {
+#if (MEMSTAT)
+                    g_memstat.nbbig -= bufsz;
+#endif
                     g_mem.nbbig -= bufsz;
                 }
             }
             if (val) {
-                memdequeuebufglob(buf, bkt);
+                if (nfree != 1) {
+                    memdequeuebufglob(buf, bkt);
+                }
                 recl = 1;
             }
         }
@@ -1495,18 +1532,6 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
 #endif
             VALGRINDRMPOOL(buf->base);
             unmapanon(buf, buf->size);
-        }
-    } else {
-        if (bkt == gbkt) {
-            buf->bkt = gbkt;
-            /* no need to reclaim or requeue, just unlock if on global list */
-#if (MEMDEBUGDEADLOCK)
-            memrelbitln(bkt);
-#else
-            memrelbit(&bkt->list);
-#endif
-        } else {
-            m_atomwrite(&buf->bkt, bkt);
         }
     }
         
