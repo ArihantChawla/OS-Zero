@@ -34,17 +34,28 @@ zasinitbuf(void)
 static int
 zasgetc(int fd, int bufid)
 {
-    struct readbuf *buf = &readbuftab[bufid];
+    struct readbuf *buf = &zasreadbuftab[bufid];
+    void           *ptr;
     ssize_t         nleft = ZASBUFSIZE;
     ssize_t         n;
     int             ch = EOF;
-    long            l = nreadbuf;
+    long            l = zasnreadbuf;
 
-    if (bufid >= nreadbuf) {
-        nreadbuf <<= 1;
-        readbuftab = realloc(readbuftab, nreadbuf * sizeof(struct readbuf));
-        for ( ; l < nreadbuf ; l++) {
-            readbuftab[l].data = malloc(ZASBUFSIZE);
+    if (bufid >= zasnreadbuf) {
+        zasnreadbuf <<= 1;
+        ptr = realloc(zasreadbuftab, zasnreadbuf * sizeof(struct readbuf));
+        if (!ptr) {
+
+            exit(1);
+        }
+        zasreadbuftab = ptr;
+        for ( ; l < zasnreadbuf ; l++) {
+            ptr = malloc(ZASBUFSIZE);
+            if (!ptr) {
+
+                exit(1);
+            }
+            zasreadbuftab[l].data = ptr;
         }
     }
     if (buf->cur < buf->lim) {
