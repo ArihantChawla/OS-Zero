@@ -1374,7 +1374,7 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
 #if (MEMTEST)
     _memchkptr(buf, ptr);
 #endif
-    glob = (bkt >= &g_mem.bigbin[0] && bkt <= &g_mem.smallbin[MEMMAXSMALLSLOT]);
+    glob = (bkt >= &g_mem.bigbin[0] && bkt < &g_mem.smallbin[MEMMAXSMALLSLOT]);
     if (bkt) {
         if (glob) {
 #if (MEMDEBUGDEADLOCK)
@@ -1508,7 +1508,7 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
                         g_memtls->nbpage += bufsz;
                     }
                 }
-
+                
                 return;
             } else if (nfree != 1) {
                 /* unqueue from thread-local list */
