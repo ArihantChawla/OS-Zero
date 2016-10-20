@@ -16,8 +16,6 @@
 #include "_malloc.h"
 
 extern THREADLOCAL volatile struct memtls *g_memtls;
-static zerospin                            g_memtlsinitlk;
-extern THREADLOCAL volatile MEMUWORD_T     g_memtlsinit;
 extern struct mem                          g_mem;
 
 static void *
@@ -34,12 +32,14 @@ _malloc(size_t size, size_t align, long flg)
     long      slot;
     void     *ptr;
 
-    if (!g_memtlsinit) {
-        spinlk(&g_memtlsinitlk);
-        if (!g_memtlsinit) {
-            meminittls();
+    if (!g_memtls) {
+        if (!meminittls()) {
+#if defined(ENOMEM)
+            errno = ENOMEM;
+#endif
+
+            return NULL;
         }
-        spinunlk(&g_memtlsinitlk);
     }
     if (type != MEMPAGEBUF) {
         memcalcslot(asz, slot);
@@ -72,19 +72,20 @@ _free(void *ptr)
     struct membuf *buf;
 #endif
     
-    if (!g_memtlsinit) {
-
-        return;
-    } else {
-#if (MEMMULTITAB)
-        memfindbuf(ptr, 1);
-#else
-        desc = membufop(ptr, MEMHASHDEL, NULL, 0);
-        if (desc) {
-            VALGRINDFREE(ptr);
-        }
-#endif
+    if (!g_memtls) {
+        meminittls();
     }
+#if (MEMMULTITAB)
+    memfindbuf(ptr, 1);
+#else
+    desc = membufop(ptr, MEMHASHDEL, NULL, 0);
+    if (desc) {
+        VALGRINDFREE(ptr);
+    }
+#endif
+#if (MEMDEBUG)
+    crash(desc != 0);
+#endif
 
     return;
 }
@@ -110,13 +111,6 @@ _realloc(void *ptr,
     MEMUWORD_T     slot;
     size_t         sz;
 
-    if (!g_memtlsinit) {
-        spinlk(&g_memtlsinitlk);
-        if (!g_memtlsinit) {
-            meminittls();
-        }
-        spinunlk(&g_memtlsinitlk);
-    }
     if (!ptr) {
         retptr = _malloc(size, 0, 0);
         
