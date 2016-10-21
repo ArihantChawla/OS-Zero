@@ -70,12 +70,12 @@ vmflushtlb(void *adr)
 #define PAGESYS1        0x00000200U	// reserved for system
 #define PAGESYS2        0x00000400U	// reserved for system
 #define PAGESYS3        0x00000800U	// reserved for system
-#define PAGESUPERPDE    0x00001000U
+#define PAGESUPERPMD    0x00001000U
 /* custom flags */
 #define PAGESWAPPED     PAGESYS1        // swapped out
-//#define PAGEBUF         PAGESYS2        // buffer cache
+#define PAGEBUF         PAGESYS2        // buffer cache
 #define PAGEWIRED       PAGESYS3        // wired
-#define PAGESYSFLAGS    (PAGESWAPPED | PAGEWIRED)
+#define PAGESYSFLAGS    (PAGESWAPPED | PAGEBUF | PAGEWIRED)
 
 /* page fault management */
 

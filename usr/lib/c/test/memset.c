@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/prof.h>
 
@@ -14,7 +14,7 @@ main(int argc, char *argv[])
     long  tm;
     
     PROFDECLCLK(clk);
-    ptr = calloc(4 * PAGESIZE);
+    ptr = calloc(4, PAGESIZE);
     memset(ptr, 0xff, 4 * PAGESIZE);
     profinitclk(clk);
     profstartclk(clk);

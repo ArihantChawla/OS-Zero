@@ -19,6 +19,7 @@
 #include <kern/cpu.h>
 #endif
 #include <kern/mem/vm.h>
+#include <kern/mem/mtrr.h>
 #include <kern/io/drv/chr/cons.h>
 #include <kern/io/drv/pc/vga.h>
 #include <kern/io/drv/pc/vbe.h>
@@ -170,6 +171,7 @@ vbeinitscr(void)
              (uint32_t)vbescreen.fbuf,
              (uint32_t)vbescreen.fbuf + vbescreen.fbufsize,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
+    mtrrsetwrcomb((uint32_t)vbescreen.fbuf, vbescreen.fbufsize);
     vbeclrscr(GFX_BLACK);
 
     return;

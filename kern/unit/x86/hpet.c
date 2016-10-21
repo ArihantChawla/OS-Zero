@@ -16,8 +16,8 @@ hpetprobe(long id)
 //    struct hpet *ptr = !id ? (void *)HPET0BASE : (void *)HPET1BASE;
     struct hpet *ptr = (struct hpet *)((uint8_t *)HPET0BASE
                                        + id * (HPET1BASE - HPET0BASE));
-    uint32_t     dword1;
-    uint32_t     dword2;
+    uint32_t dword1;
+    uint32_t dword2;
 
     dword1 = ptr->gencaplo;
     dword2 = ptr->gencaphi;
@@ -45,7 +45,7 @@ hpetprobe(long id)
 void
 hpetinit(void)
 {
-    unsigned long  len = HPETREGSIZE64;
+    unsigned long len = HPETREGSIZE64;
 
     vmmapseg((uint32_t *)&_pagetab, HPET0BASE, HPET0BASE,
              HPET0BASE + len,

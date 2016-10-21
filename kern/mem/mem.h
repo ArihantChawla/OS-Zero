@@ -12,6 +12,20 @@
 #include <kern/mem/pool.h>
 #include <kern/mem/slab.h>
 
+/* memory caching type */
+#define MEMWRBIT     0x01
+#define MEMCACHEBIT  0x02
+#define MEMWRBUFBIT  0x04
+#define MEMWRPROT    0x00 // write-protectected
+/* uncacheable */
+#define MEMNOCACHE   (MEMWRBIT)
+/* write-combining, uncached */
+#define MEMWRCOMB    (MEMWRBIT | MEMIOBUFBIT)
+/* write-through */
+#define MEMWRTHRU    (MEMWRBIT | MEMCACHEBIT)
+/* write-back */
+#define MEMWRBACK    (MEMWRBIT | MEMCACHEBIT | MEMWRBUFBIT)
+
 /* allocator parameters */
 #define MEMNHDRHASH    (512 * 1024)     // # of entries in header hash table
 //#define MEMNHDRBUF     (roundup(__STRUCT_MEMBLK_SIZE, CLSIZE))

@@ -19,6 +19,7 @@
 #define DECK_CONN_IP4      1
 #define DECK_CONN_IP6      2
 /* gfxtype-field values */
+#define DECK_GFX_LFB       0
 
 /* structure for functionality similar to X and such desktop/screen servers */
 struct deck {

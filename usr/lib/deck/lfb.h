@@ -4,10 +4,11 @@
 /* linear [graphics] framebuffer structure */
 
 /* pixfmt values */
-#define DECK_PIXEL_BGRA 0       // little-endian (x86)
+#define DECK_PIXEL_BGRA 0 // little-endian (x86)
 struct decklfb {
-    void *base;   // base address
-    void *drawbuf; // double-buffer for drawing
+    deckuword_t  pixfmt;
+    void        *base;   // base address
+    void        *drawbuf; // double-buffer for drawing
 };
 
 #endif /* __DECK_LFB_H__ */

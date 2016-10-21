@@ -1,6 +1,8 @@
 #ifndef __ZERO_X86_PROF_H__
 #define __ZERO_X86_PROF_H__
 
+#include <zero/asm.h>
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -11,19 +13,10 @@ extern "C" {
  * Thomas 'tommycannady' Cannady for help with testing and fixing the MSVC
  * versions of the macros... :)
  */ 
-
+    
 #include <stdint.h>
-#if defined(_MSC_VER)
-#undef  __inline__
-#define __inline__ inline
-#endif
-
-#if 0
-union _tickval {
-    uint64_t u64;
-    uint32_t u32v[2];
-};
-#endif
+#include <zero/cdefs.h>
+    
 struct _tickval {
     union {
         uint64_t u64;
@@ -32,33 +25,87 @@ struct _tickval {
 };
     
 #if defined(_MSC_VER)
-#define _rdtsc(tp)                                                      \
-    do {                                                                \
-        uint64_t _cnt;                                                  \
-                                                                        \
-        _cnt = rdtsc();                                                 \
-        tp->u.u64 = _cnt;                                               \
-    } while (0)
-#define _rdpmc(tp)                                                      \
-    do {                                                                \
-        uint64_t _cnt;                                                  \
-                                                                        \
-        _cnt = rdpmc();                                                 \
-        tp->u.u64 = _cnt;                                               \
-    } while (0)
+
+static __inline__ uint64_t    
+_rdtsc(struct _tickval *tp)
+{
+    uint64_t ret;
+
+    ret = rdtsc();
+    if (tp) {
+        tp->u.u64 = ret;
+    }
+    
+    return ret;
+}
+    
+static __inline__ uint64_t
+_rdpmc(struct _tickval *tp)
+{
+    uint64_t ret;
+
+    ret = rdpmc();
+    if (tp) {
+        tp->u.u64 = ret;
+    }
+
+    return ret;
+}
+
 #else /* !defined(_MSC_VER) */
+
+#if !defined(__x86_64__) && !defined(__amd64__)
 static __inline__ uint64_t
 _rdtsc(struct _tickval *tp)
 {
-    unsigned long      lo;
-    unsigned long      hi;
-    unsigned long long ret;
+    uint64_t ret;
     
     m_membar();
-    __asm__("rdtsc\n"
-            : "=a" (lo), "=d" (hi)
-            :
-            : "eax", "edx");
+    __asm__ __volatile__ ("rdtsc\n"
+                          : "=A" (ret));
+    if (tp) {
+        tp->u.u64 = ret;
+    }
+
+    return ret;
+}
+#else /* x86-64 */
+static __inline__ uint64_t
+_rdtsc(struct _tickval *tp)
+{
+    uint64_t ret;
+    uint32_t lo;
+    uint32_t hi;
+
+        m_membar();
+    __asm__ __volatile__ ("rdtsc\n"
+             : "=a" (lo), "=d" (hi));
+    ret = hi;
+    ret <<= 32;
+    ret |= lo;
+    if (tp) {
+        tp->u.u64 = ret;
+    }
+
+    return ret;
+}
+#endif
+
+/* read performance monitor counter */
+static __inline__ uint64_t
+_rdpmc(struct _tickval *tp, int id)
+{
+    uint64_t ret;
+    uint32_t lo;
+    uint32_t hi;
+    
+    __asm__ __volatile__ ("movl %2, %%ecx\n"
+                          "rdpmc\n"
+                          "mov %%eax, %0\n"
+                          "mov %%edx, %1"
+                          : "=rm" (lo), "=rm" (hi)
+                          : "rm" (id)
+                          : "eax", "edx");
     ret = hi;
     ret <<= 32;
     ret |= lo;
@@ -69,31 +116,6 @@ _rdtsc(struct _tickval *tp)
     return ret;
 }
 
-#if 0
-/* read TSC (time stamp counter) */
-#define _rdtsc(tp)  
-    __asm__("rdtsc\n"                                                   \
-            "movl %%eax, %0\n"                                          \
-            "movl %%edx, %1\n"                                          \
-            : "=m" ((tp)->u.u32v[0]), "=m" ((tp)->u.u32v[1])            \
-            :                                                           \
-            : "eax", "edx")
-#endif
-
-/* read performance monitor counter */
-static __inline__ uint64_t
-_rdpmc(struct _tickval *tp, int id)
-{
-    __asm__("movl %0, %%ecx\n"
-            "rdpmc\n"
-            "mov %%eax, %1\n"
-            "mov %%edx, %2"
-            : "=rm" (tp->u.u32v[0]), "=rm" (tp->u.u32v[1])
-            : "rm" (id)
-            : "eax", "edx");
-
-    return (tp->u.u64);
-}
 #endif
 
 #define PROFDECLTICK(id)                                                \

@@ -127,7 +127,7 @@ apicinit(long id)
     uint32_t             tmrcnt;
 
     if (!mpapic) {
-        mpapic = (volatile uint32_t *)apicprobe();
+        mpapic = apicprobe();
 
         return;
     }

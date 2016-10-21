@@ -119,14 +119,5 @@
 #define _NSIG        NSIG    /* alternative name */
 #define RTSIG_MAX    NRTSIG
 
-struct sigaction {
-    void     (*sa_handler)(int);
-    /* POSIX: the third argument may be cast to ucontext_t */
-    void     (*sa_sigaction)(int, siginfo_t *, void *); // sa_flags & SA_SIGINFO
-    void     (*sa_restorer)(void);
-    sigset_t  sa_mask;
-    int       sa_flags;
-};
-
 #endif /*  __KERN_SIGNAL_H__ */
 

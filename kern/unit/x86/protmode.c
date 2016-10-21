@@ -113,7 +113,9 @@ void
 kinitprot(unsigned long pmemsz)
 {
     uint32_t lim = min(pmemsz, KERNVIRTBASE);
+#if 0
     uint32_t sp = (uint32_t)kernusrstktab + KERNSTKSIZE;
+#endif
 
     /* initialise virtual memory */
     vminit((uint32_t *)&_pagetab);
@@ -146,14 +148,14 @@ kinitprot(unsigned long pmemsz)
 #if (SMBIOS)
     smbiosinit();
 #endif
-#if (PS2DRV) && 0
-    ps2init();
-#endif
 #if (VBE)
     vbeprintinfo();
 #endif
     logoprint();
 //    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
+#if (APIC)
+    apicinit(0);
+#endif
     /* HID devices */
 #if (PCI)
     /* initialise PCI bus driver */
@@ -167,7 +169,7 @@ kinitprot(unsigned long pmemsz)
     /* initialise Soundblaster 16 driver */
     sb16init();
 #endif
-#if (AC97) && 0
+#if (AC97)
     /* initialise AC97 audio driver */
     ac97init();
 #endif
@@ -207,7 +209,6 @@ kinitprot(unsigned long pmemsz)
     /* initialise high precision event timers */
     hpetinit();
 #endif
-    apicinit(0);
 #if (IOAPIC)
     ioapicinit(0);
 #endif
@@ -218,7 +219,6 @@ kinitprot(unsigned long pmemsz)
     }
 #endif
     taskinitenv();
-    procinit(PROCKERN, SCHEDNOCLASS);
 //    tssinit(0);
 //    machinit();
     /* execution environment */
@@ -235,9 +235,12 @@ kinitprot(unsigned long pmemsz)
 #if (PS2DRV)
     ps2init();
 #endif
+    procinit(PROCKERN, SCHEDNOCLASS);
+#if 0
     __asm__ __volatile__ ("movl %0, %%esp\n"
                           :
                           : "rm" (sp));
+#endif
 #if (APIC)
     apicstarttmr();
 #else

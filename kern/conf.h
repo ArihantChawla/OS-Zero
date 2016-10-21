@@ -76,16 +76,16 @@
 #define PLASMA      1
 
 /* planned and developed drivers */
-#define IOAPIC      0           // enable I/O APIC support
+#define IOAPIC      1           // enable I/O APIC support
 #define SMBIOS      0           // SMBIOS (system management) support
 #define APIC        1           // local [per-CPU] APIC support
-#define PCI         1           // PCI bus driver
+#define PCI         0           // PCI bus driver
 #define ATA         0           // ATA/ATAPI/SATA/SATAPI
 #define ACPI        0           // ACPI
 #define ACPICA      0           // ACPICA
 #define HPET        1           // high precision event timer support
 #define PS2DRV      1           // enable PS/2 mouse and keyboard drivers
-#define KBDUS       0           // PS/2 keyboard with US keymap
+#define KBDUS       1           // PS/2 keyboard with US keymap
 #define PS2KBDSET2  1
 #define VBE         1           // VBE2 graphics driver
 #define VGAGFX      0           // VGA graphics driver

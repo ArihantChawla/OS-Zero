@@ -10,7 +10,7 @@ CCWARNFLAGS="-D_FORTIFY_SOURCE=2 -Wall -Wundef -Wextra -Wpointer-arith -Wuniniti
 #$CC -m32 -Wundef -Wextra -DNVALGRIND -DZERONEWMTX=0 -DZEROMALLOC=0 -DPTHREAD=1 -D_REENTRANT -g -Wall -O -I/usr/include -I. -I.. -I../m -I../../.. -I../../../usr/lib -fPIC -fno-builtin -ffreestanding -shared -o zlibc32.so *.c bits/*.c sys/*.c sys/zero/*.c ia32/*.S -pthread
 
 #$CC $CCWARNFLAGS -DNVALGRIND -DZERONEWMTX=0 -DZEROMALLOC=0 -DPTHREAD=1 -D_REENTRANT -g -O -I/usr/include -I. -I.. -I../m -I../../.. -I../../../usr/lib -fPIC -fno-builtin -shared -o zlibc.so *.c bits/*.c sys/*.c sys/zero/*.c x86-64/*.S netinet/*.c -pthread
-$CC $CCBUILDFLAGS $CCWARNFLAGS -msse -DNVALGRIND -DZERONEWMTX=0 -DZEROMALLOC=0 -DPTHREAD=1 -D_REENTRANT -g -O -I./zlibc -I.. -I../m -I../../.. -I../../../usr/lib -fPIC -shared -fno-builtin -rdynamic -o zlibc.so *.c sys/*.c sys/zero/*.c zlibc/x86-64/*.S ../zero/mem.c -pthread
+$CC $CCBUILDFLAGS $CCWARNFLAGS -msse -DNVALGRIND -DZERONEWMTX=0 -DZEROMALLOC=0 -DPTHREAD=1 -D_REENTRANT -g -O -I./zlibc -I.. -I../m -I../../.. -I../../../usr/lib -fPIC -shared -fno-builtin -rdynamic -o zlibc.so *.c sys/*.c sys/zero/*.c x86-64/*.S ../zero/mem.c -pthread
 
 #$CC -Wuninitialized -m32 -Wundef -Wextra -DNVALGRIND -DZERONEWMTX=0 -DZEROMALLOC=0 -DPTHREAD=1 -D_REENTRANT -g -Wall -O -I/usr/include -I. -I.. -I../m -I../../.. -I../../../usr/lib -fPIC -fno-builtin -shared -o zlibc32.so *.c bits/*.c sys/*.c sys/zero/*.c ia32/*.S -pthread
 

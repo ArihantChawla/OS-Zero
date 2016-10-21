@@ -6,18 +6,29 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#if defined(_MSC_VER)
-#undef  __inline__
-#define __inline__ inline
 #include <time.h>
-#endif
 #include <sys/time.h>
+#include <zero/cdefs.h>
 
 #if defined(_MSC_VER) || defined(__x86_64__) || defined(__amd64__) || defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
 #include <zero/x86/prof.h>
 #elif defined(__arm__)
 #include <zero/arm/prof.h>
 #endif
+
+#define tscmp(ts1, ts2)                                                 \
+    (((ts2)->tv_sec - (ts1)->tv_nsec) * 1000000000                      \
+     + ((ts2)->tv_nsec - (ts1)->tv_nsec))
+#define tsgt(ts1, ts2)                                                  \
+    (((ts1)->tv_sec > (ts2)->tv_sec)                                    \
+     || ((ts1)->tv_nsec == (ts2)->tv_sec && (tvs)->tv_nusec > (ts2)->tv_nsec))
+
+#define tvcmp(tv1, tv2)                                                 \
+    (((tv2)->tv_sec - (tv1)->tv_sec) * 1000000                          \
+     + ((tv2)->tv_usec - (tv1)->tv_usec))
+#define tvgt(tv1, tv2)                                                  \
+    (((tv1)->tv_sec > (tv2)->tv_sec)                                    \
+     || ((tv1)->tv_sec == (tv2)->tv_sec && (tv1)->tv_usec > (tv2)->tv_usec))
 
 #define tvaddconst(tv, u)                                               \
   do {                                                                  \
@@ -63,7 +74,7 @@ extern "C" {
 #define profstopos(id)                                                  \
     clock_gettime(CLOCK_REALTIME, &__ts##id[1])
 #define profosdiff(id)                                                  \
-    tpcmp(&__ts##id[0], &__ts##id[1])
+    tscmp(&__ts##id[0], &__ts##id[1])
 #endif
 
 #if defined(__cplusplus)

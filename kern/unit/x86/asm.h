@@ -6,8 +6,8 @@
 #define k_enabintr()  __asm__ __volatile__ ("sti\n" : : : "memory")
 #define k_waitint()   __asm__ __volatile__ ("sti\nhlt\n" : : : "memory")
 
-static inline uint64_t
-k_readmsr(long adr)
+static __inline__ uint64_t
+k_readmsr(uint32_t adr)
 {
     uint32_t eax;
     uint32_t edx;
@@ -21,7 +21,7 @@ k_readmsr(long adr)
     return retval;
 }
 
-static inline void
+static __inline__ void
 k_writemsr(uint32_t adr, uint64_t val)
 {
     __asm__ __volatile__ ("wrmsr" : : "c" (adr), "A" (val));

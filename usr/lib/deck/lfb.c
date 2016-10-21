@@ -8,7 +8,7 @@
 #endif
 
 void *
-deckmaplfb(long depth, long width, long height)
+deckmaplfb(struct deck *deck, long depth, long width, long height)
 {
     void             *lfb;
     struct sysmemreg  memreg;
