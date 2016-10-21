@@ -97,16 +97,13 @@ _memchkptr(struct membuf *buf, MEMPTR_T ptr)
 }
 
 long
-_memchkbuf(struct membuf *buf, MEMWORD_T slot, MEMWORD_T type,
+_memchkbuf(struct membuf *buf, MEMWORD_T type,
            MEMWORD_T nblk, MEMUWORD_T flg, const char *func)
 {
     MEMUWORD_T bflg = memgetbufflg(buf);
     MEMWORD_T  bnblk = memgetbufnblk(buf);
     MEMWORD_T  bnfree = memgetbufnfree(buf);
     MEMWORD_T  btype = memgetbuftype(buf);
-    MEMWORD_T  bslot = memgetbufslot(buf);
-    MEMUWORD_T bsz = membufblksize(buf, type, slot);
-    MEMUWORD_T bufsz;
     long       fail = 0;
 
     if ((flg) && !bflg) {

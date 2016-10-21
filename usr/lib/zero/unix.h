@@ -32,6 +32,7 @@
 #endif
 #endif /* 0 */
 
+#include <features.h>
 #include <stdint.h>
 #include <signal.h>
 
@@ -59,7 +60,10 @@
 #define MAP_FILE            0
 #endif
 #if (!MMAP_DEV_ZERO)
-#ifndef MAP_ANONYMOUS
+#if !defined(MAP_ANON) && defined(MAP_ANONYMOUS)
+#define MAP_ANON            MAP_ANONYMOUS
+#endif
+#if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
 #define MAP_ANONYMOUS       MAP_ANON
 #endif
 #endif /* !MMAP_DEV_ZERO */
@@ -77,7 +81,7 @@
     mmap(NULL,                                                          \
          size,                                                          \
          PROT_READ | PROT_WRITE,                                        \
-         MAP_PRIVATE | MAP_ANONYMOUS | MAP_FILE,                        \
+         MAP_PRIVATE | MAP_ANON | MAP_FILE,                             \
          -1,                                                            \
          0)
 #endif

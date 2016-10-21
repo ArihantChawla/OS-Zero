@@ -38,7 +38,7 @@
 #include <kern/cpu.h>
 
 #if defined(__ZEROKERNEL__) /* kernel-level stuff only */
-//#include <mach/unit/ia32/cpu.h>
+#include <kern/unit/x86/cpu.h>
 #endif
 
 /* cpuid instruction. */
@@ -273,14 +273,14 @@ cpuid_print_l2_info_amd(struct m_cpuid *cpuid)
     (((ptr)->eax & 0x000f0000) >> 16)
 #define cpuidextfamily(ptr)                                             \
     (((ptr)->eax & 0x0ff00000) >> 20)
-#define cpuidhaspse(ptr)                                                \
-    ((ptr)->edx & CPUIDPSE)
 #define cpuidhastsc(ptr)                                                \
     ((ptr)->edx & CPUIDTSC)
-#define cpuidhassep(ptr)                                                \
-    ((ptr)->edx & CPUIDSEP)
+#define cpuidhaspse(ptr)                                                \
+    ((ptr)->edx & CPUIDPSE)
 #define cpuidhaspge(ptr)                                                \
     ((ptr)->edx & CPUIDPGE)
+#define cpuidhassep(ptr)                                                \
+    ((ptr)->edx & CPUIDSEP)
 #define cpuidhasmmx(ptr)                                                \
     ((ptr)->edx & CPUIDMMX)
 #define cpuidhasclfl(ptr)                                               \
@@ -346,43 +346,11 @@ cpuid_print_l2_info_amd(struct m_cpuid *cpuid)
 /* %ecx flags. */
 #define CPUIDSSE3      0x00000001 /* sse3. */
 
-#if 0
-
-/* control registers. need to run in system mode (ring 0). */
-
-#define cpuidgetmodes(ptr)                                              \
-    __asm__("movl %cr3, %eax");                                         \
-    __asm__("movl %%eax, %0": "=m" ((ptr)->cr3));                       \
-    __asm__("movl %cr4, %eax");                                         \
-    __asm__("movl %%eax, %0": "=m" ((ptr)->cr4));
-
-#define cpuidhaspwt(ptr)                                                \
-    ((ptr)->cr3 & CR3_PWT)
-#define cpuidhaspcd(ptr)                                                \
-    ((ptr)->cr3 & CR3_PCD)
-#define cpuidhasrdtsc(ptr)                                              \
-    (!((ptr)->cr4 & CR4_TSD))
-#define cpuidhaspse(ptr)                                                \
-    ((ptr)->cr4 & CR4_PSE)
-#define cpuidhaspge(ptr)                                                \
-    ((ptr)->cr4 & CR4_PGE)
-#define cpuidhasrdpmc(ptr)                                              \
-    ((ptr)->cr4 & CR4_PCE)
-struct m_cpuidcregs {
-    int32_t cr3;
-    int32_t cr4;
-};
-
-#endif /* 0 */
-
 void
 cpuprobe(struct m_cpuinfo *info)
 {
     struct m_cpuid       buf;
     union  m_cpuidvendor vbuf;
-#if defined(__ZEROKERNEL__)
-    struct m_cpuidcregs  rbuf;
-#endif
     struct m_cacheinfo  *cbuf;
 
     cpuidgetvendor(&vbuf);
@@ -437,10 +405,8 @@ cpuprintinfo(void)
 {
     struct m_cpuid       buf;
     union  m_cpuidvendor vbuf;
-#if defined(__ZEROKERNEL__)
-    struct m_cpuidcregs  mbuf;
-#endif
-    
+    struct m_cpuidcregs  crbuf;
+   
     cpuidgetvendor(&vbuf);
     __printf("CPU: vendor: %s\n", vbuf.str);
     if (!__strcmp((const char *)vbuf.str, _vendortab[CPUIDINTEL])) {
@@ -467,19 +433,10 @@ cpuprintinfo(void)
     __printf("\text_model: %u\n", cpuidextmodel(&buf));
     __printf("\text_family: %u\n", cpuidextfamily(&buf));
 #endif
-    
+
     __printf("CPU: features:");
-    if (cpuidhaspse(&buf)) {
-        __printf(" pse");
-    }
-    if (cpuidhastsc(&buf)) {
-        __printf(" tsc");
-    }
     if (cpuidhassep(&buf)) {
         __printf(" sep");
-    }
-    if (cpuidhaspge(&buf)) {
-        __printf(" pge");
     }
     if (cpuidhasmmx(&buf)) {
         __printf(" mmx");
@@ -515,28 +472,25 @@ cpuprintinfo(void)
     __printf("\n");
     
 #if defined(__ZEROKERNEL__)
-    cpuidgetmodes(&mbuf);
+    cpugetmodes(&crbuf);
     __printf("cpu modes:");
-    if (cpuidhaspwt(&mbuf)) {
-        __printf(" pwt");
+    if (cpuhastsc(&crbuf)) {
+        __printf(" tsc");
     }
-    if (cpuidhaspcd(&mbuf)) {
-        __printf(" pcd");
+    if (cpuhasde(&crbuf)) {
+        __printf(" de");
     }
-    if (cpuidhasrdtsc(&mbuf)) {
-        __printf(" rdtsc");
-    }
-    if (cpuidhaspse(&mbuf)) {
+    if (cpuhaspse(&crbuf)) {
         __printf(" pse");
     }
-    if (cpuidhaspge(&mbuf)) {
+    if (cpuhaspge(&crbuf)) {
         __printf(" pge");
     }
-    if (cpuidhasrdpmc(&mbuf)) {
-        __printf(" rdpmc");
+    if (cpuhaspce(&crbuf)) {
+        __printf(" pce");
     }
     __printf("\n");
-#endif /* 0 */
+#endif
  
     return;
 }

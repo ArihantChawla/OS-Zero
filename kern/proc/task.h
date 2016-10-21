@@ -120,8 +120,8 @@ struct tasktabl0 {
 };
 
 struct tasktab {
-    long           nref;
-    struct task   *tab;
+    long         nref;
+    struct task *tab;
 };
 
 /* this should be a single (aligned) cacheline */

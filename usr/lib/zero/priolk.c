@@ -2,10 +2,12 @@
 #include <stdio.h>
 #include <zero/cdefs.h>
 #include <zero/asm.h>
-#if (ZEROSPIN)
+#if !defined(PRIOLKNONBLOCK)
+#if defined(ZEROSPIN) && (ZEROSPIN)
 #include <zero/spin.h>
-#elif (ZEROFMTX)
+#elif defined(ZEROFMTX) && (ZEROFMTX)
 #include <zero/mtx.h>
+#endif
 #endif
 #include <zero/priolk.h>
 

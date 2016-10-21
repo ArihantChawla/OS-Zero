@@ -1,5 +1,3 @@
-#if 0
-
 #include <stdarg.h>
 #include <stdint.h>
 #include <ucontext.h>
@@ -114,4 +112,3 @@ setcontext(const ucontext_t *uc)
 
 #endif
 
-#endif /* 0 */

@@ -2,7 +2,9 @@
 #define __ZERO_MTX_H__
 
 #define ZEROFMTXYIELD 0
+#if !defined(ZEROMTX)
 #define ZEROMTX       0
+#endif
 #define ZEROFMTX      1
 
 #include <stddef.h>
@@ -116,7 +118,7 @@ fmtxunlk(m_atomic_t *lp)
 #define zerolkmtx(mp)    pthread_mutex_lock(mp)
 #define zerounlkmtx(mp)  pthread_mutex_unlock(mp)
 
-#elif defined(ZEROPTHREAD)
+#elif defined(ZEROPTHREAD) && !defined(PTHREAD_MUTEX_INITIALIZER)
 
 #define PTHREAD_MUTEX_INITIALIZER MTXINITVAL
 

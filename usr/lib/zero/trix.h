@@ -37,9 +37,13 @@
 #define setbits(i, j, n, b) ((i) |= (((b) << (j)) & ~(((1UL << (n)) << (j)) - 0x01)))
 #define bitset(p, b)        (((uint8_t *)(p))[(b) >> 3] & (1UL << ((b) & 0x07)))
 /* set bit # b in *p */
+#if !defined(setbit)
 #define setbit(p, b)        (((uint8_t *)(p))[(b) >> 3] |= (1UL << ((b) & 0x07)))
+#endif
 /* clear bit # b in *p */
+#if !defined(clrbit)
 #define clrbit(p, b)        (((uint8_t *)(p))[(b) >> 3] &= ~(1UL << ((b) & 0x07)))
+#endif
 /* m - mask of bits to be taken from b. */
 #define mergebits(a, b, m)  ((a) ^ (((a) ^ (b)) & (m)))
 /* m - mask of bits to be copied from a. 1 -> copy, 0 -> leave alone. */
@@ -116,7 +120,9 @@ long long llabs(long long x);
 #endif
 
 /* true if x is a power of two */
+#if !defined(powerof2)
 #define powerof2(x)     (!((x) & ((x) - 1)))
+#endif
 /* align a to boundary of (the power of two) b2. */
 //#define align(a, b2)   ((a) & ~((b2) - 1))
 //#define align(a, b2)    ((a) & -(b2))
@@ -128,15 +134,17 @@ long long llabs(long long x);
 /* round down to the previous multiple of (the power of two) b2 */
 #define rounddownpow2(a, b2) ((a) & ~((b2) - 0x01))
 
-#if defined(__GNUC__) && 0
+#if !defined(roundup)
+#if defined(__GNUC__)
 #define roundup(a, b)                                                   \
-    ((__builtin_constant_p(b) && powerof2(b))                             \
+    ((__builtin_constant_p(b) && powerof2(b))                           \
      ? rounduppow2(a, b)                                                \
      : ((((a) + ((b) - 1)) / (b)) * b))
 #else
 #define roundup(a, b)                                                   \
     ((((a) + ((b) - 1)) / (b)) * (b))
 #endif
+#endif /* !defined(roundup) */
 
 /* compute the average of a and b without division */
 #define uavg(a, b)      (((a) & (b)) + (((a) ^ (b)) >> 1))

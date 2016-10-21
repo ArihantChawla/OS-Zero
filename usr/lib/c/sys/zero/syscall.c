@@ -1,11 +1,10 @@
+#if defined(__ZEROLIBC__)
+
 /*
  * libc to syscall interface for Zero
  */
 
 #include <features.h>
-
-#if (_ZERO_SOURCE)
-
 #include <errno.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
@@ -84,5 +83,5 @@ _syscall(sysreg_t num, sysreg_t arg1, sysreg_t arg2, sysreg_t arg3)
 
 #endif
 
-#endif /* _ZERO_SOURCE */
+#endif /* defined(__ZEROLIBC__) */
 

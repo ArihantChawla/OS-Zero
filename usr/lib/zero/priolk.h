@@ -36,6 +36,7 @@ struct priolk {
 };
 
 void priolkinit(struct priolkdata *data, unsigned long val);
+void priolkfin(void);
 void priolkget(struct priolk *priolk);
 void priolkrel(struct priolk *priolk);
 

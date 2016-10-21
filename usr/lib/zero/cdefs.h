@@ -29,6 +29,7 @@
 #define IMMEDIATE(x) __builtin_constant_p(x)
 /* align variables, aggregates, and tables to boundary of a */
 #define ALIGNED(a)   __attribute__ ((__aligned__(a)))
+#define ALIGNOF(x)   __alignof__ (x)
 /* ALWAYS inline the function */
 #define INLINE       __inline__ __attribute__ ((__always_inline__))
 /* do NOT inline the function */
@@ -66,9 +67,12 @@
 #define isconst(x)   (__builtin_constant_p(x))
 
 #elif defined(_MSC_VER) /* !defined(__GNUC__) && !defined(__clang__) */
+
+#define ASMLINK      __stdcall
     
 /* Microsoft */
 #define ALIGNED(a)   __declspec(align((a)))
+#define ALIGNOF(x)   __alignof(x)
 #define __inline__   inline
 #define INLINE       __forceinline
 #define NOINLINE     __declspec(noinline)

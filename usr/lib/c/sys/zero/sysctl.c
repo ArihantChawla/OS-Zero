@@ -1,3 +1,5 @@
+#if defined(__ZEROLIBC__)
+
 #include <stdlib.h>
 #include <limits.h>
 #include <errno.h>
@@ -38,4 +40,6 @@ ioperm(unsigned long from, unsigned long num, int val)
 
     return retval;
 }
+
+#endif /* defined(__ZEROLIBC__) */
 

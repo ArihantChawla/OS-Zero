@@ -1,7 +1,11 @@
+#if defined(__ZEROLIBC__)
+
 #include <features.h>
 #include <stddef.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <zero/cdefs.h>
+#include <bits/setjmp.h>
 
 #if defined(_POSIX_SOURCE)
 
@@ -124,4 +128,6 @@ siglongjmp(sigjmp_buf env, int val)
 }
 
 #endif
+
+#endif /* defined(__ZEROLIBC__) */
 

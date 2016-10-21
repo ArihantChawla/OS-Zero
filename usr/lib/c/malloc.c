@@ -33,7 +33,8 @@ _malloc(size_t size, size_t align, long flg)
     void     *ptr;
 
     if (!g_memtls) {
-        if (!meminittls()) {
+        meminittls();
+        if (!g_memtls) {
 #if defined(ENOMEM)
             errno = ENOMEM;
 #endif
@@ -74,6 +75,10 @@ _free(void *ptr)
     
     if (!g_memtls) {
         meminittls();
+        if (!g_memtls) {
+
+            exit(ENOMEM);
+        }
     }
 #if (MEMMULTITAB)
     memfindbuf(ptr, 1);

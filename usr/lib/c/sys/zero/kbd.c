@@ -1,6 +1,6 @@
-#include <features.h>
+#if defined(__ZEROLIBC__)
 
-#if (_ZERO_SOURCE)
+#include <features.h>
 
 #include <stdint.h>
 #include <zero/param.h>
@@ -211,5 +211,5 @@ kbdinit(void)
 }
 #endif
 
-#endif /* _ZERO_SOURCE */
+#endif /* defined(__ZEROLIBC__) */
 

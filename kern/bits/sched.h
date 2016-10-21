@@ -101,19 +101,19 @@ extern void schedsetsleep(struct task *task);
 #define __STRUCT_SCHEDQUEUESET_PAD                                      \
     (roundup(__STRUCT_SCHEDQUEUESET_SIZE, CLSIZE) - __STRUCT_SCHEDQUEUESET_SIZE)
 struct schedqueueset {
-    m_atomic_t      lk;
-    m_atomic_t     *curmap;
-    m_atomic_t     *nextmap;
-    m_atomic_t     *idlemap;
-    m_atomic_t     *loadmap;
-    struct task   **cur;
-    struct task   **next;
-    struct task   **idle;
-    uint8_t         _pad[__STRUCT_SCHEDQUEUESET_PAD];
+    m_atomic_t    lk;
+    long         *curmap;
+    long         *nextmap;
+    long         *idlemap;
+    long         *loadmap;
+    struct task **cur;
+    struct task **next;
+    struct task **idle;
+    uint8_t       _pad[__STRUCT_SCHEDQUEUESET_PAD];
 };
 
 extern struct cpu            cputab[NCPU];
-extern m_atomic_t            schedidlecoremap[NCPU][SCHEDIDLECOREMAPNWORD];
+extern long                  schedidlecoremap[NCPU][SCHEDIDLECOREMAPNWORD];
 extern struct task          *schedreadytab0[NCPU][SCHEDNQUEUE];
 extern struct task          *schedreadytab1[NCPU][SCHEDNQUEUE];
 extern struct schedqueueset  schedreadytab[NCPU];
@@ -166,16 +166,12 @@ static __inline__ void
 schedswapqueues(long cpu)
 {
     struct schedqueueset *set = &schedreadytab[cpu];
-    void                 *ptr1 = set->cur;
-    void                 *ptr2 = set->next;
 
     fmtxlk(&set->lk);
-    set->next = ptr1;
-    set->cur = ptr2;
-    ptr1 = set->curmap;
-    ptr2 = set->nextmap;
-    set->nextmap = ptr1;
-    set->curmap = ptr2;
+    set->next = set->cur;
+    set->cur = set->next;
+    set->nextmap = set->curmap;
+    set->curmap = set->nextmap;
     fmtxunlk(&set->lk);
 
     return;
@@ -185,8 +181,8 @@ static __inline__ struct cpu *
 schedfindidlecore(long cpu, long *retcore)
 {
     struct cpu *unit = &cputab[cpu];
-    m_atomic_t *map = &schedidlecoremap[cpu][0];
-    m_atomic_t *ptr = &map[0];
+    long       *map = &schedidlecoremap[cpu][0];
+    long       *ptr = &map[0];
     long        nunit = NCPU;
     long        ncore = NCORE;
     long        lim = min(ncore, (long)(CHAR_BIT * sizeof(long)));

@@ -17,8 +17,9 @@
 
 static pthread_once_t               g_initonce = PTHREAD_ONCE_INIT;
 static pthread_key_t                g_thrkey;
-static THREADLOCAL zerospin         g_memtlsinitspin;
+#if (!MEMDYNTLS)
 THREADLOCAL struct memtls           g_memtlsdata;
+#endif
 THREADLOCAL volatile struct memtls *g_memtls;
 struct mem                          g_mem;
 #if (MEMSTAT)
@@ -26,7 +27,7 @@ struct memstat                      g_memstat;
 #endif
 
 static void
-memfreetls(void *arg)
+memreltls(void *arg)
 {
     void                   *adr = arg;
     volatile struct membkt *src;
@@ -100,8 +101,10 @@ memfreetls(void *arg)
                 m_syncwrite((m_atomic_t *)&dest->list, (m_atomic_t)head);
             }
         }
-        unmapanon(adr, memtlssize());
         priolkfin();
+        if (adr) {
+            unmapanon(adr, memtlssize());
+        }
     }
 
     return;
@@ -124,27 +127,22 @@ memgetprioval(void)
 }
 #endif
 
-#if 0
-struct memtls *
+volatile struct memtls *
 meminittls(void)
 {
-    struct memtls *tls = NULL;
+#if (MEMDYNTLS)
+    struct memtls *tls;
     struct memtls *adr;
+#endif
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
     unsigned long  val;
 #endif
 
     pthread_once(&g_initonce, meminit);
-    spinlk(&g_memtlsinitspin);
-    if (g_memtls) {
-        spinunlk(&g_memtlsinitspin);
-
-        return;
-    }
+#if (MEMDYNTLS)
     tls = mapanon(0, memtlssize());
     if (tls != MAP_FAILED) {
-        adr = tls;
-//        adr = (struct memtls *)memgentlsadr((MEMUWORD_T *)tls);
+        adr = (struct memtls *)memgentlsadr((MEMUWORD_T *)tls);
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
         val = memgetprioval();
         priolkinit(&adr->priolkdata, val);
@@ -152,32 +150,16 @@ meminittls(void)
         pthread_setspecific(g_thrkey, tls);
         g_memtls = adr;
     }
-    spinunlk(&g_memtlsinitspin);
-
-    return tls;
-}
-#endif
-
-struct memtls *
-meminittls(void)
-{
-#if (MEM_LK_TYPE == MEM_LK_PRIO)
-    unsigned long  val;
-#endif
-
-    pthread_once(&g_initonce, meminit);
-    spinlk(&g_memtlsinitspin);
-    if (g_memtls) {
-        spinunlk(&g_memtlsinitspin);
-
-        return;
-    }
+#else /* !MEMDYNTLS */
+    pthread_setspecific(g_thrkey, NULL);
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
     val = memgetprioval();
     priolkinit(&g_memtlsdata.priolkdata, val);
 #endif
+#if (!MEMDYNTLS)
     g_memtls = &g_memtlsdata;
-    spinunlk(&g_memtlsinitspin);
+#endif
+#endif
 
     return g_memtls;
 }
@@ -214,7 +196,7 @@ memprefork(void)
     for (slot = 0 ; slot < MEMLVL1ITEMS ; slot++) {
         memlkbit(&g_mem.tab[slot].tab);
     }
-#elif (!MEMLFHASH)
+#elif (MEMNEWHASH) && (!MEMLFHASH)
     for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
         memlkbit(&g_mem.hash[slot].chain);
     }
@@ -264,6 +246,7 @@ mempostfork(void)
     return;
 }
 
+NORETURN
 void
 memexit(int sig)
 {
@@ -274,6 +257,7 @@ memexit(int sig)
     exit(sig);
 }
 
+NORETURN
 void
 memquit(int sig)
 {
@@ -303,16 +287,14 @@ meminit(void)
     signal(SIGTERM, memquit);
 #endif
     pthread_atfork(memprefork, mempostfork, mempostfork);
-    pthread_key_create(&g_thrkey, memfreetls);
+    pthread_key_create(&g_thrkey, memreltls);
 #if (MEMSTAT)
     atexit(memprintstat);
 #endif
 #if (MEMMULTITAB)
     ptr = mapanon(0, MEMLVL1ITEMS * sizeof(struct memtab));
-#elif (MEMARRAYHASH) || (MEMNEWHASH)
+#elif (MEMNEWHASH)
     ptr = mapanon(0, MEMHASHITEMS * sizeof(struct memhashlist));
-#elif (MEMHASH)
-    ptr = mapanon(0, MEMHASHITEMS * sizeof(struct memhash));
 #if (MEMSTAT)
     g_memstat.nbhash += MEMHASHITEMS * sizeof(struct memhash);
 #endif
@@ -327,7 +309,7 @@ meminit(void)
     }
 #if (MEMMULTITAB)
     g_mem.tab = ptr;
-#elif (MEMHASH) || (MEMARRAYHASH) || (MEMNEWHASH)
+#elif (MEMNEWHASH)
     g_mem.hash = ptr;
 #endif
 #if !defined(MEMNOSBRK) || !(MEMNOSBRK)
@@ -421,7 +403,7 @@ memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
     memsetbuftype(buf, MEMSMALLBUF);
     buf->size = bufsz;
 #if (MEMTEST)
-    _memchkbuf(buf, slot, MEMSMALLBUF, nblk, flg, __FUNCTION__);
+    _memchkbuf(buf, MEMSMALLBUF, nblk, flg, __FUNCTION__);
 #endif
 
     return buf;
@@ -478,7 +460,7 @@ memallocpagebuf(MEMWORD_T slot, MEMWORD_T nblk)
 //    g_memstat.nbmap += mapsz;
 #endif
 #if (MEMTEST)
-    _memchkbuf(buf, slot, MEMPAGEBUF, nblk, 0, __FUNCTION__);
+    _memchkbuf(buf, MEMPAGEBUF, nblk, 0, __FUNCTION__);
 #endif
 
     return buf;
@@ -534,7 +516,7 @@ memallocbigbuf(MEMWORD_T slot, MEMWORD_T nblk)
 #endif
     buf->size = mapsz;
 #if (MEMTEST)
-    _memchkbuf(buf, slot, MEMBIGBUF, nblk, 0, __FUNCTION__);
+    _memchkbuf(buf, MEMBIGBUF, nblk, 0, __FUNCTION__);
 #endif
 
     return buf;
@@ -1491,7 +1473,7 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
         if (!glob && type != MEMBIGBUF && (tbkt)) {
             if (val) {
                 if (nfree != 1) {
-                    m_atomwrite(&buf->bkt, tbkt);
+                    m_atomwrite(&buf->bkt, bkt);
                 } else {
                     buf->prev = NULL;
                     upval = (MEMADR_T)tbkt->list;

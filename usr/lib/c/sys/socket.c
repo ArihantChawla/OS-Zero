@@ -1,3 +1,5 @@
+#if defined(__ZEROLIBC__)
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 
@@ -13,3 +15,6 @@ const socklen_t sockaddrlentab[AF_NFAMILY]
     0,                  // AF_ISO
     0                   // AF_BLUETOOTH
 };
+
+#endif /* defined(__ZEROLIBC__) */
+

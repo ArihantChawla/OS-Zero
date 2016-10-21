@@ -160,7 +160,7 @@ typedef zerospin      MEMLK_T;
 
 #define MEMSMALLTLSLIM      (2 * 1024 * 1024)
 #define MEMPAGETLSLIM       (4 * 1024 * 1024)
-#define MEMSMALLGLOBLIM     (~MEMUWORD(0))
+#define MEMSMALLGLOBLIM     0
 #define MEMPAGEGLOBLIM      (8 * 1024 * 1024)
 #define MEMBIGGLOBLIM       (64 * 1024 * 1024)
 
@@ -776,31 +776,36 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #define memgetnbuftls(type, slot)  memnbuftls(type, slot)
 #define memgetnbufglob(type, slot) memnbufglob(type, slot)
 
-void            meminit(void);
-struct memtls * meminittls(void);
-MEMPTR_T        memgetblk(MEMWORD_T slot, MEMWORD_T type,
-                          MEMUWORD_T size, MEMUWORD_T align);
-MEMPTR_T        memsetbuf(MEMPTR_T ptr, struct membuf *buf, MEMWORD_T id);
+void                     meminit(void);
+volatile struct memtls * meminittls(void);
+MEMPTR_T                 memgetblk(MEMWORD_T slot, MEMWORD_T type,
+                                   MEMUWORD_T size, MEMUWORD_T align);
+MEMPTR_T                 memsetbuf(MEMPTR_T ptr, struct membuf *buf,
+                                   MEMWORD_T id);
 #if (MEMMULTITAB)
-struct membuf * memfindbuf(void *ptr, MEMWORD_T incr);
+struct membuf          * memfindbuf(void *ptr, MEMWORD_T incr);
 #elif (MEMNEWHASH)
-MEMADR_T        membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf,
-                         MEMWORD_T id);
+MEMADR_T                 membufop(MEMPTR_T ptr, MEMWORD_T op,
+                                  struct membuf *buf,
+                                  MEMWORD_T id);
 #elif (MEMHASH)
-MEMADR_T        memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret);
+MEMADR_T                 memfindbuf(void *ptr, MEMWORD_T incr,
+                                    MEMADR_T *keyret);
 #else
-struct membuf * memfindbuf(void *ptr, long rel);
+struct membuf          * memfindbuf(void *ptr, long rel);
 #endif
-void            memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id);
+void                     memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id);
 #if (MEMTEST)
-void            memprintbuf(struct membuf *buf, const char *func);
-long            _memchkptr(struct membuf *buf, MEMPTR_T ptr);
-long            _memchkbuf(struct membuf *buf, MEMWORD_T slot, MEMWORD_T type,
-                           MEMWORD_T nblk, MEMUWORD_T flg, const char *func);
+void                     memprintbuf(struct membuf *buf, const char *func);
+long                     _memchkptr(struct membuf *buf, MEMPTR_T ptr);
+long                     _memchkbuf(struct membuf *buf,
+                                    MEMWORD_T type,
+                                    MEMWORD_T nblk, MEMUWORD_T flg,
+                                    const char *func);
 #endif
 
 #if (MEMSTAT)
-void            memprintstat(void);
+void                     memprintstat(void);
 struct memstat {
     MEMUWORD_T nbsmall;
     MEMUWORD_T nbpage;

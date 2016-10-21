@@ -31,11 +31,31 @@ struct m_cpucache {
     uint32_t ntlb;
 };
 
+/* control registers. need to run in system mode (ring 0). */
+
+#define cpugetmodes(ptr)                                                \
+    __asm__("movl %cr4, %eax");                                         \
+    __asm__("movl %%eax, %0": "=m" ((ptr)->cr4));
+
+#define cpuhastsc(ptr)                                                  \
+    (!((ptr)->cr4 & CPU_CR4_TSD))
+#define cpuhasde(ptr)                                                   \
+    ((ptr)->cr4 & CPU_CR4_DE)
+#define cpuhaspse(ptr)                                                  \
+    ((ptr)->cr4 & CPU_CR4_PSE)
+#define cpuhaspge(ptr)                                                  \
+    ((ptr)->cr4 & CPU_CR4_PGE)
+#define cpuhaspce(ptr)                                                  \
+    ((ptr)->cr4 & CPU_CR4_PCE)
+struct m_cpuidcregs {
+    int32_t cr4;
+};
+
 struct m_cpuinfo {
-    long              flags;
-    struct m_cpucache l1i;
-    struct m_cpucache l1d;
-    struct m_cpucache l2;
+    long                flags;
+    struct m_cpucache   l1i;
+    struct m_cpucache   l1d;
+    struct m_cpucache   l2;
 };
 
 void cpuprobe(struct m_cpuinfo *cpuinfo);
