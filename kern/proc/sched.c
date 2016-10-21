@@ -308,6 +308,7 @@ schedswitchtask(struct task *curtask)
 {
     long                   cpu = k_curcpu->id;
     struct task           *task = NULL;
+    struct task           *next;
     long                   state = (curtask) ? curtask->state : -1;
     struct schedqueueset  *set = &schedreadytab[cpu];
     struct task          **queue;
@@ -315,6 +316,7 @@ schedswitchtask(struct task *curtask)
     long                   ntz;
     long                   val;
     long                   ndx;
+    long                   ofs;
     long                   lim;
     long                   loop;
 
@@ -354,16 +356,21 @@ schedswitchtask(struct task *curtask)
             map = set->curmap;
             queue = &set->cur[0];
             for (ndx = 0 ; ndx < lim ; ndx++) {
+                ofs = ndx;
                 val = map[ndx];
                 if (val) {
+                    ofs <<= __LONGBITSLOG2;
                     ntz = tzerol(val);
-                    ndx <<= __LONGBITSLOG2;
-                    ntz += ndx;
+                    ntz += ofs;
                     queue += ntz;
                     task = deqpop(queue);
                     if (task) {
-                        if (deqisemptyptr(queue)) {
-                            clrbit(map, ntz);
+                        next = task->next;
+                        if (!next
+                            && m_cmpswapptr((m_atomic_t *)&queue[0],
+                                            (m_atomic_t *)task,
+                                            next)) {
+                            m_clrbit((m_atomic_t *)map, ntz);
                         }
                         schedsettask(task);
 
@@ -381,16 +388,21 @@ schedswitchtask(struct task *curtask)
         map = set->idlemap;
         queue = &set->idle[0];
         for (ndx = 0 ; ndx < lim ; ndx++) {
+            ofs = ndx;
             val = map[ndx];
             if (val) {
+                ofs <<= __LONGBITSLOG2;
                 ntz = tzerol(val);
-                ndx <<= __LONGBITSLOG2;
-                ntz += ndx;
+                ntz += ofs;
                 queue += ntz;
                 task = deqpop(queue);
                 if (task) {
-                    if (deqisemptyptr(queue)) {
-                        clrbit(map, ntz);
+                    next = task->next;
+                    if (!next
+                        && m_cmpswapptr((m_atomic_t *)&queue[0],
+                                        (m_atomic_t *)task,
+                                        next)) {
+                        m_clrbit((m_atomic_t *)map, ntz);
                     }
                     schedsettask(task);
                     
@@ -402,9 +414,9 @@ schedswitchtask(struct task *curtask)
 //        task = taskpull(cpu);
         /* mark the core as idle */
         val = cpu >> __LONGBITSLOG2;
-        ndx = cpu & (1UL << __LONGBITSLOG2);
+        ndx = cpu & ((1UL << __LONGBITSLOG2) - 1);
         map = &schedidlecoremap[cpu][val];
-        m_cmpsetbit((m_atomic_t *)map, ndx);
+        m_setbit((m_atomic_t *)map, ndx);
         k_enabintr();
         m_waitint();
     } while (1);
