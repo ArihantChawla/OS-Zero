@@ -12,13 +12,13 @@
 /* <vendu> eliminated the giant mutex */
 #define PRIOLKNONBLOCK 1
 
-THREADLOCAL volatile struct priolkdata *t_priolkptr;
-static volatile struct priolkdata      *g_priofree;
+static THREADLOCAL volatile struct priolkdata *t_priolkptr;
+static volatile struct priolkdata             *g_priofree;
 #if !defined(PRIOLKNONBLOCK)
 #if (ZEROSPIN)
-static zerospin                         g_priolkspin = SPININITVAL;
+static zerospin                                g_priolkspin = SPININITVAL;
 #elif (ZEROFMTX)
-static zerofmtx                         g_priolkmtx = FMTXINITVAL;
+static zerofmtx                                g_priolkmtx = FMTXINITVAL;
 #endif
 #endif
 

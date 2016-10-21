@@ -101,6 +101,7 @@ memfreetls(void *arg)
             }
         }
         unmapanon(adr, memtlssize());
+        priolkfin();
     }
 
     return;
@@ -1417,7 +1418,6 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
     memsetbufnfree(buf, nfree);
     VALGRINDPOOLFREE(buf->base, ptr);
     if (nfree != 1 && nfree != nblk) {
-        fflush(stderr);
         if (glob) {
             /* no need to reclaim or requeue, just unlock if on global list */
 #if (MEMDEBUGDEADLOCK)
@@ -1429,7 +1429,6 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
             m_atomwrite(&buf->bkt, bkt);
         }
     } else if (nfree == 1 && nfree != nblk) {
-        fflush(stderr);
         /* acquire lock for the global list */
 #if (MEMDEBUGDEADLOCK)
         memlkbitln(gbkt);
@@ -1452,40 +1451,45 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
         /* this will unlock the list (set the low-bit to zero) */
         m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
     } else if (nfree == nblk) {
-        fflush(stderr);
         /* queue or reclaim a free buffer */
         tbkt = NULL;
         bufsz = 0;
         val = 0;
-        if (!glob && nfree != 1) {
-            tbkt = bkt;
-        } else if (type == MEMSMALLBUF) {
+        if (!glob) {
+            if (nfree != 1) {
+                tbkt = bkt;
+            } else if (type == MEMSMALLBUF) {
+                lim = MEMSMALLTLSLIM;
+                bufsz = nblk << slot;
+                if (g_memtls) {
+                    tbkt = &g_memtls->smallbin[slot];
+                    if (!glob || nfree == 1) {
+                        val = (g_memtls->nbsmall + bufsz <= lim);
+                    } else {
+                        val = (g_memtls->nbsmall <= lim);
+                    }
+                }
+            } else if (type == MEMPAGEBUF) {
+                lim = MEMPAGETLSLIM;
+                bufsz = PAGESIZE + PAGESIZE * slot;
+                if (g_memtls) {
+                    tbkt = &g_memtls->pagebin[slot];
+                    if (!glob || nfree == 1) {
+                        val = (g_memtls->nbpage + bufsz <= lim);
+                    } else {
+                        val = (g_memtls->nbpage <= lim);
+                    }
+                }
+            } else if (type == MEMBIGBUF) {
+                bufsz = nblk << slot;
+            }
+        } else if (type != MEMPAGEBUF) {
             bufsz = nblk << slot;
-            lim = MEMSMALLTLSLIM;
-            if (g_memtls) {
-                tbkt = &g_memtls->smallbin[slot];
-                if (!glob || nfree == 1) {
-                    val = (g_memtls->nbsmall + bufsz > lim);
-                } else {
-                    val = (g_memtls->nbsmall > lim);
-                }
-            }
-        } else if (type == MEMPAGEBUF) {
-            bufsz = PAGESIZE + PAGESIZE * slot;
-            lim = MEMPAGETLSLIM;
-            if (g_memtls) {
-                tbkt = &g_memtls->pagebin[slot];
-                if (!glob || nfree == 1) {
-                    val = (g_memtls->nbpage + bufsz > lim);
-                } else {
-                    val = (g_memtls->nbpage > lim);
-                }
-            }
         } else {
-            bufsz = nblk << slot;
+            bufsz = PAGESIZE + PAGESIZE * slot;
         }
         if (!glob && type != MEMBIGBUF && (tbkt)) {
-            if (!val) {
+            if (val) {
                 if (nfree != 1) {
                     m_atomwrite(&buf->bkt, tbkt);
                 } else {
@@ -1525,16 +1529,16 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
         } else if (type == MEMPAGEBUF) {
             lim = MEMPAGEGLOBLIM;
             if (glob) {
-                val = (g_mem.nbpage < lim);
+                val = (g_mem.nbpage <= lim);
             } else {
-                val = (g_mem.nbpage + bufsz < lim);
+                val = (g_mem.nbpage + bufsz <= lim);
             }
         } else if (type == MEMBIGBUF) {
             lim = MEMBIGGLOBLIM;
             if (glob) {
-                val = (g_mem.nbbig < lim);
+                val = (g_mem.nbbig <= lim);
             } else {
-                val = (g_mem.nbbig + bufsz < lim);
+                val = (g_mem.nbbig + bufsz <= lim);
             }
         }
         if (val) {
