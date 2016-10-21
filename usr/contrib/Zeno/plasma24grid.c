@@ -13,7 +13,7 @@
  */
 
 #if (__KERNEL__)
-#define PLASMADOUBLEBUF 0
+#define PLASMADOUBLEBUF 1
 #if (PLASMADOUBLEBUF)
 #include <kern/util.h>
 void plasmasync(void);

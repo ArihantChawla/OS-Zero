@@ -56,6 +56,7 @@ struct m_cpuinfo {
     struct m_cpucache   l1i;
     struct m_cpucache   l1d;
     struct m_cpucache   l2;
+    struct m_cpuidcregs cregs;
 };
 
 void cpuprobe(struct m_cpuinfo *cpuinfo);
@@ -72,7 +73,7 @@ extern long               k_curpid  __asm__ ("%gs:20");
 extern struct m_cpuinfo * k_cpuinfo __asm__ ("%gs:24");
 #elif (PTRBITS == 64)
 extern long               k_curunit __asm__ ("%gs:0"
-extern struct m_cpu     * k_curcpu  __asm__ ("%gs:8");
+extern struct cpu       * k_curcpu  __asm__ ("%gs:8");
 extern struct proc      * k_curproc __asm__ ("%gs:16");
 extern struct task      * k_curtask __asm__ ("%gs:24");
 extern pde_t              k_curpdir __asm__ ("%gs:32");
@@ -85,13 +86,13 @@ extern struct m_cpuinfo * k_cpuinfo __asm__ ("%gs:48");
 //#define NCPUWORD     6 /* cpu, proc, task, pdir, pid, info */
 struct m_cpu {
     /* cpu-local variables */
-    long              unit;
-    struct cpu       *cpu;
-    struct proc      *proc;
-    struct task      *task;
-    pde_t             pdir;
-    long              pid;
-    struct m_cpuinfo *info;
+    long              unit;     // @ 0
+    struct cpu       *cpu;      // @ 4  / 8
+    struct proc      *proc;     // @ 8  / 16
+    struct task      *task;     // @ 12 / 24
+    pde_t             pdir;     // @ 16 / 32
+    long              pid;      // @ 20 / 40
+    struct m_cpuinfo  info;     // @ 24 / 48
 };
 
 #endif /* __KERN_UNIT_X86_CPU_H__ */

@@ -1,6 +1,7 @@
 #ifndef __UNIT_IA32_VM_H__
 #define __UNIT_IA32_VM_H__
 
+#include <kern/conf.h>
 #include <stdint.h>
 #include <zero/param.h>
 //#include <zero/mtx.h>
@@ -42,7 +43,9 @@ vmflushtlb(void *adr)
 //#define NPAGEMAX        (NPDE * NPTE)   // # of virtual pages
 #define NPDE            1024            // per directory
 #define NPTE            1024            // per table
+#if (VMFLATPHYSTAB)
 #define PAGETABSIZE     (NPDE * NPTE * sizeof(uint32_t))
+#endif
 #define PDSHIFT         22
 #define PTSHIFT         12
 #define VMPDMASK        0xffc00000      // top 10 bits

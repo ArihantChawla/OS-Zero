@@ -17,6 +17,8 @@ extern char _ebss;
 extern char _mpentry;
 extern char _emp;
 #endif
+extern char _usysinfo;
+extern char _eusysinfo;
 extern char _dmabuf;
 extern char _edmabuf;
 extern char _pagetab;

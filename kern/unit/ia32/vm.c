@@ -143,6 +143,11 @@ vminit(void *pagetab)
     vmmapseg(pagetab, HICORE, HICORE,
              (uint32_t)&_eboot,
              PAGEPRES | PAGEWRITE);
+
+    /* identity-map USYSINFO */
+    vmmapseg(pagetab, (uint32_t)&_usysinfo, (uint32_t)&_usysinfo,
+             (uint32_t)&_eusysinfo,
+             PAGEPRES | PAGEWRITE);
     
     /* identity-map kernel DMA buffers */
     vmmapseg(pagetab, (uint32_t)&_dmabuf, DMABUFBASE,

@@ -42,9 +42,7 @@ extern void schedsetsleep(struct task *task);
 
 #define schedcalctime(task)  ((task)->ntick >> SCHEDTICKSHIFT)
 #define schedcalcticks(task) (max((task)->lastrun - (task)->firstrun, kgethz()))
-#define schedcalcnice(task)  (tasknicetab[(task)->nice])
-#define schedcalcbaseprio(task, sched)                                  \
-    ((sched) * SCHEDNCLASSPRIO)
+#define schedcalcnice(val)   (schednicetab[(val)])
 #if 0
 #define schedsetprio(task, pri)                                         \
     ((task)->prio = schedprioqueueid(pri))
@@ -59,20 +57,26 @@ extern void schedsetsleep(struct task *task);
 /* timeshare-tasks have interactivity scores */
 #define schedistimeshare(sched)                                         \
     ((sched) >= SCHEDRESPONSIVE && (sched) <= SCHEDBATCH)
-#define schedisinteract(score)        ((score) < SCHEDSCORETHRESHOLD)
-#define schedcalcqueueid(pri)         (zeroabs(pri) >> 1)
-#define schedcalcqueueidofs(pri, ofs) (schedcalcqueueid(pri) + (ofs))
+#define schedisinteract(score)                                          \
+    ((score) < SCHEDSCOREINTLIM)
+#define schedcalctrapqueueid(pri)                                       \
+    (pri)
+#define schedcalcqueueid(pri)                                           \
+    ((pri) >> 1)
+#define schedcalcidlequeueid(pri)                                       \
+    (((pri) - SCHEDNCLASS * SCHEDNCLASSPRIO) >> 1)
+//#define schedcalcqueueidofs(pri, ofs) (schedcalcqueueid(pri) + (ofs))
 
 /* interrupt priorities */
 #define schedintrsoftprio(id)                                           \
-    (SCHEDINTRSOFTPRIO + (id) * SCHEDNQUEUEPRIO)
-#define SCHEDINTRRTPRIO     SCHEDINTRPRIOMIN
-#define SCHEDINTRAVPRIO     (SCHEDINTRPRIOMIN + SCHEDNQUEUEPRIO)
-#define SCHEDINTRHIDPRIO    (SCHEDINTRPRIOMIN + 2 * SCHEDNQUEUEPRIO)
-#define SCHEDINTRNETPRIO    (SCHEDINTRPRIOMIN + 3 * SCHEDNQUEUEPRIO)
-#define SCHEDINTRDISKPRIO   (SCHEDINTRPRIOMIN + 4 * SCHEDNQUEUEPRIO)
-#define SCHEDINTRMISCPRIO   (SCHEDINTRPRIOMIN + 5 * SCHEDNQUEUEPRIO)
-#define SCHEDINTRSOFTPRIO   (SCHEDINTRPRIOMIN + 6 * SCHEDNQUEUEPRIO)
+    (SCHEDTRAPSOFTPRIO + (id) * SCHEDNQUEUEPRIO)
+#define SCHEDTRAPRTPRIO     SCHEDTRAPPRIOMIN
+#define SCHEDTRAPAVPRIO     (SCHEDTRAPPRIOMIN + SCHEDNQUEUEPRIO)
+#define SCHEDTRAPHIDPRIO    (SCHEDTRAPPRIOMIN + 2 * SCHEDNQUEUEPRIO)
+#define SCHEDTRAPNETPRIO    (SCHEDTRAPPRIOMIN + 3 * SCHEDNQUEUEPRIO)
+#define SCHEDTRAPDISKPRIO   (SCHEDTRAPPRIOMIN + 4 * SCHEDNQUEUEPRIO)
+#define SCHEDTRAPMISCPRIO   (SCHEDTRAPPRIOMIN + 5 * SCHEDNQUEUEPRIO)
+#define SCHEDTRAPSOFTPRIO   (SCHEDTRAPPRIOMIN + 6 * SCHEDNQUEUEPRIO)
 
 #define SCHEDNLVL0DL      (1U << 16)
 #define SCHEDNLVL1DL      (1U << 8)
@@ -91,21 +95,19 @@ extern void schedsetsleep(struct task *task);
                                   CLSIZE / sizeof(long))
 #define SCHEDLOADMAPNWORD     max((SCHEDNTOTALQUEUE) / CHAR_BIT * sizeof(long), \
                                   CLSIZE / sizeof(long))
-#define SCHEDIDLECOREMAPNWORD  max(NCORE / (CHAR_BIT * sizeof(long)),   \
-                                   CLSIZE / sizeof(long))
 
 /* data structures */
 
 #define __STRUCT_SCHEDQUEUESET_SIZE                                     \
-    (sizeof(long) + 7 * sizeof(void *))
+    (sizeof(m_atomic_t) + 7 * sizeof(void *))
 #define __STRUCT_SCHEDQUEUESET_PAD                                      \
     (roundup(__STRUCT_SCHEDQUEUESET_SIZE, CLSIZE) - __STRUCT_SCHEDQUEUESET_SIZE)
 struct schedqueueset {
     m_atomic_t    lk;
     long         *curmap;
     long         *nextmap;
-    long         *idlemap;
     long         *loadmap;
+    long         *idlemap;
     struct task **cur;
     struct task **next;
     struct task **idle;
@@ -113,10 +115,10 @@ struct schedqueueset {
 };
 
 extern struct cpu            cputab[NCPU];
-extern long                  schedidlecoremap[NCPU][SCHEDIDLECOREMAPNWORD];
-extern struct task          *schedreadytab0[NCPU][SCHEDNQUEUE];
-extern struct task          *schedreadytab1[NCPU][SCHEDNQUEUE];
-extern struct schedqueueset  schedreadytab[NCPU];
+extern long                  schedidlecoremap[NCPU];
+extern struct task          *schedreadytab0[SCHEDNQUEUE];
+extern struct task          *schedreadytab1[SCHEDNQUEUE];
+extern struct schedqueueset  schedreadytab;
 extern struct divu32         fastu32div24tab[rounduppow2(SCHEDHISTORYSIZE,
                                                          PAGESIZE)];
 extern long                  schednicetab[SCHEDNICERANGE];
@@ -165,7 +167,7 @@ schedadjcpupct(struct task *task, long run)
 static __inline__ void
 schedswapqueues(long cpu)
 {
-    struct schedqueueset *set = &schedreadytab[cpu];
+    struct schedqueueset *set = &schedreadytab;
 
     fmtxlk(&set->lk);
     set->next = set->cur;
@@ -181,75 +183,20 @@ static __inline__ struct cpu *
 schedfindidlecore(long cpu, long *retcore)
 {
     struct cpu *unit = &cputab[cpu];
-    long       *map = &schedidlecoremap[cpu][0];
-    long       *ptr = &map[0];
     long        nunit = NCPU;
-    long        ncore = NCORE;
-    long        lim = min(ncore, (long)(CHAR_BIT * sizeof(long)));
     long        ndx = 0;
     long        val = 0;
-    long        cur;
-    long        last = NCPU;
-    long        ntz;
-    long        mask;
 
     fmtxlk(&unit->lk);
-    for (ndx = 0 ; ndx < lim ; ndx++) {
-        mask = *ptr;
-        if (mask) {
-            ntz = tzerol(mask);
-            clrbit(ptr, ntz);
+    for (ndx = 0 ; ndx < nunit ; ndx++) {
+        if (ndx != cpu && schedidlecoremap[ndx]) {
             fmtxunlk(&unit->lk);
-            ndx *= CHAR_BIT * sizeof(long);
-            ndx += ntz;
             *retcore = ndx;
 
             return unit;
         }
-        ptr++;
     }
     fmtxunlk(&unit->lk);
-    ptr = map;
-    for (cur = 0 ; cur != cpu ; cur++) {
-        fmtxlk(&unit->lk);
-        for (ndx = 0 ; ndx < lim ; ndx++) {
-            mask = *ptr;
-            if (mask) {
-                ntz = tzerol(mask);
-                clrbit(ptr, ntz);
-                fmtxunlk(&unit->lk);
-                unit = &cputab[cur];
-                ndx *= CHAR_BIT * sizeof(long);
-                ndx += ntz;
-                *retcore = ndx;
-
-                return unit;
-            }
-            ptr++;
-        }
-        fmtxunlk(&unit->lk);
-    }
-    cur++;
-    ptr++;
-    for ( ; cur < last ; cur++) {
-        fmtxlk(&unit->lk);
-        for (ndx = 0 ; ndx < lim ; ndx++) {
-            mask = *ptr;
-            if (mask) {
-                ntz = tzerol(mask);
-                clrbit(ptr, ntz);
-                fmtxunlk(&unit->lk);
-                unit = &cputab[cur];
-                ndx *= CHAR_BIT * sizeof(long);
-                ndx += ntz;
-                *retcore = ndx;
-
-                return unit;
-            }
-            ptr++;
-        }
-        fmtxunlk(&unit->lk);
-    }
 
     return NULL;
 }
@@ -279,7 +226,7 @@ schedcalcscore(struct task *task)
     long res;
     long tmp;
 
-    if (SCHEDSCORETHRESHOLD <= SCHEDSCOREHALF
+    if (SCHEDSCOREINTLIM <= SCHEDSCOREHALF
         && run >= slp) {
         res = SCHEDSCOREHALF;
         task->score = res;
@@ -292,9 +239,8 @@ schedcalcscore(struct task *task)
 #else
         run = fastu32div24(run, SCHEDSCOREHALF, fastu32div24tab);
 #endif
-        res = SCHEDSCOREHALF;
+        res = SCHEDSCOREMAX;
         div = max(1, run);
-        res <<= 1;
         tmp = fastu32div24(slp, div, fastu32div24tab);
         res -= tmp;
         task->score = res;
@@ -331,7 +277,7 @@ static __inline__ void
 schedcalcprio(struct task *task)
 {
     long score = schedcalcscore(task);
-    long nice = task->proc->nice;
+    long nice = schedcalcnice(task->proc->nice);
     long runprio = task->runprio;
     long prio;
     long ntick;
@@ -340,13 +286,13 @@ schedcalcprio(struct task *task)
 
     score += nice;
     score = max(0, score);
-    if (score < SCHEDSCORETHRESHOLD) {
+    if (score < SCHEDSCOREINTLIM) {
         prio = SCHEDINTPRIOMIN;
         delta = SCHEDINTRANGE;
-#if (SCHEDSCORETHRESHOLD == 32)
+#if (SCHEDSCOREINTLIM == 32)
         delta >>= 5;
 #else
-        delta = fastu32div24(delta, SCHEDSCORETHRESHOLD, fastu32div24tab);
+        delta = fastu32div24(delta, SCHEDSCOREINTLIM, fastu32div24tab);
 #endif
         delta *= score;
         prio += delta;
@@ -445,7 +391,7 @@ schedadjforkintparm(struct task *task)
     return;
 }
 
-/* applied for time-share tasks of classes SCHEDRESPONSIVE..SCHEDBATCH */
+/* applied for time-share tasks of classes SCHEDNORMAL and SCHEDBATCH */
 /* return value is new priority */
 static __inline__ long
 schedcalcintparm(struct task *task, long *retscore)
@@ -464,13 +410,13 @@ schedcalcintparm(struct task *task, long *retscore)
     score = schedcalcscore(task);
     score += nice;
     score = max(0, score);
-    if (score < SCHEDSCORETHRESHOLD) {
+    if (score < SCHEDSCOREINTLIM) {
         /* map interactive tasks to priorities SCHEDRTMIN..SCHEDBATCHPRIOMIN */
         res = SCHEDINTPRIOMIN;
-#if (SCHEDSCORETHRESHOLD == 32)
+#if (SCHEDSCOREINTLIM == 32)
         range >>= 5;
 #else
-        range = fastu32div24(range, SCHEDSCORETHRESHOLD, fastu32div24tab);
+        range = fastu32div24(range, SCHEDSCOREINTLIM, fastu32div24tab);
 #endif
         range *= score;
         res += range;

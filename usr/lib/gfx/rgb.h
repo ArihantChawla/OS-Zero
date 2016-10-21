@@ -168,12 +168,22 @@ typedef int16_t gfxrgb565_t;
      ((uint8_t *)(ptr))[1] = gfxgetgreen(pix),                          \
      ((uint8_t *)(ptr))[0] = gfxgetblue(pix))
 
+#define gfxsetrgb888_p(pix, ptr)                                        \
+    (((uint8_t *)(ptr))[2] = gfxgetred_p(pix),                          \
+     ((uint8_t *)(ptr))[1] = gfxgetgreen_p(pix),                        \
+     ((uint8_t *)(ptr))[0] = gfxgetblue_p(pix))
+
 #elif (__BYTE_ORDER == __BIG_ENDIAN)
 
 #define gfxsetrgb888(pix, ptr)                                          \
     (((uint8_t *)(ptr))[0] = gfxgetred(pix),                            \
      ((uint8_t *)(ptr))[1] = gfxgetgreen(pix),                          \
      ((uint8_t *)(ptr))[2] = gfxgetblue(pix))
+
+#define gfxsetrgb888_p(pix, ptr)                                        \
+    (((uint8_t *)(ptr))[0] = gfxgetred_p(pix),                          \
+     ((uint8_t *)(ptr))[1] = gfxgetgreen_p(pix),                        \
+     ((uint8_t *)(ptr))[2] = gfxgetblue_p(pix))
 
 #endif /* __BYTE_ORDER */
 

@@ -14,10 +14,11 @@
 #include <kern/proc/task.h>
 #include <kern/obj.h>
 #include <kern/unit/x86/boot.h>
+#include <kern/unit/x86/link.h>
 #include <kern/unit/ia32/task.h>
 
+extern pde_t        kernpagedir[NPDE];
 extern struct task  tasktab[NTASK];
-
 struct proc         proctab[NTASK] ALIGNED(PAGESIZE);
 struct proc        *proczombietab[NTASK];
 
@@ -60,17 +61,19 @@ procinit(long id, long sched)
         prio = SCHEDSYSPRIOMIN;
         task->sched = SCHEDSYSTEM;
         task->prio = prio;
+        proc->vmpagemap.dir = (pde_t *)kernpagedir;
+        proc->vmpagemap.tab = (pde_t *)&_pagetab;
     } else {
         if (sched == SCHEDNOCLASS) {
             prio = SCHEDUSERPRIOMIN;
             task->sched = SCHEDNORMAL;
         } else {
-            prio = schedcalcbaseprio(task, sched);
+            prio = schedclassminprio(sched);
             task->sched = sched;
         }
         task->prio = prio;
         /* initialise page directory */
-        ptr = kmalloc(NPDE * sizeof(pde_t));
+        ptr = kwalloc(NPDE * sizeof(pde_t));
         if (ptr) {
             kbzero(ptr, NPDE * sizeof(pde_t));
             proc->vmpagemap.dir = ptr;
@@ -79,31 +82,13 @@ procinit(long id, long sched)
             
             return -1;
         }
-#if 0
-        ptr = kmalloc(KERNSTKSIZE);
+        /* initialise page tables */
+#if (VMFLATPHYSTAB)
+        ptr = kwalloc(PAGETABSIZE);
         if (ptr) {
-            u8ptr = ptr;
-            stk = &task->kstk;
-            u8ptr += KERNSTKSIZE;
-            kbzero(ptr, KERNSTKSIZE);
-            stk->top = u8ptr;
-            stk->sp = u8ptr;
-            stk->base = ptr;
-            stk->size = KERNSTKSIZE;
-        }
-        ptr = kmalloc(TASKSTKSIZE);
-        if (ptr) {
-            u8ptr = ptr;
-            stk = &task->ustk;
-            u8ptr += KERNSTKSIZE;
-            kbzero(ptr, TASKSTKSIZE);
-            stk->top = u8ptr;
-            stk->sp = u8ptr;
-            stk->base = ptr;
-            stk->size = TASKSTKSIZE;
+            kbzero(ptr, PAGETABSIZE);
         } else {
             kfree(proc->vmpagemap.dir);
-            kfree(task->kstk.base);
             kfree(proc);
             
             return -1;
@@ -116,34 +101,14 @@ procinit(long id, long sched)
             proc->desctab = ptr;
             proc->ndesctab = TASKNDESC;
         } else {
-            kfree(proc->vmpagemap.dir);
-#if 0
-            kfree(task->ustk.base);
-            kfree(task->kstk.base);
-#endif
-            kfree(proc);
+            if (id >= TASKNPREDEF) {
+                kfree(proc->vmpagemap.tab);
+                kfree(proc->vmpagemap.dir);
+                kfree(proc);
+            }
             
             return -1;
         }
-#if 0
-        /* initialise VM structures */
-        ptr = kmalloc(NPAGEMAX * sizeof(struct userpage));
-        if (ptr) {
-            kbzero(ptr, NPAGEMAX * sizeof(struct userpage));
-            proc->pagetab = ptr;
-            proc->npagetab = NPAGEMAX;
-        } else {
-            kfree(proc->vmpagemap.dir);
-#if 0
-            kfree(task->ustk.base);
-            kfree(task->kstk.base);
-#endif
-            kfree(proc->desctab);
-            kfree(proc);
-            
-            return -1;
-        }
-#endif
     }
     task->state = TASKREADY;
     

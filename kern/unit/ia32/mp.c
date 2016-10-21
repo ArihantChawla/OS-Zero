@@ -38,6 +38,9 @@ extern pde_t    *kernpagedir[NPDE];
 
 extern void      gdtinit(void);
 extern void      trapinitidt(void);
+#if (APIC)
+extern void      apicinit(long id);
+#endif
 #if (IOAPIC)
 extern void      ioapicinit(long id);
 #endif
@@ -236,7 +239,7 @@ mpmain(struct cpu *cpu)
 {
     seginit(cpu->id);
     idtset();
-    m_atomswap(&cpu->statflg, CPUSTARTED);
+    m_atomswap(&cpu->flg, CPUSTARTED);
     /* TODO: initialise HPET; enable [rerouted] interrupts */
 #if (HPET)
     hpetinit();

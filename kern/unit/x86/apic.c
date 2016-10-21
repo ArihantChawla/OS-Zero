@@ -36,15 +36,16 @@ kusleep(unsigned long nusec)
     }
 }
 
-uint32_t *
+volatile uint32_t *
 apicprobe(void)
 {
-    unsigned long adr = k_readmsr(APICMSR);
+    unsigned long      adr = k_readmsr(APICMSR);
+    volatile uint32_t *ptr = (volatile uint32_t *)adr;
 
     adr &= 0xfffff000;
     kprintf("local APIC @ %lx\n", adr);
 
-    return (uint32_t *)adr;
+    return ptr;
 }
 
 void
@@ -119,10 +120,10 @@ apicinittmr(void)
 }
 
 void
-apicinit(long cpuid)
+apicinit(long id)
 {
     static long          first = 1;
-    volatile struct cpu *cpu = &cputab[cpuid];
+    volatile struct cpu *cpu = k_curcpu;
     uint32_t             tmrcnt;
 
     if (!mpapic) {
@@ -135,6 +136,7 @@ apicinit(long cpuid)
         return;
     }
 
+    k_curcpu->id = id;
     if (first) {
         /* identity-map APIC to kernel virtual address space */
         first = 0;
@@ -148,7 +150,6 @@ apicinit(long cpuid)
         irqvec[IRQERROR] = irqerror;
         irqvec[IRQSPURIOUS] = irqspurious;
     }
-    cpu->id = cpuid;
     /* enable local APIC; set spurious interrupt vector */
     apicwrite(APICSWENABLE | IRQSPURIOUS, APICSPURIOUS);
     /* initialise timer, mask interrupts */

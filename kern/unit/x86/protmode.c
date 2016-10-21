@@ -40,7 +40,7 @@
 #if (VBE)
 extern void trapinitprot(void);
 #endif
-extern void cpuinit(volatile struct cpu *cpu);
+extern void cpuinit(long id);
 extern long sysinit(long id);
 extern long ioinitbuf(void);
 
@@ -80,7 +80,7 @@ extern void acpiinit(void);
 extern void sb16init(void);
 #endif
 #if (APIC)
-//extern void apicinit(long cpuid);
+extern void apicinit(long id);
 extern void apicstarttmr(void);
 #endif
 extern void taskinitenv(void);
@@ -124,6 +124,8 @@ kinitprot(unsigned long pmemsz)
     /* set kernel I/O permission bitmap to all 1-bits */
     kmemset(kerniomap, 0xff, sizeof(kerniomap));
     /* INITIALIZE CONSOLES AND SCREEN */
+    /* TODO: use memory map from GRUB? */
+    vminitphys((uintptr_t)&_epagetab, lim - (unsigned long)&_epagetab);
 #if (VBE)
     vbeinitscr();
 #endif
@@ -132,13 +134,8 @@ kinitprot(unsigned long pmemsz)
 #elif (VBE)
     consinit(768 >> 3, 1024 >> 3);
 #endif
-    /* TODO: use memory map from GRUB? */
-    vminitphys((uintptr_t)&_epagetab, lim - (unsigned long)&_epagetab);
     meminit(min(pmemsz, lim), min(KERNVIRTBASE, lim));
     tssinit(0);
-#if (VBE) && (PLASMA) && (!PLASMAFOREVER)
-    plasmaloop(4);
-#endif
     kprintf("%lu free physical pages @ 0x%p..0x%p\n",
             vmpagestat.nphys, vmpagestat.phys, vmpagestat.physend);
 #if 0
@@ -201,6 +198,11 @@ kinitprot(unsigned long pmemsz)
     } else {
         kprintf("found %ld processors\n", mpncpu);
     }
+    k_curunit = 0;
+    /* CPU interface */
+    cpuinit(0);
+    sysinit(0);
+    schedinit();
 #if (HPET)
     /* initialise high precision event timers */
     hpetinit();
@@ -215,17 +217,11 @@ kinitprot(unsigned long pmemsz)
         mpstart();
     }
 #endif
-    /* CPU interface */
     taskinitenv();
-    k_curunit = 0;
-    k_curcpu = &cputab[0];
-    cpuinit(k_curcpu);
+    procinit(PROCKERN, SCHEDNOCLASS);
 //    tssinit(0);
 //    machinit();
     /* execution environment */
-    procinit(PROCKERN, SCHEDNOCLASS);
-//    k_curtask = &k_curproc->task;
-    sysinit(0);
     kprintf("DMA buffers (%ul x %ul kilobytes) @ 0x%p\n",
             DMANCHAN, DMACHANBUFSIZE >> 10, DMABUFBASE);
     kprintf("VM page tables @ 0x%p\n", (unsigned long)&_pagetab);
@@ -242,12 +238,12 @@ kinitprot(unsigned long pmemsz)
     __asm__ __volatile__ ("movl %0, %%esp\n"
                           :
                           : "rm" (sp));
-    schedinit();
 #if (APIC)
     apicstarttmr();
 #else
     pitinit();
 #endif
+//    usrinit(&_usysinfo);
 #if (PLASMAFOREVER)
     plasmaloop(-1);
 #elif (USERMODE)

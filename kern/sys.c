@@ -7,13 +7,13 @@
 #include <kern/sys.h>
 #include <kern/io/buf.h>
 
-static struct sys systab[NCPU] ALIGNED(PAGESIZE);
+static struct sys k_sys ALIGNED(PAGESIZE);
 
 void
-sysinit(long cpu)
+sysinit(long id)
 {
-    long             *tab = systab[cpu].conf.tab;
-    struct m_cpuinfo *cpuinfo = k_cpuinfo;
+    struct m_cpuinfo *info = k_cpuinfo;
+    long             *tab = k_sys.conf.tab;
     long             *ptr = tab + zeroabs(MINSYSCONF);
     
     ptr[_SC_OS_VERSION] = _ZERO_VERSION;
@@ -49,16 +49,16 @@ sysinit(long cpu)
     ptr[_SC_AVPHYS_PAGES] = 0;
     ptr[_SC_NPROCESSORS_CONF] = 1;
     ptr[_SC_NPROCESSORS_ONLN] = 1;
-    ptr[_SC_CACHELINE_SIZE] = cpugetclsize(cpuinfo);
-    ptr[_SC_NTLB] = cpugetntlb(cpuinfo);
-    ptr[_SC_L1_INST_SIZE] = cpugetl1isize(cpuinfo);
-    ptr[_SC_L1_DATA_SIZE] = cpugetl1dsize(cpuinfo);;
-    ptr[_SC_L1_INST_NWAY] = cpugetl1inway(cpuinfo);;
-    ptr[_SC_L1_DATA_NWAY] = cpugetl1dnway(cpuinfo);;
-    ptr[_SC_L2_SIZE] = cpugetl2size(cpuinfo);;
-    ptr[_SC_L2_NWAY] = cpugetl2nway(cpuinfo);;
+    ptr[_SC_CACHELINE_SIZE] = cpugetclsize(info);
+    ptr[_SC_NTLB] = cpugetntlb(info);
+    ptr[_SC_L1_INST_SIZE] = cpugetl1isize(info);
+    ptr[_SC_L1_DATA_SIZE] = cpugetl1dsize(info);;
+    ptr[_SC_L1_INST_NWAY] = cpugetl1inway(info);;
+    ptr[_SC_L1_DATA_NWAY] = cpugetl1dnway(info);;
+    ptr[_SC_L2_SIZE] = cpugetl2size(info);;
+    ptr[_SC_L2_NWAY] = cpugetl2nway(info);;
     ptr[_SC_BUF_BLK_SIZE] = BUFSIZE;
-    systab[cpu].conf.ptr = ptr;
+    k_sys.conf.ptr = ptr;
 
     return;
 }
@@ -66,9 +66,8 @@ sysinit(long cpu)
 long
 sysgetconf(int scval)
 {
-    long  cpu = k_curcpu->id;
+    long *ptr = k_sys.conf.tab;
     long  retval;
-    long *ptr = systab[cpu].conf.ptr;
     
     if (scval < MINSYSCONF || scval > MAXSYSCONF) {
 //        kseterrno(EINVAL);

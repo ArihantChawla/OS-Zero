@@ -6,6 +6,7 @@
 
 MPENTRY		= 0x9f000;
 HICORE		= 1M;
+USYSINFOSIZE    = PAGESIZE;
 DMABUF		= 8M;
 DMABUFSIZE	= 8M;
 PAGETAB		= 16M;
@@ -151,6 +152,12 @@ SECTIONS {
 	ac97.o(.bss)
         _eboot = .;
 	. = ALIGN(PAGESIZE);
+    }
+
+    .usysinfo : {
+        _usysinfo = .;
+	. += USYSINFOSIZE;
+	_eusysinfo = .;
     }
 
     . = DMABUF;

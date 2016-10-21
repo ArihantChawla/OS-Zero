@@ -85,7 +85,7 @@
 #define ACPICA      0           // ACPICA
 #define HPET        1           // high precision event timer support
 #define PS2DRV      1           // enable PS/2 mouse and keyboard drivers
-#define KBDUS       1           // PS/2 keyboard with US keymap
+#define KBDUS       0           // PS/2 keyboard with US keymap
 #define PS2KBDSET2  1
 #define VBE         1           // VBE2 graphics driver
 #define VGAGFX      0           // VGA graphics driver

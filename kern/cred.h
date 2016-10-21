@@ -13,15 +13,15 @@
 #define ucred_endcopy(cp)   (&(cp)->grptab)
 struct ucred {
     volatile long  nref;
+    long           flg;
     uid_t          uid;         // effective user ID
     uid_t          ruid;        // real user ID
     uid_t          suid;        // saved user ID
-    long           ngrp;        // # of groups
     gid_t          rgid;        // real group ID
-    uid_t          sgid;        // saved group ID
+    gid_t          sgid;        // saved group ID
     uid_t          fsuid;       // for VFS operations
     gid_t          fsgid;       // for VFS operations
-    long           flg;
+    long           ngrp;        // # of groups
     gid_t         *grptab;      // group IDs
 };
 #define credgid(uc) ((uc)->grptab[0])

@@ -15,7 +15,7 @@
 
 //#define __STRUCT_CPU_SIZE (sizeof(struct m_cpu) + 7 * sizeof(long))
 #define __STRUCT_CPU_SIZE                                               \
-    (7 * sizeof(long) + sizeof(void *) + sizeof(struct m_cpu))
+    (sizeof(struct m_cpu) + sizeof(void *) + 7 * sizeof(long))
 #define __STRUCT_CPU_PAD                                                \
     (roundup(__STRUCT_CPU_SIZE, CLSIZE) - __STRUCT_CPU_SIZE)
 /* CPU statflg-values */
@@ -25,7 +25,7 @@ struct cpu {
     struct m_cpu   m_cpu;       // machine-specific structure
     m_atomic_t     lk;          // mutual exclusion lock
     struct m_core *coretab;     // SMT
-    m_atomic_t     statflg;     // status flags
+    m_atomic_t     flg;         // status flags
     long           id;          // numerical ID
     unsigned long  ntick;       // tick count
     long           nicemin;     // minimum nice in effect

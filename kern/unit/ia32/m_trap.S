@@ -641,7 +641,7 @@ _fpusaved0:
 	cmpl	%eax, %edi		// did we reschedule the same task?
 	jne	_swtch			// if not, branch to _swtch
 	/* continue the same task */
-	popl	%eax			// pop earlier task pointer
+//	popl	%eax			// pop earlier task pointer
 	popl	%esp			// pop stack pointer
 	popl	%esi			// task flags
 #if 0

@@ -261,18 +261,6 @@ vbeprintinfo(void)
     return;
 }
 
-#if 0
-INLINE void
-vbeputpix(gfxargb32_t pix, int x, int y)
-{
-    uint8_t *ptr = vbepixadr(x, y);
-
-    gfxsetrgb888(pix, ptr);
-
-    return;
-}
-#endif
-
 INLINE void
 vbeputpix(gfxargb32_t pix, uint8_t *ptr)
 {
@@ -287,35 +275,31 @@ vbeclrscr(gfxargb32_t pix)
     uint8_t *ptr = vbepixadr(0, 0);
     long     incr = vbescreen.pixsize;
     long     n = vbescreen.w * vbescreen.h;
+    long     nbpp = vbescreen.nbpp;
+    long     lim;
 
-    while (n--) {
-        vbeputpix(pix, ptr);
-        ptr += incr;
-    }
-
-    return;
-}
-
-#if 0
-void
-vbeclrscr(gfxargb32_t pix)
-{
-    uint8_t *ptr = vbepixadr(0, 0);
-    long     incr = vbescreen.pixsize;
-    long     x;
-    long     y;
-
-    for (x = 0 ; x < vbescreen.w ; x++) {
-        for (y = 0 ; y < vbescreen.h ; y++) {
-            vbeputpix(pix, x, y);
-//            vbeputpix_p(ptr, pix);
-//            ptr + incr;
+    if (nbpp == 24) {
+        while (n) {
+            lim = min(n, 4);
+            switch (lim) {
+                case 4:
+                    vbeputpix(pix, &ptr[3 * incr]);
+                case 3:
+                    vbeputpix(pix, &ptr[2 * incr]);
+                case 2:
+                    vbeputpix(pix, &ptr[incr]);
+                case 1:
+                    vbeputpix(pix, ptr);
+                    
+                    break;
+            }
+            n -= lim;
+            ptr += lim * incr;
         }
     }
 
     return;
 }
-#endif
 
 #if (NEWFONT)
 
