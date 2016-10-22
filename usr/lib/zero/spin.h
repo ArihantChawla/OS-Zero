@@ -3,7 +3,7 @@
 
 #include <zero/asm.h>
 
-typedef volatile long zerospin;
+typedef m_atomic_t zerospin;
 
 #define ZEROSPININITVAL 0L
 #define ZEROSPINLKVAL   1L
@@ -15,9 +15,9 @@ typedef volatile long zerospin;
  * - return non-zero on success, zero if already locked
  */
 static __inline__ long
-spintrylk(volatile long *sp)
+spintrylk(m_atomic_t *sp)
 {
-    volatile long res;
+    m_atomic_t res;
 
     res = m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL);
     if (res == ZEROSPININITVAL) {
@@ -32,9 +32,9 @@ spintrylk(volatile long *sp)
  * lock spin-lock
  */
 static __inline__ void
-spinlk(volatile long *sp)
+spinlk(m_atomic_t *sp)
 {
-    volatile long res = ZEROSPINLKVAL;
+    m_atomic_t res = ZEROSPINLKVAL;
 
     while (res != ZEROSPININITVAL) {
         res = m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL);
@@ -47,7 +47,7 @@ spinlk(volatile long *sp)
  * release spin-lock
  */
 static __inline__ void
-spinunlk(volatile long *sp)
+spinunlk(m_atomic_t *sp)
 {
     m_membar();
     *sp = ZEROSPININITVAL;

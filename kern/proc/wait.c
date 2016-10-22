@@ -97,7 +97,6 @@ schedsetwait(struct task *task)
 void
 schedwakeup(uintptr_t wtchan)
 {
-    long               cpu = k_curcpu->data.id;
     struct tasktabl0  *l0tab;
     struct tasktab    *tab;
     void              *ptr = NULL;

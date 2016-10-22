@@ -47,7 +47,7 @@ _fpudone:
 #if (APIC)
 	_apiceoi
 #else
-	_piteoi1
+	_piceoi1
 #endif
 	iretl
 

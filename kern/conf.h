@@ -20,8 +20,11 @@
 #define USERMODE         0
 #define PLASMAFOREVER    1
 
+#if !defined(FASTINTR)
 #define FASTINTR    1
+#endif
 
+#define IOBUF       0
 #define NEWFONT     1
 #if !defined(BUFNMEG)
 #define BUFNMEG     64
@@ -76,7 +79,10 @@
 #define PLASMA      1
 
 /* planned and developed drivers */
-#define IOAPIC      1           // enable I/O APIC support
+#define VBE         1           // VBE2 graphics driver
+#define VBEMTRR     0           // map memory write-combining
+#define PIC         0
+#define IOAPIC      0           // enable I/O APIC support
 #define SMBIOS      0           // SMBIOS (system management) support
 #define APIC        1           // local [per-CPU] APIC support
 #define PCI         0           // PCI bus driver
@@ -84,10 +90,9 @@
 #define ACPI        0           // ACPI
 #define ACPICA      0           // ACPICA
 #define HPET        1           // high precision event timer support
-#define PS2DRV      1           // enable PS/2 mouse and keyboard drivers
-#define KBDUS       1           // PS/2 keyboard with US keymap
-#define PS2KBDSET2  1
-#define VBE         1           // VBE2 graphics driver
+#define PS2DRV      0           // enable PS/2 mouse and keyboard drivers
+#define KBDUS       0           // PS/2 keyboard with US keymap
+#define PS2KBDSET2  0
 #define VGAGFX      0           // VGA graphics driver
 #define SB16        0           // Soundblaster 16 audio driver
 #define AC97        0           // AC97 audio drivers

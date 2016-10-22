@@ -11,7 +11,7 @@ extern void seginit(long id);
 #if (VBE)
 extern void vbeinit(void);
 #endif
-extern void trapinitprot(void);
+extern void trapinit(void);
 extern void kinitprot(unsigned long pmemsz);
 extern void kinitlong(unsigned long pmemsz);
 
@@ -32,9 +32,8 @@ kmain(struct mboothdr *boothdr, unsigned long longmode)
 #if (VBE)
     /* initialise VBE graphics subsystem */
     vbeinit();
-//    trapinitprot();
 #endif
-    trapinitprot();
+    trapinit();
     kinitprot(pmemsz);
 
     /* kinitprot() should never return */

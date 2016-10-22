@@ -280,29 +280,40 @@ void cpuprobe(volatile struct m_cpuinfo *cpuinfo,
 #if defined(__KERNEL__)
 
 #if (PTRBITS == 32)
-extern volatile struct m_cpu * k_curcpu  __asm__ ("%gs:0");
-extern volatile struct task  * k_curtask __asm__ ("%gs:4");
-extern volatile struct proc  * k_curproc __asm__ ("%gs:8");
-extern volatile long           k_curpid  __asm__ ("%gs:12");
+extern struct cpu  * k_curcpu  __asm__ ("%gs:0");
+extern long          k_curunit __asm__ ("%gs:4");
+extern struct task * k_curtask __asm__ ("%gs:8");
+extern long          k_curpid  __asm__ ("%gs:12");
 #elif (PTRBITS == 64)
-extern volatile struct m_cpu * k_curcpu  __asm__ ("%gs:0");
-extern volatile struct task  * k_curtask __asm__ ("%gs:8");
-extern volatile struct proc  * k_curproc __asm__ ("%gs:16");
-extern volatile long           k_curpid  __asm__ ("%gs:24");
+extern struct cpu  * k_curcpu  __asm__ ("%gs:0");
+extern long          k_curunit __asm__ ("%gs:8");
+extern struct task * k_curtask __asm__ ("%gs:16");
+extern long          k_curpid  __asm__ ("%gs:24");
 #endif
 
 #endif /* defined(__KERNEL__) */
 
 //#define NCPUWORD     6 /* cpu, proc, task, pdir, pid, info */
-struct m_cpu {
+/* CPU flg-values */
+#define CPUSTARTED (1L << 0)
+#define CPURESCHED (1L << 1)
+#define CPUINITBIT (1L << 2)
+#define CPUHASINFO (1L << 3)
+struct cpu {
     /* cpu-local variables */
-    struct task      *task;
-    struct proc      *proc;
-    long              pid;
-    pde_t             pdir;
+    struct cpu       *cpu;
     long              unit;
-    zeromtx           mtx;
-    struct cpu        data;
+    struct task      *task;
+    long              pid;
+    struct proc      *proc;
+    pde_t             pdir;
+    long              flg;
+    /* scheduler parameters */
+    unsigned long     ntick;    // tick count
+    long              nicemin;  // minimum nice in effect
+    long              loaduser; // user/timeshare load
+    long              load;     // load
+    /* info about cpu cache and features */
     struct m_cpuinfo  info;
 };
 

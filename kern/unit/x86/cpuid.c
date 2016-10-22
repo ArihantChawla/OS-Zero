@@ -151,10 +151,11 @@ void
 cpuprobe(volatile struct m_cpuinfo *info,
          volatile struct m_cpucacheinfo *cache)
 {
-    volatile struct m_cpu *m_cpu = k_curcpu;
-    struct m_cacheinfo    *cbuf;
-    struct m_cpuid         buf;
-    union  m_cpuidvendor   vbuf;
+    volatile struct cpu  *m_cpu = k_curcpu;
+    struct m_cacheinfo   *cbuf;
+    struct m_cpuid        buf;
+    union  m_cpuidvendor  vbuf;
+    long                  flg;
 
     cpuidgetvendor(&vbuf);
     if (!__strcmp((const char *)vbuf.str, _vendortab[CPUIDINTEL])) {
@@ -193,13 +194,14 @@ cpuprobe(volatile struct m_cpuinfo *info,
         cache->l2.ntlb = buf.ebx & 0x0fff;
     }
     cpuidgetinfo(&info->id);
+    flg = CPUHASINFO;
     if (cpuidhasfxsr(&info->id)) {
-        info->flg |= CPUHASFXSR;
+        flg |= CPUHASFXSR;
     }
     if (cpuidhasapic(&info->id)) {
-        info->flg |= CPUHASAPIC;
+        flg |= CPUHASAPIC;
     }
-    m_cpu->data.flg |= CPUHASINFO;
+    m_cpu->flg = flg;
 
     return;
 }
@@ -207,11 +209,11 @@ cpuprobe(volatile struct m_cpuinfo *info,
 void
 cpuprintinfo(void)
 {
-    struct m_cacheinfo     cbuf;
-    volatile struct m_cpu *m_cpu = k_curcpu;
-    struct m_cpuid         buf;
-    union  m_cpuidvendor   vbuf;
-    struct m_cpuidcregs    crbuf;
+    volatile struct cpu  *cpu = k_curcpu;
+    struct m_cacheinfo    cbuf;
+    struct m_cpuid        buf;
+    union  m_cpuidvendor  vbuf;
+    struct m_cpuidcregs   crbuf;
    
     cpuidgetvendor(&vbuf);
     __printf("CPU: vendor: %s\n", vbuf.str);

@@ -16,16 +16,16 @@
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/x86/link.h>
 
-extern void                    irqtmr(void);
-extern void                    irqtmrcnt(void);
-extern void                  (*irqerror)(void);
-extern void                  (*irqspurious)(void);
-extern void                  (*mpspurint)(void);
-extern uint64_t                kernidt[NINTR];
-extern void                   *irqvec[];
-extern volatile struct m_cpu   m_cputab[NCPU];
-extern volatile struct m_cpu  *mpbootcpu;
-static uint32_t                apictmrcnt;
+extern void         irqtmr(void);
+extern void         irqtmrcnt(void);
+extern void       (*irqerror)(void);
+extern void       (*irqspurious)(void);
+extern void       (*mpspurint)(void);
+extern uint64_t     kernidt[NINTR];
+extern void        *irqvec[];
+extern struct cpu   cputab[NCPU];
+extern struct cpu  *mpbootcpu;
+static uint32_t     apictmrcnt;
 
 /* TODO: fix this kludge */
 void
@@ -37,11 +37,11 @@ kusleep(unsigned long nusec)
     }
 }
 
-volatile uint32_t *
+uint32_t *
 apicprobe(void)
 {
-    unsigned long      adr = k_readmsr(APICMSR);
-    volatile uint32_t *ptr = (volatile uint32_t *)adr;
+    unsigned long  adr = k_readmsr(APICMSR);
+    uint32_t      *ptr = (uint32_t *)adr;
 
     adr &= 0xfffff000;
     kprintf("local APIC @ %lx\n", adr);
@@ -67,10 +67,10 @@ apicstarttmr(void)
 void
 apicinittmr(void)
 {
-    volatile uint32_t *apic = mpapic;
-    uint32_t           freq;
-    uint32_t           tmrcnt;
-    uint8_t            tmp8;
+    uint32_t *apic = mpapic;
+    uint32_t  freq;
+    uint32_t  tmrcnt;
+    uint8_t   tmp8;
 
     if (!apic) {
         apic = apicprobe();
@@ -121,11 +121,11 @@ apicinittmr(void)
 }
 
 void
-apicinit(long id)
+apicinit(void)
 {
-    volatile struct m_cpu *m_cpu = k_curcpu;
-    static long            first = 1;
-    uint32_t               tmrcnt;
+    struct cpu  *cpu = k_curcpu;
+    static long  first = 1;
+    uint32_t     tmrcnt;
 
     if (!mpapic) {
         mpapic = apicprobe();
@@ -137,7 +137,6 @@ apicinit(long id)
         return;
     }
 
-    m_cpu->data.id = id;
     if (first) {
         /* identity-map APIC to kernel virtual address space */
         first = 0;
@@ -172,7 +171,7 @@ apicinit(long id)
     apicwrite(0, APICERRSTAT);
     /* acknowledge outstanding interrupts */
     apicwrite(0, APICEOI);
-    if (m_cpu != mpbootcpu) {
+    if (cpu != mpbootcpu) {
         /* send init level deassert to synchronise arbitration IDs */
         apicsendirq(0, APICBCAST | APICINIT | APICLEVEL, 0);
         while (apicread(APICINTRLO) & APICDELIVS) {

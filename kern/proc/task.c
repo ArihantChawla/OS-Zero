@@ -7,6 +7,7 @@
 #define DEQ_TYPE struct taskid
 #include <zero/deq.h>
 
+extern struct cpu    cputab[NCPU];
 struct task          tasktab[NTASK] ALIGNED(PAGESIZE);
 static struct taskid taskidtab[NTASK];
 static struct taskid taskidqueue;
@@ -25,6 +26,29 @@ taskinitids(void)
         deqappend(taskid, &queue);
     }
     fmtxunlk(&queue->lk);
+
+    return;
+}
+
+void
+taskinittls(long unit)
+{
+    struct cpu *cpu = &cputab[unit];
+
+    k_curcpu = cpu;
+    k_curunit = unit;
+    k_curpid = PROCKERN;
+
+    return;
+}
+
+void
+taskinit(struct task *task, long unit)
+{
+    taskinittls(unit);
+    if (!task) {
+        ;
+    }
 
     return;
 }

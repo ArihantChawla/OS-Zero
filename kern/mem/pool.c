@@ -118,7 +118,7 @@ memalloc(size_t nb, long flg)
             kprintf("duplicate allocation %p (%ld/%ld)\n",
                     ptr, ndx, mag->n);
 
-            panic(k_curproc->pid, TRAPNONE, -EINVAL);
+            panic(k_curpid, TRAPNONE, -EINVAL);
         }
         setbit(bmap, ndx);
 #endif /* defined(MEMPARANOIA) */
@@ -127,7 +127,7 @@ memalloc(size_t nb, long flg)
         }
     }
     if (!ptr) {
-        panic(k_curproc->pid, TRAPNONE, -ENOMEM);
+        panic(k_curpid, TRAPNONE, -ENOMEM);
     }
     fmtxunlk(&bkt->lk);
 

@@ -37,58 +37,6 @@
 #endif
 //#include <kern/unit/x86/asm.h>
 
-#if (VBE)
-extern void trapinitprot(void);
-#endif
-extern void cpuinit(long id);
-extern long sysinit(long id);
-extern long ioinitbuf(void);
-
-#if (HPET)
-extern void hpetinit(void);
-#endif
-#if (SMP)
-extern void mpstart(void);
-#endif
-#if (VBE)
-extern void idtinit(uint64_t *idt);
-extern void vbeinitscr(void);
-extern void vbeprintinfo(void);
-#endif
-#if (SMBIOS)
-extern void smbiosinit(void);
-#endif
-#if (PS2DRV)
-extern void ps2init(void);
-#endif
-#if (PLASMA)
-extern void plasmaloop(long nsec);
-#endif
-#if (PCI)
-extern void pciinit(void);
-#endif
-#if (ATA)
-extern void atainit(void);
-#endif
-#if (AC97)
-extern long ac97init(void);
-#endif
-#if (ACPI)
-extern void acpiinit(void);
-#endif
-#if (SB16)
-extern void sb16init(void);
-#endif
-#if (APIC)
-extern void apicinit(long id);
-extern void apicstarttmr(void);
-#endif
-extern void taskinitenv(void);
-#if (USERMODE)
-extern FASTCALL void m_jmpusr(long id, void *func);
-#endif
-extern void schedloop(void);
-
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
 extern uint8_t                   kernsysstktab[NCPU * KERNSTKSIZE];
 extern uint8_t                   kernusrstktab[NCPU * KERNSTKSIZE];
@@ -128,6 +76,12 @@ kinitprot(unsigned long pmemsz)
     /* INITIALIZE CONSOLES AND SCREEN */
     /* TODO: use memory map from GRUB? */
     vminitphys((uintptr_t)&_epagetab, lim - (unsigned long)&_epagetab);
+    meminit(min(pmemsz, lim), min(KERNVIRTBASE, lim));
+    taskinitenv();
+    tssinit(0);
+#if (PS2DRV)
+    ps2init();
+#endif
 #if (VBE)
     vbeinitscr();
 #endif
@@ -136,15 +90,31 @@ kinitprot(unsigned long pmemsz)
 #elif (VBE)
     consinit(768 >> 3, 1024 >> 3);
 #endif
-    meminit(min(pmemsz, lim), min(KERNVIRTBASE, lim));
-    tssinit(0);
+#if (SMP) || (APIC)
+//#if (SMP)
+    /* multiprocessor initialisation */
+    mpinit();
+//#endif
+    if (mpncpu == 1) {
+        kprintf("found %ld processor\n", mpncpu);
+    } else {
+        kprintf("found %ld processors\n", mpncpu);
+    }
+#if (APIC)
+    apicinit();
+#endif
+#if (IOAPIC)
+    ioapicinit();
+#endif
+#if 0
+    if (mpmultiproc) {
+        mpstart();
+    }
+#endif
+#endif /* SMP || APIC */
+    procinit(PROCKERN, SCHEDNOCLASS);
     kprintf("%lu free physical pages @ 0x%p..0x%p\n",
             vmpagestat.nphys, vmpagestat.phys, vmpagestat.physend);
-#if 0
-    /* FIXME: map possible device memory */
-    vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
-             PAGEPRES | PAGEWRITE | PAGENOCACHE);
-#endif
 #if (SMBIOS)
     smbiosinit();
 #endif
@@ -153,9 +123,6 @@ kinitprot(unsigned long pmemsz)
 #endif
     logoprint();
 //    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
-#if (APIC)
-    apicinit(0);
-#endif
     /* HID devices */
 #if (PCI)
     /* initialise PCI bus driver */
@@ -177,6 +144,7 @@ kinitprot(unsigned long pmemsz)
     /* initialise ACPI subsystem */
     acpiinit();
 #endif
+#if (IOBUF)
     /* initialise block I/O buffer cache */
     if (!ioinitbuf()) {
         kprintf("failed to allocate buffer cache\n");
@@ -190,32 +158,7 @@ kinitprot(unsigned long pmemsz)
             vmpagestat.buf, vmpagestat.bufend);
     /* allocate unused device regions (in 3.5G..4G) */
 //    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffffU - DEVMEMBASE + 1);
-#if (SMP) || (APIC)
-//#if (SMP)
-    /* multiprocessor initialisation */
-    mpinit();
-//#endif
-    if (mpncpu == 1) {
-        kprintf("found %ld processor\n", mpncpu);
-    } else {
-        kprintf("found %ld processors\n", mpncpu);
-    }
-    sysinit(0);
-    schedinit();
-#if (HPET)
-    /* initialise high precision event timers */
-    hpetinit();
-#endif
-#if (IOAPIC)
-    ioapicinit(0);
-#endif
-#endif /* SMP || APIC */
-#if (SMP) && 0
-    if (mpmultiproc) {
-        mpstart();
-    }
-#endif
-    taskinitenv();
+//    taskinitenv();
 //    tssinit(0);
 //    machinit();
     /* execution environment */
@@ -229,14 +172,12 @@ kinitprot(unsigned long pmemsz)
              << (PAGESIZELOG2 - 10)),
             vmpagestat.nwire << (PAGESIZELOG2 - 10),
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
-#if (PS2DRV)
-    ps2init();
 #endif
-    procinit(PROCKERN, SCHEDNOCLASS);
-#if 0
-    __asm__ __volatile__ ("movl %0, %%esp\n"
-                          :
-                          : "rm" (sp));
+    sysinit();
+    schedinit();
+#if (HPET)
+    /* initialise high precision event timers */
+    hpetinit();
 #endif
 #if (APIC)
     apicstarttmr();

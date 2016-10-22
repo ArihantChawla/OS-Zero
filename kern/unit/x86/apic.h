@@ -13,9 +13,9 @@
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/link.h>
 
-extern volatile uint32_t *mpapic;
+extern uint32_t *volatile mpapic;
 
-void apicinit(long id);
+void apicinit(void);
 void apicstart(uint8_t id, uint32_t adr);
 void kusleep(unsigned long nusec);
 
@@ -223,7 +223,7 @@ struct apic {
 static __inline__ uint32_t
 apicread(uint32_t reg)
 {
-    volatile uint32_t ret = mpapic[reg >> 2];
+    uint32_t ret = mpapic[reg >> 2];
 
     return ret;
 }

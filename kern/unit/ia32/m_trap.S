@@ -432,12 +432,12 @@ trappf:
 	leal	40(%esp), %ebx		// stack frame argument on stack
 	/* error code is in %ecx */
 	pushl	%ebx
-	movl	%cr2, %edx		// fault address
+	movl	%cr2, %edx		// fault address in edx
 	xorl	%gs:20, %eax		// FIXME: PID
 #else
 	movl	%cr2, %edx		// linear address
 	pushl	%ecx			// error code
-	pushl	%edx
+	pushl	%edx			// linear address
 	pushl	$0x00000000		// FIXME: push PID here
 #endif	
 	call	vmpagefault

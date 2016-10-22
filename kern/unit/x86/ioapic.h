@@ -5,7 +5,7 @@
 #include <zero/param.h>
 #include <zero/trix.h>
 
-void ioapicinit(long id);
+void ioapicinit(void);
 
 #define IOAPICID  0x00
 #define IOAPICVER 0x01

@@ -11,15 +11,15 @@
 static struct sys k_sys ALIGNED(PAGESIZE);
 
 void
-sysinit(long id)
+sysinit(void)
 {
     volatile struct m_cpucacheinfo  cbuf;
-    volatile struct m_cpu          *m_cpu = k_curcpu;
-    volatile struct m_cpuinfo      *info = &m_cpu->info;
+    volatile struct cpu            *cpu = k_curcpu;
+    volatile struct m_cpuinfo      *info = &cpu->info;
     long                           *tab = k_sys.conf.tab;
     long                           *ptr = tab + zeroabs(MINSYSCONF);
 
-    if (!(m_cpu->data.flg & CPUINITBIT)) {
+    if (!(cpu->flg & CPUINITBIT)) {
         /* CPU interface */
         cpuprobe(info, &cbuf);
     }

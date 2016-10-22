@@ -69,6 +69,7 @@ struct task {
     struct siginfo **sigqueue     ;     // info structures for pending signals
     /* scheduler parameters */
     m_atomic_t       lk;
+    long             unit;              // CPU-affinity
     long             sched;             // thread scheduler class
     long             flg;               // received user input [interrupt]
     long             runprio;           // current priority
@@ -77,7 +78,6 @@ struct task {
     long             nice;              // priority adjustment
     long             state;             // thread state
     long             score;             // interactivity score
-    long             cpu;               // CPU-affinity
     long             slice;             // timeslice in ticks
     long             runtime;           // # of ticks run
     long             slptime;           // # of ticks  of slept voluntarily

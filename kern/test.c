@@ -1,6 +1,8 @@
+#include <kern/conf.h>
 #include <sys/io.h>
 #include <zero/cdefs.h>
-#include <kern/unit/x86/asm.h>
+#include <kern/asm.h>
+#include <kern/unit/x86/pic.h>
 
 NOINLINE
 void

@@ -6,20 +6,22 @@
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <zero/fastidiv.h>
-#include <zero/mtx.h>
+#include <zero/spin.h>
 //#include <kern/sched.h>
 #include <kern/proc/task.h>
 
-extern void schedsetready(struct task *task, long cpu);
+extern long mpmultiproc;
+
+extern void schedsetready(struct task *task, long unit);
 extern void schedsetwait(struct task *task);
 extern void schedsetsleep(struct task *task);
 
-#define schedlkcpuntick(cpu)     (fmtxlk(&cpu->lk), (cpu)->ntick)
-#define schedlkcpu(cpu)          (fmtxlk(&cpu->lk))
-#define schedunlkcpu(cpu)        (fmtxunlk(&cpu->lk))
-#define schedlktaskruntime(task) (fmtxlk(&task->lk), (task)->runtime)
-#define schedlktask(task)        (fmtxlk(&task->lk))
-#define schedunlktask(task)      (fmtxunlk(&task->lk))
+#define schedlkcpuntick(cpu)     (spinlk(&cpu->lk), (cpu)->ntick)
+#define schedlkcpu(cpu)          (spinlk(&cpu->lk))
+#define schedunlkcpu(cpu)        (spinunlk(&cpu->lk))
+#define schedlktaskruntime(task) (spinlk(&task->lk), (task)->runtime)
+#define schedlktask(task)        (spinlk(&task->lk))
+#define schedunlktask(task)      (spinunlk(&task->lk))
 
 #if defined(ZEROSCHED)
 
@@ -28,18 +30,6 @@ extern void schedsetsleep(struct task *task);
 #endif
 
 /* macros */
-#define schedsetcpu(cpu)                                                \
-    do {                                                                \
-        k_curcpu = (cpu);                                               \
-    } while (0)
-#define schedsettask(task)                                              \
-    do {                                                                \
-        volatile struct m_cpu *_m_cpu = k_curcpu;                       \
-                                                                        \
-        _m_cpu->task = task;                                            \
-        _m_cpu->proc = task->proc;                                      \
-    } while (0)
-
 #define schedcalctime(task)  ((task)->ntick >> SCHEDTICKSHIFT)
 #define schedcalcticks(task) (max((task)->lastrun - (task)->firstrun, kgethz()))
 #define schedcalcnice(val)   (schednicetab[(val)])
@@ -114,7 +104,7 @@ struct schedqueueset {
     uint8_t       _pad[__STRUCT_SCHEDQUEUESET_PAD];
 };
 
-extern struct m_cpu          m_cputab[NCPU];
+extern struct cpu            cputab[NCPU];
 extern long                  schedidlecoremap[SCHEDIDLECOREMAPNWORD];
 extern struct task          *schedreadytab0[SCHEDNQUEUE];
 extern struct task          *schedreadytab1[SCHEDNQUEUE];
@@ -130,14 +120,14 @@ extern long                 *schedsliceptr;
 static __inline__ void
 schedadjcpupct(struct task *task, long run)
 {
-    volatile struct m_cpu *m_cpu = k_curcpu;
-    long                   tick = m_cpu->data.ntick;
-    unsigned               last = task->lastrun;
-    long                   diff = tick - last;
-    long                   delta;
-    long                   ntick;
-    long                   val;
-    long                   div;
+    struct cpu *cpu = k_curcpu;
+    long        tick = cpu->ntick;
+    unsigned    last = task->lastrun;
+    long        diff = tick - last;
+    long        delta;
+    long        ntick;
+    long        val;
+    long        div;
 
     if (diff >= SCHEDHISTORYNTICK) {
         task->ntick = 0;
@@ -154,6 +144,7 @@ schedadjcpupct(struct task *task, long run)
             ntick = fastu32div24(ntick, div, fastu32div24tab);
             ntick *= last;
             task->firstrun = val;
+            task->ntick = ntick;
         }
     }
     if (run) {
@@ -166,38 +157,39 @@ schedadjcpupct(struct task *task, long run)
 }
 
 static __inline__ void
-schedswapqueues(long cpu)
+schedswapqueues(void)
 {
     struct schedqueueset *set = &schedreadyset;
 
-    fmtxlk(&set->lk);
+    if (mpmultiproc) {
+        spinlk(&set->lk);
+    }
     set->next = set->cur;
     set->cur = set->next;
     set->nextmap = set->curmap;
     set->curmap = set->nextmap;
-    fmtxunlk(&set->lk);
+    if (mpmultiproc) {
+        spinunlk(&set->lk);
+    }
 
     return;
 }
 
-static __inline__ struct m_cpu *
-schedfindidlecore(long id, long *retcore)
+static __inline__ struct cpu *
+schedfindidlecore(long unit, long *retcore)
 {
-    struct m_cpu *m_cpu = &m_cputab[id];
-    long          nunit = NCPU;
-    long          ndx = 0;
-    long          val = 0;
+    struct cpu *cpu = &cputab[unit];
+    long        nunit = NCPU;
+    long        ndx = 0;
+    long        val = 0;
 
-    fmtxlk(&m_cpu->data.mtx);
     for (ndx = 0 ; ndx < nunit ; ndx++) {
-        if (ndx != id && bitset(schedidlecoremap, ndx)) {
-            fmtxunlk(&m_cpu->data.mtx);
+        if (ndx != unit && bitset(schedidlecoremap, ndx)) {
             *retcore = ndx;
 
-            return m_cpu;
+            return cpu;
         }
     }
-    fmtxunlk(&m_cpu->data.mtx);
 
     return NULL;
 }
@@ -449,7 +441,7 @@ schedcalcintparm(struct task *task, long *retscore)
 static __inline__ void
 taskwakeup(struct task *task)
 {
-    long id = k_curcpu->data.id;
+    long unit = k_curcpu->unit;
     long sched = task->sched;
     long slptick = task->slptick;
     long slp;
@@ -462,7 +454,7 @@ taskwakeup(struct task *task)
 
     task->slptick = 0;
     if (slptick) {
-        tick = k_curcpu->data.ntick;
+        tick = k_curcpu->ntick;
         if (slptick != tick) {
             diff = tick - slptick;
             slp = task->slptime;
@@ -477,14 +469,14 @@ taskwakeup(struct task *task)
         schedcalcprio(task);
     }
 #if (SMP) && 0
-    id = schedfindidlecore(id, &core);
+    unit = schedfindidlecore(unit, &core);
 #endif
     task->state = TASKREADY;
-    task->cpu = id;
+    task->unit = unit;
     m_taskjmp(&task->m_task);
 #if 0
-    schedsetcpu(&m_cputab[id]);
-    schedsetready(task, id);
+    schedsetcpu(&cputab[unit]);
+    schedsetready(task, unit);
 #endif
     /* FIXME: sched_setpreempt() */
 }

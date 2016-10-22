@@ -171,8 +171,6 @@ meminitcpubuf(long unit, long how)
 long
 meminitbuf(void)
 {
-    long              unit = k_curcpu->data.id;
-//    struct membufbkt *tab = &membufbkttab[unit];
     struct membufbkt *tab = &membufbkt;
     struct membuf    *buf;
     struct memblk    *blk;
@@ -216,11 +214,9 @@ meminitbuf(void)
 struct membuf *
 memallocbuf(long how)
 {
-    volatile long     unit = k_curcpu->data.id;
-    uint8_t          *ptr;
-//    struct membufbkt *tab = &membufbkttab[unit];
     struct membufbkt *tab = &membufbkt;
     struct membuf    *ret = NULL;
+    uint8_t          *ptr;
     struct membuf    *buf;
     struct membuf    *last;
     long              loop;
@@ -243,8 +239,6 @@ memallocbuf(long how)
 void
 memfreebuf(struct membuf *buf)
 {
-    long              unit = k_curcpu->data.id;
-//    struct membufbkt *tab = &membufbkttab[unit];
     struct membufbkt *tab = &membufbkt;
 
     fmtxlk(&tab->lk);

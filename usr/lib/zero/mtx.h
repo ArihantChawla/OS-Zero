@@ -25,15 +25,14 @@
 
 #include <zero/asm.h>
 //#if defined(__KERNEL__) && (__MTKERNEL__)
-#if defined(__KERNEL__) && 0
-#include <kern/sched.h>
-#elif defined(PTHREAD)
+#if !defined(__KERNEL__)
+#if defined(PTHREAD)
 /* on some Linux setups, the pthread library declares no prototype */
 extern int pthread_yield(void);
-#endif
-#if defined(__linux__) && !defined(__KERNEL__)
+#elif defined(__linux__)
 #include <sched.h>
 #endif
+#endif /* !defined(__KERNEL__) */
 
 #if (defined(__KERNEL__) || defined(ZEROFMTX))
 typedef m_atomic_t      zerofmtx;
@@ -80,7 +79,7 @@ fmtxlk(m_atomic_t *lp)
     do {
         res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
         if (!res) {
-#if (ZEROFMTXYIELD) || defined(__KERNEL__)
+#if (ZEROFMTXYIELD) && !defined(__KERNEL__)
             thryield();
 #else
             m_waitint();

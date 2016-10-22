@@ -50,11 +50,6 @@ SECTIONS {
         mp.o(.text)
         mp.o(.data)
         mp.o(.bss)
-/*
-	vga.o(.text)
-	vga.o(.data)
-	vga.o(.bss)
-*/
 	vbe.o(.text)
 	vbe.o(.data)
 	vbe.o(.bss)
@@ -79,77 +74,18 @@ SECTIONS {
 	pic.o(.text)
 	pic.o(.data)
 	pic.o(.bss)
-
 	seg.o(.text)
 	seg.o(.data)
 	seg.o(.bss)
-
-	mem.o(.text)
-	mem.o(.data)
-	mem.o(.bss)
-	pool.o(.text)
-	pool.o(.data)
-	pool.o(.bss)
-	slab.o(.text)
-	slab.o(.data)
-	slab.o(.bss)
-
-	page.o(.text)
-	page.o(.data)
-	page.o(.bss)
-
 	vm.o(.text)
 	vm.o(.data)
 	vm.o(.bss)
-
 	util.o(.text)
 	util.o(.data)
 	util.o(.bss)
 	debug.o(.text)
 	debug.o(.data)
 	debug.o(.bss)
-/*
-	mpentry.o(.text)
-	mpentry.o(.data)
-	mpentry.o(.bss)
-*/
-	proc.o(.text)
-	proc.o(.data)
-	proc.o(.bss)
-
-/*
-	task.o(.text)
-	task.o(.data)
-	task.o(.bss)
-*/
-	m_task.o(.text)
-	m_task.o(.data)
-	m_task.o(.bss)
-
-/*
-	sched.o(.text)
-	sched.o(.data)
-	sched.o(.bss)
-*/
-
-    	apic.o(.text)
-    	apic.o(.data)
-    	apic.o(.bss)
-    	hpet.o(.text)
-    	hpet.o(.data)
-    	hpet.o(.bss)
-	sig.o(.text)
-	sig.o(.data)
-	sig.o(.bss)
-	cons.o(.text)
-	cons.o(.data)
-	cons.o(.bss)
-	ata.o(.text)
-	ata.o(.data)
-	ata.o(.bss)
-	ac97.o(.text)
-	ac97.o(.data)
-	ac97.o(.bss)
         _eboot = .;
 	. = ALIGN(PAGESIZE);
     }

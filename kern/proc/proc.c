@@ -12,7 +12,7 @@
 #include <kern/mem/page.h>
 #include <kern/proc/proc.h>
 #include <kern/proc/task.h>
-#include <kern/obj.h>
+//#include <kern/obj.h>
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/link.h>
 #include <kern/unit/ia32/task.h>
@@ -25,95 +25,106 @@ struct proc        *proczombietab[NTASK];
 long
 procinit(long id, long sched)
 {
-    volatile struct m_cpu *m_cpu = k_curcpu;
-    struct proc           *proc = &proctab[id];
-    struct task           *task = &tasktab[id];
-    long                   prio;
-    long                   val;
-    struct taskstk        *stk;
-    void                  *ptr;
-    uint8_t               *u8ptr;
+    volatile struct cpu *cpu;
+    struct proc         *proc;
+    struct task         *task;
+    long                 prio;
+    long                 val;
+    struct taskstk      *stk;
+    void                *ptr;
+    uint8_t             *u8ptr;
 
-    proc->nice = 0;
-    proc->task = task;
-    task->m_task.flg = 0;
-    if (m_cpu->info.flg & CPUHASFXSR) {
-        task->m_task.flg |= CPUHASFXSR;
-    }
-    val = 0;
-    task->flg = val;
-    task->state = TASKNEW;
-    task->score = val;
-    task->cpu = m_cpu->data.id;
-    task->slice = val;
-    task->runtime = val;
-    task->slptime = val;
-    task->ntick = val;
-    val = m_cpu->data.ntick;
-    task->lastrun = val;
-    task->firstrun = val;
-    task->lasttick = val;
-    task->proc = proc;
-    k_curproc = proc;
-    k_curtask = task;
-    proc->pid = id;
     if (id < TASKNPREDEF) {
+        task = &tasktab[id];
         prio = SCHEDSYSPRIOMIN;
         task->sched = SCHEDSYSTEM;
         task->prio = prio;
         proc->pagedir = (pde_t *)kernpagedir;
         proc->pagetab = (pte_t *)&_pagetab;
+        task->state = TASKREADY;
+        k_curcpu = &cputab[id];
+        k_curunit = 0;
+        k_curtask = &tasktab[id];
+        k_curpid = id;
+
+        return id;
     } else {
+        id = taskgetid();
+        proc = &proctab[id];
+        task = &tasktab[id];
+        task->state = TASKNEW;
+        proc->pid = id;
+        proc->nice = 0;
+        proc->task = task;
+        k_curtask = task;
+        task->proc = proc;
+        val = 0;
+        if (cpu->flg & CPUHASFXSR) {
+            val = CPUHASFXSR;
+            task->m_task.flg = val;
+        }
+        val = 0;
+        task->flg = val;
+        task->score = val;
+        task->unit = cpu->unit;
+        task->slice = val;
+        task->runtime = val;
+        task->slptime = val;
+        task->ntick = val;
+        val = cpu->ntick;
+        task->lastrun = val;
+        task->firstrun = val;
+        task->lasttick = val;
         if (sched == SCHEDNOCLASS) {
             prio = SCHEDUSERPRIOMIN;
             task->sched = SCHEDNORMAL;
+            task->prio = prio;
         } else {
             prio = schedclassminprio(sched);
             task->sched = sched;
+            task->prio = prio;
         }
-        task->prio = prio;
-        /* initialise page directory */
-        ptr = kwalloc(NPDE * sizeof(pde_t));
-        if (ptr) {
-            kbzero(ptr, NPDE * sizeof(pde_t));
-            proc->pagedir = ptr;
-        } else {
-            kfree(proc);
-            
-            return -1;
-        }
-        /* initialise page tables */
+        if (task->state == TASKNEW) {
+            /* initialise page directory */
+            ptr = kwalloc(NPDE * sizeof(pde_t));
+            if (ptr) {
+                kbzero(ptr, NPDE * sizeof(pde_t));
+                proc->pagedir = ptr;
+            } else {
+                kfree(proc);
+                
+                return -1;
+            }
+            /* initialise page tables */
 #if (VMFLATPHYSTAB)
-        ptr = kwalloc(PAGETABSIZE);
-        if (ptr) {
-            kbzero(ptr, PAGETABSIZE);
-            proc->pagetab = ptr;
-        } else {
-            kfree(proc->pagedir);
-            kfree(proc);
-            
-            return -1;
-        }
-#endif
-        /* initialise descriptor table */
-        ptr = kmalloc(TASKNDESC * sizeof(struct desc));
-        if (ptr) {
-            kbzero(ptr, TASKNDESC * sizeof(struct desc));
-            proc->desctab = ptr;
-            proc->ndesctab = TASKNDESC;
-        } else {
-            if (id >= TASKNPREDEF) {
-                kfree(proc->pagetab);
+            ptr = kwalloc(PAGETABSIZE);
+            if (ptr) {
+                kbzero(ptr, PAGETABSIZE);
+                proc->pagetab = ptr;
+            } else {
                 kfree(proc->pagedir);
                 kfree(proc);
+                
+                return -1;
             }
-            
-            return -1;
+#endif
+            /* initialise descriptor table */
+            ptr = kmalloc(TASKNDESC * sizeof(struct desc));
+            if (ptr) {
+                kbzero(ptr, TASKNDESC * sizeof(struct desc));
+                proc->desctab = ptr;
+                proc->ndesctab = TASKNDESC;
+            } else {
+                if (id >= TASKNPREDEF) {
+                    kfree(proc->pagetab);
+                    kfree(proc->pagedir);
+                    kfree(proc);
+                }
+            }
         }
     }
-    task->state = TASKREADY;
     
-    return 0;
+    return id;
 }
 
 /* see <kern/proc.h> for definitions of scheduler classes */

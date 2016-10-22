@@ -145,7 +145,7 @@ trapinitprio(void)
 }
 
 void
-trapinitprot(void)
+trapinit(void)
 {
     trapinitidt(kernidt);
     trapinitprio();

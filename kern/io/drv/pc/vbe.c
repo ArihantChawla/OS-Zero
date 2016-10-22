@@ -19,7 +19,9 @@
 #include <kern/cpu.h>
 #endif
 #include <kern/mem/vm.h>
+#if (VBEMTRR)
 #include <kern/mem/mtrr.h>
+#endif
 #include <kern/io/drv/chr/cons.h>
 #include <kern/io/drv/pc/vga.h>
 #include <kern/io/drv/pc/vbe.h>
@@ -167,11 +169,18 @@ vbeinitscr(void)
 // TODO: set vbescreen->fmt
     /* identity-map VBE framebuffer */
     vmmapseg(&_pagetab,
+             (uint32_t)0xa000,
+             (uint32_t)0xa000,
+             (uint32_t)0xa000 + sizeof(struct vbeinfo),
+             PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
+    vmmapseg(&_pagetab,
              (uint32_t)vbescreen.fbuf,
              (uint32_t)vbescreen.fbuf,
              (uint32_t)vbescreen.fbuf + vbescreen.fbufsize,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
+#if (VBEMTRR)
     mtrrsetwrcomb((uint32_t)vbescreen.fbuf, vbescreen.fbufsize);
+#endif
     vbeclrscr(GFX_BLACK);
 
     return;

@@ -3,22 +3,23 @@
 #include <zero/param.h>
 #include <kern/cpu.h>
 
+extern void    taskinittls(long unit);
 extern void    cpuprintinfo(void);
 
-struct m_cpu   m_cputab[NCPU] ALIGNED(PAGESIZE);
+struct cpu     cputab[NCPU] ALIGNED(PAGESIZE);
 extern uint8_t kernusrstktab[NCPU * KERNSTKSIZE];
 
-long
-cpuinit(long id)
+void
+cpuinit(long unit)
 {
-    struct m_cpu     *m_cpu = &m_cputab[id];
-    struct m_cpuinfo *info = &m_cpu->info;
+    struct cpu       *cpu = &cputab[unit];
+    struct m_cpuinfo *info = &cpu->info;
 
-    k_curcpu = m_cpu;
+    taskinittls(unit);
     cpuprobe(info, &info->cache);
-    m_cpu->data.flg |= CPUINITBIT;
+    cpu->flg |= CPUINITBIT | CPUHASINFO;
 
-    return id;
+    return;
 };
 
 

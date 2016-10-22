@@ -123,14 +123,14 @@ schedinitset(void)
 {
     long                  lim = NCPU;
     struct schedqueueset *set = &schedreadyset;
-    long                  cpu = k_curcpu->data.id;
+    long                  unit = k_curcpu->unit;
     long                  id;
 
     lim >>= __LONGBITSLOG2;
     for (id = 0 ; id < lim ; id++) {
         schedidlecoremap[id] = ~1L;
     }
-    clrbit(schedidlecoremap, cpu);
+    clrbit(schedidlecoremap, unit);
     set->curmap = schedreadymap0;
     set->nextmap = schedreadymap1;
     set->idlemap = schedidlemap;
@@ -205,7 +205,7 @@ schedsetdeadline(struct task *task)
 }
 
 void
-schedsetready(struct task *task, long cpu)
+schedsetready(struct task *task, long unit)
 {
     long                   sched = task->sched;
     long                   prio = task->prio;
@@ -331,7 +331,7 @@ FASTCALL
 struct task *
 schedswitchtask(struct task *curtask)
 {
-    long                   cpu = k_curcpu->data.id;
+    long                   unit = k_curcpu->unit;
     struct task           *task = NULL;
     struct task           *next;
     long                   state = (curtask) ? curtask->state : -1;
@@ -344,11 +344,15 @@ schedswitchtask(struct task *curtask)
     long                   lim;
     long                   loop;
 
+    if (!curtask) {
+
+        return curtask;
+    }
     if (curtask) {
         if (state != TASKNEW) {
             switch (state) {
                 case TASKREADY:
-                    schedsetready(curtask, cpu);
+                    schedsetready(curtask, unit);
 
                     break;
                 case TASKSLEEPING:
@@ -397,14 +401,14 @@ schedswitchtask(struct task *curtask)
                         task = NULL;
                     }
                     fmtxunlk(&set->lk);
-                    schedsettask(task);
+                    taskinit(task, unit);
 
                     return task;
                 }
             }
             if (loop) {
                 /* if no task found during the first iteration, switch queues */
-                schedswapqueues(cpu);
+                schedswapqueues();
             }
             fmtxunlk(&set->lk);
         } while (loop--);
@@ -430,22 +434,23 @@ schedswitchtask(struct task *curtask)
                     task = NULL;
                 }
                 fmtxunlk(&set->lk);
-                schedsettask(task);
+                taskinit(task, unit);
                 
                 return task;
             }
         }
         fmtxunlk(&set->lk);
         /* FIXME: try to pull threads from other cores here */
-//        task = taskpull(cpu);
+//        task = taskpull(unit);
         /* mark the core as idle */
         map = &schedidlecoremap[0];
+        setbit(map, unit);
         k_enabintr();
         m_waitint();
     } while (1);
-    schedsettask(task);
 
-    return task;
+    /* NOTREACHED */
+    return NULL;
 }
 
 #endif /* ZEROSCHED */

@@ -34,27 +34,26 @@ extern void tssinit(long id);
 /* MP table signature */
 #define MPSIG 0x5f504d5f        // "_MP_"
 
-extern pde_t    *kernpagedir[NPDE];
-
-extern void      gdtinit(void);
-extern void      trapinitidt(void);
+extern void gdtinit(void);
+extern void trapinitidt(void);
 #if (APIC)
-extern void      apicinit(long id);
+extern void apicinit(void);
 #endif
 #if (IOAPIC)
-extern void      ioapicinit(long id);
+extern void ioapicinit(void);
 #endif
-extern void      cpuinit(volatile struct m_cpu *m_cpu);
-extern void      seginit(long id);
-extern void      idtset(void);
+extern void cpuinit(long unit);
+extern void seginit(long id);
+extern void idtset(void);
 
-extern volatile struct m_cpu  m_cputab[NCPU];
-volatile struct m_cpu        *mpbootcpu;
-volatile long                 mpmultiproc;
-volatile long                 mpncpu;
-volatile long                 mpioapicid;
-volatile uint32_t            *mpapic;
-volatile uint32_t            *mpioapic;
+extern pde_t       *kernpagedir[NPDE];
+extern struct cpu   cputab[NCPU];
+struct cpu         *mpbootcpu;
+long                mpmultiproc;
+long                mpncpu;
+long                mpioapicid;
+uint32_t *volatile  mpapic;
+uint32_t           *mpioapic;
 
 static long
 mpchksum(uint8_t *ptr, unsigned long len)
@@ -161,7 +160,7 @@ mpinit(void)
     struct mpconf   *conf;
     struct mpcpu    *cpu;
     struct mpioapic *ioapic;
-    long             core;
+    long             unit;
     uint8_t         *u8ptr;
     uint8_t         *lim;
 
@@ -176,19 +175,11 @@ mpinit(void)
         switch (*u8ptr) {
             case MPCPU:
                 cpu = (struct mpcpu *)u8ptr;
-                core = cpu->id;
-#if 0
-                if (mpncpu != core) {
-                    mpmultiproc = 0;
-                }
-#endif
+                unit = cpu->id;
                 if (cpu->flags & MPCPUBOOT) {
-                    mpbootcpu = &m_cputab[core];
-#if 0
-                    cpuinit((struct cpu *)mpbootcpu);
-#endif
+                    mpbootcpu = &cputab[unit];
                 }
-                m_cputab[core].data.id = core;
+                cputab[unit].unit = unit;
                 mpncpu++;
                 u8ptr += sizeof(struct mpcpu);
 
@@ -225,26 +216,27 @@ mpinit(void)
 #if 0
     /* Boot CPU */
     /* local APIC initialisation where present */
-//    apicinit(0);
+//    apicinit();
     /* I/O APIC initialisation */
-//    ioapicinit(0);
+//    ioapicinit();
 #endif
 
     return;
 }
 
 void
-mpinitcpu(long id)
+mpinitcpu(long unit)
 {
+    cpuinit(unit);
     /* TODO: initialise HPET; enable [rerouted] interrupts */
 #if (HPET)
     hpetinit();
 #endif
-    apicinit(id);
+    apicinit();
 #if (IOAPIC)
-    ioapicinit(id);
+    ioapicinit();
 #endif
-    tssinit(id);
+    tssinit(unit);
 
     return;
 }
@@ -253,15 +245,12 @@ ASMLINK NORETURN
 void
 mpmain(struct cpu *cpu)
 {
-    seginit(cpu->id);
+    long unit = cpu->unit;
+    
+    seginit(unit);
     idtset();
     m_atomwrite((m_atomic_t *)&cpu->flg, CPUSTARTED);
-    mpinitcpu(cpu->id);
-#if 0
-    while (1) {
-        k_waitint();
-    }
-#endif
+    mpinitcpu(unit);
     schedloop();
 
     /* NOTREACHED */
@@ -290,14 +279,14 @@ mpstart(void)
             
             continue;
         }
-        kprintf("starting CPU %ld @ 0x%lx\n", cpu->id, MPENTRY);
+        kprintf("starting CPU %ld @ 0x%lx\n", cpu->unit, MPENTRY);
         cpuinit(cpu);
-        apicinit(cpu->id);
-        ioapicinit(cpu->id);
+        apicinit(cpu->unit);
+        ioapicinit(cpu->unit);
         *--mpentrystk = (uint32_t)cpu;
-        *--mpentrystk = MPENTRYSTK - cpu->id * MPSTKSIZE;
+        *--mpentrystk = MPENTRYSTK - cpu->unit * MPSTKSIZE;
         *--mpentrystk = (uint32_t)&kernpagedir;
-        apicstart(cpu->id, MPENTRY);
+        apicstart(cpu->unit, MPENTRY);
         while (!cpu->statflg) {
             ;
         }

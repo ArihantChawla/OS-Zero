@@ -274,15 +274,19 @@ vmfreephys(void *virt, uint32_t size)
 
 #if (FASTINTR)
 FASTCALL
+#else
+ASMLINK
 #endif
 void
-vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags, void *frame)
+vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
 {
     pte_t           *pte = (pte_t *)&_pagetab + vmpagenum(adr);
     uint32_t         flg = (uint32_t)*pte & (PAGEFLTFLGMASK | PAGESYSFLAGS);
     struct physpage *page = NULL;
     unsigned long    qid;
 
+    kprintf("PAGEFAULT: pid == %lx, adr == %lx, error == %lx\n",
+            pid, adr, error);
     if (!(adr & ~(PAGEFLTADRMASK | PAGESYSFLAGS))) {
         page = pageallocphys();
         if (page) {
