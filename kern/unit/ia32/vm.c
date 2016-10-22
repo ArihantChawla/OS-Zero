@@ -182,22 +182,6 @@ vminit(void *pagetab)
     /* identity-map 3.5G..4G */
 // devmap(pagetab, DEVMEMBASE, 512 * 1024 * 1024);
 
-    /* map kernel- and user-mode per-CPU stacks */
-    vmmapseg((uint32_t *)&_pagetab,
-             (uint32_t)kernsysstktab,
-             (uint32_t)kernsysstktab,
-             (uint32_t)kernsysstktab + NCPU * KERNSTKSIZE,
-             PAGEPRES | PAGEWRITE | PAGENOCACHE);
-    vmmapseg((uint32_t *)&_pagetab,
-             (uint32_t)kernusrstktab,
-             (uint32_t)kernusrstktab,
-             (uint32_t)kernusrstktab + NCPU * KERNSTKSIZE,
-             PAGEPRES | PAGEWRITE | PAGENOCACHE);
-
-    vmmapseg(pagetab, (uint32_t)&_usr, vmlinkadr((uint32_t)&_usrvirt),
-             (uint32_t)&_eusrvirt,
-             PAGEUSER | PAGEPRES);
-
     /* initialize paging */
     pginit();
     

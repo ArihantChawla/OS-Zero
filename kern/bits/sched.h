@@ -50,9 +50,10 @@ extern void schedsetsleep(struct task *task);
 #define schedisinteract(score)                                          \
     ((score) < SCHEDSCOREINTLIM)
 #define schedcalctrapqueue(pri)                                         \
-    ((pri) >> SCHEDNQUEUESHIFT)
+    (pri)
 #define schedcalcqueue(tupe, pri)                                       \
-    (((pri) - (type) * SCHEDNCLASSPRIO) >> 1)
+    ((((pri) - (type) * SCHEDNCLASSPRIO) >> SCHEDNQUEUESHIFT)           \
+     + schedclassminqueue(type))
 
 /* interrupt priorities */
 #define schedintrsoftprio(id)                                           \

@@ -178,6 +178,7 @@ mpinit(void)
                 unit = cpu->id;
                 if (cpu->flags & MPCPUBOOT) {
                     mpbootcpu = &cputab[unit];
+                    taskinittls(unit, PROCKERN);
                 }
                 cputab[unit].unit = unit;
                 mpncpu++;

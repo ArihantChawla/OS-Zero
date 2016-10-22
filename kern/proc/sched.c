@@ -212,10 +212,11 @@ schedsetready(struct task *task)
     long                   prio = task->prio;
     struct schedqueueset  *set = &schedreadyset;
     struct task          **queue;
-    long                  *map = NULL;
+    long                  *map;
     long                   score;
     long                   type;
     long                   ndx;
+    long                   qid;
     long                   load;
     long                   lim;
     long                   flg;
@@ -232,9 +233,9 @@ schedsetready(struct task *task)
             type = SCHEDREALTIME;
         }
         if (type == SCHEDTRAP) {
-            ndx = schedcalctrapqueue(prio);
+            qid = schedcalctrapqueue(prio);
         } else if (type == SCHEDREALTIME) {
-            ndx = schedcalcqueue(type, prio);
+            qid = schedcalcqueue(type, prio);
         } else {
             /* SCHEDSYSTEM */
             lim = schedclassmaxprio(SCHEDSYSTEM);
@@ -242,11 +243,12 @@ schedsetready(struct task *task)
                 prio++;
                 task->prio = prio;
             }
-            ndx = schedcalcqueue(SCHEDSYSTEM, prio);
+            qid = schedcalcqueue(SCHEDSYSTEM, prio);
         }
         fmtxlk(&set->lk);
-        map = &set->curmap[sched];
-        queue = &set->cur[prio];
+        map = set->curmap;
+        queue = &set->cur[qid];
+        setbit(map, qid);
     } else if (sched < SCHEDIDLE) {
         /* SCHEDNORMAL, SCHEDBATCH */
         flg = task->flg;
@@ -268,18 +270,19 @@ schedsetready(struct task *task)
         }
         task->sched = type;
         task->prio = prio;
-        ndx = schedcalcqueue(type, prio);
+        qid = schedcalcqueue(type, prio);
         if (schedisinteract(score)) {
             /* if interactive, insert onto current queue */
             fmtxlk(&set->lk);
-            map = &set->curmap[sched];
-            queue = &set->cur[sched];
+            map = set->curmap;
+            queue = &set->cur[qid];
         } else {
             /* if not interactive, insert onto next queue */
             fmtxlk(&set->lk);
-            map = &set->nextmap[sched];
-            queue = &set->next[sched];
+            map = set->nextmap;
+            queue = &set->next[qid];
         }
+        setbit(map, qid);
     } else {
         /* SCHEDIDLE */
         lim = SCHEDNCLASS * SCHEDNCLASSPRIO + SCHEDNIDLE - 1;
@@ -287,13 +290,14 @@ schedsetready(struct task *task)
             prio++;
             task->prio = prio;
         }
-        ndx = schedcalcqueue(SCHEDIDLE, prio);
+        qid = schedcalcqueue(SCHEDIDLE, prio);
+        ndx = qid - schedclassminqueue(SCHEDIDLE);
         fmtxlk(&set->lk);
         map = set->idlemap;
-        queue = set->idle;
+        queue = &set->idle[ndx];
+        setbit(map, ndx);
     }
-    load = set->loadmap[ndx];
-    setbit(map, ndx);
+    load = set->loadmap[qid];
     load++;
     if (sched != SCHEDREALTIMERR) {
         deqappend(task, queue);
@@ -301,7 +305,7 @@ schedsetready(struct task *task)
         /* SCHEDREALTIME with SCHED_FIFO */
         deqpush(task, queue);
     }
-    set->loadmap[ndx] = load;
+    set->loadmap[qid] = load;
     fmtxunlk(&set->lk);
     
     return;
@@ -327,42 +331,6 @@ schedsetzombie(struct proc *proc)
     return;
 }
 
-FASTCALL
-void
-schedqueuetask(struct task *task)
-{
-    long state = task->state;
-
-    if (state == TASKNEW) {
-        schedsetready(task);
-    } else {
-        switch (state) {
-            case TASKREADY:
-                schedsetready(task);
-                
-                break;
-            case TASKSLEEPING:
-                schedsetsleep(task);
-                
-                break;
-            case TASKSTOPPED:
-                schedsetstopped(task);
-                
-                break;
-            case TASKZOMBIE:
-                schedsetzombie(task->proc);
-                
-                break;
-            default:
-                panic(task->id, -1, 0); /* FIXME: error # */
-                
-                break;
-        }
-    }
-
-    return;
-}
-
 /* switch tasks */
 FASTCALL
 struct task *
@@ -381,11 +349,29 @@ schedswitchtask(struct task *curtask)
     long                   lim;
     long                   loop;
 
-    if (!curtask) {
-
-        return NULL;
+    switch (state) {
+        case TASKNEW:
+        case TASKREADY:
+            schedsetready(curtask);
+            
+            break;
+        case TASKSLEEPING:
+            schedsetsleep(curtask);
+            
+            break;
+        case TASKSTOPPED:
+            schedsetstopped(curtask);
+            
+            break;
+        case TASKZOMBIE:
+            schedsetzombie(curtask->proc);
+            
+            break;
+        default:
+            panic(curtask->id, -1, 0); /* FIXME: error # */
+            
+            break;
     }
-    schedqueuetask(curtask);
     do {
         loop = 1;
         do {

@@ -62,8 +62,6 @@
 
 .text	32
 
-.align	16
-
 trapde:
 	pushl	$0
 	pushl	$TRAPDE
@@ -598,76 +596,6 @@ _tmr0fin:
 
 	/* 32-bit x86 context switch */
 .align	16
-
-#if defined(PERTHRSTACKS) && (PERTHRSTACKS) && 0
-	/*
-	 * top of stack after interrupt
-	 * ----------------------------
-	 * ss		- user-stack segment selector
-	 * esp		- userland stack pointer
-	 * eflags
-	 * cs
-	 * eip	<- esp points here
-	 *
-	 * NOTE: ss and esp are only pushed if the interrupt happened
-	 * in user-mode, i.e. there's a privilege transition to system-mode
- 	 */
-irqtmr:
-	pushal				// push all general purpose registers
-	pushl	%ds			// push segment registers
-	pushl	%es
-	pushl	%fs
-	pushl	%gs
-	movl	%cr3, %eax		// page-directory address in EAX
-	movl	%gs:8, %ebx		// k_curtask, task pointer
-	movl	(%ebx), %ecx		// store task flags (FPU-type etc.)
-	pushl	%eax			// PDBR
-	leal	$FPUCTXSIZE(%esp), %edx	// prepare to save FPU-context
-	movl	%edx, %esp		// flags below FPU-context
-	pushl	%ecx			// save task flags
-	andl	$CPUHASFXSR, %ecx	// check for FXSAVE/FXRSTOR
-	cmpl	$0, %ecx		// if present, branch to _fxsave
-	jne	_fxsave			//
-	fnsave	(%edx)			// use fnsave instead
-	jmp	_fpusaved0
-_fxsave0:
-	fxsave	(%edx)
-_fpusaved0:
-	fwait
-	pushl	%esp			// store stack pointer
-	pushl	%ebx			// push current task pointer
-	call	schedswitchtask		// call scheduler function
-	popl	%edi			// pop earlier task pointer
-	cmpl	%eax, %edi		// did we reschedule the same task?
-	jne	_swtch			// if not, branch to _swtch
-	/* continue the same task */
-//	popl	%eax			// pop earlier task pointer
-	popl	%esp			// pop stack pointer
-	popl	%esi			// task flags
-#if 0
-	andl	$CPUHASFXSR, %esi	// check for FXSAVE/FXRSTOR
-	cmpl	$0, %esi		// if present, branch to _fxsave
-	jne	_fxsave			//
-	fnrstor (%esp)			// use fnsave instead
-	jmp	_fpusaved1
-_fxsave1:
-	fxrstor	(%esp)
-_fpusaved1:
-#endif
-	addl	$FPUCTXSIZE, %esp
-	popl	%edi			// pop PDBR
-	popl	%gs			// pop segment registers
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
-	iretl
-_swtch:
-	call	m_taskjmp
-	
-.align	16
-
-#else
 	/*
 	 * registers after interrupt
 	 * -------------------------
@@ -694,6 +622,11 @@ irqtmr:
 	// adjust sp for pushing m_tcb.genregs
 	leal	52(%eax), %esp
 	pushal				// push general-purpose registers
+	/* push segment registers */
+	pushl	%gs			// kernel thread-local storage
+	pushl	%fs			// user thread-local storage?
+	pushl	%es			// buffer segment? something... :)
+	pushl	%ds			// data segment
 	/* store FPU context */
 	/* %esp points to top of segregs */
 	movl	(%eax), %ebx		// fetch flg
@@ -706,11 +639,7 @@ irqtmr:
 _fxsave:	
 	fxsave	(%ecx)
 _fpusaved:
-	/* push segment registers */
-	pushl	%gs			// kernel thread-local storage
-	pushl	%fs			// user thread-local storage?
-	pushl	%es			// buffer segment? something... :)
-	pushl	%ds			// data segment
+	fwait
 	/* %esp points to m_task->tcb */
 	movl	8(%ebp), %edx		// EDX = pushed %cs
 	movl	(%ebp), %ebx		// EBX = stored frame pointer
@@ -723,7 +652,6 @@ _getsysstk:
 	/* construct stack information */
 	movl	$DATASEL, %esi		// ESI = system stack/data selector
 _havestk:	
-	fwait
 	leal	4(%ebp), %edi		// EDI = trap frame addr
 	movl	%ecx, 52(%eax)		// task->pdbr = PDBR
 	movl	%edx, 68(%eax)		// task->frame.cs = caller %cs
@@ -735,12 +663,13 @@ _havestk:
 	movl	%ecx, 48(%eax)		// patch %eax in m_tcb.genregs
 	movl	%edx, 72(%eax)		// frame->eflags = pre-interrupt value
 	movl	%esi, 64(%eax)		// frame.eip = return address
-	movl	%edi, 84(%eax)		// m_tcb.trapesp = trap frame address
+	movl	%edi, 84(%eax)		// m_task.trapesp = trap frame address
 	/* schedule next thread */
 	/* task structure address is still in %eax */
 	movl	%ebx, 28(%eax)		// task->genregs.ebp = pre-trap EBP
-	leal	4(%ebp), %esp		// restore stack pointer
-	pushl	%eax			// store copy of task pointer
+	movl	%ebp, %esp		// restore stack pointer
+	/* copy of task pointer is still in EAX */
+	pushl	%eax			// store task pointer
 	call	schedswitchtask		// call scheduler function
 	popl	%edx			// pop earlier task pointer
 	cmpl	%eax, %edx		// did we reschedule the same task?
@@ -776,7 +705,6 @@ _irqkbddone:
 	_trapleave
 	sti
 	iretl
-#endif /* PERTHRSTACKS */
 
 .align	16
 

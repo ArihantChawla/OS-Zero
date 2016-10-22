@@ -35,7 +35,7 @@ extern void schedyield(void);
 #define SCHEDNCLASS         6           // # of user scheduler classes
 #define SCHEDIDLE           SCHEDNCLASS // idle tasks
 #define SCHEDNQUEUE         (SCHEDNCLASS * SCHEDNCLASSQUEUE)
-#define SCHEDNTOTALQUEUE    (SCHEDNQUEUE + SCHEDNCLASSQUEUE) // SCHEDIDLE too
+#define SCHEDNTOTALQUEUE    (SCHEDNQUEUE + SCHEDNIDLE) // SCHEDIDLE too
 #define SCHEDNTABQUEUE      512
 #define SCHEDNOCLASS        (-0x7f)
 
@@ -52,6 +52,8 @@ extern void schedyield(void);
     ((c) * SCHEDNCLASSPRIO)
 #define schedclassmaxprio(c)                                            \
     (schedclassminprio(c) + SCHEDNCLASSPRIO - 1)
+#define schedclassminqueue(c)                                           \
+    ((c) * SCHEDNCLASSQUEUE)
 /* priority organisation */
 #define SCHEDNIDLE          SCHEDNCLASSQUEUE
 #define SCHEDSYSPRIOMIN     schedclassminprio(SCHEDSYSTEM)

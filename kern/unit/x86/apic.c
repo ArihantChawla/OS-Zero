@@ -136,7 +136,6 @@ apicinit(void)
 
         return;
     }
-
     if (first) {
         /* identity-map APIC to kernel virtual address space */
         first = 0;

@@ -31,13 +31,15 @@ taskinitids(void)
 }
 
 void
-taskinittls(long unit)
+taskinittls(long unit, long id)
 {
-    struct cpu *cpu = &cputab[unit];
+    struct cpu  *cpu = &cputab[unit];
+    struct task *task = &tasktab[id];
 
     k_curcpu = cpu;
     k_curunit = unit;
-    k_curpid = PROCKERN;
+    k_curtask = task;
+    k_curpid = id;
 
     return;
 }
@@ -45,7 +47,9 @@ taskinittls(long unit)
 void
 taskinit(struct task *task, long unit)
 {
-    taskinittls(unit);
+    long id = (k_curtask) ? k_curtask->id : PROCKERN;
+    
+    taskinittls(unit, id);
     if (!task) {
         ;
     }

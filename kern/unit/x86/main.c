@@ -19,7 +19,7 @@ long kernlongmode;
 
 ASMLINK
 void
-kmain(struct mboothdr *boothdr, unsigned long longmode)
+kmain(unsigned long longmode, struct mboothdr *boothdr)
 {
     unsigned long pmemsz = grubmemsz(boothdr);
 

@@ -25,7 +25,7 @@ struct proc        *proczombietab[NTASK];
 long
 procinit(long id, long sched)
 {
-    volatile struct cpu *cpu = k_curcpu;
+    volatile struct cpu *cpu;
     struct proc         *proc;
     struct task         *task;
     long                 prio;
@@ -35,6 +35,8 @@ procinit(long id, long sched)
     uint8_t             *u8ptr;
 
     if (id < TASKNPREDEF) {
+        cpu = &cputab[0];
+        proc = &proctab[id];
         task = &tasktab[id];
         prio = SCHEDSYSPRIOMIN;
         task->sched = SCHEDSYSTEM;
@@ -42,13 +44,17 @@ procinit(long id, long sched)
         proc->pagedir = (pde_t *)kernpagedir;
         proc->pagetab = (pte_t *)&_pagetab;
         task->state = TASKREADY;
-        k_curcpu = &cputab[0];
+        if (cpu->info.flg & CPUHASFXSR) {
+            task->flg |= CPUHASFXSR;
+        }
+        k_curcpu = cpu;
         k_curunit = 0;
-        k_curtask = &tasktab[id];
+        k_curtask = task;
         k_curpid = id;
 
         return id;
     } else {
+        cpu = &cputab[0];
         id = taskgetid();
         proc = &proctab[id];
         task = &tasktab[id];
@@ -58,21 +64,14 @@ procinit(long id, long sched)
         proc->task = task;
         k_curtask = task;
         task->proc = proc;
-#if 0
         val = 0;
         if (cpu->flg & CPUHASFXSR) {
             val = CPUHASFXSR;
-            task->m_task.flg = val;
+            task->flg |= val;
         }
-#endif
         val = 0;
         task->flg = val;
         task->score = val;
-        if (cpu) {
-            task->unit = cpu->unit;
-        } else {
-            task->unit = val;
-        }
         task->slice = val;
         task->runtime = val;
         task->slptime = val;

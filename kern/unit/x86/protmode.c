@@ -57,13 +57,12 @@ extern volatile struct acpidesc *acpidesc;
 extern struct pageq              vmphysq;
 extern struct pageq              vmshmq;
 
+FASTCALL
 void
 kinitprot(unsigned long pmemsz)
 {
     uint32_t lim = min(pmemsz, KERNVIRTBASE);
-#if 0
-    uint32_t sp = (uint32_t)kernusrstktab + KERNSTKSIZE;
-#endif
+    uint32_t sp = (uint32_t)kernusrstktab + NCPU * KERNSTKSIZE;
 
     /* initialise virtual memory */
     vminit((uint32_t *)&_pagetab);
@@ -76,7 +75,13 @@ kinitprot(unsigned long pmemsz)
     /* INITIALIZE CONSOLES AND SCREEN */
     /* TODO: use memory map from GRUB? */
     vminitphys((uintptr_t)&_epagetab, lim - (unsigned long)&_epagetab);
+    __asm__ __volatile__ ("movl %0, %%esp\n"
+                          "pushl %%ebp\n"
+                          "movl %%esp, %%ebp\n"
+                          :
+                          : "rm" (sp));
     meminit(min(pmemsz, lim), min(KERNVIRTBASE, lim));
+    cpuinit(0);
     taskinitenv();
     tssinit(0);
 #if (PS2DRV)

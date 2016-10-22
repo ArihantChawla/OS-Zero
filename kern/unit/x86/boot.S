@@ -47,8 +47,13 @@ mboothdr:
 _start2:
 	/* set kernel stack up */
 	movl	$BOOTSTKTOP, %esp
+#if 0
+	movl	$kernsysstktab, %eax
+	addl	$(NCPU * KERNSTKSIZE), %eax
+	movl	%eax, %esp
+#endif
+	pushl	%ebp
 	movl	%esp, %ebp
-	pushl	$0			// store longmode argument for kmain()
 	pushl	%ebx			// store boot-header address
 #if (LONGMODE)
 	call	_chkcpuid
@@ -60,6 +65,7 @@ _protmode:
 #else
 	xorl	%eax, %eax
 #endif
+	pushl	%eax			// store longmode argument for kmain()
 	call	kmain			// call kmain()
 
 /* check for presence of CPUID by trying to flip bit 21 in %eflags */
