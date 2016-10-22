@@ -25,7 +25,7 @@ struct proc        *proczombietab[NTASK];
 long
 procinit(long id, long sched)
 {
-    volatile struct cpu *cpu;
+    volatile struct cpu *cpu = k_curcpu;
     struct proc         *proc;
     struct task         *task;
     long                 prio;
@@ -42,7 +42,7 @@ procinit(long id, long sched)
         proc->pagedir = (pde_t *)kernpagedir;
         proc->pagetab = (pte_t *)&_pagetab;
         task->state = TASKREADY;
-        k_curcpu = &cputab[id];
+        k_curcpu = &cputab[0];
         k_curunit = 0;
         k_curtask = &tasktab[id];
         k_curpid = id;
@@ -58,15 +58,21 @@ procinit(long id, long sched)
         proc->task = task;
         k_curtask = task;
         task->proc = proc;
+#if 0
         val = 0;
         if (cpu->flg & CPUHASFXSR) {
             val = CPUHASFXSR;
             task->m_task.flg = val;
         }
+#endif
         val = 0;
         task->flg = val;
         task->score = val;
-        task->unit = cpu->unit;
+        if (cpu) {
+            task->unit = cpu->unit;
+        } else {
+            task->unit = val;
+        }
         task->slice = val;
         task->runtime = val;
         task->slptime = val;

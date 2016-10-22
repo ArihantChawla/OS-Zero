@@ -25,7 +25,7 @@ void                   schedsetzombie(struct proc *proc);
 extern struct cpu        cputab[NCPU];
 extern struct proc      *proczombietab[NTASK];
 extern struct tasktabl0  taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
-extern struct divu32     fastu32div24tab[rounduppow2(SCHEDHISTORYSIZE,
+extern struct divu16     fastu32div16tab[rounduppow2(SCHEDHISTORYSIZE,
                                                      PAGESIZE)];
 
 /* lookup table to convert nice values to priority offsets */
@@ -85,7 +85,8 @@ schedinit(void)
 #error define supported scheduler such as ZEROSCHED
 #endif
 #endif
-    fastu32div24gentab(fastu32div24tab, SCHEDHISTORYSIZE);
+    kprintf("SCHEDHISTORYSIZE == %ld\n", SCHEDHISTORYSIZE);
+    fastu32div16gentab(fastu32div16tab, SCHEDHISTORYSIZE);
     schedinitset();
 
     return;

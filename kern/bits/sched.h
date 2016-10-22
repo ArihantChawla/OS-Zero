@@ -40,10 +40,10 @@ extern void schedsetsleep(struct task *task);
     ((task)->prio = schedprioqueueid(pri) + (incr))
 #endif
 #define schedcalcuserprio(task)                                         \
-    (fastu32div24(schedcalctime(task),                                  \
+    (fastu32div16(schedcalctime(task),                                  \
                   (roundup(schedcalcticks(task), SCHEDPRIORANGE)        \
                    / SCHEDPRIORANGE),                                   \
-                  fastu32div24tab))
+                  fastu32div16tab))
 /* timeshare-tasks have interactivity scores */
 #define schedistimeshare(sched)                                         \
     ((sched) >= SCHEDRESPONSIVE && (sched) <= SCHEDBATCH)
@@ -109,7 +109,7 @@ extern long                  schedidlecoremap[SCHEDIDLECOREMAPNWORD];
 extern struct task          *schedreadytab0[SCHEDNQUEUE];
 extern struct task          *schedreadytab1[SCHEDNQUEUE];
 extern struct schedqueueset  schedreadyset;
-extern struct divu32         fastu32div24tab[rounduppow2(SCHEDHISTORYSIZE,
+extern struct divu16         fastu32div16tab[rounduppow2(SCHEDHISTORYSIZE,
                                                          PAGESIZE)];
 extern long                  schednicetab[SCHEDNICERANGE];
 extern long                  schedslicetab[SCHEDNICERANGE];
@@ -141,7 +141,7 @@ schedadjcpupct(struct task *task, long run)
             div = last - first;
             val = tick - SCHEDHISTORYNTICK;
             last -= val;
-            ntick = fastu32div24(ntick, div, fastu32div24tab);
+            ntick = fastu32div16(ntick, div, fastu32div16tab);
             ntick *= last;
             task->firstrun = val;
             task->ntick = ntick;
@@ -230,11 +230,11 @@ schedcalcscore(struct task *task)
 #if (SCHEDSCOREHALF == 64)
         run >>= 6;
 #else
-        run = fastu32div24(run, SCHEDSCOREHALF, fastu32div24tab);
+        run = fastu32div16(run, SCHEDSCOREHALF, fastu32div16tab);
 #endif
         res = SCHEDSCOREMAX;
         div = max(1, run);
-        tmp = fastu32div24(slp, div, fastu32div24tab);
+        tmp = fastu32div16(slp, div, fastu32div16tab);
         res -= tmp;
         task->score = res;
         
@@ -244,10 +244,10 @@ schedcalcscore(struct task *task)
 #if (SCHEDSCOREHALF == 64)
         slp >>= 6;
 #else
-        slp = fastu32div24(slp, SCHEDHALFSCORE, s);
+        slp = fastu32div16(slp, SCHEDHALFSCORE, s);
 #endif
         div = max(1, slp);
-        res = fastu32div24(run, div, fastu32div24tab);
+        res = fastu32div16(run, div, fastu32div16tab);
         task->score = res;
 
         return res;
@@ -285,7 +285,7 @@ schedcalcprio(struct task *task)
 #if (SCHEDSCOREINTLIM == 32)
         delta >>= 5;
 #else
-        delta = fastu32div24(delta, SCHEDSCOREINTLIM, fastu32div24tab);
+        delta = fastu32div16(delta, SCHEDSCOREINTLIM, fastu32div16tab);
 #endif
         delta *= score;
         prio += delta;
@@ -373,9 +373,9 @@ schedadjforkintparm(struct task *task)
         run += run2;
         slp += slp2;
 #else
-        ratio = fastu32div24(sum, SCHEDRECTIMEFORKMAX, fastu32div24tab);
-        run = fastu32div24(run, ratio, fastu32div24tab);
-        slp = fastu32div24(slp, ratio, fastu32div24tab);
+        ratio = fastu32div16(sum, SCHEDRECTIMEFORKMAX, fastu32div16tab);
+        run = fastu32div16(run, ratio, fastu32div16tab);
+        slp = fastu32div16(slp, ratio, fastu32div16tab);
 #endif
         task->runtime = run;
         task->slptime = slp;
@@ -409,7 +409,7 @@ schedcalcintparm(struct task *task, long *retscore)
 #if (SCHEDSCOREINTLIM == 32)
         range >>= 5;
 #else
-        range = fastu32div24(range, SCHEDSCOREINTLIM, fastu32div24tab);
+        range = fastu32div16(range, SCHEDSCOREINTLIM, fastu32div16tab);
 #endif
         range *= score;
         res += range;
@@ -425,9 +425,9 @@ schedcalcintparm(struct task *task, long *retscore)
             range = diff - res + 1;
             tmp = roundup(total, range);
             res += nice;
-            div = fastu32div24(total, tmp, fastu32div24tab);
+            div = fastu32div16(total, tmp, fastu32div16tab);
             range--;
-            total = fastu32div24(tickhz, div, fastu32div24tab);
+            total = fastu32div16(tickhz, div, fastu32div16tab);
             diff = min(total, range);
             res += diff;
         }

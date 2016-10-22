@@ -30,6 +30,11 @@
 #define FASTU32DIV24ADDBIT    0x20
 #define FASTU32DIV24SHIFTBIT  0x40
     
+struct divu16 {
+    uint16_t magic;
+    uint16_t info;
+};
+
 struct divu32 {
     uint32_t magic;
     uint32_t info;
@@ -43,29 +48,32 @@ struct divu64 {
 #if (LONGSIZE == 8 || LONGLONGSIZE == 8)
 void fastu64div32gentab(struct divu64 *duptr, uint64_t lim32);
 #endif
-void fastu32div16gentab(struct divu32 *duptr, uint32_t lim16);
-void fastu32div24gentab(struct divu32 *duptr, uint32_t lim24);
+void fastu32div16gentab(struct divu16 *duptr, uint32_t lim16);
+//void fastu32div24gentab(struct divu32 *duptr, uint32_t lim24);
 
 /* get the high 32 bits of val1 * val2 */
-static INLINE uint64_t
-_mullhiu32(uint64_t val1, uint64_t val2)
+static INLINE uint32_t
+_mullhiu32(uint32_t val1, uint32_t val2)
 {
-    uint64_t val = val1 * val2;
-    uint64_t res = val >> 32;
+    uint64_t v1 = val1;
+    uint64_t v2 = val2;
+    uint64_t res = v1 * 2;
 
-    return res;
+    return (uint32_t)(res >> 32);
 }
 
 /* get the high 16 bits of val1 * val2 */
-static INLINE uint32_t
-_mullhiu16(uint32_t val1, uint32_t val2)
+static INLINE uint16_t
+_mullhiu16(uint16_t val1, uint16_t val2)
 {
-    uint32_t val = val1 * val2;
-    uint32_t res = val >> 16;
+    uint32_t v1 = val1;
+    uint32_t v2 = val2;
+    uint32_t res = v1 * v2;
 
-    return res;
+    return (uint16_t)(res >> 16);
 }
 
+#if 0
 /* get the high 24 bits of val1 * val2 */
 static INLINE uint32_t
 _mullhiu24(uint32_t val1, uint32_t val2)
@@ -75,6 +83,7 @@ _mullhiu24(uint32_t val1, uint32_t val2)
 
     return res;
 }
+#endif
 
 #if (WORDSIZE == 8)
 
@@ -122,9 +131,9 @@ fastu64div32(uint64_t num, uint32_t div32,
 /* compute num/div16 with [possible] multiplication + shift operations */
 static INLINE uint32_t
 fastu32div16(uint32_t num, uint32_t div16,
-             const struct divu32 *tab)
+             const struct divu16 *tab)
 {
-    const struct divu32 *ulptr = &tab[div16];
+    const struct divu16 *ulptr = &tab[div16];
     uint32_t             magic = ulptr->magic;
     uint32_t             info = ulptr->info;
     uint32_t             lim = tab->magic;
@@ -158,6 +167,7 @@ fastu32div16(uint32_t num, uint32_t div16,
     return res;
 }
 
+#if 0
 /* compute num/div16 with [possible] multiplication + shift operations */
 static INLINE uint32_t
 fastu32div24(uint32_t num, uint32_t div24,
@@ -196,6 +206,7 @@ fastu32div24(uint32_t num, uint32_t div24,
         
     return res;
 }
+#endif
 
 #endif /* __ZERO_FASTIDIV_H__ */
 

@@ -705,6 +705,29 @@ divu10(unsigned long x)
     return q + ((r + 6) >> 4);
 }
 
+static __inline__ uint32_t
+divu60b(uint32_t x)
+{
+    uint32_t mul = 0x8889;
+    uint32_t res;
+
+    res = ((x * mul) >> 16) >> 5;
+
+    return res;
+
+}
+
+static __inline__ uint32_t
+divu100b(uint32_t x)
+{
+    uint32_t mul = 0x47af;
+    uint32_t res;
+
+    res = ((((x * mul) >> 16) + x) >> 1) >> 1;
+
+    return res;
+}
+
 static __inline__ unsigned long
 divu100(unsigned long x)
 {
