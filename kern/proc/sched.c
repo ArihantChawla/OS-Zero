@@ -18,7 +18,7 @@
 
 void                   schedinitset(void);
 FASTCALL struct task * schedswitchtask(struct task *curtask);
-void                   schedsetready(struct task *task, long cpu);
+void                   schedsetready(struct task *task);
 void                   schedsetstopped(struct task *task);
 void                   schedsetzombie(struct proc *proc);
 
@@ -206,7 +206,7 @@ schedsetdeadline(struct task *task)
 }
 
 void
-schedsetready(struct task *task, long unit)
+schedsetready(struct task *task)
 {
     long                   sched = task->sched;
     long                   prio = task->prio;
@@ -327,16 +327,52 @@ schedsetzombie(struct proc *proc)
     return;
 }
 
+FASTCALL
+void
+schedqueuetask(struct task *task)
+{
+    long state = task->state;
+
+    if (state == TASKNEW) {
+        schedsetready(task);
+    } else {
+        switch (state) {
+            case TASKREADY:
+                schedsetready(task);
+                
+                break;
+            case TASKSLEEPING:
+                schedsetsleep(task);
+                
+                break;
+            case TASKSTOPPED:
+                schedsetstopped(task);
+                
+                break;
+            case TASKZOMBIE:
+                schedsetzombie(task->proc);
+                
+                break;
+            default:
+                panic(task->id, -1, 0); /* FIXME: error # */
+                
+                break;
+        }
+    }
+
+    return;
+}
+
 /* switch tasks */
 FASTCALL
 struct task *
 schedswitchtask(struct task *curtask)
 {
     long                   unit = k_curcpu->unit;
-    struct task           *task = NULL;
-    struct task           *next;
     long                   state = (curtask) ? curtask->state : -1;
     struct schedqueueset  *set = &schedreadyset;
+    struct task           *task;
+    struct task           *next;
     struct task          **queue;
     long                  *map;
     long                   val;
@@ -347,36 +383,9 @@ schedswitchtask(struct task *curtask)
 
     if (!curtask) {
 
-        return curtask;
+        return NULL;
     }
-    if (curtask) {
-        if (state != TASKNEW) {
-            switch (state) {
-                case TASKREADY:
-                    schedsetready(curtask, unit);
-
-                    break;
-                case TASKSLEEPING:
-                    schedsetsleep(curtask);
-
-                    break;
-                case TASKSTOPPED:
-                    schedsetstopped(curtask);
-
-                    break;
-                case TASKZOMBIE:
-                    schedsetzombie(curtask->proc);
-
-                    break;
-                default:
-                    panic(curtask->id, -1, 0); /* FIXME: error # */
-
-                    break;
-            }
-        } else {
-            ; /* TODO */
-        }
-    }
+    schedqueuetask(curtask);
     do {
         loop = 1;
         do {
@@ -398,13 +407,10 @@ schedswitchtask(struct task *curtask)
                         if (!queue) {
                             m_clrbit((m_atomic_t *)map, ofs);
                         }
-                    } else {
-                        task = NULL;
+                        fmtxunlk(&set->lk);
+                    
+                        return task;
                     }
-                    fmtxunlk(&set->lk);
-                    taskinit(task, unit);
-
-                    return task;
                 }
             }
             if (loop) {
@@ -431,21 +437,18 @@ schedswitchtask(struct task *curtask)
                     if (!queue) {
                         m_clrbit((m_atomic_t *)map, ofs);
                     }
-                } else {
-                    task = NULL;
+                    fmtxunlk(&set->lk);
+                    
+                    return task;
                 }
-                fmtxunlk(&set->lk);
-                taskinit(task, unit);
-                
-                return task;
             }
         }
-        fmtxunlk(&set->lk);
         /* FIXME: try to pull threads from other cores here */
 //        task = taskpull(unit);
         /* mark the core as idle */
-        map = &schedidlecoremap[0];
+        map = &set->idlemap[0];
         setbit(map, unit);
+        fmtxunlk(&set->lk);
         k_enabintr();
         m_waitint();
     } while (1);

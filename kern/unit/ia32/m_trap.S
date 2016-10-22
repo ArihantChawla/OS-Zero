@@ -433,7 +433,7 @@ trappf:
 	/* error code is in %ecx */
 	pushl	%ebx
 	movl	%cr2, %edx		// fault address in edx
-	xorl	%gs:20, %eax		// FIXME: PID
+	xorl	%gs:12, %eax		// FIXME: PID
 #else
 	movl	%cr2, %edx		// linear address
 	pushl	%ecx			// error code
@@ -619,7 +619,7 @@ irqtmr:
 	pushl	%fs
 	pushl	%gs
 	movl	%cr3, %eax		// page-directory address in EAX
-	movl	%gs:12, %ebx		// k_curtask, task pointer
+	movl	%gs:8, %ebx		// k_curtask, task pointer
 	movl	(%ebx), %ecx		// store task flags (FPU-type etc.)
 	pushl	%eax			// PDBR
 	leal	$FPUCTXSIZE(%esp), %edx	// prepare to save FPU-context
@@ -690,7 +690,7 @@ irqtmr:
 	pushl	%ebp			// push frame pointer
 	movl	%esp, %ebp		// store stack pointer
 	pushl	%eax			// back %eax up
-	movl	%gs:12, %eax		// per-cpu current task
+	movl	%gs:8, %eax		// per-cpu current task
 	// adjust sp for pushing m_tcb.genregs
 	leal	52(%eax), %esp
 	pushal				// push general-purpose registers

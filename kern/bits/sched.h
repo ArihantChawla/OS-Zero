@@ -12,7 +12,7 @@
 
 extern long mpmultiproc;
 
-extern void schedsetready(struct task *task, long unit);
+extern void schedsetready(struct task *task);
 extern void schedsetwait(struct task *task);
 extern void schedsetsleep(struct task *task);
 
