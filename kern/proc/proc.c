@@ -25,31 +25,31 @@ struct proc        *proczombietab[NTASK];
 long
 procinit(long id, long sched)
 {
-    struct cpu     *cpu = k_curcpu;
-    struct proc    *proc = &proctab[id];
-    struct task    *task = &tasktab[id];
-    long            prio;
-    long            val;
-    struct taskstk *stk;
-    void           *ptr;
-    uint8_t        *u8ptr;
+    volatile struct m_cpu *m_cpu = k_curcpu;
+    struct proc           *proc = &proctab[id];
+    struct task           *task = &tasktab[id];
+    long                   prio;
+    long                   val;
+    struct taskstk        *stk;
+    void                  *ptr;
+    uint8_t               *u8ptr;
 
     proc->nice = 0;
     proc->task = task;
     task->m_task.flg = 0;
-    if (k_cpuinfo->flags & CPUHASFXSR) {
+    if (m_cpu->info.flg & CPUHASFXSR) {
         task->m_task.flg |= CPUHASFXSR;
     }
     val = 0;
-    task->schedflg = val;
+    task->flg = val;
     task->state = TASKNEW;
     task->score = val;
-    task->cpu = cpu->id;
+    task->cpu = m_cpu->data.id;
     task->slice = val;
     task->runtime = val;
     task->slptime = val;
     task->ntick = val;
-    val = cpu->ntick;
+    val = m_cpu->data.ntick;
     task->lastrun = val;
     task->firstrun = val;
     task->lasttick = val;
@@ -61,8 +61,8 @@ procinit(long id, long sched)
         prio = SCHEDSYSPRIOMIN;
         task->sched = SCHEDSYSTEM;
         task->prio = prio;
-        proc->vmpagemap.dir = (pde_t *)kernpagedir;
-        proc->vmpagemap.tab = (pde_t *)&_pagetab;
+        proc->pagedir = (pde_t *)kernpagedir;
+        proc->pagetab = (pte_t *)&_pagetab;
     } else {
         if (sched == SCHEDNOCLASS) {
             prio = SCHEDUSERPRIOMIN;
@@ -76,7 +76,7 @@ procinit(long id, long sched)
         ptr = kwalloc(NPDE * sizeof(pde_t));
         if (ptr) {
             kbzero(ptr, NPDE * sizeof(pde_t));
-            proc->vmpagemap.dir = ptr;
+            proc->pagedir = ptr;
         } else {
             kfree(proc);
             
@@ -87,8 +87,9 @@ procinit(long id, long sched)
         ptr = kwalloc(PAGETABSIZE);
         if (ptr) {
             kbzero(ptr, PAGETABSIZE);
+            proc->pagetab = ptr;
         } else {
-            kfree(proc->vmpagemap.dir);
+            kfree(proc->pagedir);
             kfree(proc);
             
             return -1;
@@ -102,8 +103,8 @@ procinit(long id, long sched)
             proc->ndesctab = TASKNDESC;
         } else {
             if (id >= TASKNPREDEF) {
-                kfree(proc->vmpagemap.tab);
-                kfree(proc->vmpagemap.dir);
+                kfree(proc->pagetab);
+                kfree(proc->pagedir);
                 kfree(proc);
             }
             

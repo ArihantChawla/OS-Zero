@@ -80,7 +80,7 @@ ps2initkbd(void)
         ps2readkbd(u8);
     } while (u8 != PS2KBD_ACK);
     irqvec[IRQKBD] = ps2kbdintr;
-    kprintf("PS/2 keyboard interrupt enabled\n");
+//    kprintf("PS/2 keyboard interrupt enabled\n");
 
     return;
 }
@@ -256,7 +256,7 @@ void
 ps2initmouse(void)
 {
     irqvec[IRQMOUSE] = ps2mouseintr;
-    kprintf("PS/2 mouse interrupt enabled\n");
+//    kprintf("PS/2 mouse interrupt enabled\n");
 
     return;
 }

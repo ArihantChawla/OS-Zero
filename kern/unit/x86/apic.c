@@ -1,3 +1,4 @@
+
 #include <kern/conf.h>
 
 #if (SMP) || (APIC)
@@ -15,16 +16,16 @@
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/x86/link.h>
 
-extern void                  irqtmr(void);
-extern void                  irqtmrcnt(void);
-extern void                (*irqerror)(void);
-extern void                (*irqspurious)(void);
-extern void                (*mpspurint)(void);
-extern uint64_t              kernidt[NINTR];
-extern void                 *irqvec[];
-extern volatile struct cpu   cputab[NCPU];
-extern volatile struct cpu  *mpbootcpu;
-static uint32_t              apictmrcnt;
+extern void                    irqtmr(void);
+extern void                    irqtmrcnt(void);
+extern void                  (*irqerror)(void);
+extern void                  (*irqspurious)(void);
+extern void                  (*mpspurint)(void);
+extern uint64_t                kernidt[NINTR];
+extern void                   *irqvec[];
+extern volatile struct m_cpu   m_cputab[NCPU];
+extern volatile struct m_cpu  *mpbootcpu;
+static uint32_t                apictmrcnt;
 
 /* TODO: fix this kludge */
 void
@@ -122,9 +123,9 @@ apicinittmr(void)
 void
 apicinit(long id)
 {
-    static long          first = 1;
-    volatile struct cpu *cpu = k_curcpu;
-    uint32_t             tmrcnt;
+    volatile struct m_cpu *m_cpu = k_curcpu;
+    static long            first = 1;
+    uint32_t               tmrcnt;
 
     if (!mpapic) {
         mpapic = apicprobe();
@@ -136,7 +137,7 @@ apicinit(long id)
         return;
     }
 
-    k_curcpu->id = id;
+    m_cpu->data.id = id;
     if (first) {
         /* identity-map APIC to kernel virtual address space */
         first = 0;
@@ -171,7 +172,7 @@ apicinit(long id)
     apicwrite(0, APICERRSTAT);
     /* acknowledge outstanding interrupts */
     apicwrite(0, APICEOI);
-    if (cpu != mpbootcpu) {
+    if (m_cpu != mpbootcpu) {
         /* send init level deassert to synchronise arbitration IDs */
         apicsendirq(0, APICBCAST | APICINIT | APICLEVEL, 0);
         while (apicread(APICINTRLO) & APICDELIVS) {

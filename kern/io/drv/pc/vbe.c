@@ -235,7 +235,7 @@ vbeprintinfo(void)
 {
     struct vbeinfo *info = (void *)VBEMODEADR;
     uint16_t       *modeptr = (uint16_t *)VBEPTR(info->modelst);
-//    long            cnt;
+    long            cnt;
 
 //    kmemcpy(&vbectlinfo, (void *)0xa000, sizeof(struct vbeinfo));
     kprintf("VBE FB: %ld kilobytes @ 0x%p - 0x%p\n",
@@ -244,18 +244,16 @@ vbeprintinfo(void)
     kprintf("VBE OEM: %s\n", (void *)VBEPTR(&info->oem));
     modeptr = (uint16_t *)VBEPTR(vbectlinfo.modelst);
     kprintf("VBE modes:");
-//    cnt = 0;
+    cnt = 0;
     while (*modeptr != VBEMODELSTEND) {
         if (*modeptr) {
             kprintf(" %x", *modeptr);
         }
-#if 0
         cnt++;
-        if (cnt == 24) {
+        if (cnt == 16) {
             kprintf("\n");
             cnt = 0;
         }
-#endif
         modeptr++;
     }
     kprintf("\n");

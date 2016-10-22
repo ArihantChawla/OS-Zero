@@ -6,16 +6,6 @@
  * -vendu
  */
 
-#if defined(__KERNEL__) && (__KERNEL__)
-#define __printf kprintf
-#define __strcmp kstrcmp
-#else
-#include <stdio.h>
-#include <string.h>
-#define __printf printf
-#define __strcmp strcmp
-#endif
-
 /* TODO: fix this stuff to run on SMP (per-CPU m_cpuinfo structures) */
 
 /*
@@ -41,72 +31,10 @@
 #include <kern/unit/x86/cpu.h>
 #endif
 
-/* cpuid instruction. */
-
-#define M_CPUIDVENDOR  0x00000000
-#define M_CPUIDINFO    0x00000001
-#define M_CPUIDCACHE   0x00000002
-#define M_CPUIDSERIAL  0x00000003
-#define M_CPUIDCORE    0x00000004
-#define M_CPUIDSSE3    0x00000005
-#define M_CPUIDPM      0x00000006
-#define M_CPUIDHI      0x80000000
-#define M_CPUIDEXTINFO 0x80000001
-#define M_CPUIDL1_AMD  0x80000005
-#define M_CPUIDL2_AMD  0x80000006
-
-#define cpuid(op, ptr)                                                  \
-    __asm__ __volatile__ ("movl %4, %%eax\n"                            \
-                          "cpuid\n"                                     \
-                          "movl %%eax, %0\n"                            \
-                          "movl %%ebx, %1\n"                            \
-                          "movl %%ecx, %2\n"                            \
-                          "movl %%edx, %3\n"                            \
-                          : "=m" ((ptr)->eax),                          \
-                            "=m" ((ptr)->ebx),                          \
-                            "=m" ((ptr)->ecx),                          \
-                            "=m" ((ptr)->edx)                           \
-                          : "i" (op)                                    \
-                          : "eax", "ebx", "ecx", "edx")
-        
-struct m_cpuid {
-    int32_t eax;
-    int32_t ebx;
-    int32_t ecx;
-    int32_t edx;
-};
-
-union m_cpuidvendor {
-    int32_t       wtab[4];
-    unsigned char str[16];
-};
-
-#define M_CPUIDINSTRTLB   0x00
-#define M_CPUIDDATATLB    0x01
-#define M_CPUIDINSTRCACHE 0x02
-#define M_CPUIDDATACACHE  0x03
-#define M_CPUIDUNICACHE   0x04
-struct m_cacheinfo {
-    int32_t type;
-    int32_t size;
-    int32_t nway;
-    int32_t xsize;
-};
+struct m_cacheinfo cpuidcacheinfo[16] ALIGNED(PAGESIZE);
+struct m_cpuinfo   cpuinfo;
 
 /* vendor strings. */
-/* vendor strings. */
-#define CPUIDAMD       0
-#define CPUIDINTEL     1
-#define CPUIDVIA       2
-#define CPUIDTRANSMETA 3
-#define CPUIDCYRIX     4
-#define CPUIDCENTAUR   5
-#define CPUIDNEXGEN    6
-#define CPUIDUMC       7
-#define CPUIDSIS       8
-#define CPUIDNSC       9
-#define CPUIDRISE      10
-
 static const char *_vendortab[]
 = {
     "AuthenticAMD",
@@ -122,133 +50,6 @@ static const char *_vendortab[]
     "RiseRiseRise"
 };
 
-static struct m_cacheinfo cpuidcacheinfo[256] ALIGNED(PAGESIZE);
-struct m_cpuinfo          cpuinfo;
-
-#define cpuidaddci(id, t, s, n, x)                                      \
-    do {                                                                \
-        cpuidcacheinfo[id].type = (t);                                  \
-        cpuidcacheinfo[id].size = (s);                                  \
-        cpuidcacheinfo[id].nway = (n);                                  \
-        cpuidcacheinfo[id].xsize = (x);                                 \
-    } while (0)
-
-static void
-cpuidinitci_intel(void)
-{
-    cpuidaddci(0x01, M_CPUIDINSTRTLB, 4096, 4, 32);
-    cpuidaddci(0x02, M_CPUIDINSTRTLB, 4096 * 1024, 4, 4);
-    cpuidaddci(0x03, M_CPUIDDATATLB, 4096, 4, 64);
-    cpuidaddci(0x04, M_CPUIDDATATLB, 4096 * 1024, 4, 8);
-    cpuidaddci(0x06, M_CPUIDINSTRCACHE, 8192, 4, 32);
-    cpuidaddci(0x08, M_CPUIDINSTRCACHE, 16384, 4, 32);
-    cpuidaddci(0x0a, M_CPUIDDATACACHE, 8192, 2, 32);
-    cpuidaddci(0x0c, M_CPUIDDATACACHE, 16384, 2, 32);
-    cpuidaddci(0x41, M_CPUIDUNICACHE, 131072, 4, 32);
-    cpuidaddci(0x42, M_CPUIDUNICACHE, 262144, 4, 32);
-    cpuidaddci(0x43, M_CPUIDUNICACHE, 524288, 4, 32);
-    cpuidaddci(0x44, M_CPUIDUNICACHE, 1048576, 4, 32);
-}
-
-static void
-cpuid_print_cache_info_intel(uint8_t id)
-{
-    struct m_cacheinfo *info;
-
-    info = &cpuidcacheinfo[id];
-    if (info->size) {
-        switch (info->type) {
-            case M_CPUIDINSTRTLB:
-                __printf("itlb: %ldK pages, %ld-way, %ld entries\n",
-                       (long)info->size / 1024, (long)info->nway, (long)info->xsize);
-                
-                break;
-            case M_CPUIDDATATLB:
-                __printf("dtlb: %ldK pages, %ld-way, %ld entries\n",
-                       (long)info->size / 1024, (long)info->nway, (long)info->xsize);
-                
-                break;
-            case M_CPUIDINSTRCACHE:
-                __printf("icache: %ldK, %ld-way, %ld-byte line\n",
-                       (long)info->size / 1024, (long)info->nway, (long)info->xsize);
-                
-                break;
-            case M_CPUIDDATACACHE:
-                __printf("dcache: %ldK, %ld-way, %ld-byte line\n",
-                       (long)info->size / 1024, (long)info->nway, (long)info->xsize);
-                
-                break;
-            case M_CPUIDUNICACHE:
-                __printf("ucache: %ldK, %ld-way, %ld-byte line\n",
-                       (long)info->size / 1024, (long)info->nway, (long)info->xsize);
-                
-                break;
-            default:
-                __printf("failed to probe cache info\n");
-
-                break;
-        }
-    }
-
-    return;
-}
-
-static void
-cpuid_print_l1_info_amd(struct m_cpuid *cpuid)
-{
-    __printf("dtlb: 4K pages, %ld-way, %ld entries\n",
-           (long)cpuid->ebx >> 24, ((long)cpuid->ecx >> 16) & 0xff);
-    __printf("dtlb: 2M pages, %ld-way, %ld entries\n",
-           (long)cpuid->eax >> 24, (long)cpuid->eax & 0xff);
-    __printf("dtlb: 4M pages, %ld-way, %ld entries\n",
-           (long)cpuid->eax >> 24, ((long)cpuid->eax & 0xff) >> 1);
-
-    __printf("itlb: 4K pages, %ld-way, %ld entries\n",
-           ((long)cpuid->ebx >> 8) & 0xff, (long)cpuid->edx & 0xff);
-    __printf("itlb: 2M pages, %ld-way, %ld entries\n",
-           ((long)cpuid->eax >> 8) & 0xff, (long)cpuid->eax & 0xff);
-    __printf("itlb: 4M pages, %ld-way, %ld entries\n",
-           ((long)cpuid->eax >> 8) & 0xff, ((long)cpuid->eax & 0xff) >> 1);
-
-    __printf("dcache: %ldK, %ld-way, %ld-byte line\n",
-           (long)cpuid->ecx >> 24, ((long)cpuid->ecx >> 16) & 0xff, (long)cpuid->ecx & 0xff);
-    __printf("icache: %ldK, %ld-way, %ld-byte line\n",
-           (long)cpuid->edx >> 24, ((long)cpuid->edx >> 16) & 0xff, (long)cpuid->edx & 0xff);
-
-    return;
-}
-
-static void
-cpuid_print_l2_info_amd(struct m_cpuid *cpuid)
-{
-    __printf("l2: %ldK, %ld-way, %ld-byte line\n",
-           (long)cpuid->ecx >> 16, ((long)cpuid->ecx >> 12) & 0x0f, (long)cpuid->ecx & 0xff);
-
-    __printf("l2dtlb: 4K, %ld-way,  %ld entries\n",
-           (long)cpuid->ebx >> 28, ((long)cpuid->ebx >> 16) & 0x0fff);
-    __printf("l2dtlb: 2M, %ld-way,  %ld entries\n",
-           (long)cpuid->eax >> 28, ((long)cpuid->eax >> 16) & 0x0fff);
-    __printf("l2dtlb: 4M, %ld-way,  %ld entries\n",
-           (long)cpuid->eax >> 28, (((long)cpuid->eax >> 16) & 0x0fff) >> 1);
-
-    __printf("l2itlb: 4K, %ld-way,  %ld entries\n",
-           ((long)cpuid->ebx >> 12) & 0x0f, (long)cpuid->ebx & 0x0fff);
-    __printf("l2itlb: 2M, %ld-way,  %ld entries\n",
-           ((long)cpuid->eax >> 12) & 0x0f, (long)cpuid->eax & 0x0fff);
-    __printf("l2itlb: 4M, %ld-way,  %ld entries\n",
-           ((long)cpuid->eax >> 12) & 0x0f, ((long)cpuid->eax & 0x0fff) >> 1);
-
-    return;
-}
-
-#define cpuidgetvendor(ptr)                                             \
-    __asm__("movl %0, %%eax" : : "i" (M_CPUIDVENDOR));                  \
-    __asm__("cpuid" : : : "eax", "ebx", "ecx", "edx");                  \
-    __asm__("movl %%ebx, %0" : "=m" ((ptr)->wtab[0]));                  \
-    __asm__("movl %%edx, %0" : "=m" ((ptr)->wtab[1]));                  \
-    __asm__("movl %%ecx, %0" : "=m" ((ptr)->wtab[2]));                  \
-    __asm__("xorl %eax, %eax");                                         \
-    __asm__("movl %%eax, %0" : "=m" ((ptr)->wtab[3]));
 #define cpuidgetinfo(ptr)                                               \
     cpuid(M_CPUIDINFO, ptr)
 #define cpuidgetexti(ptr)                                               \
@@ -347,55 +148,58 @@ cpuid_print_l2_info_amd(struct m_cpuid *cpuid)
 #define CPUIDSSE3      0x00000001 /* sse3. */
 
 void
-cpuprobe(struct m_cpuinfo *info)
+cpuprobe(volatile struct m_cpuinfo *info,
+         volatile struct m_cpucacheinfo *cache)
 {
-    struct m_cpuid       buf;
-    union  m_cpuidvendor vbuf;
-    struct m_cacheinfo  *cbuf;
+    volatile struct m_cpu *m_cpu = k_curcpu;
+    struct m_cacheinfo    *cbuf;
+    struct m_cpuid         buf;
+    union  m_cpuidvendor   vbuf;
 
     cpuidgetvendor(&vbuf);
     if (!__strcmp((const char *)vbuf.str, _vendortab[CPUIDINTEL])) {
-        cpuidinitci_intel();
+        cpuidinitci_intel(cpuidcacheinfo);
         cpuidgetci_intel(&buf);
         cbuf = &cpuidcacheinfo[M_CPUIDINSTRCACHE];
-        info->l1i.size = cbuf->size;
-        info->l1i.clsz = cbuf->xsize;
-        info->l1i.nway = cbuf->nway;
+        cache->l1i.size = cbuf->size;
+        cache->l1i.clsz = cbuf->xsize;
+        cache->l1i.nway = cbuf->nway;
         cbuf = &cpuidcacheinfo[M_CPUIDINSTRTLB];
-        info->l1i.ntlb = cbuf->xsize;
+        cache->l1i.ntlb = cbuf->xsize;
         cbuf = &cpuidcacheinfo[M_CPUIDDATACACHE];
-        info->l1d.size = cbuf->size;
-        info->l1d.clsz = cbuf->xsize;
-        info->l1d.nway = cbuf->nway;
+        cache->l1d.size = cbuf->size;
+        cache->l1d.clsz = cbuf->xsize;
+        cache->l1d.nway = cbuf->nway;
         cbuf = &cpuidcacheinfo[M_CPUIDDATATLB];
-        info->l1i.ntlb = cbuf->xsize;
+        cache->l1i.ntlb = cbuf->xsize;
         cbuf = &cpuidcacheinfo[M_CPUIDUNICACHE];
-        info->l2.size = cbuf->size;
-        info->l2.clsz = cbuf->xsize;
-        info->l2.nway = cbuf->nway;
+        cache->l2.size = cbuf->size;
+        cache->l2.clsz = cbuf->xsize;
+        cache->l2.nway = cbuf->nway;
     } else if (!__strcmp((const char *)vbuf.str, _vendortab[CPUIDAMD])) {
         cpuidgetl1_amd(&buf);
-        info->l1i.size = buf.edx >> 14;
-        info->l1i.clsz = buf.edx & 0xff;
-        info->l1i.nway = (buf.edx >> 16) & 0xff ;
-        info->l1i.ntlb = buf.ebx & 0xff;
-        info->l1d.size = buf.ecx >> 14;
-        info->l1d.clsz = buf.ecx & 0xff;
-        info->l1d.nway = (buf.ecx >> 16) & 0xff ;
-        info->l1d.ntlb = (buf.ebx >> 16) & 0xff;
+        cache->l1i.size = buf.edx >> 14;
+        cache->l1i.clsz = buf.edx & 0xff;
+        cache->l1i.nway = (buf.edx >> 16) & 0xff ;
+        cache->l1i.ntlb = buf.ebx & 0xff;
+        cache->l1d.size = buf.ecx >> 14;
+        cache->l1d.clsz = buf.ecx & 0xff;
+        cache->l1d.nway = (buf.ecx >> 16) & 0xff ;
+        cache->l1d.ntlb = (buf.ebx >> 16) & 0xff;
         cpuidgetl2_amd(&buf);
-        info->l2.size = buf.ecx >> 6 & 0xffc00;
-        info->l2.clsz = buf.ecx & 0xff;
-        info->l2.nway = (buf.ebx >> 12) & 0x0f;
-        info->l2.ntlb = buf.ebx & 0x0fff;
+        cache->l2.size = buf.ecx >> 6 & 0xffc00;
+        cache->l2.clsz = buf.ecx & 0xff;
+        cache->l2.nway = (buf.ebx >> 12) & 0x0f;
+        cache->l2.ntlb = buf.ebx & 0x0fff;
     }
-    cpuidgetinfo(&buf);
-    if (cpuidhasfxsr(&buf)) {
-        info->flags |= CPUHASFXSR;
+    cpuidgetinfo(&info->id);
+    if (cpuidhasfxsr(&info->id)) {
+        info->flg |= CPUHASFXSR;
     }
-    if (cpuidhasapic(&buf)) {
-        info->flags |= CPUHASAPIC;
+    if (cpuidhasapic(&info->id)) {
+        info->flg |= CPUHASAPIC;
     }
+    m_cpu->data.flg |= CPUHASINFO;
 
     return;
 }
@@ -403,14 +207,16 @@ cpuprobe(struct m_cpuinfo *info)
 void
 cpuprintinfo(void)
 {
-    struct m_cpuid       buf;
-    union  m_cpuidvendor vbuf;
-    struct m_cpuidcregs  crbuf;
+    struct m_cacheinfo     cbuf;
+    volatile struct m_cpu *m_cpu = k_curcpu;
+    struct m_cpuid         buf;
+    union  m_cpuidvendor   vbuf;
+    struct m_cpuidcregs    crbuf;
    
     cpuidgetvendor(&vbuf);
     __printf("CPU: vendor: %s\n", vbuf.str);
     if (!__strcmp((const char *)vbuf.str, _vendortab[CPUIDINTEL])) {
-        cpuidinitci_intel();
+        cpuidinitci_intel(&cbuf);
         cpuidgetci_intel(&buf);
         cpuid_print_cache_info_intel(buf.eax);
         cpuid_print_cache_info_intel(buf.ebx);
@@ -434,7 +240,7 @@ cpuprintinfo(void)
     __printf("\text_family: %u\n", cpuidextfamily(&buf));
 #endif
 
-    __printf("CPU: features:");
+    __printf("cpu features:");
     if (cpuidhassep(&buf)) {
         __printf(" sep");
     }

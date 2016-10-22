@@ -65,6 +65,8 @@
 #include <kern/proc/task.h>
 #include <kern/unit/x86/vm.h>
 
+#define PROCNEW (-1L)
+
 long procinit(long id, long sched);
 long procgetpid(void);
 void procfreepid(long id);
@@ -108,11 +110,18 @@ struct proc {
     struct task         *thrqueue;
     long                 nthr;          // # of entries in thrtab
     struct task        **thrtab;        // child threads
+    /* process credentials */
+    long                 pid;           // process ID
+    long                 ppid;          // parent process ID
+    long                 pgrp;          // process-group ID (leader)
     /* memory management */
+    pde_t               *pagedir;       // page directory address
+#if (PTRSIZE == 4) && (VMFLATPHYSTAB)
+    pte_t               *pagetab;
+#endif
     struct maghdr      **vmmagtab;      // PTRBITS queues of mags
     struct slabhdr     **vmslabtab;     // PTRBITS queues of slabs
     uint8_t             *brk;           // current heap-top
-    struct vmpagemap     vmpagemap;
     struct procseginfo  *seginfo;       // process segment information
     /* process credentials */
     struct cred         *cred;          // effective credentials
@@ -122,13 +131,10 @@ struct proc {
     size_t               ndesctab;      // number of entries in descriptor table
     struct desc         *desctab;       // descriptor table
     /* current working directory */
-    char                *cwd;
+    char                *cwd;           // current working directory
     /* current permission mask */
-    mode_t               umask;
+    mode_t               umask;         // mask-bits for creating files
     /* linkage */
-    long                 pid;           // process ID
-    long                 ppid;          // parent process ID
-    long                 pgrp;          // process-group ID (leader)
     struct proc         *prev;
     struct proc         *next;
     /* signal dispositions */

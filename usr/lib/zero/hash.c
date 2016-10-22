@@ -72,29 +72,27 @@ pphash(char *str)
 /* Ramakrishna & Zobel hash function, improvised for 32- and 64-bit keys*/
 #define SHLCNT 7
 #define SHRCNT 2
-#if (LONGSIZE == 8) || (LONGLONGSIZE == 8)
-uint64_t
-#elif (LONGSIZE == 4)
-uint32_t
-#endif
+uintptr_t
 razohash(void *ptr, size_t len, size_t nbit)
 {
-#if (LONGSIZE == 8) || (LONGLONGSIZE == 8)
-    uint64_t hash = SEED64;
-#elif (LONGSIZE == 4)
-    uint32_t hash = (len <= 4) ? SEED32 : SEED;
+#if (PTRSIZE == 8)
+    uintptr_t hash = SEED64;
+#elif (PTRSIZE == 4)
+    uint32_t hash = SEED32;
 #endif
     if (len == 8) {
-        uint64_t  val = (uint64_t)ptr;
+        uintptr_t val = (uintptr_t)ptr;
 
         hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + (val & 0xffU);
         hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + ((val >> 8) & 0xffU);
         hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + ((val >> 16) & 0xffU);
         hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + ((val >> 24) & 0xffU);
+#if (PTRSIZE == 8)
         hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + ((val >> 32) & 0xffU);
         hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + ((val >> 40) & 0xffU);
         hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + ((val >> 48) & 0xffU);
         hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + ((val >> 56) & 0xffU);
+#endif
     } else if (len == 4) {
         uint32_t *vp = ptr;
     } else {

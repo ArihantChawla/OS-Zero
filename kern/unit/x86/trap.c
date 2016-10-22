@@ -78,6 +78,20 @@ long                   trapsigmap[TRAPNCPU]
 #define trapsetprio(irq, prio)                                          \
     (trappriotab[(irq)] = (prio))
 
+#if (PTRSIZE == 4)
+
+void
+trapsetidt(long ntrap, uint64_t *idt)
+{
+    idtptr.lim = ntrap * sizeof(uint64_t) - 1;
+    idtptr.adr = (uint32_t)idt;
+    idtset();
+
+    return;
+}
+
+#endif
+
 void
 trapinitidt(uint64_t *idt)
 {
@@ -116,9 +130,7 @@ trapinitidt(uint64_t *idt)
     trapsetintrgate(&idt[TRAPV86MODE], trapv86, TRAPUSER);
 #endif
     /* initialize interrupts */
-    idtptr.lim = NINTR * sizeof(uint64_t) - 1;
-    idtptr.adr = (uint32_t)idt;
-    idtset();
+    trapsetidt(NINTR, idt);
 
     return;
 }

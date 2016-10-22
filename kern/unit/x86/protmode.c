@@ -200,9 +200,6 @@ kinitprot(unsigned long pmemsz)
     } else {
         kprintf("found %ld processors\n", mpncpu);
     }
-    k_curunit = 0;
-    /* CPU interface */
-    cpuinit(0);
     sysinit(0);
     schedinit();
 #if (HPET)

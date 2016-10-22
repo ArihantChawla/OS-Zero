@@ -17,8 +17,9 @@ extern void schedyield(void);
 
 /* task scheduler classes */
 #define SCHEDNCLASSPRIO     64          // # of priorities per class
-#define SCHEDNCLASSQUEUE    32          // # of priority queues per class
-#define SCHEDNQUEUEPRIO     (SCHEDNCLASSPRIO / SCHEDNCLASSQUEUE)
+#define SCHEDNCLASSQUEUE    (SCHEDNCLASSPRIO >> SCHEDNQUEUESHIFT)
+#define SCHEDNQUEUESHIFT    1
+#define SCHEDNQUEUEPRIO     (1 << SCHEDNQUEUESHIFT)
 /* 'system' classes */
 #define SCHEDDEADLINE       (-SCHEDREALTIME - 1) // deadline tasks
 #define SCHEDREALTIMERR     (-SCHEDREALTIME) // 

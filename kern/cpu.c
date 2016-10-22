@@ -5,20 +5,18 @@
 
 extern void    cpuprintinfo(void);
 
-struct cpu     cputab[NCPU] ALIGNED(PAGESIZE);
+struct m_cpu   m_cputab[NCPU] ALIGNED(PAGESIZE);
 extern uint8_t kernusrstktab[NCPU * KERNSTKSIZE];
 
 long
 cpuinit(long id)
 {
-    struct cpu       *cpu = &cputab[id];
-    struct m_cpu     *m_cpu = &cpu->m_cpu;
-    struct m_cpuinfo *info = &cpu->m_cpu.info;
+    struct m_cpu     *m_cpu = &m_cputab[id];
+    struct m_cpuinfo *info = &m_cpu->info;
 
-    m_cpu->unit = id;
-    m_cpu->cpu = cpu;
-    cpuprobe(info);
-    cpuprintinfo();
+    k_curcpu = m_cpu;
+    cpuprobe(info, &info->cache);
+    m_cpu->data.flg |= CPUINITBIT;
 
     return id;
 };

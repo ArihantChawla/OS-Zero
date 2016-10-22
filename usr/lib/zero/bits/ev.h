@@ -4,24 +4,24 @@
 #include <stdint.h>
 #include <zero/cdefs.h>
 
-#if (EVTIMESIZE == 64)
+#if (EVTIMEBITS == 64)
 typedef uint64_t evtime_t;
-#elif (EVTIMESIZE == 32)
+#elif (EVTIMEBITS == 32)
 typedef uint32_t evtime_t;
 #endif
 
 typedef int32_t  evkeycode_t;
 
-#if (EVWORDSIZE == 32)
+#if (EVWORDBITS == 32)
 typedef int32_t  evword_t;
 typedef uint32_t evuword_t;
-#elif (EVWORDSIZE == 64)
+#elif (EVWORDBITS == 64)
 typedef int64_t  evword_t;
 typedef uint64_t evuword_t;
 #endif
 
-#if (EVNODEIDSIZE == 64)
-typedef int64_t  evnodeid_t;
+#if (EVOBJBITS == 64)
+typedef int64_t  evobjid_t;
 #endif
 
 /* event names */
@@ -259,9 +259,9 @@ struct evcmd {
 
 /* file system events; EVFSCREAT, EVFSUNLINK, EVFSMKDIR, EVFSRMDIR */
 struct evfs {
-    evnodeid_t node;            // node (file, directory) ID
-    evuword_t  dev;             // device ID
-    evuword_t  flg;             // event flags
+    evobjid_t node;     // node (file, directory) ID
+    evuword_t dev;      // device ID
+    evuword_t flg;      // event flags
 };
 
 #endif /* __ZERO_BITS_EV_H__ */

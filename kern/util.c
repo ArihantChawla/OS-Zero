@@ -321,7 +321,7 @@ kstrncpy(char *dest, const char *src, long len)
 {
     long nb = 0;
 
-    while ((*src) && len--) {
+    while ((*src) && --len) {
         *dest++ = *src++;
         nb++;
     }

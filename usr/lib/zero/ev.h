@@ -15,9 +15,9 @@
 //#include <deck/deck.h>
 #include <gfx/rgb.h>
 
-#define EVWORDSIZE   32
-#define EVTIMESIZE   64
-#define EVNODEIDSIZE 64
+#define EVOBJBITS  64
+#define EVTIMEBITS 64
+#define EVWORDBITS 32
 
 #include <zero/bits/ev.h>
 
@@ -33,7 +33,7 @@ struct evhdr {
 
 /* event structure */
 struct ev {
-    struct evhdr hdr;
+    struct evhdr      hdr;
     union {
         /* actual event message */
         struct evkbd  kbd;

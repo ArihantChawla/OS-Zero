@@ -44,17 +44,17 @@ extern void      apicinit(long id);
 #if (IOAPIC)
 extern void      ioapicinit(long id);
 #endif
-extern void      cpuinit(volatile struct cpu *cpu);
+extern void      cpuinit(volatile struct m_cpu *m_cpu);
 extern void      seginit(long id);
 extern void      idtset(void);
 
-extern volatile struct cpu  cputab[NCPU];
-volatile struct cpu        *mpbootcpu;
-volatile long               mpmultiproc;
-volatile long               mpncpu;
-volatile long               mpioapicid;
-volatile uint32_t          *mpapic;
-volatile uint32_t          *mpioapic;
+extern volatile struct m_cpu  m_cputab[NCPU];
+volatile struct m_cpu        *mpbootcpu;
+volatile long                 mpmultiproc;
+volatile long                 mpncpu;
+volatile long                 mpioapicid;
+volatile uint32_t            *mpapic;
+volatile uint32_t            *mpioapic;
 
 static long
 mpchksum(uint8_t *ptr, unsigned long len)
@@ -183,12 +183,12 @@ mpinit(void)
                 }
 #endif
                 if (cpu->flags & MPCPUBOOT) {
-                    mpbootcpu = &cputab[core];
+                    mpbootcpu = &m_cputab[core];
 #if 0
                     cpuinit((struct cpu *)mpbootcpu);
 #endif
                 }
-                cputab[core].id = core;
+                m_cputab[core].data.id = core;
                 mpncpu++;
                 u8ptr += sizeof(struct mpcpu);
 
@@ -233,22 +233,30 @@ mpinit(void)
     return;
 }
 
+void
+mpinitcpu(long id)
+{
+    /* TODO: initialise HPET; enable [rerouted] interrupts */
+#if (HPET)
+    hpetinit();
+#endif
+    apicinit(id);
+#if (IOAPIC)
+    ioapicinit(id);
+#endif
+    tssinit(id);
+
+    return;
+}
+
 ASMLINK NORETURN
 void
 mpmain(struct cpu *cpu)
 {
     seginit(cpu->id);
     idtset();
-    m_atomswap(&cpu->flg, CPUSTARTED);
-    /* TODO: initialise HPET; enable [rerouted] interrupts */
-#if (HPET)
-    hpetinit();
-#endif
-    apicinit(cpu->id);
-#if (IOAPIC)
-    ioapicinit(cpu->id);
-#endif
-    tssinit(cpu->id);
+    m_atomwrite((m_atomic_t *)&cpu->flg, CPUSTARTED);
+    mpinitcpu(cpu->id);
 #if 0
     while (1) {
         k_waitint();

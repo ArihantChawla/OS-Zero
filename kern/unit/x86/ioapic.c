@@ -9,7 +9,7 @@
 #include <kern/unit/x86/link.h>
 #include <kern/unit/ia32/mp.h>
 
-extern volatile struct m_cpu     cputab[NCPU];
+extern volatile struct m_cpu     m_cputab[NCPU];
 extern volatile struct m_cpu    *mpbootcpu;
 extern volatile struct mpioapic *mpioapic;
 volatile struct ioapic          *ioapic;
@@ -17,7 +17,7 @@ volatile struct ioapic          *ioapic;
 void
 ioapicinit(long id)
 {
-    struct m_cpu *cpu = (struct m_cpu *)&cputab[id];
+    struct m_cpu *m_cpu = (struct m_cpu *)&m_cputab[id];
     long ntrap;
 //    long id;
     long l;
@@ -27,7 +27,7 @@ ioapicinit(long id)
         return;
     }
     ioapic = (volatile struct ioapic *)mpioapic;
-    if (cpu == mpbootcpu) {
+    if (m_cpu == mpbootcpu) {
         vmmapseg((uint32_t *)&_pagetab, (uint32_t)mpioapic, (uint32_t)mpioapic,
                  (uint32_t)((uint8_t *)mpioapic + PAGESIZE),
                  PAGEPRES | PAGEWRITE);

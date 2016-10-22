@@ -49,47 +49,46 @@ struct taskstk {
 #define TASKCATCHSIG (1 << 3)   // sleeping thread awakened by signals
 struct task {
     /* thread control block - KEEP THIS FIRST in the structure */
-    struct m_task   m_task;             // machine thread control block
-    /* scheduler parameters */
-    m_atomic_t      lk;
-    long            sched;              // thread scheduler class
-    long            schedflg;           // received user input [interrupt]
-    long            runprio;            // current priority
-    long            prio;               // base priority
-    long            sysprio;            // kernel-mode priority
-    long            nice;               // priority adjustment
-    long            state;              // thread state
-    long            score;              // interactivity score
-    long            cpu;                // CPU-affinity
-    long            slice;              // timeslice in ticks
-    long            runtime;            // # of ticks run
-    long            slptime;            // # of ticks  of slept voluntarily
-    long            slptick;            // ID of tick when sleeping started
-    long            ntick;              // # of scheduler ticks received
-    long            lastrun;            // last tick we ran on
-    long            firstrun;           // first tick we ran on
-    long            ntickleft;          // # of remaining ticks of slice
-    long            lasttick;           // real last tick for affinity
-    uintptr_t       waitchan;           // wait channel
-    time_t          timelim;            // wakeup time or deadline
+    struct m_task    m_task;            // machine thread control block
+    long             id;                // task ID
     /* linkage */
-    struct proc    *proc;               // parent/owner process
-    struct task    *prev;               // previous in queue
-    struct task    *next;               // next in queue
-    long            id;                 // task ID
+    struct proc     *proc;              // parent/owner process
+    struct task     *prev;              // previous in queue
+    struct task     *next;              // next in queue
+    /* execution state */
+    long             argc;              // # of command-line arguments
+    char           **argv;              // [textual] command-line arguments
+    long             nenv;              // # of environment strings
+    char           **envp;              // environment strings
     /* system call context */
-    struct sysctx   sysctx;             // current system call
+    int              errnum;            // errno
+    struct sysctx    sysctx;            // current system call
     /* signal state */
-    sigset_t        sigmask;            // signal mask
-    sigset_t        sigpend;            // pending signals
-    struct siginfo *sigqueue[NSIG];     // info structures for pending signals
-#if 0
-    /* stack information */
-    struct taskstk  ustk;               // user-mode stack
-    struct taskstk  kstk;               // system-mode stack
-    struct taskstk  altstk;             // alternative [signal] stack
-#endif
-    int             errnum;             // errno
+    sigset_t         sigmask;           // signal mask
+    sigset_t         sigpend;           // pending signals
+    struct siginfo **sigqueue     ;     // info structures for pending signals
+    /* scheduler parameters */
+    m_atomic_t       lk;
+    long             sched;             // thread scheduler class
+    long             flg;               // received user input [interrupt]
+    long             runprio;           // current priority
+    long             prio;              // base priority
+    long             sysprio;           // kernel-mode priority
+    long             nice;              // priority adjustment
+    long             state;             // thread state
+    long             score;             // interactivity score
+    long             cpu;               // CPU-affinity
+    long             slice;             // timeslice in ticks
+    long             runtime;           // # of ticks run
+    long             slptime;           // # of ticks  of slept voluntarily
+    long             slptick;           // ID of tick when sleeping started
+    long             ntick;             // # of scheduler ticks received
+    long             lastrun;           // last tick we ran on
+    long             firstrun;          // first tick we ran on
+    long             ntickleft;         // # of remaining ticks of slice
+    long             lasttick;          // real last tick for affinity
+    uintptr_t        waitchan;          // wait channel
+    time_t           timelim;           // wakeup time or deadline
 };
 
 #if (PTRSIZE == 8)

@@ -6,8 +6,8 @@
 /* system-assigned process IDs */
 #define PROCKERN     0  // main kernel; context switches, system calls, ...
 #define PROCINIT     1  // init process; the mother of all processes
-#define PROCBUFD     2  // buffer daemon; HID, audio, video, net, disk
-#define PROCEVD      3  // event daemon; manage events such as user input ones
+#define PROCEVD      2  // event daemon; manage events such as user input ones
+#define PROCBUFD     3  // buffer daemon; HID, audio, video, net, disk
 #define PROCPAGED    4  // page daemon; page replacement; aging, LRU-queue
 #define PROCIDLE     5  // idle process; zeroes memory etc.
 #define TASKNPREDEF  6

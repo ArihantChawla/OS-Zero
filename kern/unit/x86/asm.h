@@ -27,5 +27,13 @@ k_writemsr(uint32_t adr, uint64_t val)
     __asm__ __volatile__ ("wrmsr" : : "c" (adr), "A" (val));
 }
 
+#if ((defined(__i386__) || defined(__i486__)                            \
+      || defined(__i568__) || defined(__i686__))                        \
+     && (defined(__x86_64__) || defined(__amd64__)))
+#include <kern/unit/ia32/asm.h>
+#else
+#include <kern/unit/x86-64/asm.h>
+#endif
+
 #endif /* __KERN_UNIT_X86_ASM_H__ */
 
