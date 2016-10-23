@@ -48,33 +48,37 @@ fastu32div32gentab(struct divu32 *duptr, uint32_t lim32)
     duptr->info = info;
     for (div = 1 ; div < lim32 ; div++) {
         duptr++;
+        shift = 31;
+        lzero32(div, val);
+        shift -= val;
         if (!powerof2(div)) {
+            uint64_t div64 = div;
             uint64_t val64;
+            uint32_t val;
             uint32_t rem;
-            uint32_t rem2;
+            uint32_t lim;
             uint32_t e;
 
-            lzero32(div, val);
-            shift = 31 - val;
-            val64 = 1U << shift;
+            lim = 1U << shift;
+            val64 = lim;
             val64 <<= 32;
-            magic = val64 / div;
-            rem = val64 % div;
+            magic = val64 / div64;
+            rem = val64 % div64;
             e = div - rem;
-            if (e < (1U << shift)) {
+            if (e < lim) {
                 info = shift;
             } else {
-                rem2 = rem;
+                val = rem;
                 magic <<= 1;
-                rem2 <<= 1;
-                info = shift | FASTU32DIVADDBIT;
-                if (rem2 >= div || rem2 < rem) {
+                val <<= 1;
+                info |= FASTU32DIVADDBIT;
+                if (val >= div || val < rem) {
                     magic++;
                 }
             }
             magic++;
         } else {
-            tzero32(div, info);
+            info = shift;
             magic = 0;
             info |= FASTU32DIVSHIFTBIT;
         }
@@ -94,44 +98,49 @@ void
 fastu32div16gentab(struct divu16 *duptr, uint32_t lim16)
 {
     uint32_t magic = lim16;
-    uint16_t info = 0;
+    uint32_t info = 0;
     uint32_t div;
+    uint32_t val;
+    uint32_t shift;
 
     /* store array size into the first item to avoid buffer overruns */
     duptr->magic = magic;
     duptr->info = info;
     for (div = 1 ; div < lim16 ; div++) {
         duptr++;
+        lzero32(div, val);
+        val -= 16;
+        shift = 15 - val;
         if (!powerof2(div)) {
             uint32_t val32;
-            uint32_t rem2;
+            uint32_t res32;
+            uint32_t rem;
+            uint32_t lim;
             uint32_t e;
-            uint16_t val;
-            uint16_t shift;
-            uint16_t rem;
 
-            lzero32(div, val);
-            val -= 16;
-            shift = 15 - val;
-            val32 = UINT32_C(1) << shift;
+            lim = UINT32_C(1) << shift;
+            val32 = lim;
             val32 <<= 16;
             magic = val32 / div;
-            rem = val32 % div;
-            e = div - rem;
-            if (e < (1U << shift)) {
+            /* elimnated rem = val32 % div */
+            res32 = magic;
+            res32 *= div;
+            val32 -= res32;
+            e = div - val32;
+            if (e < lim) {
                 info = shift;
             } else {
-                rem2 = rem;
+                rem = val32;
                 magic <<= 1;
-                rem2 <<= 1;
+                rem <<= 1;
                 info = shift | FASTU32DIVADDBIT;
-                if (rem2 >= div || rem2 < rem) {
+                if (rem >= div || rem < val32) {
                     magic++;
                 }
             }
             magic++;
         } else {
-            tzero32(div, info);
+            info = shift;
             magic = 0;
             info |= FASTU32DIVSHIFTBIT;
         }

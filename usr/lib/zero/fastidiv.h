@@ -36,7 +36,7 @@ void fastu32div16gentab(struct divu16 *duptr, uint32_t lim16);
 #if (LONGSIZE == 8 || LONGLONGSIZE == 8)
 /* get the high 32 bits of val1 * val2 */
 static INLINE uint32_t
-_mullhiu32(uint32_t val1, uint32_t val2)
+_mulhiu32(uint32_t val1, uint32_t val2)
 {
     uint64_t v1 = val1;
     uint64_t v2 = val2;
@@ -50,7 +50,7 @@ _mullhiu32(uint32_t val1, uint32_t val2)
 
 /* get the high 16 bits of val1 * val2 */
 static INLINE uint32_t
-_mullhiu16(uint16_t val1, uint16_t val2)
+_mulhiu16(uint16_t val1, uint16_t val2)
 {
     uint32_t v1 = val1;
     uint32_t v2 = val2;
@@ -70,36 +70,41 @@ fastu32div32(uint32_t num, uint32_t div32,
 {
     const struct divu32 *ulptr = &tab[div32];
     uint32_t             lim = tab[0].magic;
-    uint32_t             magic = ulptr->magic;
-    uint32_t             info = ulptr->info;
-    uint32_t             res = 0;
+    uint32_t             magic;
+    uint32_t             info;
+    uint32_t             res;
 
-    fprintf(stderr, "CALC: %u / %u\n", (unsigned int)num, (unsigned int)div32);
-    fprintf(stderr, "DIV == %u, MAGIC == 0x%0.8x, INFO == %u\n",
-            (unsigned int)div32, (unsigned int)magic, (unsigned int)info);
     if (div32 == 1) {
         
         return num;
-    }
-    if (div32 >= lim) {
+    } else if (div32 >= lim) {
         res = num / div32;
 
         return res;
     }
-    res = num;
+    info = ulptr->info;
+    magic = ulptr->magic;
+    fprintf(stderr, "32: %u / %u\n", (unsigned int)num, (unsigned int)div32);
+    fprintf(stderr, "DIV32 == %u, MAGIC == 0x%0.8x, INFO == 0x%x\n",
+            (unsigned int)div32, (unsigned int)magic, (unsigned int)info);
     if (!(info & FASTU32DIVSHIFTBIT)) {
-        uint32_t quot = _mullhiu32(magic, num);
+        uint32_t quot = _mulhiu32(magic, num);
 
+        fprintf(stderr, "MULHI == %lx\n", quot);
+        res = quot;
         if (info & FASTU32DIVADDBIT) {
             /* calculate ((num - quot) >> 1) + quot */
             num -= quot;
+            info &= FASTU32DIVSHIFTMASK;
             num >>= 1;
-            quot += num;
+            res += num;
         }
-        res = quot;
+        res >>= info;
+    } else {
+        res = num;
+        info &= FASTU32DIVSHIFTMASK;
+        res >>= info;
     }
-    info &= FASTU32DIVSHIFTMASK;
-    res >>= info;
         
     return res;
 }
@@ -112,9 +117,9 @@ fastu32div16(uint32_t num, uint16_t div16,
 {
     const struct divu16 *ulptr = &tab[div16];
     uint16_t             lim = tab[0].magic;
-    uint32_t             magic = ulptr->magic;
-    uint32_t             info = ulptr->info;
-    uint32_t             res = 0;
+    uint32_t             magic;
+    uint32_t             info;
+    uint32_t             res;
 
     if (div16 == 1) {
 
@@ -124,19 +129,26 @@ fastu32div16(uint32_t num, uint16_t div16,
 
         return res;
     }
-    res = num;
+    info = ulptr->info;
+    magic = ulptr->magic;
+    fprintf(stderr, "16: %u / %u\n", (unsigned int)num, (unsigned int)div16);
+    fprintf(stderr, "DIV16 == %u, MAGIC == 0x%0.8x, INFO == 0x%x\n",
+            (unsigned int)div16, (unsigned int)magic, (unsigned int)info);
     if (!(info & FASTU32DIVSHIFTBIT)) {
-        uint32_t quot = _mullhiu16(magic, num);
+        uint32_t quot = _mulhiu16(magic, num);
         
         if (info & FASTU32DIVADDBIT) {
             /* calculate ((num - quot) >> 1) + quot */
             num -= quot;
+            info &= FASTU32DIVSHIFTMASK;
             num >>= 1;
             quot += num;
         }
         res = quot;
+    } else {
+        res = num;
+        info &= FASTU32DIVSHIFTMASK;
     }
-    info &= FASTU32DIVSHIFTMASK;
     res >>= info;
         
     return res;
