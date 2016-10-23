@@ -39,11 +39,6 @@ extern void schedsetsleep(struct task *task);
 #define schedsetprioincr(task, pri, incr)                               \
     ((task)->prio = schedprioqueueid(pri) + (incr))
 #endif
-#define schedcalcuserprio(task)                                         \
-    (fastu32div16(schedcalctime(task),                                  \
-                  (roundup(schedcalcticks(task), SCHEDPRIORANGE)        \
-                   / SCHEDPRIORANGE),                                   \
-                  fastu32div16tab))
 /* timeshare-tasks have interactivity scores */
 #define schedistimeshare(sched)                                         \
     ((sched) >= SCHEDRESPONSIVE && (sched) <= SCHEDBATCH)
@@ -266,6 +261,25 @@ schedcalcscore(struct task *task)
     return 0;
 }
 
+static __inline__ uint32_t
+schedcalcuserprio(struct task *task)
+{
+    uint32_t time = schedcalctime(task);
+    uint32_t val = schedcalcticks(task);
+    uint32_t res;
+
+    /*
+     * round val up to next multiple of SCHEDPRIORANGE,
+     * then divide by SCHEDPRIORANGE; i'm cheating big time =)
+     */
+    val += SCHEDPRIORANGE - 1;
+    val = fastu32div16(val, SCHEDPRIORANGE, fastu32div16tab);
+    /* divide runtime by the result */
+    res = fastu32div16(time, (uint16_t)val, fastu32div16tab);
+
+    return res;
+}
+
 /* based on sched_priority() from ULE */
 static __inline__ void
 schedcalcprio(struct task *task)
@@ -276,7 +290,6 @@ schedcalcprio(struct task *task)
     long prio;
     long ntick;
     long delta;
-    long tmp;
 
     score += nice;
     score = max(0, score);
@@ -294,8 +307,9 @@ schedcalcprio(struct task *task)
         ntick = task->ntick;
         prio = SCHEDUSERPRIOMIN;
         if (ntick) {
-            tmp = schedcalcuserprio(task);
-            prio += min(tmp, SCHEDUSERRANGE - 1);
+            delta = schedcalcuserprio(task);
+            delta = min(delta, SCHEDUSERRANGE - 1);
+            prio += delta;
         }
         prio += nice;
         prio = min(runprio, prio);
