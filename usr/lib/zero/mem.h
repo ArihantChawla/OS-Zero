@@ -158,11 +158,11 @@ typedef zerospin      MEMLK_T;
         (slot) = _res;                                                  \
     } while (0)
 
-#define MEMSMALLTLSLIM      (2 * 1024 * 1024)
-#define MEMPAGETLSLIM       (4 * 1024 * 1024)
+#define MEMSMALLTLSLIM      (4 * 1024 * 1024)
+#define MEMPAGETLSLIM       (8 * 1024 * 1024)
 #define MEMSMALLGLOBLIM     0
-#define MEMPAGEGLOBLIM      (8 * 1024 * 1024)
-#define MEMBIGGLOBLIM       (64 * 1024 * 1024)
+#define MEMPAGEGLOBLIM      (16 * 1024 * 1024)
+#define MEMBIGGLOBLIM       (32 * 1024 * 1024)
 
 /* determine minimal required alignment for blocks */
 #if defined(__BIGGEST_ALIGNMENT__)
@@ -204,13 +204,13 @@ typedef zerospin      MEMLK_T;
 #define MEMMIDSLOT          12
 //#define MEMBIGSLOT          (MEMSMALLSLOTS - 1)
 #define MEMSMALLPAGESLOT    16
-#define MEMMIDPAGESLOT      32
-#define MEMBIGPAGESLOT      48
-#define MEMPAGESLOTS        64
+#define MEMMIDPAGESLOT      48
+#define MEMBIGPAGESLOT      80
+#define MEMPAGESLOTS        128
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
-#define MEMSMALLMAPSHIFT    20
+#define MEMSMALLMAPSHIFT    22
 //#define MEMBUFMIDMAPSHIFT 22
-#define MEMBIGMAPSHIFT      23
+#define MEMBIGMAPSHIFT      26
 //#define MEMBUFHUGEMAPSHIFT  26
 
 struct membkt {
@@ -338,11 +338,11 @@ struct membuf {
 #else
     MEMWORD_T               info; // slot + # of total & free blks
 #endif
+    m_atomic_t              nfree;
     struct membuf          *heap; // previous buf in heap for bufs from sbrk()
     struct membuf          *prev; // previous buf in chain
     struct membuf          *next; // next buf in chain
     volatile struct membkt *bkt;  // pointer to parent bucket
-//    MEMWORD_T      slot;        // bucket slot #
     MEMUWORD_T              size; // buffer bookkeeping + allocation blocks
     MEMPTR_T                base; // base address for allocations
     MEMUWORD_T              flg;  // flags + buffer type
@@ -396,6 +396,8 @@ struct memhashlist {
 #define MEMHASHNOTFOUND  0
 #define MEMHASHFOUND     (~(MEMADR_T)0)
 
+#endif /* MEMNEWHASH */
+
 struct memhashitem {
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
     MEMUWORD_T nref;            // reference count for the page
@@ -419,36 +421,21 @@ struct memhash {
  * - we have a 4-word header; adding total of 52 words as 13 hash-table entries
  *   lets us cache-color the table by adding a modulo-9 value to the pointer
  */
-#define MEMHASHBITS     20
-#define MEMHASHITEMS    (1U << MEMHASHBITS)
+#define MEMHASHBITS      18
+#define MEMHASHITEMS     (1U << MEMHASHBITS)
 #if (MEMBIGHASHTAB)
-#define MEMHASHSIZE     (256 * WORDSIZE)
+#define MEMHASHARRAYSIZE (256 * WORDSIZE)
+#elif (MEMSMALLHASHTAB)
+#define MEMHASHARRAYSIZE (64 * WORDSIZE)
 #else
-#define MEMHASHSIZE     (128 * WORDSIZE)
+#define MEMHASHARRAYSIZE (128 * WORDSIZE)
 #endif
 #if (MEMNEWHASHTAB)
-#define MEMHASHTABITEMS                                                 \
-    ((MEMHASHSIZE - offsetof(struct memhash, data))                     \
+#define MEMHASHARRAYITEMS                                               \
+    ((MEMHASHARRAYSIZE - offsetof(struct memhash, data))                \
      / sizeof(struct memhashitem))
-#elif defined(MEMHASHNREF) && (MEMHASHNREF)                             \
-    && defined(MEMHASHNACT) && (MEMHASHNACT)
-#define MEMHASHTABITEMS 32      // allow a bit of table-address randomization
-#elif ((defined(MEMHASHNREF) && (MEMHASHNREF))                          \
-       ||  defined(MEMHASNACT) && (MEMHASHNACT))
-#define MEMHASHTABITEMS 42      // allow a bit of table-address randomization
-#else
-#define MEMHASHTABITEMS 64      // allow a bit of table-address randomization
 #endif
-#elif defined(MEMHASHNREF) && (MEMHASHNREF)                             \
-    && defined(MEMHASHNACT) && (MEMHASHNACT)
-#define MEMHASHTABITEMS 24
-#elif ((defined(MEMHASHNREF) && (MEMHASHNREF))                          \
-       ||  defined(MEMHASNACT) && (MEMHASHNACT))
-#define MEMHASHTABITEMS 32
-#else
-#define MEMHASHTABITEMS 48
-#endif
-#define memhashsize()   MEMHASHSIZE
+#define memhashsize()     MEMHASHARRAYSIZE
 
 #define memtlssize() rounduppow2(sizeof(struct memtls), 2 * PAGESIZE)
 struct memtls {
@@ -730,27 +717,31 @@ memgenhashtabadr(MEMUWORD_T *adr)
            : (MEMBUFMAXBLKS >> 4)))                                     \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMMIDPAGESLOT)                                   \
+           ? 8                                                          \
+           : (((slot) <= MEMBIGPAGESLOT)                                \
+              ? 4                                                       \
+              : 2))                                                     \
+        : (((slot) <= MEMSMALLMAPSHIFT)                                 \
+           ? 8                                                          \
+           : (((slot) <= MEMBIGMAPSHIFT)                                \
+              ? 4                                                       \
+              : 1))))
+#define memnbuftls(type, slot)                                          \
+    (((type) == MEMSMALLBUF)                                            \
+     ? 4                                                                \
+     : (((type) == MEMPAGEBUF)                                          \
+        ? (((slot) <= MEMMIDPAGESLOT)                                   \
            ? 4                                                          \
            : (((slot) <= MEMBIGPAGESLOT)                                \
               ? 2                                                       \
               : 1))                                                     \
-        : 1))
-#define memnbuftls(type, slot)                                          \
-    (((type) == MEMSMALLBUF)                                            \
-     ? 2                                                                \
-     : (((type) == MEMPAGEBUF)                                          \
-        ? (((slot) <= MEMMIDPAGESLOT)                                   \
-           ? 2                                                          \
-           : (((slot) <= MEMBIGPAGESLOT)                                \
-              ? 1                                                       \
-              : 0))                                                     \
         : 0))
 #define memnbufglob(type, slot)                                         \
     (((type) == MEMSMALLBUF)                                            \
-     ? 8                                                                \
+     ? 4                                                                \
      : (((type) == MEMPAGEBUF)                                          \
-        ? 4                                                             \
-        : 0))
+        ? 2                                                             \
+        : 1))
 
 #define membufblkadr(buf, ndx)                                          \
     ((buf)->base + ((ndx) << memgetbufslot(buf)))
@@ -794,7 +785,9 @@ MEMADR_T                 memfindbuf(void *ptr, MEMWORD_T incr,
 #else
 struct membuf          * memfindbuf(void *ptr, long rel);
 #endif
-void                     memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id);
+long                     memrelblk(void *ptr, struct membuf *buf,
+                                   volatile struct membkt *bkt,
+                                   MEMWORD_T id);
 #if (MEMTEST)
 void                     memprintbuf(struct membuf *buf, const char *func);
 long                     _memchkptr(struct membuf *buf, MEMPTR_T ptr);
@@ -814,7 +807,10 @@ struct memstat {
     MEMUWORD_T nbmap;
     MEMUWORD_T nbunmap;
     MEMUWORD_T nbbook;
+    MEMUWORD_T nbhashtab;
     MEMUWORD_T nbhash;
+    MEMUWORD_T nhashchain;
+    MEMUWORD_T nhashitem;
 };
 #endif
 

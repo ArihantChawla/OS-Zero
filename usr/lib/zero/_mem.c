@@ -27,6 +27,9 @@ memprintstat(void)
     fprintf(stderr, "unmap\t%llu KB\n",  stat->nbunmap >> 10);
     fprintf(stderr, "book\t%llu KB\n",  stat->nbbook >> 10);
     fprintf(stderr, "hash\t%llu KB\n",  stat->nbhash >> 10);
+    fprintf(stderr, "hashtab\t%llu KB\n",  stat->nbhashtab >> 10);
+    fprintf(stderr, "hashchains\t%llu\n", stat->nhashchain);
+    fprintf(stderr, "hashitems\t%llu\n", stat->nhashitem);
 }
 #endif
 
