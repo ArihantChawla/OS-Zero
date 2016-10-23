@@ -25,14 +25,14 @@ struct proc        *proczombietab[NTASK];
 long
 procinit(long id, long sched)
 {
-    volatile struct cpu *cpu;
-    struct proc         *proc;
-    struct task         *task;
-    long                 prio;
-    long                 val;
-    struct taskstk      *stk;
-    void                *ptr;
-    uint8_t             *u8ptr;
+    struct cpu     *cpu;
+    struct proc    *proc;
+    struct task    *task;
+    long            prio;
+    long            val;
+    struct taskstk *stk;
+    void           *ptr;
+    uint8_t        *u8ptr;
 
     if (id < TASKNPREDEF) {
         cpu = &cputab[0];

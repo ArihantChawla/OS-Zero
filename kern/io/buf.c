@@ -48,7 +48,6 @@ static m_atomic_t          buflktab[BUFNDEV] ALIGNED(PAGESIZE);
 static void               *buftab[BUFNDEV] ALIGNED(PAGESIZE);
 #elif (BUFNEWHASH)
 static struct bufchain     bufhash[BUFNHASH];
-//static struct bufchain     bufhash[BUFNDEV][BUFNHASH];
 #else
 static m_atomic_t          buflktab[BUFNDEV] ALIGNED(PAGESIZE);
 static void               *bufhash[BUFNDEV][BUFNHASH];
@@ -70,7 +69,7 @@ ioinitbuf(void)
     struct bufblk *prev;
     long           n;
     long           sz;
-    long           end;
+    unsigned long  lim;
 
 #if (BUFDYNALLOC)
     sz = BUFNBLK * sizeof(struct bufblk);
@@ -89,7 +88,7 @@ ioinitbuf(void)
         do {
             sz >>= 1;
             ptr = memalloc(sz, PAGEWIRED);
-        } while ((sz) && !ptr);
+        } while ((sz) >= BUFMINBYTES && !ptr);
     }
     if (!ptr) {
         kprintf("failed to allocate buffer cache\n");
@@ -100,13 +99,20 @@ ioinitbuf(void)
     kprintf("BUF: reserved %lu bytes for buffer cache\n", sz);
 #endif
     u8ptr = ptr;
-    vmpagestat.nbuf = sz >> PAGESIZELOG2;
+    lim = (unsigned long)(u8ptr + sz);
+    vmpagestat.nbuf = sz >> BUFMINSIZELOG2;
     vmpagestat.buf = ptr;
     vmpagestat.bufend = u8ptr + sz;
     vmmapseg((uint32_t *)&_pagetab,
              (uint32_t)ptr, (uint32_t)ptr,
-             (uint32_t)(u8ptr + sz),
-             PAGEPRES | PAGEWRITE | PAGEWIRED); 
+             (uint32_t)lim,
+             PAGEBUF | PAGEPRES | PAGEWRITE | PAGEWIRED);
+    vmpagestat.nphys += (sz >> PAGESIZELOG2);
+    vmpagestat.nvirt += (sz >> PAGESIZELOG2);
+    vmpagestat.nwire += (sz >> PAGESIZELOG2);
+    vmpagestat.nbuf += (sz >> PAGESIZELOG2);
+    kprintf("BUF: mapped buffer cache to %lx..%lx\n",
+            (unsigned long)ptr, (unsigned long)(lim - 1));
     if (ptr) {
         /* zero buffer cache */
         kbzero(ptr, sz);
@@ -216,12 +222,12 @@ void
 bufaddblk(struct bufblk *blk)
 {
 #if (BUFNEWHASH)
-    int64_t          val = bufmkhashkey(blk->dev, blk->num);
-    int64_t          key = hashq128(&val, sizeof(int64_t), BUFNHASHBIT);
+    bufval_t         val = bufmkhashkey(blk->dev, blk->num);
+    bufval_t         key = bufhash(val);
     struct bufblk   *buf;
     struct bufchain *chain = &bufhash[key];
 #else
-    int64_t          key = hashq128(&blk->num, sizeof(int64_t), BUFNHASHBIT);
+    buval_t          key = bufhash(blk->num);
     long             dkey = blk->dev & BUFDEVMASK;
     struct bufblk   *buf;
 #endif
@@ -254,12 +260,12 @@ struct bufblk *
 buffindblk(long dev, off_t num, long rel)
 {
 #if (BUFNEWHASH)
-    int64_t          val = bufmkhashkey(dev, num);
-    int64_t          key = hashq128(&val, sizeof(int64_t), BUFNHASHBIT);
+    bufval_t         val = bufmkhashkey(dev, num);
+    bufval_t         key = bufhash(val);
     struct bufblk   *blk;
     struct bufchain *chain = &bufhash[key];
 #else
-    int64_t          key = hashq128(&num, sizeof(int64_t), BUFNHASHBIT);
+    bufval_t         key = bufhash(num);
     long             dkey = dev & BUFDEVMASK;
     struct bufblk   *blk = NULL;
 #endif
@@ -312,7 +318,7 @@ buffindblk(long dev, off_t num, long rel)
 void
 bufaddblk(struct bufblk *blk)
 {
-    int64_t        key = bufkey(blk->num);
+    bufval_t       key = bufkey(blk->num);
     long           dkey = blk->dev & BUFDEVMASK;
     long           bkey1 = (key >> BUFL1SHIFT) & BUFL1MASK;
     long           bkey2 = (key >> BUFL2SHIFT) & BUFL2MASK;
@@ -409,7 +415,7 @@ bufaddblk(struct bufblk *blk)
 struct bufblk *
 buffindblk(long dev, off_t num, long rel)
 {
-    int64_t        key = bufkey(num);
+    bufval_t       key = bufkey(num);
     struct bufblk *blk = NULL;
     long           dkey = dev & BUFDEVMASK;
     long           bkey1 = (key >> BUFL1SHIFT) & BUFL1MASK;
@@ -482,7 +488,7 @@ buffindblk(long dev, off_t num, long rel)
 #endif
 
 void
-bufrel(long dev, int64_t num, long flush)
+bufrel(long dev, bufval_t num, long flush)
 {
     struct bufblk *blk = buffindblk(dev, num, 1);
 

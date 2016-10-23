@@ -7,13 +7,32 @@
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <kern/perm.h>
+#if (!BUFMULTITAB) && (BUFNEWHASH)
+#include <zero/hash.h>
+#endif
+
+#if (PTRSIZE == 8)
+#define BUFVAL(x) INT64_C(x)
+#define bufhash(val)                                                    \
+    (tmhash64((uint64_t)val) & ((1UL << BUFNHASHBIT) - 1))
+#define bufhashblk(dev, num)                                            \
+    (tmhash64((uint64_t)bufmkhashkey(dev, num)) & ((1UL << BUFNHASHBIT) - 1))
+typedef int64_t bufval_t;
+#elif (PTRSIZE == 4)
+#define BUFVAL(x) INT32_C(x)
+#define bufhash(val)                                                    \
+    (tmhash32((uint32_t)val) & ((1U << BUFNHASHBIT) - 1))
+#define bufhashblk(dev, num)                                            \
+    (tmhash32((uint32_t)bufmkhashkey(dev, num)) & ((1UL << BUFNHASHBIT) - 1))
+typedef int32_t bufval_t;
+#endif
 
 #if (!BUFMULTITAB)
 #if (BUFNEWHASH)
 #define BUFNHASHBIT 16
 #define bufmkhashkey(dev, num)                                          \
-    (((int64_t)dev << (64 - BUFNDEVBIT))                                \
-     | ((num) & ((INT64_C(1) << (64 - BUFNDEVBIT)) - 1)))
+    (((bufval_t)dev << (PTRBITS - BUFNDEVBIT))                          \
+     | ((num) & ((BUFVAL(1) << (PTRBITS - BUFNDEVBIT)) - 1)))
 #else
 #define BUFNHASHBIT 16
 #endif
@@ -27,7 +46,7 @@
  */
 
 #define BUFMINSIZE     (1UL << BUFMINSIZELOG2)
-#define BUFMINSIZELOG2 13
+#define BUFMINSIZELOG2 PAGESIZELOG2
 #define BUFNOFSBIT     BUFMINSIZELOG2
 #define BUFSIZE        (1UL << BUFSIZELOG2)
 #define BUFSIZELOG2    16
@@ -40,6 +59,7 @@
 #define BUFNDEVBIT     8
 #define BUFNDEVBITMAX  16
 #define BUFDEVMASK     (BUFNDEV - 1)
+#if (BUFMULTITAB)
 #define BUFNL1BIT      (BUFNIDBIT - BUFNL2BIT - BUFNL3BIT)
 #define BUFNL2BIT      16
 #define BUFNL3BIT      16
@@ -53,8 +73,9 @@
 #define BUFL2MASK      (BUFNL2ITEM - 1)
 #define BUFL3MASK      (BUFNL3ITEM - 1)
 #define BUFL4MASK      (BUFNL4ITEM - 1)
+#endif /* BUFMULTITAB */
 
-#define bufkey(num) (((num) >> BUFNOFSBIT) & ((UINT64_C(1) << BUFNIDBIT) - 1))
+#define bufmkkey(num) (((num) >> BUFNOFSBIT) & ((UINT64_C(1) << BUFNIDBIT) - 1))
 #define bufclr(blk)                                                     \
     do {                                                                \
         long  _val = 0;                                                 \
@@ -78,13 +99,13 @@
 /* this structure has been carefully crafted to fit a cacheline or two */
 #define __STRUCT_BUFBLK_SIZE                                            \
     (sizeof(long) + 5 * sizeof(void *)                                  \
-     + sizeof(int64_t) + sizeof(int32_t) + 2 * sizeof(int16_t))
+     + sizeof(bufval_t) + sizeof(int32_t) + 2 * sizeof(int16_t))
 #define __STRUCT_BUFBLK_PAD                                             \
     (roundup(__STRUCT_BUFBLK_SIZE, CLSIZE) - __STRUCT_BUFBLK_SIZE)
 struct bufblk {
     const void    *data;        // buffer address + flags in low bits
     long           flg;         // shift count for size + flags as above
-    int64_t        num;         // per-device block ID
+    bufval_t       num;         // per-device block ID
     int32_t        nref;        // # of references
     int16_t        chksum;      // checksum such as IPv4
     int16_t        dev;         // buffer-subsystem device ID
@@ -96,9 +117,9 @@ struct bufblk {
 };
 #else
 struct bufblk {
-    int64_t        dev;         // device #
-    int64_t        num;         // per-device block #
-    int64_t        chksum;      // checksum such as IPv4 or IPv6
+    bufval_t       dev;         // device #
+    bufval_t       num;         // per-device block #
+    bufval_t       chksum;      // checksum such as IPv4 or IPv6
     long           status;      // status flags
     long           nb;          // # of bytes
     long           nref;        // # of items in subtables
@@ -115,7 +136,7 @@ struct bufblk {
 #define __STRUCT_BUFDEV_PAD                                             \
     (roundup(__STRUCT_BUFDEV_SIZE, CLSIZE) - __STRUCT_BUFDEV_SIZE)
 struct bufdev {
-    m_atomic_t lk;
+    m_atomic_t lk;              // lock
     long       id;              // system descriptor
     long       flg;             // flags such as DEVIOSEQ, DEVCANSEEK(?), ...
     long       type;            // DISK, NET, OPT, TAPE, ...

@@ -101,8 +101,8 @@ struct vmpagestat {
     unsigned long  nphys;
     unsigned long  nvirt;
     unsigned long  nmap;
-    unsigned long  nbuf;
     unsigned long  nwire;
+    unsigned long  nbuf;
     void          *phys;
     void          *physend;
     void          *buf;
