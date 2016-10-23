@@ -105,7 +105,7 @@ extern long                  schedidlecoremap[SCHEDIDLECOREMAPNWORD];
 extern struct task          *schedreadytab0[SCHEDNQUEUE];
 extern struct task          *schedreadytab1[SCHEDNQUEUE];
 extern struct schedqueueset  schedreadyset;
-extern struct divu16         fastu32div16tab[rounduppow2(SCHEDHISTORYSIZE,
+extern struct divu16         fastu16div16tab[rounduppow2(SCHEDHISTORYSIZE,
                                                          PAGESIZE)];
 extern long                  schednicetab[SCHEDNICERANGE];
 extern long                  schedslicetab[SCHEDNICERANGE];
@@ -137,7 +137,7 @@ schedadjcpupct(struct task *task, long run)
             div = last - first;
             val = tick - SCHEDHISTORYNTICK;
             last -= val;
-            ntick = fastu32div16(ntick, div, fastu32div16tab);
+            ntick = fastu16div16(ntick, div, fastu16div16tab);
             ntick *= last;
             task->firstrun = val;
             task->ntick = ntick;
@@ -226,11 +226,11 @@ schedcalcscore(struct task *task)
 #if (SCHEDSCOREHALF == 64)
         run >>= 6;
 #else
-        run = fastu32div16(run, SCHEDSCOREHALF, fastu32div16tab);
+        run = fastu16div16(run, SCHEDSCOREHALF, fastu16div16tab);
 #endif
         res = SCHEDSCOREMAX;
         div = max(1, run);
-        tmp = fastu32div16(slp, div, fastu32div16tab);
+        tmp = fastu16div16(slp, div, fastu16div16tab);
         res -= tmp;
         task->score = res;
         
@@ -240,10 +240,10 @@ schedcalcscore(struct task *task)
 #if (SCHEDSCOREHALF == 64)
         slp >>= 6;
 #else
-        slp = fastu32div16(slp, SCHEDHALFSCORE, s);
+        slp = fastu16div16(slp, SCHEDHALFSCORE, s);
 #endif
         div = max(1, slp);
-        res = fastu32div16(run, div, fastu32div16tab);
+        res = fastu16div16(run, div, fastu16div16tab);
         task->score = res;
 
         return res;
@@ -273,9 +273,9 @@ schedcalcuserprio(struct task *task)
      * then divide by SCHEDPRIORANGE; i'm cheating big time =)
      */
     val += SCHEDPRIORANGE - 1;
-    val = fastu32div16(val, SCHEDPRIORANGE, fastu32div16tab);
+    val = fastu16div16(val, SCHEDPRIORANGE, fastu16div16tab);
     /* divide runtime by the result */
-    res = fastu32div16(time, (uint16_t)val, fastu32div16tab);
+    res = fastu16div16(time, (uint16_t)val, fastu16div16tab);
 
     return res;
 }
@@ -299,7 +299,7 @@ schedcalcprio(struct task *task)
 #if (SCHEDSCOREINTLIM == 32)
         delta >>= 5;
 #else
-        delta = fastu32div16(delta, SCHEDSCOREINTLIM, fastu32div16tab);
+        delta = fastu16div16(delta, SCHEDSCOREINTLIM, fastu16div16tab);
 #endif
         delta *= score;
         prio += delta;
@@ -388,9 +388,9 @@ schedadjforkintparm(struct task *task)
         run += run2;
         slp += slp2;
 #else
-        ratio = fastu32div16(sum, SCHEDRECTIMEFORKMAX, fastu32div16tab);
-        run = fastu32div16(run, ratio, fastu32div16tab);
-        slp = fastu32div16(slp, ratio, fastu32div16tab);
+        ratio = fastu16div16(sum, SCHEDRECTIMEFORKMAX, fastu16div16tab);
+        run = fastu16div16(run, ratio, fastu16div16tab);
+        slp = fastu16div16(slp, ratio, fastu16div16tab);
 #endif
         task->runtime = run;
         task->slptime = slp;
@@ -424,7 +424,7 @@ schedcalcintparm(struct task *task, long *retscore)
 #if (SCHEDSCOREINTLIM == 32)
         range >>= 5;
 #else
-        range = fastu32div16(range, SCHEDSCOREINTLIM, fastu32div16tab);
+        range = fastu16div16(range, SCHEDSCOREINTLIM, fastu16div16tab);
 #endif
         range *= score;
         res += range;
@@ -440,9 +440,9 @@ schedcalcintparm(struct task *task, long *retscore)
             range = diff - res + 1;
             tmp = roundup(total, range);
             res += nice;
-            div = fastu32div16(total, tmp, fastu32div16tab);
+            div = fastu16div16(total, tmp, fastu16div16tab);
             range--;
-            total = fastu32div16(tickhz, div, fastu32div16tab);
+            total = fastu16div16(tickhz, div, fastu16div16tab);
             diff = min(total, range);
             res += diff;
         }

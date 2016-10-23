@@ -93,7 +93,7 @@ fastu64divgentab(struct divu64 *duptr, uint32_t lim64)
  * - table size is stored in item #0 to check for buffer overruns
  */
 void
-fastu32div16gentab(struct divu16 *duptr, uint32_t lim16)
+fastu16div16gentab(struct divu16 *duptr, uint32_t lim16)
 {
     uint32_t magic = lim16;
     uint32_t info = 0;

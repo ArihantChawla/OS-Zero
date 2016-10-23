@@ -25,7 +25,7 @@ void                   schedsetzombie(struct proc *proc);
 extern struct cpu        cputab[NCPU];
 extern struct proc      *proczombietab[NTASK];
 extern struct tasktabl0  taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
-extern struct divu16     fastu32div16tab[rounduppow2(SCHEDHISTORYSIZE,
+extern struct divu16     fastu16div16tab[rounduppow2(SCHEDHISTORYSIZE,
                                                      PAGESIZE)];
 
 /* lookup table to convert nice values to priority offsets */
@@ -86,7 +86,7 @@ schedinit(void)
 #endif
 #endif
     kprintf("SCHEDHISTORYSIZE == %ld\n", SCHEDHISTORYSIZE);
-    fastu32div16gentab(fastu32div16tab, SCHEDHISTORYSIZE);
+    fastu16div16gentab(fastu16div16tab, SCHEDHISTORYSIZE);
     schedinitset();
 
     return;

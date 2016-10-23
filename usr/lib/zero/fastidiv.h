@@ -37,7 +37,7 @@ struct divu64 {
 #if (LONGSIZE == 8 || LONGLONGSIZE == 8) && 0
 void fastu64divgentab(struct divu64 *duptr, uint64_t lim32);
 #endif
-void fastu32div16gentab(struct divu16 *duptr, uint32_t lim16);
+void fastu16div16gentab(struct divu16 *duptr, uint32_t lim16);
 //void fastu32div24gentab(struct divu32 *duptr, uint32_t lim24);
 
 #if (LONGSIZE == 8 || LONGLONGSIZE == 8)
@@ -56,7 +56,7 @@ _mulhiu32(uint32_t val1, uint32_t val2)
 #endif
 
 /* get the high 16 bits of val1 * val2 */
-static INLINE uint32_t
+static INLINE uint16_t
 _mulhiu16(uint16_t val1, uint16_t val2)
 {
     uint32_t v1 = val1;
@@ -65,7 +65,7 @@ _mulhiu16(uint16_t val1, uint16_t val2)
 
     res >>= 16;
 
-    return res;
+    return (uint16_t)res;
 }
 
 /* NOTE: dividing 32-bit by 32-bit is currently broken */
@@ -91,9 +91,6 @@ fastu64div32(uint64_t num, uint32_t div32,
     }
     info = ulptr->info;
     magic = ulptr->magic;
-    fprintf(stderr, "32: %u / %u\n", (unsigned int)num, (unsigned int)div32);
-    fprintf(stderr, "DIV32 == %u, MAGIC == 0x%0.8x, INFO == 0x%x\n",
-            (unsigned int)div32, (unsigned int)magic, (unsigned int)info);
     if (!(info & FASTU32DIVSHIFTBIT)) {
         uint32_t quot = _mulhiu32(magic, num);
 
@@ -117,12 +114,12 @@ fastu64div32(uint64_t num, uint32_t div32,
 #endif
 
 /* compute num/div16 with [possible] multiplication + shift operations */
-static INLINE uint32_t
-fastu32div16(uint32_t num, uint16_t div16,
+static INLINE uint16_t
+fastu16div16(uint16_t num, uint16_t div16,
              const struct divu16 *tab)
 {
     const struct divu16 *ulptr = &tab[div16];
-    uint16_t             lim = tab[0].magic;
+    uint32_t             lim = tab[0].magic;
     uint32_t             magic;
     uint32_t             info;
     uint32_t             res;
@@ -137,9 +134,6 @@ fastu32div16(uint32_t num, uint16_t div16,
     }
     info = ulptr->info;
     magic = ulptr->magic;
-    fprintf(stderr, "16: %u / %u\n", (unsigned int)num, (unsigned int)div16);
-    fprintf(stderr, "DIV16 == %u, MAGIC == 0x%0.8x, INFO == 0x%x\n",
-            (unsigned int)div16, (unsigned int)magic, (unsigned int)info);
     if (!(info & FASTU32DIVSHIFTBIT)) {
         uint32_t quot = _mulhiu16(magic, num);
         
