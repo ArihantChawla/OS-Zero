@@ -35,47 +35,45 @@
  * - table size is stored in item #0 to check for buffer overruns
  */
 void
-fastu64div32gentab(struct divu64 *duptr, uint64_t lim32)
+fastu64div32gentab(struct divu32 *duptr, uint64_t lim32)
 {
     uint32_t magic = lim32;
     uint32_t info = 0;
     uint32_t div;
-
+    
     /* store array size into the first item to avoid buffer overruns */
     duptr->magic = magic;
     duptr->info = info;
     for (div = 1 ; div < lim32 ; div++) {
         duptr++;
         if (!powerof2(div)) {
-            uint64_t val64;
+            uint64_t val64 = div;
             uint64_t rem2;
+            uint64_t e;
             uint32_t val;
             uint32_t shift;
-            uint32_t mul;
             uint32_t rem;
-            uint32_t e;
 
-            lzero32(div, val);
-            shift = 31 - val;
+            lzero64(val64, val);
+            shift = 63 - val;
             val64 = 1ULL << shift;
-            val64 <<= 32;
-            mul = val64 / div;
+            magic = val64 / div;
             rem = val64 % div;
             e = div - rem;
-            if (e < val) {
+            if (e < (1ULL << shift)) {
                 info = shift;
             } else {
                 rem2 = rem;
-                mul <<= 1;
+                magic <<= 1;
                 rem2 <<= 1;
-                info = shift | FASTU64DIV32ADDBIT;
                 if (rem2 >= div || rem2 < rem) {
-                    mul++;
+                    info = shift | FASTU64DIV32ADDBIT;
+                    magic++;
                 }
             }
-            magic = ++mul;
+            magic++;
         } else {
-            info = tzerol(div);
+            tzero32(div, info);
             magic = 0;
             info |= FASTU64DIV32SHIFTBIT;
         }
@@ -94,9 +92,9 @@ fastu64div32gentab(struct divu64 *duptr, uint64_t lim32)
 void
 fastu32div16gentab(struct divu16 *duptr, uint32_t lim16)
 {
-    uint16_t magic = lim16;
+    uint32_t magic = lim16;
     uint16_t info = 0;
-    uint16_t div;
+    uint32_t div;
 
     /* store array size into the first item to avoid buffer overruns */
     duptr->magic = magic;
@@ -104,36 +102,35 @@ fastu32div16gentab(struct divu16 *duptr, uint32_t lim16)
     for (div = 1 ; div < lim16 ; div++) {
         duptr++;
         if (!powerof2(div)) {
-            uint32_t val32 = div;
+            uint32_t val32;
             uint32_t rem2;
+            uint32_t e;
             uint16_t val;
             uint16_t shift;
-            uint16_t mul;
             uint16_t rem;
-            uint16_t e;
 
-            lzero32(val32, val);
+            lzero32(div, val);
             val -= 16;
             shift = 15 - val;
             val32 = UINT32_C(1) << shift;
             val32 <<= 16;
-            mul = val32 / div;
+            magic = val32 / div;
             rem = val32 % div;
             e = div - rem;
             if (e < (1U << shift)) {
                 info = shift;
             } else {
                 rem2 = rem;
-                mul <<= 1;
+                magic <<= 1;
                 rem2 <<= 1;
                 info = shift | FASTU32DIV16ADDBIT;
                 if (rem2 >= div || rem2 < rem) {
-                    mul++;
+                    magic++;
                 }
             }
-            magic = ++mul;
+            magic++;
         } else {
-            info = tzerol(div);
+            tzero32(div, info);
             magic = 0;
             info |= FASTU32DIV16SHIFTBIT;
         }
@@ -143,60 +140,4 @@ fastu32div16gentab(struct divu16 *duptr, uint32_t lim16)
 
     return;
 }
-
-#if 0
-/*
- * This routine precomputes a lookup table for divisors 1..lim24
- * - table size is stored in item #0 to check for buffer overruns
- */
-void
-fastu32div24gentab(struct divu32 *duptr, uint32_t lim24)
-{
-    uint32_t magic = lim24;
-    uint32_t info = 0;
-    uint32_t div;
-
-    /* store array size into the first item to avoid buffer overruns */
-    duptr->magic = magic;
-    duptr->info = info;
-    for (div = 1 ; div < lim24 ; div++) {
-        duptr++;
-        if (!powerof2(div)) {
-            uint32_t val;
-            uint32_t shift;
-            uint32_t mul;
-            uint32_t rem;
-            uint32_t rem2;
-            uint32_t e;
-
-            lzero32(div, val);
-            shift = 31 - val;
-            val = UINT32_C(1) << shift;
-            mul = val / div;
-            rem = val % div;
-            e = div - rem;
-            if (e < val) {
-                info = shift;
-            } else {
-                rem2 = rem;
-                mul += mul;
-                rem2 += rem;
-                info = shift | FASTU32DIV24ADDBIT;
-                if (rem2 >= div || rem2 < rem) {
-                    mul++;
-                }
-            }
-            magic = ++mul;
-        } else {
-            info = tzerol(div);
-            magic = 0;
-            info |= FASTU32DIV24SHIFTBIT;
-        }
-        duptr->magic = magic;
-        duptr->info = info;
-    }
-
-    return;
-}
-#endif /* 0 */
 

@@ -12,16 +12,14 @@
 #include <kern/mem/mbuf.h>
 #include <kern/mem/pool.h>
 #include <kern/mem/mag.h>
-#if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__) && 0
-#include <kern/mem/slab32.h>
-#include <kern/unit/x86/link.h>
-#elif defined(__arm__)
+#include <kern/mem/slab.h>
+#if defined(__arm__)
 #include <kern/unit/arm/link.h>
 #endif
 
 extern struct mempool   memphyspool;
 extern struct mempool   memvirtpool;
-static struct membufbkt membufbkttab[NCPU] ALIGNED(PAGESIZE);
+//static struct membufbkt membufbkttab[NCPU] ALIGNED(PAGESIZE);
 static struct membufbkt membufbkt;
 
 void

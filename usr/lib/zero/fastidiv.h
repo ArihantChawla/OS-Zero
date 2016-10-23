@@ -46,7 +46,7 @@ struct divu64 {
 };
 
 #if (LONGSIZE == 8 || LONGLONGSIZE == 8)
-void fastu64div32gentab(struct divu64 *duptr, uint64_t lim32);
+void fastu64div32gentab(struct divu32 *duptr, uint64_t lim32);
 #endif
 void fastu32div16gentab(struct divu16 *duptr, uint32_t lim16);
 //void fastu32div24gentab(struct divu32 *duptr, uint32_t lim24);
@@ -73,38 +73,19 @@ _mullhiu16(uint16_t val1, uint16_t val2)
     return (uint16_t)(res >> 16);
 }
 
-#if 0
-/* get the high 24 bits of val1 * val2 */
-static INLINE uint32_t
-_mullhiu24(uint32_t val1, uint32_t val2)
-{
-    uint32_t val = val1 * val2;
-    uint32_t res = val >> 8;
-
-    return res;
-}
-#endif
-
 #if (WORDSIZE == 8)
 
 /* compute num/div32 with [possible] multiplication + shift operations */
 static INLINE uint64_t
 fastu64div32(uint64_t num, uint32_t div32,
-             const struct divu64 *tab)
+             const struct divu32 *tab)
 {
-    const struct divu64 *ulptr = &tab[div32];
-    uint64_t             magic = ulptr->magic;
-    uint64_t             info = ulptr->info;
-    uint64_t             lim = tab->magic;
+    const struct divu32 *ulptr = &tab[div32];
+    uint32_t             magic = ulptr->magic;
+    uint32_t             info = ulptr->info;
+    uint32_t             lim = tab->magic;
     uint64_t             res = 0;
 
-    if (lim < div32 || !div32) {
-#if defined(__KERNEL__)
-        panic(k_curpid, -TRAPDE, 0);
-#else
-        abort();
-#endif
-    }
     if (!(info & FASTU64DIV32SHIFTBIT)) {
         uint64_t quot = _mullhiu32(magic, num);
         
