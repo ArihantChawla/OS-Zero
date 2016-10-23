@@ -27,8 +27,15 @@ struct divu32 {
     uint32_t info;
 };
 
-#if (LONGSIZE == 8 || LONGLONGSIZE == 8)
-void fastu32div32gentab(struct divu32 *duptr, uint32_t lim32);
+#if 0
+struct divu64 {
+    uint64_t magic;
+    uint64_t info;
+};
+#endif
+
+#if (LONGSIZE == 8 || LONGLONGSIZE == 8) && 0
+void fastu64divgentab(struct divu64 *duptr, uint64_t lim32);
 #endif
 void fastu32div16gentab(struct divu16 *duptr, uint32_t lim16);
 //void fastu32div24gentab(struct divu32 *duptr, uint32_t lim24);
@@ -62,17 +69,17 @@ _mulhiu16(uint16_t val1, uint16_t val2)
 }
 
 /* NOTE: dividing 32-bit by 32-bit is currently broken */
-#if (LONGSIZE == 8 || LONGLONGSIZE == 8)
+#if (LONGSIZE == 8 || LONGLONGSIZE == 8) && 0
 /* compute num/div32 with [possible] multiplication + shift operations */
-static INLINE uint32_t
-fastu32div32(uint32_t num, uint32_t div32,
-             const struct divu32 *tab)
+static INLINE uint64_t
+fastu64div32(uint64_t num, uint32_t div32,
+             const struct divu64 *tab)
 {
-    const struct divu32 *ulptr = &tab[div32];
+    const struct divu64 *ulptr = &tab[div32];
     uint32_t             lim = tab[0].magic;
-    uint32_t             magic;
-    uint32_t             info;
-    uint32_t             res;
+    uint64_t             magic;
+    uint64_t             info;
+    uint64_t             res;
 
     if (div32 == 1) {
         
@@ -90,7 +97,6 @@ fastu32div32(uint32_t num, uint32_t div32,
     if (!(info & FASTU32DIVSHIFTBIT)) {
         uint32_t quot = _mulhiu32(magic, num);
 
-        fprintf(stderr, "MULHI == %lx\n", quot);
         res = quot;
         if (info & FASTU32DIVADDBIT) {
             /* calculate ((num - quot) >> 1) + quot */

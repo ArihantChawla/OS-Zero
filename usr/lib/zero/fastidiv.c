@@ -29,41 +29,39 @@
 #include <zero/trix.h>
 #include <zero/fastidiv.h>
 
-#if (WORDSIZE == 8)
+#if (WORDSIZE == 8) && 0
 /*
- * This routine precomputes a lookup table for divisors 1..lim32
+ * This routine precomputes a lookup table for divisors 1..lim64
  * - table size is stored in item #0 to check for buffer overruns
  */
 void
-fastu32div32gentab(struct divu32 *duptr, uint32_t lim32)
+fastu64divgentab(struct divu64 *duptr, uint32_t lim64)
 {
-    uint32_t magic = lim32;
-    uint32_t info = 0;
-    uint32_t div;
+    uint64_t magic = lim64;
+    uint64_t info = 0;
+    uint64_t div;
     uint32_t val;
     uint32_t shift;
     
     /* store array size into the first item to avoid buffer overruns */
     duptr->magic = magic;
     duptr->info = info;
-    for (div = 1 ; div < lim32 ; div++) {
+    duptr++;
+    for (div = 2 ; div < lim64 ; div++) {
         duptr++;
-        shift = 31;
-        lzero32(div, val);
+        shift = 63;
+        lzero64(div, val);
         shift -= val;
         if (!powerof2(div)) {
-            uint64_t div64 = div;
             uint64_t val64;
-            uint32_t val;
-            uint32_t rem;
-            uint32_t lim;
-            uint32_t e;
+            uint64_t lim;
+            uint64_t val;
+            uint64_t rem;
+            uint64_t e;
 
             lim = 1U << shift;
-            val64 = lim;
-            val64 <<= 32;
-            magic = val64 / div64;
-            rem = val64 % div64;
+            magic = val64 / div;
+            rem = val64 % div;
             e = div - rem;
             if (e < lim) {
                 info = shift;
