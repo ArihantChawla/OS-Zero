@@ -1107,9 +1107,31 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
 #else
                         memlkbit(&bkt->list);
 #endif
+                    } else {
+                        do {
+                            bkt = NULL;
+                            m_syncread(&buf->bkt, bkt);
+                            if (!bkt) {
+                                slot->val = MEMHASHNOTFOUND;
+
+                                return MEMHASHNOTFOUND;
+                            }
+                        } while (!m_cmpswapptr((m_atomic_t *)&buf->bkt,
+                                               bkt,
+                                               NULL));
                     }
                     if (memrelblk(ptr, (struct membuf *)bufval, bkt, id)) {
                         slot->val = MEMHASHNOTFOUND;
+
+                        return desc;
+                    } else if (glob) {
+#if (MEMDEBUGDEADLOCK)
+                        memrelbitln(bkt);
+#else
+                        memrelbit(&bkt->list);
+#endif
+                    } else {
+                        m_syncwrite((m_atomic_t *)&buf->bkt, bkt);
                     }
                 } else {
                     slot->val = MEMHASHNOTFOUND;
@@ -1456,24 +1478,9 @@ memrelblk(void *ptr, struct membuf *buf,
     memsetbufnfree(buf, nfree);
     VALGRINDPOOLFREE(buf->base, ptr);
     if (nfree != 1 && nfree != nblk) {
-        if (glob) {
-            /* no need to reclaim or requeue, just unlock if on global list */
-#if (MEMDEBUGDEADLOCK)
-            memrelbitln(bkt);
-#else
-            memrelbit(&bkt->list);
-#endif
-        }
 
         return 0;
     } else if (nfree == 1 && nfree != nblk) {
-        if (!glob) {
-#if (MEMDEBUGDEADLOCK)
-            gbkt->line = __LINE__;
-#endif
-            /* this will unlock the list (set the low-bit to zero) */
-            m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
-        }
 
         return 0;
     } else if (nfree == nblk) {
@@ -1630,9 +1637,9 @@ memrelblk(void *ptr, struct membuf *buf,
 #endif
             VALGRINDRMPOOL(buf->base);
             unmapanon(buf, buf->size);
-        }
 
-        return 1;
+            return 1;
+        }
     }
 
     return 0;
