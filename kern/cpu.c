@@ -23,4 +23,3 @@ cpuinit(long unit)
 };
 
 
-

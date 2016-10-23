@@ -670,17 +670,18 @@ _havestk:
 	movl	%ebp, %esp		// restore stack pointer
 	/* copy of task pointer is still in EAX */
 	pushl	%eax			// store task pointer
-	call	schedswitchtask		// call scheduler function
-	popl	%edx			// pop earlier task pointer
-	cmpl	%eax, %edx		// did we reschedule the same task?
-	jne	_swtch			// if not, branch to _swtch
+//	call	schedswitchtask		// call scheduler function
+//	popl	%edx			// pop earlier task pointer
+//	cmpl	%eax, %edx		// did we reschedule the same task?
+//	jne	_swtch			// if not, branch to _swtch
 	/* continue the same task */
-	leal	20(%eax), %esp
+	popl	%ebx			// pop earlier task pointer
+	leal	20(%ebx), %esp
 	popal
-	movl	32(%esp), %esp		// ESP = m_tcb.trapesp
+	movl	32(%esp), %esp		// ESP = m_task.trapesp
 	iretl
-_swtch:
-	call	m_taskjmp
+//_swtch:
+//	call	m_taskjmp
 	
 .align	16
 

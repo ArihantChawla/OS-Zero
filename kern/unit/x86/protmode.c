@@ -82,6 +82,7 @@ kinitprot(unsigned long pmemsz)
                           : "rm" (sp));
     meminit(min(pmemsz, lim), min(KERNVIRTBASE, lim));
     cpuinit(0);
+    procinit(PROCKERN, SCHEDNOCLASS);
     taskinitenv();
     tssinit(0);
 #if (PS2DRV)
@@ -117,7 +118,7 @@ kinitprot(unsigned long pmemsz)
     }
 #endif
 #endif /* SMP || APIC */
-    procinit(PROCKERN, SCHEDNOCLASS);
+//    procinit(PROCKERN, SCHEDNOCLASS);
     kprintf("%lu free physical pages @ 0x%p..0x%p\n",
             vmpagestat.nphys, vmpagestat.phys, vmpagestat.physend);
 #if (SMBIOS)

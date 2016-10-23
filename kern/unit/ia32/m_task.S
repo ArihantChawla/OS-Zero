@@ -20,8 +20,6 @@ m_taskjmp:
 	movl	%gs:8, %eax
 	/* fetch fxsave-word */
 	movl	(%eax), %ebx
-	/* adjust %esp to task->pdbr */
-	leal	4(%eax), %esp
 	andl	$CPUHASFXSR, %ebx
 	leal	128(%eax), %edx
 	cmpl	$0, %ebx
@@ -32,20 +30,19 @@ _frstor:
 	frstor	(%edx)
 _fpudone:
 	fwait
-	leal	4(%eax), %esp
 	/* fetch page directory page register */
 	movl	52(%eax), %ebx
-	/* load address of task->segregs into %esp */
+	/* restore page directory page register */
+	movl	%ebx, %cr3
+	/* - load stack pointer for segregs */
+	leal	4(%eax), %esp
 	popl	%ds
 	popl	%es
 	popl	%fs
 	popl	%gs
-	/* restore page directory page register */
-	movl	%ebx, %cr3
 	/* pop general purpose registers */
 	popal
-	/* - stack pointer points to top of segregs */
-	addl	$12, %esp
+	movl	64(%esp), %esp
 #if (APIC)
 	_apiceoi
 #else
