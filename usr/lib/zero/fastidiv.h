@@ -41,7 +41,8 @@ _mullhiu32(uint32_t val1, uint32_t val2)
     uint64_t v2 = val2;
     uint64_t res = v1 * 2;
 
-    return (uint32_t)(res >> 32);
+    res >>= 32;
+    return (uint32_t)res;
 }
 #endif
 
@@ -53,9 +54,11 @@ _mullhiu16(uint16_t val1, uint16_t val2)
     uint32_t v2 = val2;
     uint32_t res = v1 * v2;
 
-    return (uint16_t)(res >> 16);
+    res >>= 16;
+    return (uint16_t)res;
 }
 
+/* NOTE: dividing 32-bit by 32-bit is currently broken */
 #if (LONGSIZE == 8 || LONGLONGSIZE == 8)
 /* compute num/div32 with [possible] multiplication + shift operations */
 static INLINE uint32_t
@@ -63,10 +66,20 @@ fastu32div32(uint32_t num, uint32_t div32,
              const struct divu32 *tab)
 {
     const struct divu32 *ulptr = &tab[div32];
+    uint32_t             lim = tab[0].magic;
     uint32_t             magic = ulptr->magic;
     uint32_t             info = ulptr->info;
     uint32_t             res = 0;
 
+    if (div32 == 1) {
+        
+        return num;
+    }
+    if (div32 >= lim) {
+        res = num / div32;
+
+        return res;
+    }
     res = num;
     if (!(info & FASTU32DIVSHIFTBIT)) {
         uint32_t quot = _mullhiu32(magic, num);
@@ -91,10 +104,19 @@ fastu32div16(uint32_t num, uint16_t div16,
              const struct divu16 *tab)
 {
     const struct divu16 *ulptr = &tab[div16];
+    uint16_t             lim = tab[0].magic;
     uint32_t             magic = ulptr->magic;
     uint32_t             info = ulptr->info;
     uint32_t             res = 0;
 
+    if (div16 == 1) {
+
+        return num;
+    } else if (div16 >= lim) {
+        res = num / div16;
+
+        return res;
+    }
     res = num;
     if (!(info & FASTU32DIVSHIFTBIT)) {
         uint32_t quot = _mullhiu16(magic, num);
