@@ -104,7 +104,8 @@ fastu16div16gentab(struct divu16 *duptr, uint32_t lim16)
     /* store array size into the first item to avoid buffer overruns */
     duptr->magic = magic;
     duptr->info = info;
-    for (div = 1 ; div < lim16 ; div++) {
+    duptr++;
+    for (div = 2 ; div <= lim16 ; div++) {
         duptr++;
         lzero32(div, val);
         val -= 16;
