@@ -619,6 +619,18 @@ irqtmr:
 	movl	%esp, %ebp		// store stack pointer
 	pushl	%eax			// back %eax up
 	movl	%gs:8, %eax		// per-cpu current task
+	cmpl	$0, %eax
+	jnz	_save
+	popl	%eax
+	movl	%ebp, %esp
+	popl	%ebp
+#if (APIC)
+	_apiceoi
+#else
+	_piceoi1
+#endif
+	iretl
+_save:
 	// adjust sp for pushing m_tcb.genregs
 	leal	52(%eax), %esp
 	pushal				// push general-purpose registers
@@ -670,19 +682,20 @@ _havestk:
 	movl	%ebp, %esp		// restore stack pointer
 	/* copy of task pointer is still in EAX */
 	pushl	%eax			// store task pointer
-//	call	schedswitchtask		// call scheduler function
-//	popl	%edx			// pop earlier task pointer
-//	cmpl	%eax, %edx		// did we reschedule the same task?
-//	jne	_swtch			// if not, branch to _swtch
+	call	schedswitchtask		// call scheduler function
+	/* schedswitchtask does not return normally */
 	/* continue the same task */
 	popl	%ebx			// pop earlier task pointer
 	leal	20(%ebx), %esp
 	popal
 	movl	32(%esp), %esp		// ESP = m_task.trapesp
+#if (APIC)
+	_apiceoi
+#else
+	_piceoi1
+#endif
 	iretl
-//_swtch:
-//	call	m_taskjmp
-	
+ 	
 .align	16
 
 irqkbd:

@@ -349,6 +349,11 @@ schedswitchtask(struct task *curtask)
     long                   lim;
     long                   loop;
 
+    if (!curtask) {
+        /* kernel initialisations are still taking place */
+
+        return NULL;
+    }
     switch (state) {
         case TASKNEW:
         case TASKREADY:

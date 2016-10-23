@@ -24,7 +24,7 @@
 #define FASTINTR    1
 #endif
 
-#define IOBUF       0
+#define IOBUF       1
 #define NEWFONT     1
 #if !defined(BUFNMEG)
 #define BUFNMEG     64
@@ -97,10 +97,6 @@
 #define SB16        0           // Soundblaster 16 audio driver
 #define AC97        0           // AC97 audio drivers
 #define ENS1370     0           // Ensoniq 1370 audio driver
-
-#if (!ZEROSCHED)
-#undef ZEROSCHED
-#endif
 
 #endif /* __KERN_CONF_H__ */
 

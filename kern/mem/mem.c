@@ -121,6 +121,11 @@ meminit(size_t nbphys, size_t nbvirt)
     size_t    lim = max(nbphys, KERNVIRTBASE);
     uintptr_t adr;
 
+    vmmapseg(&_pagetab,
+             (uint32_t)nbvirt,
+             (uint32_t)nbvirt,
+             (uint32_t)lim,
+             PAGEPRES | PAGEWRITE);
 #if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
     || defined(__arm__)
     pageinitphys((uintptr_t)&_epagetab, lim - (size_t)&_epagetab);

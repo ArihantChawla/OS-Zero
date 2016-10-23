@@ -27,6 +27,7 @@
 #include <kern/mem/slab.h>
 #include <kern/mem/mag.h>
 #include <kern/io/buf.h>
+#include <kern/unit/x86/link.h>
 
 #define DEQ_ITEM_TYPE struct bufblk
 #define DEQ_TYPE      struct bufblk
@@ -102,6 +103,10 @@ ioinitbuf(void)
     vmpagestat.nbuf = sz >> PAGESIZELOG2;
     vmpagestat.buf = ptr;
     vmpagestat.bufend = u8ptr + sz;
+    vmmapseg((uint32_t *)&_pagetab,
+             (uint32_t)ptr, (uint32_t)ptr,
+             (uint32_t)(u8ptr + sz),
+             PAGEPRES | PAGEWRITE | PAGEWIRED); 
     if (ptr) {
         /* zero buffer cache */
         kbzero(ptr, sz);
