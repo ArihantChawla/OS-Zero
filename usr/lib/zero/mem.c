@@ -794,6 +794,8 @@ meminithashitem(MEMPTR_T data)
 }
 #endif
 
+#endif
+
 static struct memhash *
 memgethashitem(void)
 {
@@ -1096,50 +1098,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             id = desc & MEMPAGEINFOMASK;
             n = blk->ntab;
             buf = (struct membuf *)bufval;
-            if (buf) {
-                m_syncread(&buf->bkt, bkt);
-                if (bkt) {
-                    glob = (bkt >= &g_mem.bigbin[0]
-                            && bkt < &g_mem.smallbin[MEMMAXSMALLSLOT]);
-                    if (glob) {
-#if (MEMDEBUGDEADLOCK)
-                        memlkbitln(bkt);
-#else
-                        memlkbit(&bkt->list);
-#endif
-                    } else {
-                        do {
-                            bkt = NULL;
-                            m_syncread(&buf->bkt, bkt);
-                            if (!bkt) {
-                                slot->val = MEMHASHNOTFOUND;
-
-                                return MEMHASHNOTFOUND;
-                            }
-                        } while (!m_cmpswapptr((m_atomic_t *)&buf->bkt,
-                                               bkt,
-                                               NULL));
-                    }
-                    if (memrelblk(ptr, (struct membuf *)bufval, bkt, id)) {
-                        slot->val = MEMHASHNOTFOUND;
-
-                        return desc;
-                    } else if (glob) {
-#if (MEMDEBUGDEADLOCK)
-                        memrelbitln(bkt);
-#else
-                        memrelbit(&bkt->list);
-#endif
-                    } else {
-                        m_syncwrite((m_atomic_t *)&buf->bkt, bkt);
-                    }
-                } else {
-                    slot->val = MEMHASHNOTFOUND;
-
-                    return MEMHASHNOTFOUND;
-                }
-#endif
-            }
+            memrelblk(ptr, buf, bkt, id);
 #if (MEMHASHNREF)
             if (!slot->nref) {
                 if (n == 1) {
