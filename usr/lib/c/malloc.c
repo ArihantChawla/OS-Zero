@@ -13,6 +13,7 @@
 #include <zero/mem.h>
 #include <zero/mtx.h>
 #include <zero/trix.h>
+#include <zero/valgrind.h>
 #include "_malloc.h"
 
 extern THREADLOCAL volatile struct memtls *g_memtls;
