@@ -1399,7 +1399,7 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
 #if (MEMDEBUG)
     crash(nfree <= nblk);
 #endif
-    if (nfree == 1 && nfree != nblk) {
+    if (nfree == 1) {
 #if (MEMDEBUGDEADLOCK)
         memlkbitln(gbkt);
 #else
@@ -1419,7 +1419,7 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
 #endif
         /* this will unlock the list (set the low-bit to zero) */
         m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
-
+        
         return;
     } else if (nfree == nblk) {
         /* queue or reclaim a free buffer */
@@ -1433,17 +1433,11 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
         if (!glob) {
             tbkt = NULL;
             if (type == MEMSMALLBUF) {
+                tbkt = &g_memtls->smallbin[slot];
                 lim = MEMSMALLTLSLIM;
                 bufsz = nblk << slot;
-                tbkt = &g_memtls->smallbin[slot];
-                if (nfree == 1) {
-                    bktsz = tbkt-bufsz;
-                    bktsz += bufsz;
-                    if (bktsz > lim) {
-                        tbkt = NULL;
-                    }
-                } else if (bkt != tbkt) {
-
+                if (bkt != tbkt) {
+                    
                     return;
                 } else {
                     bktsz = tbkt->bufsz;
@@ -1454,24 +1448,18 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
                     }
                 }
             } else if (type == MEMPAGEBUF) {
+                tbkt = &g_memtls->pagebin[slot];
                 lim = MEMPAGETLSLIM;
                 bufsz = PAGESIZE + PAGESIZE * slot;
-                tbkt = &g_memtls->pagebin[slot];
-                if (nfree == 1) {
+                if (bkt != tbkt) {
+                    
+                    return;
+                } else {
                     bktsz = tbkt->bufsz;
                     bktsz += bufsz;
                     if (bktsz > lim) {
                         tbkt = NULL;
-                    } else if (bkt != tbkt) {
-                        
-                        return;
-                    } else {
-                        bktsz = tbkt->bufsz;
-                        bktsz += bufsz;
-                        if (bktsz > lim) {
-                            tbkt = NULL;
-                            memdequeuebuftls(buf, bkt);
-                        }
+                        memdequeuebuftls(buf, bkt);
                     }
                 }
             }
