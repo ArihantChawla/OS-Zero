@@ -786,7 +786,6 @@ MEMADR_T                 memfindbuf(void *ptr, MEMWORD_T incr,
 struct membuf          * memfindbuf(void *ptr, long rel);
 #endif
 long                     memrelblk(void *ptr, struct membuf *buf,
-                                   volatile struct membkt *bkt,
                                    MEMWORD_T id);
 #if (MEMTEST)
 void                     memprintbuf(struct membuf *buf, const char *func);

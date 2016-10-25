@@ -47,7 +47,7 @@
 #define m_getfrmadr(p)                                                  \
     (__builtin_frame_address(0))
 /* atomic operations - FIXME: are the barriers used correctly? */
-#define m_atomread(a)     ((*(volatile typeof(a))(a)))
+#define m_atomread(a)     ((*(volatile typeof(a) *)&(a)))
 #define m_atomwrite(a, v) ((*(volatile typeof(v) *)(a)) = (v))
 #define m_syncread(a, res)                                              \
     do {                                                                \
