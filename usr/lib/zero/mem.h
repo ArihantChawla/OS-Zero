@@ -235,7 +235,7 @@ struct membkt {
 #if (MEMDEBUGDEADLOCK)
     MEMUWORD_T     line;
 #endif
-    MEMWORD_T      nbuf;        // number of bufs in list
+    MEMWORD_T      bufsz;       // number of free bytes on list
 #if 0
     MEMWORD_T      nblk;        // # of per-buffer blocks; 0 for default
     MEMWORD_T      nmax;        // max # to buffer; 0 for default
@@ -307,7 +307,7 @@ struct mem {
     struct memhashlist *hash;    // hash table
     struct memhash     *hashbuf; // buffer for hash items
 #endif
-    MEMUWORD_T          flg;     // memory interface flags
+    MEMWORD_T           flg;     // memory interface flags
     MEMUWORD_T          nbsmall;
     MEMUWORD_T          nbpage;
     MEMUWORD_T          nbbig;
@@ -418,7 +418,7 @@ struct memhashitem {
 
 struct memhash {
     struct memhash     *chain;  // next array in this chain
-    MEMUWORD_T          ntab;   // number of occupied slots in this table
+    MEMWORD_T           ntab;   // number of occupied slots in this table
     struct memhashitem *tab;    // pointer to the item table
     struct memhashlist *list;   // pointer for head of list
     MEMUWORD_T          data;   // base address for the table
@@ -449,7 +449,7 @@ struct memtls {
 #if (MEM_LK_TYPE & MEM_LK_PRIO)
     struct priolkdata priolkdata;
 #endif
-    MEMUWORD_T        flg;
+    MEMWORD_T         flg;
     MEMUWORD_T        nbsmall;
     MEMUWORD_T        nbpage;
 };
@@ -777,7 +777,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
 void                     meminit(void);
 volatile struct memtls * meminittls(void);
 MEMPTR_T                 memgetblk(MEMWORD_T slot, MEMWORD_T type,
-                                   MEMUWORD_T size, MEMUWORD_T align);
+                                   MEMWORD_T size, MEMWORD_T align);
 MEMPTR_T                 memsetbuf(MEMPTR_T ptr, struct membuf *buf,
                                    MEMWORD_T id);
 #if (MEMMULTITAB)
@@ -799,7 +799,7 @@ void                     memprintbuf(struct membuf *buf, const char *func);
 long                     _memchkptr(struct membuf *buf, MEMPTR_T ptr);
 long                     _memchkbuf(struct membuf *buf,
                                     MEMWORD_T type,
-                                    MEMWORD_T nblk, MEMUWORD_T flg,
+                                    MEMWORD_T nblk, MEMWORD_T flg,
                                     const char *func);
 #endif
 
