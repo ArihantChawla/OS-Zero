@@ -1,7 +1,7 @@
 #ifndef __ZERO_VALGRIND_H__
 #define __ZERO_VALGRIND_H__
 
-#if defined(ZEROVALGRIND) && (ZEROVALGRIND) && !defined(NVALGRIND)
+#if !defined(NVALGRIND)
 #include <valgrind/valgrind.h>
 #define VALGRINDMKPOOL(adr, rz, zf)                                     \
     do {                                                                \
@@ -46,13 +46,13 @@
         }                                                               \
     } while (0)
 #else /* !MALLOCVALGRIND */
-#define VALGRINDMKPOOL(adr, z)
+#define VALGRINDMKPOOL(adr, rz, zer)
 #define VALGRINDMARKPOOL(adr, sz)
 #define VALGRINDRMPOOL(adr)
 #define VALGRINDMKSUPER(adr)
 #define VALGRINDPOOLALLOC(pool, adr, sz)
 #define VALGRINDPOOLFREE(pool, adr)
-#define VALGRINDALLOC(adr, sz, z)
+#define VALGRINDALLOC(adr, sz, zf)
 #define VALGRINDFREE(adr)
 #endif
 

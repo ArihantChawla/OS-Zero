@@ -45,10 +45,6 @@
 #elif (MEM_LK_TYPE == MEM_LK_FMTX)
 #include <zero/mtx.h>
 #endif
-#if defined(MEMVALGRIND) && (MEMVALGRIND)
-#define ZEROVALGRIND 1
-#include <zero/valgrind.h>
-#endif
 
 /* types */
 
@@ -441,11 +437,9 @@ struct memhash {
 #else
 #define MEMHASHARRAYSIZE (128 * WORDSIZE)
 #endif
-#if (MEMNEWHASHTAB)
 #define MEMHASHARRAYITEMS                                               \
     ((MEMHASHARRAYSIZE - offsetof(struct memhash, data))                \
      / sizeof(struct memhashitem))
-#endif
 #define memhashsize()     MEMHASHARRAYSIZE
 
 #define memtlssize() rounduppow2(sizeof(struct memtls), 2 * PAGESIZE)

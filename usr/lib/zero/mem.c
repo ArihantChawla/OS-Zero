@@ -14,6 +14,7 @@
 #include <zero/spin.h>
 #include <zero/mem.h>
 #include <zero/hash.h>
+#include <zero/valgrind.h>
 
 static pthread_once_t               g_initonce = PTHREAD_ONCE_INIT;
 static pthread_key_t                g_thrkey;
