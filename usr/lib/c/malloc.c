@@ -89,9 +89,6 @@ _free(void *ptr)
         VALGRINDFREE(ptr);
     }
 #endif
-#if (MEMDEBUG)
-    crash(desc != 0);
-#endif
 
     return;
 }

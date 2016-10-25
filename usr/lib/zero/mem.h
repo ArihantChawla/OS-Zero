@@ -280,11 +280,11 @@ struct membkt {
 #define memgetbufheapflg(buf)                                           \
     ((buf)->info & MEMHEAPBIT)
 #define memgetbufnblk(buf)                                              \
-    ((buf)->info & ((MEMUWORD(1) << MEMBUFNBLKBITS) - 1))
+    ((buf)->info & ((MEMWORD(1) << MEMBUFNBLKBITS) - 1))
 #define memgetbufnfree(buf)                                             \
     ((buf)->nfree)
 #define memgetbuftype(buf)                                              \
-    (((buf)->info >>  MEMBUFTYPESHIFT) & ((MEMUWORD(1) << MEMBUFTYPEBITS) - 1))
+    (((buf)->info >>  MEMBUFTYPESHIFT) & ((MEMWORD(1) << MEMBUFTYPEBITS) - 1))
 #define memgetbufslot(buf)                                              \
     (((buf)->info >> MEMBUFSLOTSHIFT) & ((MEMWORD(1) << MEMBUFSLOTBITS) - 1))
 
