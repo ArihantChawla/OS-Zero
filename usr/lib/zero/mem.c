@@ -752,8 +752,8 @@ MEMADR_T
 membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
 {
     MEMADR_T                adr = (MEMADR_T)ptr;
-//    MEMADR_T                page = adr >> PAGESIZELOG2;
-    MEMUWORD_T              key = memhashptr(adr) & (MEMHASHITEMS - 1);
+    MEMADR_T                page = adr >> PAGESIZELOG2;
+    MEMUWORD_T              key = memhashptr(page) & (MEMHASHITEMS - 1);
     MEMADR_T                desc;
     MEMADR_T                upval;
     struct memhash         *blk;
@@ -785,56 +785,56 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             switch (n) {
                 case 8:
                     slot = &src[7];
-                    if (slot->adr == adr) {
+                    if (slot->adr == page) {
                         found++;
                         
                         break;
                     }
                 case 7:
                     slot = &src[6];
-                    if (slot->adr == adr) {
+                    if (slot->adr == page) {
                         found++;
                         
                         break;
                     }
                 case 6:
                     slot = &src[5];
-                    if (slot->adr == adr) {
+                    if (slot->adr == page) {
                         found++;
                         
                         break;
                     }
                 case 5:
                     slot = &src[4];
-                    if (slot->adr == adr) {
+                    if (slot->adr == page) {
                         found++;
                         
                         break;
                     }
                 case 4:
                     slot = &src[3];
-                    if (slot->adr == adr) {
+                    if (slot->adr == page) {
                         found++;
                         
                         break;
                     }
                 case 3:
                     slot = &src[2];
-                    if (slot->adr == adr) {
+                    if (slot->adr == page) {
                         found++;
                         
                         break;
                     }
                 case 2:
                     slot = &src[1];
-                    if (slot->adr == adr) {
+                    if (slot->adr == page) {
                         found++;
                         
                         break;
                     }
                 case 1:
                     slot = &src[0];
-                    if (slot->adr == adr) {
+                    if (slot->adr == page) {
                         found++;
                         
                         break;
@@ -852,9 +852,6 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             blk = blk->chain;
         } else {
             desc = slot->val;
-            if (op == MEMHASHDEL) {
-                slot->val = 0;
-            }
         }
     }
 //    upval = (MEMADR_T)g_mem.hash[key].chain;
@@ -933,7 +930,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                 }
 #endif
                 blk->list = &g_mem.hash[key];
-                slot->adr = adr;
+                slot->adr = page;
                 slot->val = desc;
 #if (MEMHASHLOCK)
                 g_mem.hash[key].chain = blk;
@@ -960,7 +957,6 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
 #endif
         if (op == MEMHASHDEL) {
             id = desc & MEMPAGEINFOMASK;
-            slot->adr = 0;
             desc &= ~MEMPAGEINFOMASK;
             buf = (struct membuf *)desc;
             memrelblk(ptr, buf, id);
