@@ -91,7 +91,7 @@ _memchkptr(struct membuf *buf, MEMPTR_T ptr)
         fprintf(stderr, "nfree:\t%lx\n", nfree);
         fprintf(stderr, "type:\t%lx\n", type);
         fprintf(stderr, "slot:\t%lx\n", slot);
-        fprintf(stderr, "bufsz:\t%lx\n", sz);
+        fprintf(stderr, "blksz:\t%lx\n", sz);
 
         abort();
     }

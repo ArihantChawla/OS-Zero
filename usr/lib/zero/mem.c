@@ -966,9 +966,9 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
             slot->nref--;
 #endif
-            n = blk->ntab;
             memrelblk(ptr, buf, id);
 #if (MEMHASHNREF)
+            n = blk->ntab;
             if (!slot->nref) {
                 if (n == 1) {
                     if (prev) {
@@ -982,15 +982,17 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                     }
                     membufhashitem(blk);
                 } else {
+                    n--;
                     src = &blk->tab[n];
                     slot->nref = src->nref;
 #if defined(MEMHASHNACT) && (MEMHASHNACT)
                     slot->nact = src->nact;
 #endif
-                    n--;
 //                upval &= ~MEMLKBIT;
                     slot->adr = src->adr;
                     slot->val = src->val;
+                    src->adr = 0;
+                    src->val = 0;
                     blk->ntab = n;
                 }
             }

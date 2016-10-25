@@ -262,19 +262,19 @@ struct membkt {
 #define MEMBIGBUF        0x02
 #define MEMBUFTYPES      3
 #define MEMBUFTYPEBITS   2
-#define MEMHEAPBIT       (MEMUWORD(1) << MEMBUFFLGSHIFT)
-#define MEMBUFFLGSHIFT   (sizeof(MEMUWORD_T) * CHAR_BIT - 1)
-#define MEMBUFFLGBITS    1
-#define MEMBUFSLOTBITS   8
+#define MEMHEAPBIT       (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 1))
+#define MEMBUFSLOTBITS   12
 #define MEMBUFSLOTMASK   (((MEMUWORD(1) << MEMBUFSLOTBITS) - 1)         \
                           << MEMBUFSLOTSHIFT)
-#define MEMBUFSLOTSHIFT  (2 * MEMBUFNBLKBITS)
+#define MEMBUFSLOTSHIFT  (MEMBUFNBLKBITS)
 #define MEMBUFTYPESHIFT  (MEMBUFSLOTSHIFT + MEMBUFSLOTBITS)
-#define MEMBUFNBLKBITS   10
+#define MEMBUFNBLKBITS   12
 #define MEMBUFNBLKMASK   ((MEMWORD(1) << MEMBUFNBLKBITS) - 1)
+#if 0
 #define MEMBUFNFREEBITS   MEMBUFNBLKBITS
 #define MEMBUFNFREEMASK  (MEMBUFNBLKMASK << MEMBUFNFREESHIFT)
 #define MEMBUFNFREESHIFT  MEMBUFNBLKBITS
+#endif
 
 #define memsetbufnblk(buf, n)                                           \
     ((buf)->info |= (n))
@@ -283,13 +283,13 @@ struct membkt {
 #define memsetbufslot(buf, slot)                                        \
     ((buf->info)  |= (slot) << MEMBUFSLOTSHIFT)
 #define memsetbufnfree(buf, n)                                          \
-    ((buf)->info = ((buf)->info & ~MEMBUFNFREEMASK) | ((n) << MEMBUFNBLKBITS))
+    ((buf)->nfree = (n))
 #define memgetbufheapflg(buf)                                           \
     ((buf)->info & MEMHEAPBIT)
 #define memgetbufnblk(buf)                                              \
     ((buf)->info & MEMBUFNBLKMASK)
 #define memgetbufnfree(buf)                                             \
-    (((buf)->info >> MEMBUFNFREESHIFT) & ((MEMUWORD(1) << MEMBUFNFREEBITS) - 1))
+    ((buf)->nfree)
 #define memgetbuftype(buf)                                              \
     (((buf)->info >>  MEMBUFTYPESHIFT) & ((MEMUWORD(1) << MEMBUFTYPEBITS) - 1))
 #define memgetbufslot(buf)                                              \
