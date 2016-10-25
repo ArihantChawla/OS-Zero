@@ -410,7 +410,6 @@ struct memhashlist {
 #endif
 #endif
 #define MEMHASHNOTFOUND  0
-#define MEMHASHFOUND     (~(MEMADR_T)0)
 
 #endif /* MEMNEWHASH */
 
@@ -421,7 +420,7 @@ struct memhashitem {
 #if defined(MEMHASHNACT) && (MEMHASHNACT)
     MEMUWORD_T nact;            // number of inserts, finds, and deletes
 #endif
-    MEMADR_T   page;            // page address
+    MEMADR_T   adr;             // allocation address
     MEMADR_T   val;             // stored value
 };
 
@@ -774,6 +773,8 @@ memgenhashtabadr(MEMUWORD_T *adr)
     ((buf)->ptrtab[membufblkid(buf, ptr)])
 #define membufsetadr(buf, ptr, adr)                                     \
     ((buf)->ptrtab[membufblkid(buf, ptr)] = (adr))
+#define membufgetadr(buf, ptr)                                          \
+    ((buf)->ptrtab[membufblkid(buf, ptr)])
 #define membufgetpageadr(buf, ndx)                                      \
     ((buf)->ptrtab[(ndx)])
 #define membufsetpageadr(buf, ndx, adr)                                 \

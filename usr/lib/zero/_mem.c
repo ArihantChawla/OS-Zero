@@ -42,9 +42,9 @@ memprintbuf(struct membuf *buf, const char *func)
     MEMUWORD_T blksz = membufblksize(buf, type, slot);
 
     if (func) {
-        fprintf(stderr, "BUF: (%s)\n", func);
+        fprintf(stderr, "BUF(%p): (%s)\n", buf, func);
     } else {
-        fprintf(stderr, "BUF\n");
+        fprintf(stderr, "BUF(%p)\n", buf);
     }
     fprintf(stderr, "--------\n");
     fprintf(stderr, "base:\t%p\n", buf->base);
