@@ -957,18 +957,15 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
 #if defined(MEMHASHNACT) && (MEMHASHNACT)
         slot->nact++;
 #endif
-        desc &= ~MEMPAGEINFOMASK;
-        if (desc == ~((MEMADR_T)0)) {
-            abort();
-        }
-        buf = (struct membuf *)desc;
         if (op == MEMHASHDEL) {
+            id = desc & MEMPAGEINFOMASK;
             slot->adr = 0;
+            desc &= ~MEMPAGEINFOMASK;
             slot->val = 0;
+            buf = (struct membuf *)desc;
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
             slot->nref--;
 #endif
-            id = desc & MEMPAGEINFOMASK;
             n = blk->ntab;
             memrelblk(ptr, buf, id);
 #if (MEMHASHNREF)

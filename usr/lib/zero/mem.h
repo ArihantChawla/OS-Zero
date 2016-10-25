@@ -263,7 +263,6 @@ struct membkt {
 #define MEMBUFTYPES      3
 #define MEMBUFTYPEBITS   2
 #define MEMHEAPBIT       (MEMUWORD(1) << MEMBUFFLGSHIFT)
-#define MEMBUFFLGMASK    (MEMHEAPBIT)
 #define MEMBUFFLGSHIFT   (sizeof(MEMUWORD_T) * CHAR_BIT - 1)
 #define MEMBUFFLGBITS    1
 #define MEMBUFSLOTBITS   8
