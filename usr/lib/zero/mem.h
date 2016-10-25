@@ -264,12 +264,9 @@ struct membkt {
 #define MEMBUFTYPEBITS   2
 #define MEMHEAPBIT       (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 1))
 #define MEMBUFSLOTBITS   12
-#define MEMBUFSLOTMASK   (((MEMUWORD(1) << MEMBUFSLOTBITS) - 1)         \
-                          << MEMBUFSLOTSHIFT)
 #define MEMBUFSLOTSHIFT  (MEMBUFNBLKBITS)
 #define MEMBUFTYPESHIFT  (MEMBUFSLOTSHIFT + MEMBUFSLOTBITS)
 #define MEMBUFNBLKBITS   12
-#define MEMBUFNBLKMASK   ((MEMWORD(1) << MEMBUFNBLKBITS) - 1)
 #if 0
 #define MEMBUFNFREEBITS   MEMBUFNBLKBITS
 #define MEMBUFNFREEMASK  (MEMBUFNBLKMASK << MEMBUFNFREESHIFT)
@@ -287,7 +284,7 @@ struct membkt {
 #define memgetbufheapflg(buf)                                           \
     ((buf)->info & MEMHEAPBIT)
 #define memgetbufnblk(buf)                                              \
-    ((buf)->info & MEMBUFNBLKMASK)
+    ((buf)->info & ((MEMUWORD(1) << MEMBUFNBLKBITS) - 1))
 #define memgetbufnfree(buf)                                             \
     ((buf)->nfree)
 #define memgetbuftype(buf)                                              \

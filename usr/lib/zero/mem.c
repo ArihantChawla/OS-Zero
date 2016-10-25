@@ -963,11 +963,9 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             desc &= ~MEMPAGEINFOMASK;
             slot->val = 0;
             buf = (struct membuf *)desc;
+            memrelblk(ptr, buf, id);
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
             slot->nref--;
-#endif
-            memrelblk(ptr, buf, id);
-#if (MEMHASHNREF)
             n = blk->ntab;
             if (!slot->nref) {
                 if (n == 1) {
