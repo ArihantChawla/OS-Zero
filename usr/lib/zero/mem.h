@@ -99,6 +99,21 @@ typedef zerospin      MEMLK_T;
 #define MEMLKBITID      0
 #define MEMLKBIT        (MEMUWORD(1) << MEMLKBITID)
 #if (MEMDEBUGDEADLOCK)
+#if (MEMDEBUGLOCK)
+#define memlkbitln(ptr)                                                 \
+    do {                                                                \
+        do {                                                            \
+            fprintf(stderr, "LK(%ld): owned by line %d\n", __LINE__,    \
+                    (ptr)->line);                                       \
+        } while (m_cmpsetbit((m_atomic_t *)&(ptr)->list, MEMLKBITID));  \
+        (ptr)->line = __LINE__;                                         \
+    } while (0)
+#define memrelbitln(ptr)                                                \
+    do {                                                                \
+        (ptr)->line = -1;                                               \
+        m_clrbit((m_atomic_t *)&(ptr)->list, MEMLKBITID);               \
+    } while (0)
+#else
 #define memlkbitln(ptr)                                                 \
     do {                                                                \
         do {                                                            \
@@ -106,9 +121,12 @@ typedef zerospin      MEMLK_T;
         } while (m_cmpsetbit((m_atomic_t *)&(ptr)->list, MEMLKBITID));  \
         (ptr)->line = __LINE__;                                         \
     } while (0)
-#define memrelbitln(ptr) \
-    ((ptr)->line = __LINE__,                                            \
-     m_cmpclrbit((m_atomic_t *)&(ptr)->list, MEMLKBITID))
+#define memrelbitln(ptr)                                                \
+    do {                                                                \
+        (ptr)->line = -1;                                               \
+        m_clrbit((m_atomic_t *)&(ptr)->list, MEMLKBITID);               \
+    } while (0)
+#endif
 #endif
 #if (MEMDEBUGLOCK)
 #define memlkbit(ptr)                                                   \
@@ -116,8 +134,7 @@ typedef zerospin      MEMLK_T;
         fprintf(stderr, "LK: %s: %d\n", __FILE__, __LINE__);            \
     } while (m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID))
 #define memrelbit(ptr) (fprintf(stderr, "UNLK: %s: %d\n", __FILE__, __LINE__), \
-                        m_cmpclrbit((m_atomic_t *)ptr, MEMLKBITID))
-
+                        m_clrbit((m_atomic_t *)ptr, MEMLKBIT))
 #else
 #define memtrylkbit(ptr)                                                \
     (!m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID))
@@ -125,7 +142,7 @@ typedef zerospin      MEMLK_T;
     do {                                                                \
         ;                                                               \
     } while (m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID))
-#define memrelbit(ptr) m_cmpclrbit((m_atomic_t *)ptr, MEMLKBITID)
+#define memrelbit(ptr) m_clrbit((m_atomic_t *)ptr, MEMLKBITID)
 #endif
 
 #if (WORDSIZE == 4)
