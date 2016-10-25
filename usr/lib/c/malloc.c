@@ -72,7 +72,7 @@ _free(void *ptr)
 #if (MEMMULTITAB)
     struct membuf *buf;
 #endif
-    
+
     if (!g_memtls) {
         meminittls();
         if (!g_memtls) {
