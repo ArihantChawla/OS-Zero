@@ -103,7 +103,7 @@ long
 _memchkbuf(struct membuf *buf, MEMWORD_T type,
            MEMWORD_T nblk, MEMUWORD_T flg, const char *func)
 {
-    MEMUWORD_T bflg = memgetbufflg(buf);
+    MEMUWORD_T bflg = memgetbufheapflg(buf);
     MEMWORD_T  bnblk = memgetbufnblk(buf);
     MEMWORD_T  bnfree = memgetbufnfree(buf);
     MEMWORD_T  btype = memgetbuftype(buf);

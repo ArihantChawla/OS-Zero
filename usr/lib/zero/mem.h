@@ -270,29 +270,29 @@ struct membkt {
 #define MEMBUFSLOTMASK   (((MEMUWORD(1) << MEMBUFSLOTBITS) - 1)         \
                           << MEMBUFSLOTSHIFT)
 #define MEMBUFSLOTSHIFT  (2 * MEMBUFNBLKBITS)
-#define MEMBUFNBLKBITS   12
+#define MEMBUFTYPESHIFT  (MEMBUFSLOTSHIFT + MEMBUFSLOTBITS)
+#define MEMBUFNBLKBITS   10
 #define MEMBUFNBLKMASK   ((MEMWORD(1) << MEMBUFNBLKBITS) - 1)
 #define MEMBUFNFREEBITS   MEMBUFNBLKBITS
 #define MEMBUFNFREEMASK  (MEMBUFNBLKMASK << MEMBUFNFREESHIFT)
 #define MEMBUFNFREESHIFT  MEMBUFNBLKBITS
 
-#define memsetbufflg(buf, flg) ((buf)->flg |= (flg))
 #define memsetbufnblk(buf, n)                                           \
     ((buf)->info |= (n))
 #define memsetbuftype(buf, t)                                           \
-    ((buf)->flg |=  (t))
+    ((buf)->info |=  (t) << MEMBUFTYPESHIFT)
 #define memsetbufslot(buf, slot)                                        \
     ((buf->info)  |= (slot) << MEMBUFSLOTSHIFT)
 #define memsetbufnfree(buf, n)                                          \
     ((buf)->info = ((buf)->info & ~MEMBUFNFREEMASK) | ((n) << MEMBUFNBLKBITS))
-#define memgetbufflg(buf)                                               \
-    ((buf)->info & (flg))
+#define memgetbufheapflg(buf)                                           \
+    ((buf)->info & MEMHEAPBIT)
 #define memgetbufnblk(buf)                                              \
     ((buf)->info & MEMBUFNBLKMASK)
 #define memgetbufnfree(buf)                                             \
     (((buf)->info >> MEMBUFNFREESHIFT) & ((MEMUWORD(1) << MEMBUFNFREEBITS) - 1))
 #define memgetbuftype(buf)                                              \
-    ((buf)->flg & ((MEMUWORD(1) << MEMBUFTYPEBITS) - 1))
+    (((buf)->info >>  MEMBUFTYPESHIFT) & ((MEMUWORD(1) << MEMBUFTYPEBITS) - 1))
 #define memgetbufslot(buf)                                              \
     (((buf)->info >> MEMBUFSLOTSHIFT) & ((MEMWORD(1) << MEMBUFSLOTBITS) - 1))
 
@@ -355,14 +355,13 @@ struct membuf {
 #else
     MEMWORD_T               info; // slot + # of total & free blks
 #endif
-    m_atomic_t              nfree;
     struct membuf          *heap; // previous buf in heap for bufs from sbrk()
     struct membuf          *prev; // previous buf in chain
     struct membuf          *next; // next buf in chain
     volatile struct membkt *bkt;  // pointer to parent bucket
+    MEMWORD_T               nfree;
     MEMUWORD_T              size; // buffer bookkeeping + allocation blocks
     MEMPTR_T                base; // base address for allocations
-    MEMUWORD_T              flg;  // flags + buffer type
 //    MEMPTR_T               *ptrtab; // original pointers for aligned blocks
     MEMUWORD_T              freemap[MEMBUFFREEMAPWORDS];
     MEMPTR_T                ptrtab[EMPTY];
@@ -802,7 +801,7 @@ MEMADR_T                 memfindbuf(void *ptr, MEMWORD_T incr,
 #else
 struct membuf          * memfindbuf(void *ptr, long rel);
 #endif
-long                     memrelblk(void *ptr, struct membuf *buf,
+void                     memrelblk(void *ptr, struct membuf *buf,
                                    MEMWORD_T id);
 #if (MEMTEST)
 void                     memprintbuf(struct membuf *buf, const char *func);

@@ -394,11 +394,7 @@ memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
 #endif
     }
     buf = (struct membuf *)adr;
-#if (MEMBITFIELD)
-    memsetbufflg(buf, 1);
-#else
     buf->info = flg;    // possible MEMHEAPBIT
-#endif
     memsetbufslot(buf, slot);
     memsetbufnblk(buf, nblk);
     memsetbuftype(buf, MEMSMALLBUF);
@@ -968,9 +964,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
 #endif
             id = desc & MEMPAGEINFOMASK;
             n = blk->ntab;
-            if (memrelblk(ptr, buf, id)) {
-                slot->val = 0;
-            }
+            memrelblk(ptr, buf, id);
 #if (MEMHASHNREF)
             if (!slot->nref) {
                 if (n == 1) {
@@ -1102,6 +1096,9 @@ memgetblkglob(MEMWORD_T type, MEMWORD_T slot, MEMUWORD_T size, MEMUWORD_T align)
     MEMPTR_T                ptr;
     MEMPTR_T                adr;
     MEMWORD_T               nfree;
+#if (MEMDEBUG)
+    MEMWORD_T               nblk;
+#endif
     MEMWORD_T               id;
     MEMADR_T                upval;
 
@@ -1132,7 +1129,8 @@ memgetblkglob(MEMWORD_T type, MEMWORD_T slot, MEMUWORD_T size, MEMUWORD_T align)
     nfree = memgetbufnfree(head);
     id = membufgetfree(head);
 #if (MEMDEBUG)
-    crash(nfree > 0 && nfree <= memgetbufnblk(head));
+    nblk = memgetbufnblk(head);
+    crash(nfree > 0 && nfree <= nblk);
 #endif
     nfree--;
     if (type != MEMPAGEBUF) {
@@ -1197,7 +1195,7 @@ memgetblk(MEMWORD_T slot, MEMWORD_T type, MEMUWORD_T size, MEMUWORD_T align)
                 ptr = meminitsmallbuf(buf, size, align, nblk);
             }
             if (ptr) {
-                flg = buf->flg;
+                flg = memgetbufheapflg(buf);
                 if (flg & MEMHEAPBIT) {          
                     memlkbit(&g_mem.heap);
                     upval = (MEMADR_T)g_mem.heap;
@@ -1312,7 +1310,7 @@ memdequeuebufglob(struct membuf *buf, volatile struct membkt *src)
     return;
 }
 
-long
+void
 memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
 {
     volatile struct membkt *bkt;
@@ -1347,7 +1345,7 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
     if (nfree != 1 && nfree != nblk) {
         /* buffer not totally free or allocated */
 
-        return 0;
+        return;
     }
     bkt = buf->bkt;
     glob = 0;
@@ -1385,7 +1383,7 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
         /* this will unlock the list (set the low-bit to zero) */
         m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
 
-        return 0;
+        return;
     } else if (nfree == nblk) {
         /* queue or reclaim a free buffer */
         tbkt = NULL;
@@ -1537,10 +1535,8 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
             VALGRINDRMPOOL(buf->base);
             unmapanon(buf, buf->size);
         }
-
-        return 1;
     }
 
-    return 0;
+    return;
 }
 
