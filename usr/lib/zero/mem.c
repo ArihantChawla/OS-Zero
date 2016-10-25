@@ -761,7 +761,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
     struct memhashitem     *slot;
     struct memhashitem     *src;
     MEMWORD_T               lim;
-    MEMWORD_T               n;
+    MEMUWORD_T              n;
     MEMWORD_T               found;
 
 //    fprintf(stderr, "locking hash chain %lx\n", key);
@@ -1120,6 +1120,7 @@ memgetblkglob(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
         blksz = PAGESIZE + PAGESIZE * slot;
         bkt = &g_mem.pagebin[slot];
     } else {
+        blksz = MEMWORD(1) << slot;
         bkt = &g_mem.bigbin[slot];
     }
 #if (MEMDEBUGDEADLOCK)
@@ -1467,7 +1468,7 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
                 buf->prev = NULL;
                 head = tbkt->list;
                 buf->bkt = tbkt;
-                if (upval) {
+                if (head) {
                     head->prev = buf;
                 }
                 buf->next = head;
@@ -1501,9 +1502,9 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
         if (val) {
             if (glob) {
 #if (MEMDEBUGDEADLOCK)
-                memrelbitln(gbkt);
+                memrelbitln(bkt);
 #else
-                memrelbit(&gbkt->list);
+                memrelbit(&bkt->list);
 #endif
 
                 return;
