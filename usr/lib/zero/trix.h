@@ -912,34 +912,33 @@ bitcnt1u32(uint32_t a) {
 static __inline__ uint64_t
 bitcnt1u64(uint64_t a)
 {
-  uint64_t val;
-  
-  val = a << 1;
-  val &= UINT64_C(0x5555555555555555);
-  a &= UINT64_C(0x5555555555555555);
-  a += val;
-  val = a << 2;
-  val &= UINT64_C(0x3333333333333333);
-  a &= UINT64_C(0x3333333333333333);
-  a += val;
-  val = a << 4;
-  val &= UINT64_C(0x0f0f0f0f0f0f0f0f);
-  a &= UINT64_C(0x0f0f0f0f0f0f0f0f);
-  a += val;
-  val = a << 8;
-  val &= UINT64_C(0x00ff00ff00ff00ff);
-  a &= UINT64_C(0x00ff00ff00ff00ff);
-  a += val;
-  val = a << 16;
-  val &= UINT64_C(0x0000ffff0000ffff);
-  a &= UINT64_C(0x0000ffff0000ffff);
-  a += val;
-  val = a << 32;
-  a += val;
+    uint64_t val;
+    
+    val = a << 1;
+    val &= UINT64_C(0x5555555555555555);
+    a &= UINT64_C(0x5555555555555555);
+    a += val;
+    val = a << 2;
+    val &= UINT64_C(0x3333333333333333);
+    a &= UINT64_C(0x3333333333333333);
+    a += val;
+    val = a << 4;
+    val &= UINT64_C(0x0f0f0f0f0f0f0f0f);
+    a &= UINT64_C(0x0f0f0f0f0f0f0f0f);
+    a += val;
+    val = a << 8;
+    val &= UINT64_C(0x00ff00ff00ff00ff);
+    a &= UINT64_C(0x00ff00ff00ff00ff);
+    a += val;
+    val = a << 16;
+    val &= UINT64_C(0x0000ffff0000ffff);
+    a &= UINT64_C(0x0000ffff0000ffff);
+    a += val;
+    val = a << 32;
+    a += val;
   
   return a;
 }
-
 
 static __inline__ uint32_t
 mod15u32(uint32_t a) {
