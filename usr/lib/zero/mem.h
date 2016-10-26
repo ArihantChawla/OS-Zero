@@ -517,22 +517,22 @@ membufrelfree(struct membuf *buf)
     MEMUWORD_T  cnt;
     MEMWORD_T   ndx;
 
+    nfree = buf->nfree;
     for (ndx = 0 ; ndx < MEMBUFBITMAPWORDS ; ndx++) {
-        free = freemap[ndx];
         m_syncread((m_atomic_t *)&relmap[ndx], rel);
+        free = freemap[ndx];
         if (rel) {
-            nfree = buf->nfree;
 #if (WORDSIZE == 4)
             cnt = bitcnt1u32(rel);
 #elif (WORDSIZE == 8)
             cnt = bitcnt1u64(rel);
 #endif
             free |= rel;
-            nfree -= cnt;
+            nfree += cnt;
             freemap[ndx] = free;
-            buf->nfree = nfree;
         }
     }
+    buf->nfree = nfree;
 
     return;
 }

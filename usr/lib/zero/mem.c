@@ -45,8 +45,10 @@ memreltls(void *arg)
             head = src->list;
             if (head) {
                 buf = head;
+                membufrelfree(buf);
                 while (buf->next) {
                     buf = buf->next;
+                    membufrelfree(buf);
                 }
 #if (MEMDEBUGDEADLOCK)
                 memlkbitln(dest);

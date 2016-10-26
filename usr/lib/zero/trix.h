@@ -875,6 +875,8 @@ ratreduce(int64_t *num, int64_t *den)
     *den /= b;
 }
 
+/* FIXME: use X86 popcnt-instruction for population counts */
+
 /*
  * These were found at http://homepage.cs.uiowa.edu/~jones/bcd/mod.shtml
  */
