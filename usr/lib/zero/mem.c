@@ -1392,10 +1392,10 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
     if (type != MEMPAGEBUF) {
         adr = membufgetadr(buf, ptr);
         id = membufblkid(buf, adr);
-        membufsetadr(buf, ptr, NULL);
+//        membufsetadr(buf, ptr, NULL);
     } else {
         adr = membufgetpageadr(buf, id);
-        membufsetpageadr(buf, id, NULL);
+//        membufsetpageadr(buf, id, NULL);
     }
 #if (MEMTEST)
     _memchkptr(buf, adr);
