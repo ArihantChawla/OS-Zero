@@ -753,6 +753,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
     struct memhash         *prev;
     struct memhashitem     *slot;
     struct memhashitem     *src;
+    volatile struct memtls *tls;
     MEMWORD_T               lim;
     MEMUWORD_T              n;
     MEMWORD_T               found;
@@ -952,7 +953,12 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             id = desc & MEMPAGEINFOMASK;
             desc &= ~MEMPAGEINFOMASK;
             buf = (struct membuf *)desc;
-            memrelblk(ptr, buf, id);
+            tls = buf->tls;
+            if (tls && tls != g_memtls) {
+                membufsetrel(buf, id);
+            } else {
+                memrelblk(ptr, buf, id);
+            }
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
             slot->nref--;
             n = blk->ntab;
@@ -1349,12 +1355,15 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
     MEMWORD_T               glob;
     MEMWORD_T               val;
 
+#if 0
     tls = buf->tls;
     if (tls && tls != g_memtls) {
         membufsetrel(buf, id);
 
         return;
     }
+#endif
+    tls = buf->tls;
     glob = 0;
     if (!tls) {
         glob = 1;
