@@ -49,9 +49,11 @@
 /* types */
 
 #if (WORDSIZE == 4)
+#define MEMWORDSIZESHIFT 2
 typedef int32_t   MEMWORD_T;    // machine word
 typedef uint32_t  MEMUWORD_T;   // unsigned machine word
 #elif (WORDSIZE == 8)
+#define MEMWORDSIZESHIFT 3
 typedef int64_t   MEMWORD_T;
 typedef uint64_t  MEMUWORD_T;
 #endif
@@ -206,10 +208,10 @@ typedef zerospin      MEMLK_T;
 #define MEMBIGSLOTS         PTRBITS
 #define MEMMAXBIGSLOT       (MEMBIGSLOTS - 1)
 /* number of words in buf freemap */
-//#define MEMBUFFREEMAPWORDS  (CLSIZE / WORDSIZE)
-#define MEMBUFFREEMAPWORDS  8
+//#define MEMBUFBITMAPWORDS  (CLSIZE / WORDSIZE)
+#define MEMBUFBITMAPWORDS   8
 /* number of block-bits in buf freemap */
-#define MEMBUFMAXBLKS       (MEMBUFFREEMAPWORDS * WORDSIZE * CHAR_BIT)
+#define MEMBUFMAXBLKS       (MEMBUFBITMAPWORDS * WORDSIZE * CHAR_BIT)
 /* minimum allocation block size in bigbins */
 //#define MEMBIGMINSIZE      (2 * PAGESIZE)
 //#define MEMPAGESLOTS        (MEMWORD(1) << MEMBUFSLOTBITS)
@@ -258,7 +260,11 @@ struct membkt {
 #define MEMBIGBUF        0x02
 #define MEMBUFTYPES      3
 #define MEMBUFTYPEBITS   2
-#define MEMHEAPBIT       (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 1))
+//#define MEMTLSBIT        (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 1))
+#define MEMBUFLKBIT      (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 1))
+#if !defined(MEMNOSBRK) || (MEMNOSBRK)
+#define MEMHEAPBIT       (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 2))
+#endif
 #define MEMBUFSLOTBITS   12
 #define MEMBUFSLOTSHIFT  (MEMBUFNBLKBITS)
 #define MEMBUFTYPESHIFT  (MEMBUFSLOTSHIFT + MEMBUFSLOTBITS)
@@ -300,6 +306,8 @@ struct mem {
     struct membkt       bigbin[MEMBIGSLOTS];     // mapped blocks of 1 << slot
     struct membkt       pagebin[MEMPAGESLOTS];   // maps of PAGESIZE * slot
     struct membkt       smallbin[MEMSMALLSLOTS]; // blocks of 1 << slot
+    struct membkt       deadpage[MEMSMALLSLOTS];
+    struct membkt       deadsmall[MEMSMALLSLOTS];
 //    struct membufvals   bufvals;
 #if (MEMMULTITAB)
     struct memtabl0    *tab;     // allocation lookup structure
@@ -342,6 +350,9 @@ struct membufinfo {
 #define MEMNOBLK (MEMWORD(-1))
 
 struct membuf {
+    volatile struct memtls *tls;
+    MEMWORD_T               nfree;
+    MEMPTR_T                base; // base address for allocations
 #if (MEMBITFIELD)
     struct membufinfo       info;
 #else
@@ -350,12 +361,11 @@ struct membuf {
     struct membuf          *heap; // previous buf in heap for bufs from sbrk()
     struct membuf          *prev; // previous buf in chain
     struct membuf          *next; // next buf in chain
-    volatile struct membkt *bkt;  // pointer to parent bucket
-    MEMWORD_T               nfree;
+//    volatile struct membkt *bkt;  // pointer to parent bucket
     MEMUWORD_T              size; // buffer bookkeeping + allocation blocks
-    MEMPTR_T                base; // base address for allocations
 //    MEMPTR_T               *ptrtab; // original pointers for aligned blocks
-    MEMUWORD_T              freemap[MEMBUFFREEMAPWORDS];
+    MEMUWORD_T              freemap[MEMBUFBITMAPWORDS];
+    MEMUWORD_T              relmap[MEMBUFBITMAPWORDS];
     MEMPTR_T                ptrtab[EMPTY];
 //    MEMPTR_T                ptrtab[MEMBUFMAXBLKS];
 };
@@ -473,13 +483,44 @@ membufinitfree(struct membuf *buf)
     MEMUWORD_T *ptr = buf->freemap;
 
     _memfillmap0(ptr, 0, bits);
-#if (MEMBUFFREEMAPWORDS >= 8)
+#if (MEMBUFBITMAPWORDS >= 8)
     _memfillmap(ptr, 4, bits);
 #endif
-#if (MEMBUFFREEMAPWORDS == 16)
+#if (MEMBUFBITMAPWORDS == 16)
     _memfillmap(ptr, 8, bits);
     _memfillmap(ptr, 12, bits);
 #endif
+
+    return;
+}
+
+static __inline__ void
+membufsetrel(struct membuf *buf, MEMWORD_T id)
+{
+    MEMWORD_T ndx = id;
+
+    ndx = id >> MEMWORDSIZESHIFT;
+    id &= (MEMWORD(1) << MEMWORDSIZESHIFT) - 1;
+    m_setbit((m_atomic_t *)&buf->relmap[ndx], id);
+
+    return;
+}
+
+static __inline__ void
+membufrelfree(struct membuf *buf)
+{
+    MEMUWORD_T *freemap = buf->freemap;
+    MEMUWORD_T *relmap = buf->relmap;
+    MEMUWORD_T  free;
+    MEMUWORD_T  rel;
+    MEMWORD_T   ndx;
+
+    for (ndx = 0 ; ndx < MEMBUFBITMAPWORDS ; ndx++) {
+        free = freemap[ndx];
+        m_syncread((m_atomic_t *)&relmap[ndx], rel);
+        free |= rel;
+        freemap[ndx] = free;
+    }
 
     return;
 }

@@ -121,10 +121,6 @@ _memchkbuf(struct membuf *buf, MEMWORD_T type,
         fprintf(stderr, "nfree > nblk\n");
         fail++;
     }
-    if ((bnfree) && !buf->bkt) {
-        fprintf(stderr, "NOT in any bucket (%lx free blocks)\n", bnblk);
-        fail++;
-    }
     if (type != btype) {
         fprintf(stderr, "WRONG type: %lx (%s)\n", btype, bufnames[type]);
         fail++;

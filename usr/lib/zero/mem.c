@@ -34,36 +34,32 @@ memreltls(void *arg)
     volatile struct membkt *src;
     volatile struct membkt *dest;
     MEMWORD_T               slot;
-    MEMWORD_T               bufsz;
-    struct membuf          *head;
     struct membuf          *buf;
+    struct membuf          *head;
     MEMADR_T                upval;
 
     if (g_memtls) {
         for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
             src = &g_memtls->smallbin[slot];
-            dest = &g_mem.smallbin[slot];
+            dest = &g_mem.deadsmall[slot];
             head = src->list;
             if (head) {
                 buf = head;
-                buf->bkt = dest;
                 while (buf->next) {
                     buf = buf->next;
-                    buf->bkt = dest;
                 }
-                bufsz = src->bufsz;
 #if (MEMDEBUGDEADLOCK)
                 memlkbitln(dest);
 #else
                 memlkbit(&dest->list);
 #endif
                 upval = (MEMADR_T)dest->list;
-                dest->bufsz += bufsz;
                 upval &= ~MEMLKBIT;
+                head = (struct membuf *)upval;
 //                buf->prev = NULL;
-                buf->next = (struct membuf *)upval;
+                buf->next = head;
                 if (upval) {
-                    ((struct membuf *)upval)->prev = buf;
+                    head->prev = buf;
                 }
 #if (MEMDEBUGDEADLOCK)
                 dest->line = __LINE__;
@@ -73,28 +69,25 @@ memreltls(void *arg)
         }
         for (slot = 0 ; slot < MEMPAGESLOTS ; slot++) {
             src = &g_memtls->pagebin[slot];
-            dest = &g_mem.pagebin[slot];
+            dest = &g_mem.deadpage[slot];
             head = src->list;
             if (head) {
                 buf = head;
-                buf->bkt = dest;
                 while (buf->next) {
                     buf = buf->next;
-                    buf->bkt = dest;
                 }
-                bufsz = src->bufsz;
 #if (MEMDEBUGDEADLOCK)
                 memlkbitln(dest);
 #else
                 memlkbit(&dest->list);
 #endif
                 upval = (MEMADR_T)dest->list;
-                dest->bufsz += bufsz;
                 upval &= ~MEMLKBIT;
+                head = (struct membuf *)upval;
 //                buf->prev = NULL;
-                buf->next = (struct membuf *)upval;
+                buf->next = head;
                 if (upval) {
-                    ((struct membuf *)upval)->prev = buf;
+                    head->prev = buf;
                 }
 #if (MEMDEBUGDEADLOCK)
                 dest->line = __LINE__;
@@ -1052,46 +1045,66 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
         blksz = PAGESIZE + PAGESIZE * slot;
         bkt = &g_memtls->pagebin[slot];
     }
-    head = bkt->list;
-    if (!head) {
-
-        return NULL;
-    }
-    nfree = memgetbufnfree(head);
-    id = membufgetfree(head);
-#if (MEMDEBUG)
-    nblk = memgetbufnblk(head);
-    crash(nfree > 0 && nfree <= nblk);
-#endif
-    nfree--;
-    if (type != MEMPAGEBUF) {
-        adr = membufblkadr(head, id);
-    } else {
-        adr = membufpageadr(head, id);
-    }
-    memsetbufnfree(head, nfree);
-    ptr = memsetadr(head, adr, size, align, id);
-    memsetbuf(ptr, head, id);
-#if (MEMTEST)
-    _memchkptr(head, ptr);
-#endif
-    bkt->bufsz -= blksz;
-    VALGRINDPOOLALLOC(head->base, ptr, size);
-    if (!nfree) {
-        /* head shall be disconnected from all lists */
-        if (head->next) {
-            head->next->prev = NULL;
+    do {
+        head = bkt->list;
+        if (!head) {
+            
+            return NULL;
         }
+        nfree = memgetbufnfree(head);
+        if (!nfree) {
+            membufrelfree(head);
+            nfree = memgetbufnfree(head);
+        }
+        if (!nfree) {
+        /* head shall be disconnected from all lists */
+            if (head->next) {
+                head->next->prev = NULL;
+            }
 #if (MEMDEBUGDEADLOCK)
-        bkt->line = __LINE__;
+            bkt->line = __LINE__;
 #endif
-        bkt->list = head->next;
-        head->bkt = NULL;
-        head->prev = NULL;
-        head->next = NULL;
-    }
+            bkt->list = head->next;
+            head->tls = NULL;
+            head->prev = NULL;
+            head->next = NULL;
+        } else {
+            id = membufgetfree(head);
+#if (MEMDEBUG)
+            nblk = memgetbufnblk(head);
+            crash(nfree > 0 && nfree <= nblk);
+#endif
+            if (type != MEMPAGEBUF) {
+                adr = membufblkadr(head, id);
+            } else {
+                adr = membufpageadr(head, id);
+            }
+            nfree--;
+            ptr = memsetadr(head, adr, size, align, id);
+            memsetbuf(ptr, head, id);
+            memsetbufnfree(head, nfree);
+            bkt->bufsz -= blksz;
+            VALGRINDPOOLALLOC(head->base, ptr, size);
+            if (!nfree) {
+                /* head shall be disconnected from all lists */
+                if (head->next) {
+                    head->next->prev = NULL;
+                }
+#if (MEMDEBUGDEADLOCK)
+                bkt->line = __LINE__;
+#endif
+                bkt->list = head->next;
+                head->tls = NULL;
+                head->prev = NULL;
+                head->next = NULL;
+            }
 
-    return ptr;
+            return ptr;
+        }
+    } while (1);
+
+    /* NOTREACHED */
+    return NULL;
 }
 
 MEMPTR_T
@@ -1165,7 +1178,6 @@ memgetblkglob(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
         bkt->line = __LINE__;
 #endif
         m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)head->next);
-        head->bkt = NULL;
         head->prev = NULL;
         head->next = NULL;
     } else {
@@ -1251,7 +1263,6 @@ memgetblk(MEMWORD_T slot, MEMWORD_T type, MEMWORD_T size, MEMWORD_T align)
                 head = (struct membuf *)upval;
             }
             buf->prev = NULL;
-            buf->bkt = dest;
             if (head) {
                 head->prev = buf;
             }
@@ -1285,8 +1296,6 @@ memdequeuebuftls(struct membuf *buf, volatile struct membkt *src)
     } else {
         head = NULL;
     }
-    buf->bkt = NULL;
-    m_syncwrite((m_atomic_t)&src->list, (m_atomic_t)head);
     src->list = head;
 
     return;
@@ -1313,11 +1322,10 @@ memdequeuebufglob(struct membuf *buf, volatile struct membkt *src)
     } else {
         head = NULL;
     }
-    buf->bkt = NULL;
 #if (MEMDEBUGDEADLOCK)
     src->line = __LINE__;
 #endif
-    m_syncwrite((m_atomic_t)&src->list, (m_atomic_t)head);
+    m_syncwrite((m_atomic_t *)&src->list, (m_atomic_t)head);
 
     return;
 }
@@ -1326,7 +1334,7 @@ void
 memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
 {
     MEMPTR_T                adr;
-    volatile struct membkt *bkt;
+    volatile struct memtls *tls;
     volatile struct membkt *gbkt;
     volatile struct membkt *tbkt;
     struct membuf          *head;
@@ -1341,28 +1349,31 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
     MEMWORD_T               glob;
     MEMWORD_T               val;
 
-    bkt = buf->bkt;
-    glob = 0;
-    if (bkt) {
-        glob = (bkt >= &g_mem.bigbin[0]
-                && bkt < &g_mem.smallbin[MEMMAXSMALLSLOT]);
+    tls = buf->tls;
+    if (tls && tls != g_memtls) {
+        membufsetrel(buf, id);
+
+        return;
     }
-    slot = memgetbufslot(buf);
-    if (glob) {
-        gbkt = bkt;
-#if (MEMDEBUGDEADLOCK)
-        memlkbitln(bkt);
-#else
-        memlkbit(&bkt->list);
-#endif
+    glob = 0;
+    if (!tls) {
+        glob = 1;
     }
     type = memgetbuftype(buf);
+    slot = memgetbufslot(buf);
     if (type == MEMSMALLBUF) {
         gbkt = &g_mem.smallbin[slot];
     } else if (type == MEMPAGEBUF) {
         gbkt = &g_mem.pagebin[slot];
     } else {
         gbkt = &g_mem.bigbin[slot];
+    }
+    if (glob) {
+#if (MEMDEBUGDEADLOCK)
+        memlkbitln(gbkt);
+#else
+        memlkbit(&gbkt->list);
+#endif
     }
     nfree = memgetbufnfree(buf);
     nblk = memgetbufnblk(buf);
@@ -1385,9 +1396,9 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
         /* buffer not totally free or allocated */
         if (glob) {
 #if (MEMDEBUGDEADLOCK)
-            memrelbitln(bkt);
+            memrelbitln(gbkt);
 #else
-            memrelbit(&bkt->list);
+            memrelbit(&gbkt->list);
 #endif
         }
 
@@ -1397,20 +1408,22 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
     crash(nfree <= nblk);
 #endif
     if (nfree == 1) {
+        if (!glob) {
 #if (MEMDEBUGDEADLOCK)
-        memlkbitln(gbkt);
+            memlkbitln(gbkt);
 #else
-        memlkbit(&gbkt->list);
+            memlkbit(&gbkt->list);
 #endif
+        }
         /* add buffer in front of global list */
         upval = (MEMADR_T)gbkt->list;
         buf->prev = NULL;
         upval &= ~MEMLKBIT;
-        buf->bkt = gbkt;
-        if (upval) {
-            ((struct membuf *)upval)->prev = buf;
+        head = (struct membuf *)upval;
+        if (head) {
+            head->prev = buf;
         }
-        buf->next = (struct membuf *)upval;
+        buf->next = head;
 #if (MEMDEBUGDEADLOCK)
         gbkt->line = __LINE__;
 #endif
@@ -1433,48 +1446,26 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
                 tbkt = &g_memtls->smallbin[slot];
                 lim = MEMSMALLTLSLIM;
                 bufsz = nblk << slot;
-                if (bkt != tbkt) {
-                    
-                    return;
+                bktsz = tbkt->bufsz;
+                bktsz += bufsz;
+                if (bktsz > lim) {
+                    memdequeuebuftls(buf, tbkt);
                 } else {
-                    bktsz = tbkt->bufsz;
-                    bktsz += bufsz;
-                    if (bktsz > lim) {
-                        tbkt = NULL;
-                        memdequeuebuftls(buf, bkt);
-                    }
+
+                    return;
                 }
             } else if (type == MEMPAGEBUF) {
                 tbkt = &g_memtls->pagebin[slot];
                 lim = MEMPAGETLSLIM;
                 bufsz = PAGESIZE + PAGESIZE * slot;
-                if (bkt != tbkt) {
-                    
-                    return;
+                bktsz = tbkt->bufsz;
+                bktsz += bufsz;
+                if (bktsz > lim) {
+                    memdequeuebuftls(buf, tbkt);
                 } else {
-                    bktsz = tbkt->bufsz;
-                    bktsz += bufsz;
-                    if (bktsz > lim) {
-                        tbkt = NULL;
-                        memdequeuebuftls(buf, bkt);
-                    }
-                }
-            }
-            if (tbkt) {
-                buf->prev = NULL;
-                head = tbkt->list;
-                buf->bkt = tbkt;
-                if (head) {
-                    head->prev = buf;
-                }
-                buf->next = head;
-                tbkt->bufsz += bufsz;
-#if (MEMDEBUGDEADLOCK)
-                tbkt->line = __LINE__;
-#endif
-                bkt->list = buf;
 
-                return;
+                    return;
+                }
             }
         }
         if (type == MEMSMALLBUF) {
@@ -1498,9 +1489,9 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
         if (val) {
             if (glob) {
 #if (MEMDEBUGDEADLOCK)
-                memrelbitln(bkt);
+                memrelbitln(gbkt);
 #else
-                memrelbit(&bkt->list);
+                memrelbit(&gbkt->list);
 #endif
 
                 return;
@@ -1515,7 +1506,6 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
             buf->prev = NULL;
             upval &= ~MEMLKBIT;
             head = (struct membuf *)upval;
-            buf->bkt = gbkt;
             if (upval) {
                 head->prev = buf;
             }
@@ -1528,13 +1518,13 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
             m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
         } else {
             if (glob) {
-                bkt->bufsz -= bktsz;
+                gbkt->bufsz -= bktsz;
                 /* unqueue from global list */
-                memdequeuebufglob(buf, bkt);
+                memdequeuebufglob(buf, gbkt);
 #if (MEMDEBUGDEADLOCK)
-                memrelbitln(bkt);
+                memrelbitln(gbkt);
 #else
-                memrelbit(&bkt->list);
+                memrelbit(&gbkt->list);
 #endif
             }
 #if (MEMSTAT)
