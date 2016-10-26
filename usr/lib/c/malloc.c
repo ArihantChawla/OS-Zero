@@ -22,16 +22,16 @@ extern struct mem                          g_mem;
 static void *
 _malloc(size_t size, size_t align, long flg)
 {
-    size_t    aln = max(align, MEMMINALIGN);
-    size_t    sz = max(size, MEMMINBLK);
-    size_t    asz = (aln <= PAGESIZE && aln <= sz) ? sz : sz + aln;
-    long      type = (memusesmallbuf(asz)
-                      ? MEMSMALLBUF
-                      : (memusepagebuf(asz)
-                         ? MEMPAGEBUF
-                         : MEMBIGBUF));
-    long      slot;
-    void     *ptr;
+    size_t  aln = max(align, MEMMINALIGN);
+    size_t  sz = max(size, MEMMINBLK);
+    size_t  asz = (aln <= PAGESIZE && aln <= sz) ? sz : sz + aln;
+    long    type = (memusesmallbuf(asz)
+                    ? MEMSMALLBUF
+                    : (memusepagebuf(asz)
+                       ? MEMPAGEBUF
+                       : MEMBIGBUF));
+    long    slot;
+    void   *ptr;
 
     if (!g_memtls) {
         meminittls();

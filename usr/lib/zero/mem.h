@@ -519,7 +519,9 @@ membufrelfree(struct membuf *buf)
 
     nfree = buf->nfree;
     for (ndx = 0 ; ndx < MEMBUFBITMAPWORDS ; ndx++) {
-        m_syncread((m_atomic_t *)&relmap[ndx], rel);
+        do {
+            m_syncread((m_atomic_t *)&relmap[ndx], rel);
+        } while (!m_cmpswap((m_atomic_t *)&relmap[ndx], rel, 0));
         free = freemap[ndx];
         if (rel) {
 #if (WORDSIZE == 4)
