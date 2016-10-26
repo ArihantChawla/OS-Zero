@@ -499,7 +499,7 @@ membufsetrel(struct membuf *buf, MEMWORD_T id)
 {
     MEMWORD_T ndx = id;
 
-    ndx = id >> MEMWORDSIZESHIFT;
+    ndx >>= MEMWORDSIZESHIFT;
     id &= (MEMWORD(1) << MEMWORDSIZESHIFT) - 1;
     m_setbit((m_atomic_t *)&buf->relmap[ndx], id);
 
