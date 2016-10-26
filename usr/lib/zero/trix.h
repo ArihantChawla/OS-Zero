@@ -880,7 +880,7 @@ ratreduce(int64_t *num, int64_t *den)
  */
 
 static __inline__ uint32_t
-bitcnt32a(uint32_t a) {
+bitcnt1u32a(uint32_t a) {
     a = ((a >> 1) & 0x55555555) + (a & 0x55555555);
     /* each 2-bit chunk sums 2 bits */
     a = ((a >> 2) & 0x33333333) + (a & 0x33333333);
@@ -894,7 +894,7 @@ bitcnt32a(uint32_t a) {
 }
 
 static __inline__ uint32_t
-bitcntu32(uint32_t a) {
+bitcnt1u32(uint32_t a) {
     a = ((a >> 1) & 0x55555555) + (a & 0x55555555);
     a = ((a >> 2) & 0x33333333) + (a & 0x33333333);
     a = ((a >> 4) & 0x07070707) + (a & 0x07070707);
@@ -903,6 +903,42 @@ bitcntu32(uint32_t a) {
     return (a >> 16) + (a & 0x0000001f);
 }
 
+/*
+ * this one comes from
+ * https://blogs.oracle.com/d/entry/bit_manipulation_population_count
+ * - thanks Darryl Gove! :)
+ */
+
+static __inline__ uint64_t
+bitcnt1u64(uint64_t a)
+{
+  uint64_t val;
+  
+  val = a << 1;
+  val &= UINT64_C(0x5555555555555555);
+  a &= UINT64_C(0x5555555555555555);
+  a += val;
+  val = a << 2;
+  val &= UINT64_C(0x3333333333333333);
+  a &= UINT64_C(0x3333333333333333);
+  a += val;
+  val = a << 4;
+  val &= UINT64_C(0x0f0f0f0f0f0f0f0f);
+  a &= UINT64_C(0x0f0f0f0f0f0f0f0f);
+  a += val;
+  val = a << 8;
+  val &= UINT64_C(0x00ff00ff00ff00ff);
+  a &= UINT64_C(0x00ff00ff00ff00ff);
+  a += val;
+  val = a << 16;
+  val &= UINT64_C(0x0000ffff0000ffff);
+  a &= UINT64_C(0x0000ffff0000ffff);
+  a += val;
+  val = a << 32;
+  a += val;
+  
+  return a;
+}
 
 
 static __inline__ uint32_t
