@@ -262,6 +262,9 @@ struct membkt {
 #define MEMBUFTYPEBITS   2
 //#define MEMTLSBIT        (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 1))
 #define MEMBUFLKBIT      (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 1))
+#define MEMBUFGLOBBIT    (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 2))
+#define MEMBUFLKBITID    (8 * sizeof(MEMUWORD_T) - 1)
+#define MEMBUFGLOBBITID  (8 * sizeof(MEMUWORD_T) - 2)
 #if !defined(MEMNOSBRK) || (MEMNOSBRK)
 #define MEMHEAPBIT       (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 2))
 #endif
@@ -847,8 +850,7 @@ MEMADR_T                 memfindbuf(void *ptr, MEMWORD_T incr,
 #else
 struct membuf          * memfindbuf(void *ptr, long rel);
 #endif
-void                     memrelblk(void *ptr, struct membuf *buf,
-                                   MEMWORD_T id);
+void                     memrelblk(struct membuf *buf, MEMWORD_T id);
 #if (MEMTEST)
 void                     memprintbuf(struct membuf *buf, const char *func);
 long                     _memchkptr(struct membuf *buf, MEMPTR_T ptr);
