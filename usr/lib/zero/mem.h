@@ -177,7 +177,7 @@ typedef zerospin      MEMLK_T;
 #define MEMPAGETLSLIM       (8 * 1024 * 1024)
 #define MEMSMALLGLOBLIM     0
 #define MEMPAGEGLOBLIM      (16 * 1024 * 1024)
-#define MEMBIGGLOBLIM       (32 * 1024 * 1024)
+#define MEMBIGGLOBLIM       (64 * 1024 * 1024)
 
 /* determine minimal required alignment for blocks */
 #if defined(__BIGGEST_ALIGNMENT__)
