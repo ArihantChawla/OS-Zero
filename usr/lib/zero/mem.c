@@ -34,22 +34,33 @@ memreltls(void *arg)
     volatile struct membkt *src;
     volatile struct membkt *dest;
     MEMWORD_T               slot;
+    MEMUWORD_T              bufsz;
+    MEMUWORD_T              nb;
     struct membuf          *buf;
     struct membuf          *head;
     MEMADR_T                upval;
 
     if (g_memtls) {
+        bufsz = g_memtls->nbsmall;
+        nb = g_mem.nbsmall;
         for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
             src = &g_memtls->smallbin[slot];
+#if 0
             dest = &g_mem.deadsmall[slot];
+#endif
+            dest = &g_mem.smallbin[slot];
             head = src->list;
             if (head) {
                 buf = head;
+#if (MEMBUFRELMAP)
                 membufrelfree(buf);
+#endif
                 buf->tls = NULL;
                 while (buf->next) {
                     buf = buf->next;
+#if (MEMBUFRELMAP)
                     membufrelfree(buf);
+#endif
                     buf->tls = NULL;
                 }
 #if (MEMDEBUGDEADLOCK)
@@ -71,17 +82,28 @@ memreltls(void *arg)
                 m_syncwrite((m_atomic_t *)&dest->list, (m_atomic_t)head);
             }
         }
+        nb += bufsz;
+        bufsz = g_memtls->nbpage;
+        g_mem.nbsmall = nb;
+        nb = g_mem.nbpage;
         for (slot = 0 ; slot < MEMPAGESLOTS ; slot++) {
             src = &g_memtls->pagebin[slot];
+#if 0
             dest = &g_mem.deadpage[slot];
+#endif
+            dest = &g_mem.pagebin[slot];
             head = src->list;
             if (head) {
                 buf = head;
+#if (MEMBUFRELMAP)
                 membufrelfree(buf);
+#endif
                 buf->tls = NULL;
                 while (buf->next) {
                     buf = buf->next;
+#if (MEMBUFRELMAP)
                     membufrelfree(buf);
+#endif
                     buf->tls = NULL;
                 }
 #if (MEMDEBUGDEADLOCK)
@@ -103,6 +125,8 @@ memreltls(void *arg)
                 m_syncwrite((m_atomic_t *)&dest->list, (m_atomic_t)head);
             }
         }
+        nb += bufsz;
+        g_mem.nbpage = nb;
         priolkfin();
         if (adr) {
             unmapanon(adr, memtlssize());
@@ -1075,10 +1099,12 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
             return NULL;
         }
         nfree = memgetbufnfree(head);
+#if (MEMBUFRELMAP)
         if (!nfree) {
             membufrelfree(head);
             nfree = memgetbufnfree(head);
         }
+#endif
         if (!nfree) {
         /* head shall be disconnected from all lists */
             if (head->next) {
@@ -1381,8 +1407,8 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
     MEMWORD_T               isglob;
     MEMWORD_T               val;
 
-#if 0
     tls = buf->tls;
+#if 0
     if (tls && tls != g_memtls) {
         membufsetrel(buf, id);
 
@@ -1407,6 +1433,12 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
         memlkbitln(gbkt);
 #else
         memlkbit(&gbkt->list);
+#endif
+#if (MEMBUFRELMAP)
+    } else if ((tls) && tls != g_memtls) {
+        membufsetrel(buf, id);
+
+        return;
 #endif
     }
     nfree = memgetbufnfree(buf);
@@ -1461,7 +1493,6 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
         /* queue or reclaim a free buffer */
         bufsz = 0;
         val = 0;
-        tls = buf->tls;
         if (type != MEMPAGEBUF) {
             bufsz = nblk << slot;
         } else {
