@@ -761,7 +761,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
     struct memhash         *prev;
     struct memhashitem     *slot;
     struct memhashitem     *src;
-    volatile struct memtls *tls;
+//    volatile struct memtls *tls;
     MEMWORD_T               type;
     MEMWORD_T               lim;
     MEMUWORD_T              n;
@@ -961,7 +961,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             id = desc & MEMPAGEINFOMASK;
             desc &= ~MEMPAGEINFOMASK;
             buf = (struct membuf *)desc;
-            tls = buf->tls;
+//            tls = buf->tls;
             type = memgetbuftype(buf);
             VALGRINDPOOLFREE(buf->base, ptr);
             if (type != MEMPAGEBUF) {
@@ -1389,7 +1389,6 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
         return;
     }
 #endif
-    tls = buf->tls;
     isglob = 0;
     if (buf->info & MEMBUFGLOBBITID) {
         isglob = 1;
@@ -1462,6 +1461,7 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
         /* queue or reclaim a free buffer */
         bufsz = 0;
         val = 0;
+        tls = buf->tls;
         if (type != MEMPAGEBUF) {
             bufsz = nblk << slot;
         } else {
