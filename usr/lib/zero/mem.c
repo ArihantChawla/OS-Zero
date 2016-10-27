@@ -968,11 +968,14 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                 adr = membufgetadr(buf, ptr);
                 id = membufblkid(buf, adr);
             }
+#if 0
             if (tls && tls != g_memtls) {
                 membufsetrel(buf, id);
             } else {
                 memrelblk(buf, id);
             }
+#endif
+            memrelblk(buf, id);
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
             slot->nref--;
             n = blk->ntab;
