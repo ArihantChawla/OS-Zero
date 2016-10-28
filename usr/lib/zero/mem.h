@@ -756,7 +756,11 @@ memgenhashtabadr(MEMUWORD_T *adr)
 //#define membufptrtabsize(nblk) (MEMBUFMAXBLKS * sizeof(MEMPTR_T))
 //#define membufslot(buf)       (memgetbufslot(buf))
 #define membufblkofs(nblk)                                              \
+    (rounduppow2(membufhdrsize(), PAGESIZE))
+#if 0
+#define membufblkofs(nblk)                                              \
     (rounduppow2(membufhdrsize() + (nblk) * sizeof(MEMPTR_T), PAGESIZE))
+#endif
 #define memusesmallbuf(sz)     ((sz) <= (MEMUWORD(1) << MEMMAXSMALLSLOT))
 #define memusepagebuf(sz)      ((sz) <= (PAGESIZE * MEMPAGESLOTS))
 /* allocations of PAGESIZE * slot */
