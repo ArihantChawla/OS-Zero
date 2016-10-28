@@ -223,8 +223,10 @@ memprefork(void)
         memlkbit(&g_mem.tab[slot].tab);
     }
 #elif (MEMNEWHASH) && (!MEMLFHASH)
-    for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
-        memlkbit(&g_mem.hash[slot].chain);
+    if (g_mem.hash) {
+        for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
+            memlkbit(&g_mem.hash[slot].chain);
+        }
     }
 #endif
 
@@ -241,8 +243,10 @@ mempostfork(void)
         memrelbit(&g_mem.tab[slot].tab);
     }
 #elif (!MEMLFHASH)
-    for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
-        memrelbit(&g_mem.hash[slot].chain);
+    if (g_mem.hash) {
+        for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
+            memrelbit(&g_mem.hash[slot].chain);
+        }
     }
 #endif
     for (slot = 0 ; slot < MEMPAGESLOTS ; slot++) {
