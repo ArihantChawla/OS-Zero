@@ -369,7 +369,7 @@ struct membuf {
 //    MEMPTR_T               *ptrtab; // original pointers for aligned blocks
     MEMUWORD_T              freemap[MEMBUFBITMAPWORDS];
     MEMUWORD_T              relmap[MEMBUFBITMAPWORDS];
-    MEMPTR_T                ptrtab[EMPTY];
+//    MEMPTR_T                ptrtab[EMPTY];
 //    MEMPTR_T                ptrtab[MEMBUFMAXBLKS];
 };
 
