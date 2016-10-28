@@ -27,7 +27,7 @@ _malloc(size_t size, size_t align, long flg)
 //    size_t  asz = (aln <= PAGESIZE && aln <= sz) ? sz : sz + aln;
     size_t  asz = ((aln <= PAGESIZE)
                    ? max(aln, sz)
-                   : sz + aln);
+                   : sz + aln - 1);
     long    type = (memusesmallbuf(asz)
                     ? MEMSMALLBUF
                     : (memusepagebuf(asz)
