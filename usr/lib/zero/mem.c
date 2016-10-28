@@ -1582,7 +1582,13 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
                 head->prev = buf;
             }
             buf->next = head;
-            gbkt->bufsz = bktsz;
+            if (type == MEMSMALLBUF) {
+                g_mem.nbsmall = bktsz;
+            } else if (type == MEMPAGEBUF) {
+                g_mem.nbpage = bktsz;
+            } else {
+                g_mem.nbbig = bktsz;
+            }
 #if (MEMDEBUGDEADLOCK)
             gbkt->line = __LINE__;
 #endif
@@ -1591,7 +1597,6 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
             m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
         } else {
             if (isglob) {
-                gbkt->bufsz -= bktsz;
                 /* unqueue from global list */
                 memdequeuebufglob(buf, gbkt);
 #if (MEMDEBUGDEADLOCK)
