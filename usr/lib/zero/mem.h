@@ -817,8 +817,10 @@ memgenhashtabadr(MEMUWORD_T *adr)
     ((type != MEMPAGEBUF)                                               \
      ? (MEMUWORD(1) << (slot))                                          \
      : (MEMUWORD(PAGESIZE) + MEMUWORD(PAGESIZE) * (slot)))
+#if 0
 #define membufgetptr(buf, ptr)                                          \
     ((buf)->ptrtab[membufblkid(buf, ptr)])
+#endif
 #define membufsetadr(buf, ptr, adr)                                     \
     ((buf)->ptrtab[membufblkid(buf, ptr)] = (adr))
 #define membufgetadr(buf, ptr)                                          \
