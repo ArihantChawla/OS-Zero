@@ -364,13 +364,9 @@ struct membuf {
     struct membuf          *heap; // previous buf in heap for bufs from sbrk()
     struct membuf          *prev; // previous buf in chain
     struct membuf          *next; // next buf in chain
-//    volatile struct membkt *bkt;  // pointer to parent bucket
     MEMUWORD_T              size; // buffer bookkeeping + allocation blocks
-//    MEMPTR_T               *ptrtab; // original pointers for aligned blocks
     MEMUWORD_T              freemap[MEMBUFBITMAPWORDS];
     MEMUWORD_T              relmap[MEMBUFBITMAPWORDS];
-//    MEMPTR_T                ptrtab[EMPTY];
-//    MEMPTR_T                ptrtab[MEMBUFMAXBLKS];
 };
 
 #if (MEMMULTITAB)
@@ -778,10 +774,10 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #define memnbufblk(type, slot)                                          \
     (((type) == MEMSMALLBUF)                                            \
      ? (((slot) <= MEMSMALLSLOT)                                        \
-        ? (MEMBUFMAXBLKS >> 2)                                          \
+        ? (MEMBUFMAXBLKS)                                               \
         : (((slot) <= MEMMIDSLOT)                                       \
-           ? (MEMBUFMAXBLKS >> 3)                                       \
-           : (MEMBUFMAXBLKS >> 4)))                                     \
+           ? (MEMBUFMAXBLKS >> 1)                                       \
+           : (MEMBUFMAXBLKS >> 2)))                                     \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMMIDPAGESLOT)                                   \
            ? 8                                                          \
@@ -789,26 +785,10 @@ memgenhashtabadr(MEMUWORD_T *adr)
               ? 4                                                       \
               : 2))                                                     \
         : (((slot) <= MEMSMALLMAPSHIFT)                                 \
-           ? 8                                                          \
-           : (((slot) <= MEMBIGMAPSHIFT)                                \
-              ? 4                                                       \
-              : 1))))
-#define memnbuftls(type, slot)                                          \
-    (((type) == MEMSMALLBUF)                                            \
-     ? 4                                                                \
-     : (((type) == MEMPAGEBUF)                                          \
-        ? (((slot) <= MEMMIDPAGESLOT)                                   \
            ? 4                                                          \
-           : (((slot) <= MEMBIGPAGESLOT)                                \
+           : (((slot) <= MEMBIGMAPSHIFT)                                \
               ? 2                                                       \
-              : 1))                                                     \
-        : 0))
-#define memnbufglob(type, slot)                                         \
-    (((type) == MEMSMALLBUF)                                            \
-     ? 4                                                                \
-     : (((type) == MEMPAGEBUF)                                          \
-        ? 2                                                             \
-        : 1))
+              : 1))))
 
 #define membufblkadr(buf, ndx)                                          \
     ((buf)->base + ((ndx) << memgetbufslot(buf)))
@@ -821,18 +801,6 @@ memgenhashtabadr(MEMUWORD_T *adr)
     ((type != MEMPAGEBUF)                                               \
      ? (MEMUWORD(1) << (slot))                                          \
      : (MEMUWORD(PAGESIZE) + MEMUWORD(PAGESIZE) * (slot)))
-#if 0
-#define membufgetptr(buf, ptr)                                          \
-    ((buf)->ptrtab[membufblkid(buf, ptr)])
-#endif
-#define membufsetadr(buf, ptr, adr)                                     \
-    ((buf)->ptrtab[membufblkid(buf, ptr)] = (adr))
-#define membufgetadr(buf, ptr)                                          \
-    ((buf)->ptrtab[membufblkid(buf, ptr)])
-#define membufgetpageadr(buf, ndx)                                      \
-    ((buf)->ptrtab[(ndx)])
-#define membufsetpageadr(buf, ndx, adr)                                 \
-    ((buf)->ptrtab[(ndx)] = (adr))
 
 #define memgetnbufblk(type, slot)  memnbufblk(type, slot)
 #define memgetnbuftls(type, slot)  memnbuftls(type, slot)
