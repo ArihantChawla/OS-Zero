@@ -818,66 +818,67 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
         prev = NULL;
         do {
             n = min(lim, 8);
-            slot = &src[7];
+//            slot = &src[7];
             switch (n) {
                 case 8:
-                    if (slot[0].adr == page) {
+                    if (src[7].adr == page) {
+                        slot = &src[7];
                         found++;
                         desc = slot->val;
                         
                         break;
                     }
                 case 7:
-                    if (slot[-1].adr == page) {
-                        slot -= 1;
+                    if (src[6].adr == page) {
+                        slot = &src[6];
                         found++;
                         desc = slot->val;
                         
                         break;
                     }
                 case 6:
-                    if (slot[-2].adr == page) {
-                        slot -= 2;
+                    if (src[5].adr == page) {
+                        slot = &src[5];
                         found++;
                         desc = slot->val;
                         
                         break;
                     }
                 case 5:
-                    if (slot[-3].adr == page) {
-                        slot -= 3;
+                    if (src[4].adr == page) {
+                        slot = &src[4];
                         found++;
                         desc = slot->val;
                         
                         break;
                     }
                 case 4:
-                    if (slot[-4].adr == page) {
-                        slot -= 4;
+                    if (src[3].adr == page) {
+                        slot = &src[3];
                         found++;
                         desc = slot->val;
                         
                         break;
                     }
                 case 3:
-                    if (slot[-5].adr == page) {
-                        slot -= 5;
+                    if (src[2].adr == page) {
+                        slot = &src[2];
                         found++;
                         desc = slot->val;
                         
                         break;
                     }
                 case 2:
-                    if (slot[-6].adr == page) {
-                        slot -= 6;
+                    if (src[1].adr == page) {
+                        slot = &src[1];
                         found++;
                         desc = slot->val;
                         
                         break;
                     }
                 case 1:
-                    if (slot[-7].adr == page) {
-                        slot -= 7;
+                    if (src[0].adr == page) {
+                        slot = &src[0];
                         found++;
                         desc = slot->val;
                         
