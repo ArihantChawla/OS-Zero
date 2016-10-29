@@ -812,10 +812,78 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
     prev = NULL;
     blk = (struct memhash *)upval;
     desc = 0;
+    slot = NULL;
     while ((blk) && !found) {
         lim = blk->ntab;
         src = blk->tab;
         prev = NULL;
+//            slot = &src[7];
+#if (MEMBFHASH)
+        do {
+            n = min(lim, 8);
+            switch (n) {
+                MEMADRDIFF_T mask;
+                
+                case 8:
+                    mask = -((MEMADRDIFF_T)(src[7].adr == page));
+                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[7]);
+                    slot = (struct memhashitem *)upval;
+                case 7:
+                    mask = -((MEMADRDIFF_T)(src[6].adr == page));
+                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[6]);
+                    slot = (struct memhashitem *)upval;
+                    if (slot) {
+
+                        break;
+                    }
+                case 6:
+                    mask = -((MEMADRDIFF_T)(src[5].adr == page));
+                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[5]);
+                    slot = (struct memhashitem *)upval;
+                case 5:
+                    mask = -((MEMADRDIFF_T)(src[4].adr == page));
+                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[4]);
+                    slot = (struct memhashitem *)upval;
+                    if (slot) {
+
+                        break;
+                    }
+                case 4:
+                    mask = -((MEMADRDIFF_T)(src[3].adr == page));
+                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[3]);
+                    slot = (struct memhashitem *)upval;
+                case 3:
+                    mask = -((MEMADRDIFF_T)(src[2].adr == page));
+                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[2]);
+                    slot = (struct memhashitem *)upval;
+                    if (slot) {
+
+                        break;
+                    }
+                case 2:
+                    mask = -((MEMADRDIFF_T)(src[1].adr == page));
+                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[1]);
+                    slot = (struct memhashitem *)upval;
+                case 1:
+                    mask = -((MEMADRDIFF_T)(src[0].adr == page));
+                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[0]);
+                    slot = (struct memhashitem *)upval;
+                case 0:
+                default:
+                    
+                    break;
+            }
+            lim -= n;
+            src += n;
+        } while (!slot && !found);
+        if (!slot) {
+            prev = blk;
+            blk = blk->chain;
+        } else {
+            found++;
+            desc = slot->val;
+        }
+#else
         do {
             n = min(lim, 8);
 //            slot = &src[7];
@@ -896,6 +964,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             prev = blk;
             blk = blk->chain;
         }
+#endif
     }
 //    upval = (MEMADR_T)g_mem.hash[key].chain;
     if (!found) {
