@@ -790,6 +790,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
     MEMUWORD_T              key = memhashptr(page) & (MEMHASHITEMS - 1);
     MEMADR_T                desc;
     MEMADR_T                upval;
+    MEMADR_T                val;
     struct memhash         *blk;
     struct memhash         *prev;
     struct memhashitem     *slot;
@@ -823,56 +824,56 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             n = min(lim, 8);
             switch (n) {
                 /*
-                 * if found, the mask will be -1 (all 1-bits), and upval will be
+                 * if found, the mask will be -1 (all 1-bits), and val will be
                  * the item address
-                 * if not found, the mask will be 0 and so will upval/slot
+                 * if not found, the mask will be 0 and so will val/slot
                  */
                 MEMADRDIFF_T mask;
                 
                 case 8:
                     mask = -((MEMADRDIFF_T)(src[7].adr == page));
-                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[7]);
-                    slot = (struct memhashitem *)upval;
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[7]);
+                    slot = (struct memhashitem *)val;
                 case 7:
                     mask = -((MEMADRDIFF_T)(src[6].adr == page));
-                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[6]);
-                    slot = (struct memhashitem *)upval;
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[6]);
+                    slot = (struct memhashitem *)val;
                     if (slot) {
 
                         break;
                     }
                 case 6:
                     mask = -((MEMADRDIFF_T)(src[5].adr == page));
-                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[5]);
-                    slot = (struct memhashitem *)upval;
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[5]);
+                    slot = (struct memhashitem *)val;
                 case 5:
                     mask = -((MEMADRDIFF_T)(src[4].adr == page));
-                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[4]);
-                    slot = (struct memhashitem *)upval;
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[4]);
+                    slot = (struct memhashitem *)val;
                     if (slot) {
 
                         break;
                     }
                 case 4:
                     mask = -((MEMADRDIFF_T)(src[3].adr == page));
-                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[3]);
-                    slot = (struct memhashitem *)upval;
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[3]);
+                    slot = (struct memhashitem *)val;
                 case 3:
                     mask = -((MEMADRDIFF_T)(src[2].adr == page));
-                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[2]);
-                    slot = (struct memhashitem *)upval;
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[2]);
+                    slot = (struct memhashitem *)val;
                     if (slot) {
 
                         break;
                     }
                 case 2:
                     mask = -((MEMADRDIFF_T)(src[1].adr == page));
-                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[1]);
-                    slot = (struct memhashitem *)upval;
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[1]);
+                    slot = (struct memhashitem *)val;
                 case 1:
                     mask = -((MEMADRDIFF_T)(src[0].adr == page));
-                    upval = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[0]);
-                    slot = (struct memhashitem *)upval;
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[0]);
+                    slot = (struct memhashitem *)val;
                 case 0:
                 default:
                     
