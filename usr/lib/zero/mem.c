@@ -822,6 +822,11 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
         do {
             n = min(lim, 8);
             switch (n) {
+                /*
+                 * if found, the mask will be -1 (all 1-bits), and upval will be
+                 * the item address
+                 * if not found, the mask will be 0 and so will upval/slot
+                 */
                 MEMADRDIFF_T mask;
                 
                 case 8:
