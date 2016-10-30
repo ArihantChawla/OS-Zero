@@ -643,8 +643,8 @@ _save:
 	/* %esp points to top of segregs */
 	movl	(%eax), %ebx		// fetch flg
 	leal	128(%eax), %ecx		// ECX = &task->fpstate
-	andl	$M_FPMASK, %ebx		// (flg & M_FPUMASK) ?
-	cmpl	$M_NOFP, %ebx		// if so, branch to _fxsave
+	andl	$M_FPMASK, %ebx		// (flg & M_FPMASK) ?
+	cmpl	$M_NOFP, %ebx		// if zero, branch to _fpunone
 	je	_fpunone		// no FPU-context saved
 	cmpl	$M_FP387, %ebx		// check for i387
 	je	_fnsave
