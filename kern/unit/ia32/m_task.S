@@ -20,9 +20,11 @@ m_taskjmp:
 	movl	%gs:8, %eax
 	/* fetch fxsave-word */
 	movl	(%eax), %ebx
-	andl	$CPUHASFXSR, %ebx
+	andl	$M_FPMASK, %ebx
 	leal	128(%eax), %edx
-	cmpl	$0, %ebx
+	cmpl	$M_NOFP, %ebx
+	je	_fpunone
+	cmpl	$M_FP387, %ebx
 	je	_frstor
 	fxrstor	(%edx)
 	jmp	_fpudone
@@ -30,6 +32,7 @@ _frstor:
 	frstor	(%edx)
 _fpudone:
 	fwait
+_fpunone:
 	/* fetch page directory page register */
 	movl	52(%eax), %ebx
 	/* restore page directory page register */

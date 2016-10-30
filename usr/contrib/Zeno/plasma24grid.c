@@ -155,7 +155,7 @@ plasmaloop(long nsec)
     static long ndx = 0;
     long        nfrm = PLASMAFPS * nsec;
 
-    plasmainit();
+//    plasmainit();
     if (nfrm < 0) {
         for ( ; ; ) {
             plasmadraw();

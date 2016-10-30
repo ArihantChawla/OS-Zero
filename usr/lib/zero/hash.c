@@ -180,12 +180,13 @@ tmunhash2(unsigned int u)
     return u;
 }
 
-/* here is a version of FNV1A by Georgi 'Kaze' 'Sanmayce' :) */
+/* here is a version of FNV1A (Fowler-Noll-Vo) by Georgi 'Kaze' 'Sanmayce' :) */
 
 uint32_t
 FNV1A_Hash_WHIZ(const char *str, size_t wsz)
 {
     const uint32_t  prime = 1607;
+    uint32_t        ret;
     uint32_t        hash32 = 2166136261;
     const char     *ptr = str;
  
@@ -198,10 +199,14 @@ FNV1A_Hash_WHIZ(const char *str, size_t wsz)
         hash32 = (hash32 ^ *(uint16_t *)ptr) * prime;
         ptr += sizeof(uint16_t);
     }
-    if (wsz & 1) 
+    if (wsz & 1) {
         hash32 = (hash32 ^ *ptr) * prime;
+    }
+    ret = hash32;
+    hash32 >>= 16;
+    ret ^= hash32;
  
-    return hash32 ^ (hash32 >> 16);
+    return ret;
 }
 
 /* this one I found on ariya.io */
@@ -220,20 +225,10 @@ FNV1A_Hash_WHIZ(const char *str, size_t wsz)
  */
 
 int
-mpmod(int k, int p, int s)
+mprimod(int k, int p, int s)
 {
     int i = (k & p) + (k >> s);
     
     return (i >= p) ? i - p : i;
 }
-
-#if 0
-int
-main(int argc, char *argv[])
-{
-    hashpjw("vendu");
-
-    return 0;
-}
-#endif
 

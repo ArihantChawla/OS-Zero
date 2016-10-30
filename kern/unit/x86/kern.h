@@ -54,6 +54,9 @@ extern void acpiinit(void);
 #if (SB16)
 extern void sb16init(void);
 #endif
+#if (PLASMA)
+extern void plasmainit(void);
+#endif
 #if (APIC)
 extern void apicinit(void);
 extern void apicstarttmr(void);

@@ -185,6 +185,9 @@ kinitprot(unsigned long pmemsz)
     /* initialise high precision event timers */
     hpetinit();
 #endif
+#if (PLASMA)
+    plasmainit();
+#endif
 #if (APIC)
     apicstarttmr();
 #else

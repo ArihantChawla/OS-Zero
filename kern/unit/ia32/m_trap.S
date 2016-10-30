@@ -643,15 +643,18 @@ _save:
 	/* %esp points to top of segregs */
 	movl	(%eax), %ebx		// fetch flg
 	leal	128(%eax), %ecx		// ECX = &task->fpstate
-	andl	$CPUHASFXSR, %ebx	// (flg & CPUHASFXSR) ?
-	cmpl	$0, %ebx		// if so, branch to _fxsave
-	jne	_fxsave			//
-	fnsave	(%ecx)			// use fnsave instead
+	andl	$M_FPMASK, %ebx		// (flg & M_FPUMASK) ?
+	cmpl	$M_NOFP, %ebx		// if so, branch to _fxsave
+	je	_fpunone		// no FPU-context saved
+	cmpl	$M_FP387, %ebx		// check for i387
+	je	_fnsave
+	fxsave	(%ecx)			// SSE-context detected
 	jmp	_fpusaved
-_fxsave:	
-	fxsave	(%ecx)
+_fnsave:	
+	fnsave	(%ecx)
 _fpusaved:
 	fwait
+_fpunone:
 	/* %esp points to m_task->tcb */
 	movl	8(%ebp), %edx		// EDX = pushed %cs
 	movl	(%ebp), %ebx		// EBX = stored frame pointer
