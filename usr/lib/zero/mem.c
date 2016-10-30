@@ -800,6 +800,10 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
     MEMWORD_T               lim;
     MEMUWORD_T              n;
     MEMWORD_T               found;
+#if (MEMBFHASH)
+    struct memhashitem     *item;
+    MEMADRDIFF_T            mask;
+#endif
 
 //    fprintf(stderr, "locking hash chain %lx\n", key);
 #if (!MEMLFHASH)
@@ -828,51 +832,58 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                  * the item address
                  * if not found, the mask will be 0 and so will val/slot
                  */
-                MEMADRDIFF_T mask;
                 
                 case 8:
-                    mask = -((MEMADRDIFF_T)(src[7].adr == page));
-                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[7]);
+                    item = &src[7];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
                 case 7:
-                    mask = -((MEMADRDIFF_T)(src[6].adr == page));
-                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[6]);
+                    item = &src[6];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
                     if (slot) {
 
                         break;
                     }
                 case 6:
-                    mask = -((MEMADRDIFF_T)(src[5].adr == page));
-                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[5]);
+                    item = &src[5];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
                 case 5:
-                    mask = -((MEMADRDIFF_T)(src[4].adr == page));
-                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[4]);
+                    item = &src[4];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
                     if (slot) {
 
                         break;
                     }
                 case 4:
-                    mask = -((MEMADRDIFF_T)(src[3].adr == page));
-                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[3]);
+                    item = &src[3];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
                 case 3:
-                    mask = -((MEMADRDIFF_T)(src[2].adr == page));
-                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[2]);
+                    item = &src[2];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
                     if (slot) {
 
                         break;
                     }
                 case 2:
-                    mask = -((MEMADRDIFF_T)(src[1].adr == page));
-                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[1]);
+                    item = &src[1];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
                 case 1:
-                    mask = -((MEMADRDIFF_T)(src[0].adr == page));
-                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)&src[0]);
+                    item = &src[0];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
                 case 0:
                 default:
