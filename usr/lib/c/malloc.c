@@ -477,7 +477,7 @@ malloc_usable_size(void *ptr)
     size_t         sz = 0;
     MEMUWORD_T     type;
     MEMUWORD_T     slot;
-    
+
     if (buf) {
         type = memgetbuftype(buf);
         slot = memgetbufslot(buf);
@@ -490,6 +490,7 @@ malloc_usable_size(void *ptr)
 size_t
 malloc_good_size(size_t size)
 {
+#if 0
     size_t sz = 0;
     
 #if (WORDSIZE == 4)
@@ -511,6 +512,9 @@ malloc_good_size(size_t size)
 #endif
 
     return sz;
+#endif
+
+    return size;
 }
 
 size_t

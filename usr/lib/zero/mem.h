@@ -175,7 +175,7 @@ typedef zerospin      MEMLK_T;
 
 #define MEMSMALLTLSLIM      (4 * 1024 * 1024)
 #define MEMPAGETLSLIM       (8 * 1024 * 1024)
-#define MEMSMALLGLOBLIM     0
+#define MEMSMALLGLOBLIM     (~MEMWORD(0))
 #define MEMPAGEGLOBLIM      (16 * 1024 * 1024)
 #define MEMBIGGLOBLIM       (64 * 1024 * 1024)
 
@@ -309,7 +309,7 @@ struct mem {
     struct membkt       bigbin[MEMBIGSLOTS];     // mapped blocks of 1 << slot
     struct membkt       pagebin[MEMPAGESLOTS];   // maps of PAGESIZE * slot
     struct membkt       smallbin[MEMSMALLSLOTS]; // blocks of 1 << slot
-    struct membkt       deadpage[MEMSMALLSLOTS];
+    struct membkt       deadpage[MEMPAGESLOTS];
     struct membkt       deadsmall[MEMSMALLSLOTS];
 //    struct membufvals   bufvals;
 #if (MEMMULTITAB)
@@ -319,9 +319,12 @@ struct mem {
     struct memhash     *hashbuf; // buffer for hash items
 #endif
     MEMWORD_T           flg;     // memory interface flags
+    MEMWORD_T           nbytetab[MEMBUFTYPES];
+#if 0
     MEMUWORD_T          nbsmall;
     MEMUWORD_T          nbpage;
     MEMUWORD_T          nbbig;
+#endif
     struct membuf      *heap;    // heap allocations (try sbrk(), then mmap())
     struct membuf      *maps;    // mapped blocks
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
@@ -453,14 +456,18 @@ struct memhash {
 
 #define memtlssize() rounduppow2(sizeof(struct memtls), 2 * PAGESIZE)
 struct memtls {
-    struct membkt     pagebin[MEMPAGESLOTS]; // maps of PAGESIZE * slot
-    struct membkt     smallbin[MEMSMALLSLOTS]; // blocks of size 1 << slot
+    struct membkt     bigbin[MEMBIGSLOTS];      // mapped blocks of 1 << slot
+    struct membkt     pagebin[MEMPAGESLOTS];    // maps of PAGESIZE * slot
+    struct membkt     smallbin[MEMSMALLSLOTS];  // blocks of size 1 << slot
 #if (MEM_LK_TYPE & MEM_LK_PRIO)
     struct priolkdata priolkdata;
 #endif
+    MEMWORD_T         nbytetab[MEMBUFTYPES];
     MEMWORD_T         flg;
+#if 0
     MEMUWORD_T        nbsmall;
     MEMUWORD_T        nbpage;
+#endif
 };
 
 /* mark the first block of buf as allocated */
@@ -506,7 +513,7 @@ membufsetrel(struct membuf *buf, MEMWORD_T id)
 }
 
 static __inline__ void
-membufrelfree(struct membuf *buf)
+membuffreerel(struct membuf *buf)
 {
     MEMUWORD_T *freemap = buf->freemap;
     MEMUWORD_T *relmap = buf->relmap;
@@ -518,9 +525,7 @@ membufrelfree(struct membuf *buf)
 
     nfree = buf->nfree;
     for (ndx = 0 ; ndx < MEMBUFBITMAPWORDS ; ndx++) {
-        do {
-            m_syncread((m_atomic_t *)&relmap[ndx], rel);
-        } while (!m_cmpswap((m_atomic_t *)&relmap[ndx], rel, 0));
+        rel = relmap[ndx];
         free = freemap[ndx];
         if (rel) {
 #if (WORDSIZE == 4)
@@ -528,6 +533,7 @@ membufrelfree(struct membuf *buf)
 #elif (WORDSIZE == 8)
             cnt = bitcnt1u64(rel);
 #endif
+            relmap[ndx] = 0;
             free |= rel;
             nfree += cnt;
             freemap[ndx] = free;
