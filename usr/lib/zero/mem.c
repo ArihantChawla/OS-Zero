@@ -164,6 +164,7 @@ meminittls(void)
     unsigned long  val;
 #endif
 
+    spinlk(&g_mem.initlk);
     pthread_once(&g_initonce, meminit);
 #if (MEMDYNTLS)
     tls = mapanon(0, memtlssize());
@@ -186,6 +187,7 @@ meminittls(void)
     g_memtls = &g_memtlsdata;
 #endif
 #endif
+    spinunlk(&g_mem.initlk);
 
     return g_memtls;
 }
@@ -307,15 +309,15 @@ meminit(void)
 #endif
     void       *ptr;
 
-    fprintf(stderr, "MEMHASHARRAYITEMS == %d\n", MEMHASHARRAYITEMS);
-    spinlk(&g_mem.initlk);
+//    fprintf(stderr, "MEMHASHARRAYITEMS == %d\n", MEMHASHARRAYITEMS);
+//    spinlk(&g_mem.initlk);
 #if 0
     signal(SIGQUIT, memexit);
     signal(SIGINT, memexit);
     signal(SIGTERM, memexit);
-#endif
     signal(SIGSEGV, memquit);
     signal(SIGABRT, memquit);
+#endif
     pthread_atfork(memprefork, mempostfork, mempostfork);
     pthread_key_create(&g_thrkey, memreltls);
 #if (MEMSTAT)
@@ -352,7 +354,7 @@ meminit(void)
 //    memrellk(&g_mem.heaplk);
 #endif
     g_mem.flg |= MEMINITBIT;
-    spinunlk(&g_mem.initlk);
+//    spinunlk(&g_mem.initlk);
 
     return;
 }
