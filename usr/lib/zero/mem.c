@@ -54,13 +54,13 @@ memreltls(void *arg)
 #if (MEMBUFRELMAP)
 //                membuffreerel(buf);
 #endif
-                buf->tls = NULL;
+//                buf->tls = NULL;
                 while (buf->next) {
                     buf = buf->next;
 #if (MEMBUFRELMAP)
 //                    membuffreerel(buf);
 #endif
-                    buf->tls = NULL;
+//                    buf->tls = NULL;
                 }
 #if (MEMDEBUGDEADLOCK)
                 memlkbitln(dest);
@@ -97,13 +97,13 @@ memreltls(void *arg)
 #if (MEMBUFRELMAP)
 //                membuffreerel(buf);
 #endif
-                buf->tls = NULL;
+//                buf->tls = NULL;
                 while (buf->next) {
                     buf = buf->next;
 #if (MEMBUFRELMAP)
 //                    membuffreerel(buf);
 #endif
-                    buf->tls = NULL;
+//                    buf->tls = NULL;
                 }
 #if (MEMDEBUGDEADLOCK)
                 memlkbitln(dest);
@@ -216,6 +216,11 @@ memprefork(void)
 #else
         memlkbit(&g_mem.smallbin[slot].list);
 #endif
+#if (MEMDEBUGDEADLOCK)
+        memlkbitln(&g_mem.deadsmall[slot]);
+#else
+        memlkbit(&g_mem.deadsmall[slot].list);
+#endif
     }
     for (slot = 0 ; slot < MEMBIGSLOTS ; slot++) {
 #if (MEMDEBUGDEADLOCK)
@@ -230,6 +235,11 @@ memprefork(void)
 #else
         memlkbit(&g_mem.pagebin[slot].list);
 #endif
+#if (MEMDEBUGDEADLOCK)
+        memlkbitln(&g_mem.deadpage[slot]);
+#else
+        memlkbit(&g_mem.deadpage[slot].list);
+#endif
     }
 
     return;
@@ -241,6 +251,11 @@ mempostfork(void)
     MEMWORD_T slot;
 
     for (slot = 0 ; slot < MEMPAGESLOTS ; slot++) {
+#if (MEMDEBUGDEADLOCK)
+        memrelbitln(&g_mem.deadpage[slot]);
+#else
+        memrelbit(&g_mem.deadpage[slot].list);
+#endif
 #if (MEMDEBUGDEADLOCK)
         memrelbitln(&g_mem.pagebin[slot]);
 #else
@@ -255,6 +270,11 @@ mempostfork(void)
 #endif
     }
     for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
+#if (MEMDEBUGDEADLOCK)
+        memrelbitln(&g_mem.deadsmall[slot]);
+#else
+        memrelbit(&g_mem.deadsmall[slot].list);
+#endif
 #if (MEMDEBUGDEADLOCK)
         memrelbitln(&g_mem.smallbin[slot]);
 #else
@@ -829,14 +849,51 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
 //            slot = &src[7];
 #if (MEMBFHASH)
         do {
-            n = min(lim, 8);
+            n = min(lim, 16);
             switch (n) {
                 /*
                  * if found, the mask will be -1 (all 1-bits), and val will be
                  * the item address
                  * if not found, the mask will be 0 and so will val/slot
                  */
-                
+                case 16:
+                    item = &src[15];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
+                    slot = (struct memhashitem *)val;
+                case 15:
+                    item = &src[14];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
+                    slot = (struct memhashitem *)val;
+                case 13:
+                    item = &src[12];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
+                    slot = (struct memhashitem *)val;
+                    if (slot) {
+
+                        break;
+                    }
+                case 12:
+                    item = &src[11];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
+                    slot = (struct memhashitem *)val;
+                case 10:
+                    item = &src[9];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
+                    slot = (struct memhashitem *)val;
+                case 9:
+                    item = &src[8];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
+                    slot = (struct memhashitem *)val;
+                    if (slot) {
+
+                        break;
+                    }
                 case 8:
                     item = &src[7];
                     mask = -((MEMADRDIFF_T)(item->adr == page));
@@ -847,24 +904,20 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                     mask = -((MEMADRDIFF_T)(item->adr == page));
                     val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
-                    if (slot) {
-
-                        break;
-                    }
                 case 6:
                     item = &src[5];
                     mask = -((MEMADRDIFF_T)(item->adr == page));
                     val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
+                    if (slot) {
+
+                        break;
+                    }
                 case 5:
                     item = &src[4];
                     mask = -((MEMADRDIFF_T)(item->adr == page));
                     val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
-                    if (slot) {
-
-                        break;
-                    }
                 case 4:
                     item = &src[3];
                     mask = -((MEMADRDIFF_T)(item->adr == page));
@@ -1264,6 +1317,7 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
 MEMPTR_T
 memgetblkdead(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
 {
+    volatile struct memtls *tls;
     volatile struct membkt *bkt;
     struct membuf          *head;
     MEMPTR_T                ptr;
@@ -1338,15 +1392,26 @@ memgetblkdead(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
         memsetbufnfree(head, nfree);
         bkt->bufsz -= blksz;
         VALGRINDPOOLALLOC(head->base, ptr, size);
-        if (!nfree) {
-            /* head shall be disconnected from all lists */
-            if (head->next) {
-                head->next->prev = NULL;
-            }
+        /* head shall be disconnected from all lists */
+        if (head->next) {
+            head->next->prev = NULL;
+        }
 #if (MEMDEBUGDEADLOCK)
-            bkt->line = __LINE__;
+        bkt->line = __LINE__;
 #endif
-            m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)head->next);
+        m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)head->next);
+        if (nfree) {
+            tls = g_memtls;
+            head->prev = NULL;
+            if (type == MEMSMALLBUF) {
+                head->next = tls->smallbin[slot].list;
+                m_syncwrite((m_atomic_t *)&tls->smallbin[slot].list, head);
+            } else {
+                head->next = tls->pagebin[slot].list;
+                m_syncwrite((m_atomic_t *)&tls->pagebin[slot].list, head);
+            }
+            head->tls = tls;
+        } else {
             head->tls = NULL;
             head->prev = NULL;
             head->next = NULL;
