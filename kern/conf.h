@@ -18,6 +18,7 @@
 
 #define VMFLATPHYSTAB 1
 #define USERMODE      0
+#define PLASMA        1
 #define PLASMAFOREVER 1
 
 #if !defined(FASTINTR)
@@ -76,8 +77,6 @@
 
 #define BOCHS         1
 #define DEVEL         0         // debugging
-
-#define PLASMA        1
 
 /* planned and developed drivers */
 #define VBE           1         // VBE2 graphics driver

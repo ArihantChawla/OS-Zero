@@ -40,6 +40,7 @@ memalloc(size_t nb, long flg)
     void            *ptr = NULL;
     size_t           sz = max(MEMMINSIZE, nb);
     size_t           bsz;
+    long             vmflg;
     unsigned long    slab = 0;
     unsigned long    bktid = memcalcbkt(sz);
 #if defined(MEMPARANOIA)
@@ -52,12 +53,16 @@ memalloc(size_t nb, long flg)
     struct membkt   *bkt = &virtpool->tab[bktid];
     struct memmag   *mag;
 
+    vmflg = PAGEPRES | PAGEWRITE;
+    if (MEMWIRE) {
+        vmflg |= PAGEPRES;
+    }
     fmtxlk(&bkt->lk);
     if (bktid >= MEMSLABSHIFT) {
         ptr = slaballoc(virtpool, sz, flg);
         if (ptr) {
 #if (!MEMTEST)
-            vminitvirt(&_pagetab, ptr, sz, flg);
+            vminitvirt(&_pagetab, ptr, sz, vmflg);
 #endif
             slab++;
             mag = memgetmag(ptr, virtpool);
@@ -82,7 +87,7 @@ memalloc(size_t nb, long flg)
             ptr = slaballoc(virtpool, sz, flg);
             if (ptr) {
 #if (!MEMTEST)
-                vminitvirt(&_pagetab, ptr, sz, flg);
+                vminitvirt(&_pagetab, ptr, sz, vmflg);
 #endif
                 u8ptr = ptr;
                 slab++;

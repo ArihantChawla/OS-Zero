@@ -12,6 +12,8 @@
  * - hacks to make it run with zero kernel using graphics framebuffer
  */
 
+#define PLASMAKMALLOC   0
+#define PLASMAMODLUT    1
 #if (__KERNEL__)
 #define PLASMADOUBLEBUF 0
 #if (PLASMADOUBLEBUF)
@@ -95,9 +97,13 @@ static SDL_Surface* logo;
 #endif
 
 #if (__KERNEL__)
-static uint8_t rtab[INTER_WIDTH * INTER_HEIGHT];
-static uint8_t gtab[INTER_WIDTH * INTER_HEIGHT];
-static uint8_t btab[INTER_WIDTH * INTER_HEIGHT];
+static gfxargb32_t modxlut[INTER_WIDTH];
+static gfxargb32_t modylut[INTER_HEIGHT];
+#if (!PLASMAKMALLOC)
+static uint8_t     rtab[INTER_WIDTH * INTER_HEIGHT];
+static uint8_t     gtab[INTER_WIDTH * INTER_HEIGHT];
+static uint8_t     btab[INTER_WIDTH * INTER_HEIGHT];
+#endif
 #endif
 
 static uint8_t palette1[PALETTE_SIZE];
@@ -253,19 +259,19 @@ bool init(void)
 
 #endif /* !__KERNEL__ */
 
-#if (__KERNEL__)
+#if (__KERNEL__) && (!PLASMAKMALLOC)
     intermediateR = rtab;
     intermediateG = gtab;
     intermediateB = btab;
 #else
     // Intermediate pixel destinations
-    intermediateR = malloc(INTER_WIDTH * INTER_HEIGHT * sizeof(*intermediateR));
+    intermediateR = malloc(INTER_WIDTH * INTER_HEIGHT * sizeof(uint8_t));
     if (!intermediateR) return false;
 
-    intermediateG = malloc(INTER_WIDTH * INTER_HEIGHT * sizeof(*intermediateG));
+    intermediateG = malloc(INTER_WIDTH * INTER_HEIGHT * sizeof(uint8_t));
     if (!intermediateG) return false;
     
-    intermediateB = malloc(INTER_WIDTH * INTER_HEIGHT * sizeof(*intermediateB));
+    intermediateB = malloc(INTER_WIDTH * INTER_HEIGHT * sizeof(uint8_t));
     if (!intermediateR) return false;
 #endif
 
@@ -300,7 +306,7 @@ bool init(void)
 void
 cleanup(void)
 {
-#if 0
+#if (PLASMAKMALLOC)
     kfree(intermediateR);
     kfree(intermediateG);
     kfree(intermediateB);
@@ -383,6 +389,9 @@ void drawPlasma(SDL_Surface *surface)
     unsigned ypos = 0;
 
 #if (__KERNEL__)
+#if (PLASMAMODLUT)
+    gfxargb32_t  mask;
+#endif
 #if (PLASMADOUBLEBUF)
     uint8_t *dest = plasmabuf;
 #else
@@ -396,6 +405,15 @@ void drawPlasma(SDL_Surface *surface)
     p2_sinposx = p2_sinpos_start_x;
     p3_sinposx = p3_sinpos_start_x;
 
+#if (PLASMAMODLUT)
+    for (x = 0 ; x < INTER_WIDTH ; x++) {
+        modxlut[x] = -(!!(x % vbefontw));
+    }
+    for (y = 0 ; y < INTER_HEIGHT ; y++) {
+        modylut[y] = y % vbefonth;
+    }
+#endif
+
     for (y = 0; y < INTER_HEIGHT; y++) {
 
         p1_sinposy = p1_sinpos_start_y;
@@ -403,7 +421,7 @@ void drawPlasma(SDL_Surface *surface)
         p3_sinposy = p3_sinpos_start_y;
 
         for (x = 0; x < INTER_WIDTH; x++) {
-            uint32_t colour;
+            uint8_t colour;
 
             p1_sinposy += 61;
             colour = palette1[p1_palettePos - offsetTable[p1_sinposy>>7]];
@@ -420,6 +438,43 @@ void drawPlasma(SDL_Surface *surface)
             *(intermediateB + x + ypos) = colour;
 
         }
+#if (PLASMAMODLUT)
+        if (modylut[y]) {
+            for (x = 0; x < OUT_WIDTH; x++) {
+                int srcpos;
+                uint32_t colour;
+#if (__KERNEL__)
+                gfxargb32_t r;
+                gfxargb32_t g;
+                gfxargb32_t b;
+#endif
+                
+                mask = modxlut[x];
+                // copy to row y
+                srcpos = OFFSET_MAG + x
+                    + ypos - (offsetTable[p1_sinposx>>7]>>1);
+                
+                /* FIXME: SDL_MapRGB() is very likely not a very fast way to do this
+                 */
+#if (__KERNEL__)
+                r = intermediateR[srcpos];
+                g = intermediateG[srcpos];
+                b = intermediateB[srcpos];
+                r &= mask;
+                g &= mask;
+                b &= mask;
+                colour = gfxmkpix(0, r, g, b);
+                gfxsetrgb888(colour, dest + x * 3);
+#else
+                colour = SDL_MapRGB(surface->format,
+                                    intermediateG[srcpos],
+                                    intermediateR[srcpos],
+                                    intermediateB[srcpos]);
+                *(dest + x) = colour;
+#endif
+            }
+        }
+#else /* !PLASMAMODLUT */
         if (y % vbefonth) {
             for (x = 0; x < OUT_WIDTH; x++) {
                 int srcpos;
@@ -452,10 +507,9 @@ void drawPlasma(SDL_Surface *surface)
                     *(dest + x) = colour;
 #endif
                 }
-#if (__KERNEL__)
-#endif
             }
         }
+#endif /* PLASMAMODLUT */
 
         p1_palettePos++;
         p1_sinposx += 263;

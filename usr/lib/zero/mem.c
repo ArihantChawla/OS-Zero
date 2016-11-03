@@ -199,17 +199,6 @@ memprefork(void)
 
     spinlk(&g_mem.initlk);
     memgetlk(&g_mem.heaplk);
-#if (MEMMULTITAB)
-    for (slot = 0 ; slot < MEMLVL1ITEMS ; slot++) {
-        memlkbit(&g_mem.tab[slot].tab);
-    }
-#elif (!MEMLFHASH)
-    if (g_mem.hash) {
-        for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
-            memlkbit(&g_mem.hash[slot].chain);
-        }
-    }
-#endif
     for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
 #if (MEMDEBUGDEADLOCK)
         memlkbitln(&g_mem.smallbin[slot]);
@@ -241,6 +230,17 @@ memprefork(void)
         memlkbit(&g_mem.deadpage[slot].list);
 #endif
     }
+#if (MEMMULTITAB)
+    for (slot = 0 ; slot < MEMLVL1ITEMS ; slot++) {
+        memlkbit(&g_mem.tab[slot].tab);
+    }
+#elif (!MEMLFHASH)
+    if (g_mem.hash) {
+        for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
+            memlkbit(&g_mem.hash[slot].chain);
+        }
+    }
+#endif
 
     return;
 }
@@ -250,6 +250,17 @@ mempostfork(void)
 {
     MEMWORD_T slot;
 
+#if (MEMMULTITAB)
+    for (slot = 0 ; slot < MEMLVL1ITEMS ; slot++) {
+        memrelbit(&g_mem.tab[slot].tab);
+    }
+#elif (!MEMLFHASH)
+    if (g_mem.hash) {
+        for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
+            memrelbit(&g_mem.hash[slot].chain);
+        }
+    }
+#endif
     for (slot = 0 ; slot < MEMPAGESLOTS ; slot++) {
 #if (MEMDEBUGDEADLOCK)
         memrelbitln(&g_mem.deadpage[slot]);
@@ -281,17 +292,6 @@ mempostfork(void)
         memrelbit(&g_mem.smallbin[slot].list);
 #endif
     }
-#if (MEMMULTITAB)
-    for (slot = 0 ; slot < MEMLVL1ITEMS ; slot++) {
-        memrelbit(&g_mem.tab[slot].tab);
-    }
-#elif (!MEMLFHASH)
-    if (g_mem.hash) {
-        for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
-            memrelbit(&g_mem.hash[slot].chain);
-        }
-    }
-#endif
     memrellk(&g_mem.heaplk);
     spinunlk(&g_mem.initlk);
 

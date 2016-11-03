@@ -209,7 +209,7 @@ vminitvirt(void *pagetab, void *virt, uint32_t size, uint32_t flg)
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
     pte = (pte_t *)pagetab + vmpagenum(virt);
     while (n--) {
-        *pte = PAGEWRITE | flg;
+        *pte = flg;
         pte++;
     }
 
