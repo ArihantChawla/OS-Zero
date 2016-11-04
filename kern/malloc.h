@@ -13,17 +13,17 @@
 
 #include <zero/param.h>
 #include <kern/mem/mem.h>
-#define  kwalloc(nb)         memalloc(nb, MEMWIRE)
-#define  kmalloc(nb)         memalloc(nb, 0)
-#define  kcalloc(nb)         memalloc(nb, MEMZERO)
-#define  kcwalloc(nb)        memalloc(nb, MEMZERO | MEMWIRE)
-#define  kvalloc(nb)         memalloc(PAGESIZE, 0)
-#define  kcvalloc(nb)        memalloc(PAGESIZE, MEMZERO)
-#define  kcvwalloc(nb)       memalloc(PAGESIZE, MEMZERO | MEMWIRE)
-#define  kwtmalloc(nb)       memwtalloc(nb, 0, 0)
-#define  kwtwalloc(nb)       memwtalloc(nb, MEMWIRE, 0)
-#define  kwtsmalloc(nb, cnt) memwtalloc(nb, 0, cnt)
-#define  kwtswalloc(nb, cnt) memwtalloc(nb, MEMWIRE, cnt)
+#define  kwalloc(nb)            memalloc(nb, MEMWIRE)
+#define  kmalloc(nb)            memalloc(nb, 0)
+#define  kcalloc(nb)            memalloc(nb, MEMZERO)
+#define  kcwalloc(nb)           memalloc(nb, MEMZERO | MEMWIRE)
+#define  kvalloc(nb)            memalloc(PAGESIZE, 0)
+#define  kcvalloc(nb)           memalloc(PAGESIZE, MEMZERO)
+#define  kcvwalloc(nb)          memalloc(PAGESIZE, MEMZERO | MEMWIRE)
+#define  kwtmalloc(nb)          memwtalloc(nb, 0, 0)
+#define  kwtwalloc(nb)          memwtalloc(nb, MEMWIRE, 0)
+#define  kwtspinmalloc(nb, cnt) memwtalloc(nb, 0, cnt)
+#define  kwtspinwalloc(nb, cnt) memwtalloc(nb, MEMWIRE, cnt)
 void    *memalloc(size_t nb, long flg);
 void    *memwtalloc(size_t nb, long flg, long spin);
 void     kfree(void *ptr);
