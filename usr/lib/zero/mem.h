@@ -392,9 +392,7 @@ struct memitem {
 #elif (MEMNEWHASH)
 
 struct memhashlist {
-#if (MEMHASHLOCK)
     MEMLK_T         lk;
-#endif
     struct memhash *chain;
 };
 
@@ -442,7 +440,7 @@ struct memhash {
     struct memhash     *chain;  // next array in this chain
     MEMWORD_T           ntab;   // number of occupied slots in this table
     struct memhashitem *tab;    // pointer to the item table
-    struct memhashlist *list;   // pointer for head of list
+    MEMUWORD_T          pad;
     MEMUWORD_T          data;   // base address for the table
 };
 
