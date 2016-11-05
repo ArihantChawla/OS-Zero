@@ -384,24 +384,17 @@ memcalcadr(struct membuf *buf, MEMPTR_T ptr, MEMWORD_T size, MEMWORD_T align)
 //          MEMWORD_T id)
 {
     MEMPTR_T   adr = ptr;
-    MEMWORD_T  type = memgetbuftype(buf);
+    MEMWORD_T  type;
     MEMWORD_T  slot;
     MEMWORD_T  bsz;
 
-    if (align <= CLSIZE) {
-        slot = memgetbufslot(buf);
-        bsz = membufblksize(buf, type, slot);
-        ptr = memgenadr(adr, bsz, size);
-    } else if ((MEMADR_T)ptr & (align - 1)) {
-        ptr = memalignptr(adr, align);
-    }
 #if 0
-    if (type != MEMPAGEBUF) {
-        membufsetadr(buf, ptr, adr);
-    } else {
-        membufsetpageadr(buf, id, adr);
-    }
+    type = memgetbufslot(buf);
+    slot = memgetbufslot(buf);
+    bsz = membufblksize(buf, type, slot);
+    ptr = memgenadr(adr, bsz, size);
 #endif
+    ptr = memalignptr(adr, align);
 
     return ptr;
 }
@@ -475,6 +468,9 @@ meminitsmallbuf(struct membuf *buf,
     memsetbufnfree(buf, nblk);
 //    ptr = memcalcadr(buf, ptr, size, align, 0);
     ptr = memcalcadr(buf, ptr, size, align);
+#if 0
+    ptr = memalignptr(ptr, align);
+#endif
     memsetbuf(ptr, buf, 0);
 #if (MEMTEST)
     _memchkptr(buf, ptr);
@@ -718,7 +714,7 @@ meminithashitem(MEMPTR_T data)
 }
 #if (MEMHASHSUBTABS)
 static void
-meminithashsubitem(MEMPTR_T data)
+meminithashsubtab(MEMPTR_T data)
 {
     struct memhashsubitem *item = (struct memhash *)data;
 
@@ -1470,10 +1466,10 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
 MEMPTR_T
 memgetblkdead(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
 {
+    MEMPTR_T                ptr = NULL;
     volatile struct memtls *tls;
     volatile struct membkt *bkt;
     struct membuf          *head;
-    MEMPTR_T                ptr;
     MEMPTR_T                adr;
     MEMWORD_T               blksz;
     MEMWORD_T               nfree;

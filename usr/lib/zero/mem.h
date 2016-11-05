@@ -648,15 +648,9 @@ memgenadr(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
     MEMADR_T   div9;
     MEMADR_T   dec;
 
-    if (lim <= 2 * CLSIZE) {
+    if (lim < 4 * CLSIZE) {
 
         return ptr;
-    } else if (lim >= 4 * CLSIZE) {
-#if (CLSIZE == 32)
-        shift = 4;
-#elif (CLSIZE == 64)
-        shift = 5;
-#endif
     } else {
 #if (CLSIZE == 32)
         shift = 3;
