@@ -44,7 +44,8 @@ memreltls(void *arg)
         bufsz = g_memtls->nbytetab[MEMSMALLBUF];
         for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
             src = &g_memtls->smallbin[slot];
-            dest = &g_mem.deadsmall[slot];
+//            dest = &g_mem.deadsmall[slot];
+            dest = &g_mem.smallbin[slot];
 #if 0
             dest = &g_mem.smallbin[slot];
 #endif
@@ -87,7 +88,8 @@ memreltls(void *arg)
         bufsz = g_memtls->nbytetab[MEMPAGEBUF];
         for (slot = 0 ; slot < MEMPAGESLOTS ; slot++) {
             src = &g_memtls->pagebin[slot];
-            dest = &g_mem.deadpage[slot];
+//            dest = &g_mem.deadpage[slot];
+            dest = &g_mem.pagebin[slot];
 #if 0
             dest = &g_mem.pagebin[slot];
 #endif
@@ -205,10 +207,12 @@ memprefork(void)
 #else
         memlkbit(&g_mem.smallbin[slot].list);
 #endif
+#if 0
 #if (MEMDEBUGDEADLOCK)
         memlkbitln(&g_mem.deadsmall[slot]);
 #else
         memlkbit(&g_mem.deadsmall[slot].list);
+#endif
 #endif
     }
     for (slot = 0 ; slot < MEMBIGSLOTS ; slot++) {
@@ -224,10 +228,12 @@ memprefork(void)
 #else
         memlkbit(&g_mem.pagebin[slot].list);
 #endif
+#if 0
 #if (MEMDEBUGDEADLOCK)
         memlkbitln(&g_mem.deadpage[slot]);
 #else
         memlkbit(&g_mem.deadpage[slot].list);
+#endif
 #endif
     }
 #if (MEMMULTITAB)
@@ -262,10 +268,12 @@ mempostfork(void)
     }
 #endif
     for (slot = 0 ; slot < MEMPAGESLOTS ; slot++) {
+#if 0
 #if (MEMDEBUGDEADLOCK)
         memrelbitln(&g_mem.deadpage[slot]);
 #else
         memrelbit(&g_mem.deadpage[slot].list);
+#endif
 #endif
 #if (MEMDEBUGDEADLOCK)
         memrelbitln(&g_mem.pagebin[slot]);
@@ -281,10 +289,12 @@ mempostfork(void)
 #endif
     }
     for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
+#if 0
 #if (MEMDEBUGDEADLOCK)
         memrelbitln(&g_mem.deadsmall[slot]);
 #else
         memrelbit(&g_mem.deadsmall[slot].list);
+#endif
 #endif
 #if (MEMDEBUGDEADLOCK)
         memrelbitln(&g_mem.smallbin[slot]);
@@ -377,26 +387,6 @@ meminit(void)
 //    spinunlk(&g_mem.initlk);
 
     return;
-}
-
-MEMPTR_T
-memcalcadr(struct membuf *buf, MEMPTR_T ptr, MEMWORD_T size, MEMWORD_T align)
-//          MEMWORD_T id)
-{
-    MEMPTR_T   adr = ptr;
-    MEMWORD_T  type;
-    MEMWORD_T  slot;
-    MEMWORD_T  bsz;
-
-#if 0
-    type = memgetbufslot(buf);
-    slot = memgetbufslot(buf);
-    bsz = membufblksize(buf, type, slot);
-    ptr = memgenadr(adr, bsz, size);
-#endif
-    ptr = memalignptr(adr, align);
-
-    return ptr;
 }
 
 static struct membuf *
@@ -1463,6 +1453,7 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
     return NULL;
 }
 
+#if 0
 MEMPTR_T
 memgetblkdead(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
 {
@@ -1569,6 +1560,7 @@ memgetblkdead(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
 
     return ptr;
 }
+#endif
 
 MEMPTR_T
 memgetblkglob(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
@@ -1672,9 +1664,11 @@ memgetblk(MEMWORD_T slot, MEMWORD_T type, MEMWORD_T size, MEMWORD_T align)
     ptr = NULL;
     if (type != MEMBIGBUF) {
         ptr = memgetblktls(type, slot, size, align);
+#if 0
         if (!ptr) {
             ptr = memgetblkdead(type, slot, size, align);
         }
+#endif
     }
     if (!ptr) {
         ptr = memgetblkglob(type, slot, size, align);

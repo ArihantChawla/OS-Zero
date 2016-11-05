@@ -209,7 +209,7 @@ typedef zerospin      MEMLK_T;
 #define MEMMAXBIGSLOT       (MEMBIGSLOTS - 1)
 /* number of words in buf freemap */
 //#define MEMBUFBITMAPWORDS  (CLSIZE / WORDSIZE)
-#define MEMBUFBITMAPWORDS   16
+#define MEMBUFBITMAPWORDS   8
 /* number of block-bits in buf freemap */
 #define MEMBUFMAXBLKS       (MEMBUFBITMAPWORDS * WORDSIZE * CHAR_BIT)
 /* minimum allocation block size in bigbins */
@@ -309,8 +309,10 @@ struct mem {
     struct membkt       bigbin[MEMBIGSLOTS];     // mapped blocks of 1 << slot
     struct membkt       pagebin[MEMPAGESLOTS];   // maps of PAGESIZE * slot
     struct membkt       smallbin[MEMSMALLSLOTS]; // blocks of 1 << slot
+#if 0
     struct membkt       deadpage[MEMPAGESLOTS];
     struct membkt       deadsmall[MEMSMALLSLOTS];
+#endif
 //    struct membufvals   bufvals;
 #if (MEMMULTITAB)
     struct memtabl0    *tab;     // allocation lookup structure
@@ -641,23 +643,18 @@ memgenadr(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
 {
     MEMPTR_T   adr = ptr;
     MEMADR_T   res = (MEMADR_T)ptr;
-    MEMUWORD_T lim = blksz - size;
+//    MEMUWORD_T lim = blksz - size;
     MEMWORD_T  shift;
     MEMADR_T   q;
     MEMADR_T   r;
     MEMADR_T   div9;
     MEMADR_T   dec;
 
-    if (lim < 4 * CLSIZE) {
-
-        return ptr;
-    } else {
 #if (CLSIZE == 32)
-        shift = 3;
+    shift = 3;
 #elif (CLSIZE == 64)
-        shift = 4;
+    shift = 4;
 #endif
-    }
     /* shift out some [mostly-aligned] low bits */
     res >>= 16;
     /* divide by 9 */
@@ -872,6 +869,27 @@ struct memstat {
     MEMUWORD_T nhashitem;
 };
 #endif
+
+static __inline__ MEMPTR_T
+memcalcadr(struct membuf *buf, MEMPTR_T ptr, MEMWORD_T size, MEMWORD_T align)
+//          MEMWORD_T id)
+{
+    MEMPTR_T   adr = ptr;
+    MEMWORD_T  type;
+    MEMWORD_T  slot;
+    MEMWORD_T  bsz;
+
+    type = memgetbufslot(buf);
+    slot = memgetbufslot(buf);
+    bsz = membufblksize(buf, type, slot);
+    if (align <= CLSIZE && bsz - size >= 2 * CLSIZE) {
+        ptr = memgenadr(adr, bsz, size);
+    } else if ((MEMADR_T)adr & (align - 1)) {
+        ptr = memalignptr(adr, align);
+    }
+
+    return ptr;
+}
 
 #endif /* __ZERO_MEM_H__ */
 
