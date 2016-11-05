@@ -7,7 +7,7 @@
 
 /* flg arguments for memalloc() */
 #define MEM_ZERO        (1 << 0)        // initiliaze memory to all zero-bits
-#define MEM_NODUMP      (1 << 1)        // > PAGESIZE allocs left out of dumps
+#define MEM_NODUMP      (1 << 1)        // >= PAGESIZE allocs left out of dumps
 #define MEM_WAIT        (1 << 2)        // wait for allocation to succeed
 #define MEM_USE_RESERVE (1 << 31)       // use reserved memory with MEM_NOWAIT
 

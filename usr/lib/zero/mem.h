@@ -209,7 +209,7 @@ typedef zerospin      MEMLK_T;
 #define MEMMAXBIGSLOT       (MEMBIGSLOTS - 1)
 /* number of words in buf freemap */
 //#define MEMBUFBITMAPWORDS  (CLSIZE / WORDSIZE)
-#define MEMBUFBITMAPWORDS   8
+#define MEMBUFBITMAPWORDS   16
 /* number of block-bits in buf freemap */
 #define MEMBUFMAXBLKS       (MEMBUFBITMAPWORDS * WORDSIZE * CHAR_BIT)
 /* minimum allocation block size in bigbins */
@@ -218,9 +218,9 @@ typedef zerospin      MEMLK_T;
 #define MEMSMALLSLOT        8
 #define MEMMIDSLOT          12
 //#define MEMBIGSLOT          (MEMSMALLSLOTS - 1)
-#define MEMSMALLPAGESLOT    16
-#define MEMMIDPAGESLOT      48
-#define MEMBIGPAGESLOT      80
+#define MEMSMALLPAGESLOT    32
+#define MEMMIDPAGESLOT      64
+#define MEMBIGPAGESLOT      96
 #define MEMPAGESLOTS        128
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
 #define MEMSMALLMAPSHIFT    22
@@ -786,10 +786,10 @@ memgenhashtabadr(MEMUWORD_T *adr)
            : (MEMBUFMAXBLKS >> 2)))                                     \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMMIDPAGESLOT)                                   \
-           ? 8                                                          \
+           ? 16                                                         \
            : (((slot) <= MEMBIGPAGESLOT)                                \
-              ? 4                                                       \
-              : 2))                                                     \
+              ? 8                                                       \
+              : 4))                                                     \
         : (((slot) <= MEMSMALLMAPSHIFT)                                 \
            ? 4                                                          \
            : (((slot) <= MEMBIGMAPSHIFT)                                \

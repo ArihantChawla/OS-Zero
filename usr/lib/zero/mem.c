@@ -850,6 +850,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
 #if (MEMBFHASH)
         do {
             n = min(lim, 16);
+#if (!MEMHASHRASTER)
             switch (n) {
                 /*
                  * if found, the mask will be -1 (all 1-bits), and val will be
@@ -950,6 +951,131 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             lim -= n;
             src += n;
         } while (!slot && !found);
+#else
+        adr = page;
+        switch (n) {
+            /*
+             * if found, the mask will be -1 (all 1-bits), and val will be
+             * the item address
+             * if not found, the mask will be 0 and so will val/slot
+             */
+            case 16:
+                item = &src[15];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+            case 15:
+                item = &src[14];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+            case 14:
+                item = &src[13];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+            case 13:
+                item = &src[12];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+                if (slot) {
+                    
+                    break;
+                }
+            case 12:
+                item = &src[11];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+            case 11:
+                item = &src[10];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+            case 10:
+                item = &src[9];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+            case 9:
+                item = &src[8];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+                if (slot) {
+                    
+                    break;
+                }
+            case 8:
+                item = &src[7];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+            case 7:
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+                item = &src[6];
+            case 6:
+                item = &src[5];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+            case 5:
+                item = &src[4];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+                if (slot) {
+                    
+                    break;
+                }
+            case 4:
+                item = &src[3];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+            case 3:
+                item = &src[2];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+            case 2:
+                item = &src[1];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+            case 1:
+                item = &src[0];
+                adr = item->adr;
+                if ((adr) && adr == page) {
+                    slot = item;
+                }
+            case 0:
+            default:
+                
+                break;
+        }
+        lim -= n;
+        src += n;
+        } while (!slot && !found);
+#endif
         if (!slot) {
             prev = blk;
             blk = blk->chain;
