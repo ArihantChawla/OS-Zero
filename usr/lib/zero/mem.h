@@ -417,15 +417,25 @@ struct memhashlist {
 
 #endif /* MEMNEWHASH */
 
+struct memhashsubitem {
+    MEMADR_T val;
+};
+
 struct memhashitem {
+#if (!MEMHASHSUBTABS)
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
-    MEMUWORD_T nref;            // reference count for the page
+    MEMUWORD_T             nref;        // reference count for the page
 #endif
 #if defined(MEMHASHNACT) && (MEMHASHNACT)
-    MEMUWORD_T nact;            // number of inserts, finds, and deletes
+    MEMUWORD_T             nact;        // number of inserts, finds, and deletes
 #endif
-    MEMADR_T   adr;             // allocation address
-    MEMADR_T   val;             // stored value
+#endif
+    MEMADR_T               adr;         // allocation address
+#if (MEMHASHSUBTABS)
+    struct memhashsubitem *tab;
+#else
+    MEMADR_T               val;         // stored value
+#endif
 };
 
 struct memhash {
@@ -440,19 +450,33 @@ struct memhash {
  * - we have a 4-word header; adding total of 52 words as 13 hash-table entries
  *   lets us cache-color the table by adding a modulo-9 value to the pointer
  */
-#define MEMHASHBITS      18
-#define MEMHASHITEMS     (1U << MEMHASHBITS)
+#define MEMHASHBITS        18
+#define MEMHASHITEMS       (1U << MEMHASHBITS)
 #if (MEMBIGHASHTAB)
-#define MEMHASHARRAYSIZE (256 * WORDSIZE)
+#define MEMHASHARRAYSIZE   (256 * WORDSIZE)
 #elif (MEMSMALLHASHTAB)
-#define MEMHASHARRAYSIZE (64 * WORDSIZE)
+#define MEMHASHARRAYSIZE   (64 * WORDSIZE)
 #else
-#define MEMHASHARRAYSIZE (128 * WORDSIZE)
+#define MEMHASHARRAYSIZE   (128 * WORDSIZE)
 #endif
 #define MEMHASHARRAYITEMS                                               \
     ((MEMHASHARRAYSIZE - offsetof(struct memhash, data))                \
      / sizeof(struct memhashitem))
-#define memhashsize()     MEMHASHARRAYSIZE
+#define memhashsize()      MEMHASHARRAYSIZE
+
+#if (MEMHASHSUBTABS)
+#define MEMHASHSUBTABSIZE  MEMHASHARRAYSIZE
+#define MEMHASHSUBTABITEMS (MEMHASHARRAYSIZE / sizeof(struct memhashsubtab))
+#if (MEMHASHSUBTABITEMS == 32)
+#define MEMHASHTABSHIFT    5
+#elif (MEMHASHSUBTABITEMS == 64)
+#define MEMHASHTABSHIFT    6
+#elif (MEMHASHSUBTABITEMS == 128)
+#define MEMHASHTABSHIFT    7
+#elif (MEMHASHSUBTABITEMS == 256)
+#define MEMHASHTABSHIFT    8
+#endif
+#endif /* MEMHASHSUBTABS */
 
 #define memtlssize() rounduppow2(sizeof(struct memtls), 2 * PAGESIZE)
 struct memtls {

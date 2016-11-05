@@ -717,6 +717,17 @@ meminithashitem(MEMPTR_T data)
 
     return;
 }
+
+#if (MEMHASHSUBTABS)
+static void
+meminithashsubitem(MEMPTR_T data)
+{
+    struct memhashsubitem *item = (struct memhashsubitem *)data;
+
+    item->nref = 0;
+    item->val = 0;
+}
+#endif
 #else
 static void
 meminithashitem(MEMPTR_T data)
@@ -809,15 +820,29 @@ membufhashitem(struct memhash *item)
 MEMADR_T
 membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
 {
+#if (MEMHASHSUBTABS)
+    MEMPTR_T                adr = ptr;
+    MEMADR_T                hiadr = ((MEMADR_T)adr
+                                     >> (PAGESIZELOG2 + MEMHASHTABSHIFT));
+    MEMADR_T                loadr = (((MEMADR_T)adr
+                                      >> PAGESIZELOG2)
+                                     & ((MEMUWORD(1) << MEMHASHTABSHIFT) - 1));
+    struct memhashsubitem  *tab;
+#else
     MEMPTR_T                adr = ptr;
     MEMADR_T                page = (MEMADR_T)adr >> PAGESIZELOG2;
+#endif
     MEMUWORD_T              key = memhashptr(page) & (MEMHASHITEMS - 1);
     MEMADR_T                desc;
     MEMADR_T                upval;
     MEMADR_T                val;
     struct memhash         *blk;
     struct memhash         *prev;
+#if (MEMHASHSUBTABS)
+    struct memhashsubitem  *slot;
+#else
     struct memhashitem     *slot;
+#endif
     struct memhashitem     *src;
 //    volatile struct memtls *tls;
     MEMWORD_T               type;
@@ -842,15 +867,208 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
     blk = (struct memhash *)upval;
     desc = 0;
     slot = NULL;
-    while ((blk) && !found) {
+    if (blk) {
         lim = blk->ntab;
         src = blk->tab;
         prev = NULL;
 //            slot = &src[7];
 #if (MEMBFHASH)
+#if (MEMHASHSUBTABS)
         do {
             n = min(lim, 16);
-#if (!MEMHASHRASTER)
+            switch (n) {
+                /*
+                 * if found, the mask will be -1 (all 1-bits), and val will be
+                 * the item address
+                 * if not found, the mask will be 0 and so will val/slot
+                 */
+                case 16:
+                    item = &src[15];
+                    mask = -((MEMADRDIFF_T)(item->adr == hiadr));
+                    tab = (void *)((MEMADR_T)mask & (MEMADR_T)item);
+                    if (tab) {
+                        slot = &tab[loadr];
+                        if (slot->val) {
+                            desc = slot->val;
+                            
+                            break;
+                        }
+                    }
+                case 15:
+                    item = &src[14];
+                    mask = -((MEMADRDIFF_T)(item->adr == hiadr));
+                    tab = (void *)((MEMADR_T)mask & (MEMADR_T)item);
+                    if (tab) {
+                        slot = &tab[loadr];
+                        if (slot->val) {
+                            desc = slot->val;
+                            
+                            break;
+                        }
+                    }
+                case 13:
+                    item = &src[12];
+                    mask = -((MEMADRDIFF_T)(item->adr == hiadr));
+                    tab = (void *)((MEMADR_T)mask & (MEMADR_T)item);
+                    if (tab) {
+                        slot = &tab[loadr];
+                        if (slot->val) {
+                            desc = slot->val;
+                            
+                            break;
+                        }
+                    }
+                case 12:
+                    item = &src[11];
+                    mask = -((MEMADRDIFF_T)(item->adr == hiadr));
+                    tab = (void *)((MEMADR_T)mask & (MEMADR_T)item);
+                    if (tab) {
+                        slot = &tab[loadr];
+                        if (slot->val) {
+                            desc = slot->val;
+                            
+                            break;
+                        }
+                    }
+                case 10:
+                    item = &src[9];
+                    mask = -((MEMADRDIFF_T)(item->adr == hiadr));
+                    tab = (void *)((MEMADR_T)mask & (MEMADR_T)item);
+                    if (tab) {
+                        slot = &tab[loadr];
+                        if (slot->val) {
+                            desc = slot->val;
+                            
+                            break;
+                        }
+                    }
+                case 9:
+                    item = &src[8];
+                    mask = -((MEMADRDIFF_T)(item->adr == hiadr));
+                    tab = (void *)((MEMADR_T)mask & (MEMADR_T)item);
+                    if (tab) {
+                        slot = &tab[loadr];
+                        if (slot->val) {
+                            desc = slot->val;
+                            
+                            break;
+                        }
+                    }
+                case 8:
+                    item = &src[7];
+                    mask = -((MEMADRDIFF_T)(item->adr == hiadr));
+                    tab = (void *)((MEMADR_T)mask & (MEMADR_T)item);
+                    if (tab) {
+                        slot = &tab[loadr];
+                        if (slot->val) {
+                            desc = slot->val;
+                            
+                            break;
+                        }
+                    }
+                case 7:
+                    item = &src[6];
+                    mask = -((MEMADRDIFF_T)(item->adr == hiadr));
+                    tab = (void *)((MEMADR_T)mask & (MEMADR_T)item);
+                    if (tab) {
+                        slot = &tab[loadr];
+                        if (slot->val) {
+                            desc = slot->val;
+                            
+                            break;
+                        }
+                    }
+                case 6:
+                    item = &src[5];
+                    mask = -((MEMADRDIFF_T)(item->adr == hiadr));
+                    tab = (void *)((MEMADR_T)mask & (MEMADR_T)item);
+                    if (tab) {
+                        slot = &tab[loadr];
+                        if (slot->val) {
+                            desc = slot->val;
+                            
+                            break;
+                        }
+                    }
+                case 5:
+                    item = &src[4];
+                    mask = -((MEMADRDIFF_T)(item->adr == hiadr));
+                    tab = (void *)((MEMADR_T)mask & (MEMADR_T)item);
+                    if (tab) {
+                        slot = &tab[loadr];
+                        if (slot->val) {
+                            desc = slot->val;
+                            
+                            break;
+                        }
+                    }
+                case 4:
+                    item = &src[3];
+                    mask = -((MEMADRDIFF_T)(item->adr == hiadr));
+                    tab = (void *)((MEMADR_T)mask & (MEMADR_T)item);
+                    if (tab) {
+                        slot = &tab[loadr];
+                        if (slot->val) {
+                            desc = slot->val;
+                            
+                            break;
+                        }
+                    }
+                case 3:
+                    item = &src[2];
+                    mask = -((MEMADRDIFF_T)(item->adr == hiadr));
+                    tab = (void *)((MEMADR_T)mask & (MEMADR_T)item);
+                    if (tab) {
+                        slot = &tab[loadr];
+                        if (slot->val) {
+                            desc = slot->val;
+                            
+                            break;
+                        }
+                    }
+                case 2:
+                    item = &src[1];
+                    mask = -((MEMADRDIFF_T)(item->adr == hiadr));
+                    tab = (void *)((MEMADR_T)mask & (MEMADR_T)item);
+                    if (tab) {
+                        slot = &tab[loadr];
+                        if (slot->val) {
+                            desc = slot->val;
+                            
+                            break;
+                        }
+                    }
+                case 1:
+                    item = &src[0];
+                    mask = -((MEMADRDIFF_T)(item->adr == hiadr));
+                    tab = (void *)((MEMADR_T)mask & (MEMADR_T)item);
+                    if (tab) {
+                        slot = &tab[loadr];
+                        if (slot->val) {
+                            desc = slot->val;
+                            
+                            break;
+                        }
+                    }
+                case 0:
+                default:
+                    
+                    break;
+            }
+            lim -= n;
+            src += n;
+            if (!desc && (n)) {
+                prev = blk;
+                blk = blk->chain;
+            } else {
+                found = 1;
+                
+                break;
+            }
+        } while (!desc && (n));
+#elif (!MEMHASHRASTER)
+        do {
+            n = min(lim, 16);
             switch (n) {
                 /*
                  * if found, the mask will be -1 (all 1-bits), and val will be
@@ -873,7 +1091,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                     val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
                     if (slot) {
-
+                        
                         break;
                     }
                 case 12:
@@ -892,7 +1110,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                     val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
                     if (slot) {
-
+                        
                         break;
                     }
                 case 8:
@@ -911,7 +1129,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                     val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
                     if (slot) {
-
+                        
                         break;
                     }
                 case 5:
@@ -930,7 +1148,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                     val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
                     if (slot) {
-
+                        
                         break;
                     }
                 case 2:
@@ -950,139 +1168,152 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             }
             lim -= n;
             src += n;
-        } while (!slot && !found);
-#else
-        adr = page;
-        switch (n) {
-            /*
-             * if found, the mask will be -1 (all 1-bits), and val will be
-             * the item address
-             * if not found, the mask will be 0 and so will val/slot
-             */
-            case 16:
-                item = &src[15];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 15:
-                item = &src[14];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 14:
-                item = &src[13];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 13:
-                item = &src[12];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-                if (slot) {
-                    
-                    break;
-                }
-            case 12:
-                item = &src[11];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 11:
-                item = &src[10];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 10:
-                item = &src[9];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 9:
-                item = &src[8];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-                if (slot) {
-                    
-                    break;
-                }
-            case 8:
-                item = &src[7];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 7:
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-                item = &src[6];
-            case 6:
-                item = &src[5];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 5:
-                item = &src[4];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-                if (slot) {
-                    
-                    break;
-                }
-            case 4:
-                item = &src[3];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 3:
-                item = &src[2];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 2:
-                item = &src[1];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 1:
-                item = &src[0];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 0:
-            default:
+            if (!slot && (n))  {
+                prev = blk;
+                blk = blk->chain;
+            } else {
+                found = 1;
+                desc = slot->val;
                 
                 break;
-        }
-        lim -= n;
-        src += n;
-        } while (!slot && !found);
+            }
+        } while (1);
+#else
+        adr = page;
+        do {
+            n = min(lim, 16);
+            switch (n) {
+                /*
+                 * if found, the mask will be -1 (all 1-bits), and val will be
+                 * the item address
+                 * if not found, the mask will be 0 and so will val/slot
+                 */
+                case 16:
+                    item = &src[15];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                case 15:
+                    item = &src[14];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                case 14:
+                    item = &src[13];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                case 13:
+                    item = &src[12];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                    if (slot) {
+                        
+                        break;
+                    }
+                case 12:
+                    item = &src[11];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                case 11:
+                    item = &src[10];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                case 10:
+                    item = &src[9];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                case 9:
+                    item = &src[8];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                    if (slot) {
+                        
+                        break;
+                    }
+                case 8:
+                    item = &src[7];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                case 7:
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                    item = &src[6];
+                case 6:
+                    item = &src[5];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                case 5:
+                    item = &src[4];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                    if (slot) {
+                        
+                        break;
+                    }
+                case 4:
+                    item = &src[3];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                case 3:
+                    item = &src[2];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                case 2:
+                    item = &src[1];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                case 1:
+                    item = &src[0];
+                    adr = item->adr;
+                    if ((adr) && adr == page) {
+                        slot = item;
+                    }
+                case 0:
+                default:
+                    
+                    break;
+            }
+            lim -= n;
+            src += n;
+            if (!slot && (n)) {
+                prev = blk;
+                blk = blk->chain;
+            } else {
+                found = 1;
+                desc = slot->val;
+                
+                break;
+            }
+        } while (1);
 #endif
-        if (!slot) {
-            prev = blk;
-            blk = blk->chain;
-        } else {
-            found++;
-            desc = slot->val;
-        }
 #else
         do {
             n = min(lim, 8);
@@ -1151,7 +1382,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                         desc = slot->val;
                         
                         break;
-                    }
+                }
                 case 0:
                 default:
                     
@@ -1159,11 +1390,14 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             }
             lim -= n;
             src += n;
-        } while ((lim) && !found);
-        if (!found) {
-            prev = blk;
-            blk = blk->chain;
-        }
+            if (!found) {
+                prev = blk;
+                blk = blk->chain;
+            } else {
+                
+                break;
+            }
+        } while (1);
 #endif
     }
 //    upval = (MEMADR_T)g_mem.hash[key].chain;
