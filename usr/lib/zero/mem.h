@@ -816,6 +816,7 @@ memgenadr(MEMPTR_T ptr)
     return adr;
 }
 
+/* generate an offset in the range [0, 4 * CLSIZE] */
 static __inline__ MEMADR_T
 memgenofs(MEMPTR_T ptr)
 {
@@ -827,9 +828,9 @@ memgenofs(MEMPTR_T ptr)
     MEMADR_T  dec;
 
 #if (CLSIZE == 32)
-    shift = 3;
-#elif (CLSIZE == 64)
     shift = 4;
+#elif (CLSIZE == 64)
+    shift = 5;
 #endif
     /* shift out some [mostly-aligned] low bits */
     res >>= 16;
