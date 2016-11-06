@@ -639,7 +639,7 @@ memgentlsadr(MEMUWORD_T *adr)
 }
 
 static __inline__ MEMPTR_T
-memgenadr(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
+memgenadr(MEMPTR_T ptr)
 {
     MEMPTR_T   adr = ptr;
     MEMADR_T   res = (MEMADR_T)ptr;
@@ -871,19 +871,25 @@ struct memstat {
 #endif
 
 static __inline__ MEMPTR_T
-memcalcadr(struct membuf *buf, MEMPTR_T ptr, MEMWORD_T size, MEMWORD_T align)
+memcalcadr(MEMPTR_T ptr, MEMWORD_T size,
+           MEMWORD_T blksz, MEMWORD_T align)
 //          MEMWORD_T id)
 {
     MEMPTR_T   adr = ptr;
+    MEMWORD_T  diff = blksz - size;
+#if 0
     MEMWORD_T  type;
     MEMWORD_T  slot;
     MEMWORD_T  bsz;
+#endif
 
+#if 0
     type = memgetbufslot(buf);
     slot = memgetbufslot(buf);
     bsz = membufblksize(buf, type, slot);
-    if (align <= CLSIZE && bsz - size >= 2 * CLSIZE) {
-        ptr = memgenadr(adr, bsz, size);
+#endif
+    if (align <= CLSIZE && diff >= 2 * CLSIZE) {
+        ptr = memgenadr(adr);
     } else if ((MEMADR_T)adr & (align - 1)) {
         ptr = memalignptr(adr, align);
     }
