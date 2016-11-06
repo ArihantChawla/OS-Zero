@@ -373,27 +373,34 @@ vbedrawcharbg(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg)
     if (!bg) {
         for (cy = 0 ; cy < lim ; cy++) {
             val = *glyph;
+            pix = fg;
             mask = -(val & 0x40);
-            fg &= mask;
-            gfxsetrgb888(fg, ptr);
+            pix &= mask;
+            gfxsetrgb888(pix, ptr);
+            pix = fg;
             mask = -(val & 0x20);
-            fg &= mask;
-            gfxsetrgb888(fg, ptr);
+            pix &= mask;
+            gfxsetrgb888(pix, ptr);
+            pix = fg;
             mask = -(val & 0x10);
-            fg &= mask;
-            gfxsetrgb888(fg, ptr);
+            pix &= mask;
+            gfxsetrgb888(pix, ptr);
+            pix = fg;
             mask = -(val & 0x08);
-            fg &= mask;
-            gfxsetrgb888(fg, ptr);
+            pix &= mask;
+            gfxsetrgb888(pix, ptr);
+            pix = fg;
             mask = -(val & 0x04);
-            fg &= mask;
-            gfxsetrgb888(fg, ptr);
+            pix &= mask;
+            gfxsetrgb888(pix, ptr);
+            pix = fg;
             mask = -(val & 0x02);
-            fg &= mask;
-            gfxsetrgb888(fg, ptr);
+            pix &= mask;
+            gfxsetrgb888(pix, ptr);
+            pix = fg;
             mask = -(val & 0x01);
-            fg &= mask;
-            gfxsetrgb888(fg, ptr);
+            pix &= mask;
+            gfxsetrgb888(pix, ptr);
             ptr += incr;
             glyph++;
         }
