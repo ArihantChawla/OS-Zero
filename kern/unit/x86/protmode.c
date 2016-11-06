@@ -81,6 +81,12 @@ kinitprot(unsigned long pmemsz)
                           :
                           : "rm" (sp));
     meminit(min(pmemsz, lim), min(KERNVIRTBASE, lim));
+#if (PLASMA)
+    plasmainit();
+#if (!PLASMAFOREVER)
+    plasmaloop(1);
+#endif
+#endif
     cpuinit(0);
     procinit(PROCKERN, SCHEDNOCLASS);
     taskinitenv();
@@ -185,7 +191,7 @@ kinitprot(unsigned long pmemsz)
     /* initialise high precision event timers */
     hpetinit();
 #endif
-#if (PLASMA)
+#if (PLASMA) && 0
     plasmainit();
 #endif
 #if (APIC)
