@@ -6,7 +6,23 @@
 #include <stdio.h>
 #include <zero/mem.h>
 
-static const char *bufnames[3] = { "SMALL", "PAGE", "BIG" };
+#if (MEMSTAT)
+extern struct memstat  g_memstat;
+#endif
+
+static const char     *bufnames[3] = { "SMALL", "PAGE", "BIG" };
+
+#if defined(MEMBUFSTACK) && (MEMBUFSTACK)
+void memprintbufstk(struct membuf *buf, const char *msg)
+{
+    fprintf(stderr, "%s\n", msg);
+    fprintf(stderr, "NFREE\t%ld\n", buf->nfree);
+    fprintf(stderr, "STKTOP\t%ld\n", buf->stktop);
+    fprintf(stderr, "STKLIM\t%ld\n", buf->stklim);
+
+    return;
+}
+#endif
 
 #if (MEMSTAT)
 

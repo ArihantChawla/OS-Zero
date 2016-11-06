@@ -64,6 +64,11 @@ _malloc(size_t size, size_t align, long flg)
     }
 #if (MEMDEBUG)
     crash(ptr != NULL);
+    crash (!((MEMADR_T)ptr & (aln - 1)));
+#endif
+#if 0
+    fprintf(stderr, "_MALLOC(%ld, %lx, %lx): %p\n",
+            (long)size, align, flg, ptr);
 #endif
 
     return ptr;
@@ -106,6 +111,9 @@ _realloc(void *ptr,
          long rel)
 {
     MEMPTR_T       retptr = NULL;
+    MEMPTR_T       orig;
+    MEMADRDIFF_T   delta;
+    MEMWORD_T      id;
 #if (MEMMULTITAB)
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
 #else
@@ -131,11 +139,21 @@ _realloc(void *ptr,
         if (desc) {
             type = memgetbuftype(buf);
             slot = memgetbufslot(buf);
+            if (type != MEMPAGEBUF) {
+                id = membufblkid(buf, ptr);
+                orig = membufslotblkadr(buf, id, slot);
+            } else {
+                id = desc & MEMPAGEINFOMASK;
+                orig = membufslotpageadr(buf, id, slot);
+            }
+            delta = orig - (MEMPTR_T)ptr;
             sz = membufblksize(buf, type, slot);
+            sz -= delta;
             if (size <= sz) {
                 
                 return ptr;
             }
+            sz = max(sz, size);
             retptr = _malloc(size, 0, 0);
             if (retptr) {
                 memcpy(retptr, ptr, sz);
