@@ -85,17 +85,17 @@
 #define IOAPIC        0         // enable I/O APIC support
 #define SMBIOS        0         // SMBIOS (system management) support
 #define APIC          1         // local [per-CPU] APIC support
-#define PCI           0         // PCI bus driver
-#define ATA           0         // ATA/ATAPI/SATA/SATAPI
+#define PCI           1         // PCI bus driver
+#define ATA           1         // ATA/ATAPI/SATA/SATAPI
 #define ACPI          0         // ACPI
 #define ACPICA        0         // ACPICA
 #define HPET          1         // high precision event timer support
 #define PS2DRV        0         // enable PS/2 mouse and keyboard drivers
-#define KBDUS         0         // PS/2 keyboard with US keymap
-#define PS2KBDSET2    0
+#define KBDUS         1         // PS/2 keyboard with US keymap
+#define PS2KBDSET2    1
 #define VGAGFX        0         // VGA graphics driver
 #define SB16          0         // Soundblaster 16 audio driver
-#define AC97          0         // AC97 audio drivers
+#define AC97          1         // AC97 audio drivers
 #define ENS1370       0         // Ensoniq 1370 audio driver
 
 #endif /* __KERN_CONF_H__ */

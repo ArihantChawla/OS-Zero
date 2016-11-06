@@ -832,7 +832,7 @@ irqspurious:
 
 #endif /* SMP || APIC */
 
-.data
+.bss
 
 .align	NBPG
 

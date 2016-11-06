@@ -91,9 +91,6 @@ kinitprot(unsigned long pmemsz)
     procinit(PROCKERN, SCHEDNOCLASS);
     taskinitenv();
     tssinit(0);
-#if (PS2DRV)
-    ps2init();
-#endif
 #if (VBE)
     vbeinitscr();
 #endif
@@ -101,6 +98,9 @@ kinitprot(unsigned long pmemsz)
     consinit(768 / vbefontw, 1024 / vbefonth);
 #elif (VBE)
     consinit(768 >> 3, 1024 >> 3);
+#endif
+#if (PS2DRV)
+    ps2init();
 #endif
 #if (SMP) || (APIC)
 //#if (SMP)
@@ -130,7 +130,7 @@ kinitprot(unsigned long pmemsz)
 #if (SMBIOS)
     smbiosinit();
 #endif
-#if (VBE)
+#if (VBE) && 0
     vbeprintinfo();
 #endif
     logoprint();
