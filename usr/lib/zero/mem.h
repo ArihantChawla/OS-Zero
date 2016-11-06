@@ -756,7 +756,7 @@ memgentlsadr(MEMUWORD_T *adr)
     MEMADR_T div9;
     MEMADR_T dec;
 
-    res >>= 16;
+    res >>= PAGESIZELOG2;
     /* divide by 9 */
     q = res - (res >> 3);
     q = q + (q >> 6);
@@ -795,7 +795,7 @@ memgenadr(MEMPTR_T ptr)
     shift = 4;
 #endif
     /* shift out some [mostly-aligned] low bits */
-    res >>= 16;
+    res >>= MEMALIGNSHIFT;
     /* divide by 9 */
     q = res - (res >> 3);
     q = q + (q >> 6);
@@ -833,7 +833,7 @@ memgenofs(MEMPTR_T ptr)
     shift = 5;
 #endif
     /* shift out some [mostly-aligned] low bits */
-    res >>= 16;
+    res >>= MEMALIGNSHIFT;
     /* divide by 9 */
     q = res - (res >> 3);
     q = q + (q >> 6);
