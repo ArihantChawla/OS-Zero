@@ -767,8 +767,8 @@ memgentlsadr(MEMUWORD_T *adr)
     /* calculate res -= res/9 * 9 i.e. res % 9 (max 8) */
     dec = div9 * 9;
     res -= dec;
-    /* scale to 0..512 (machine words) */
-    res <<= 6;
+    /* scale to 0..256 (machine words) */
+    res <<= 5;
     /* align to cacheline */
     res &= ~(CLSIZE - 1);
     /* add to original pointer */

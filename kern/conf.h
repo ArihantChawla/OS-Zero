@@ -18,8 +18,8 @@
 
 #define VMFLATPHYSTAB 1
 #define USERMODE      0
-#define PLASMA        1
-#define PLASMAFOREVER 1
+#define PLASMA        0
+#define PLASMAFOREVER 0
 
 #if !defined(FASTINTR)
 #define FASTINTR      1

@@ -366,50 +366,80 @@ vbedrawcharbg(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg)
     long         incr = vbescreen.w * (vbescreen.nbpp >> 3);
     uint16_t    *glyph = (uint16_t *)vgafontbuf + (int)c * vbefonth;
     uint8_t     *ptr = vbepixadr(x, y);
-    uint16_t     mask;
+    uint32_t     val;
+    uint32_t     mask;
     gfxargb32_t  pix;
-    
-    for (cy = 0 ; cy < lim ; cy++) {
-        mask = *glyph;
-        if (mask & 0x40) {
-            gfxsetrgb888(fg, ptr);
-        } else {
-            gfxsetrgb888(bg, ptr);
-        }
-        if (mask & 0x20) {
-            gfxsetrgb888(fg, ptr + 3);
-        } else {
-            gfxsetrgb888(bg, ptr + 3);
-        }
-        if (mask & 0x10) {
-            gfxsetrgb888(fg, ptr + 6);
-        } else {
-            gfxsetrgb888(bg, ptr + 6);
-        }
-        if (mask & 0x08) {
-            gfxsetrgb888(fg, ptr + 9);
-            } else {
-            gfxsetrgb888(bg, ptr + 9);
-        }
-        if (mask & 0x04) {
-            gfxsetrgb888(fg, ptr + 12);
-        } else {
-                gfxsetrgb888(bg, ptr + 12);
-        }
-        if (mask & 0x02) {
-            gfxsetrgb888(fg, ptr + 15);
-            } else {
-            gfxsetrgb888(bg, ptr + 15);
-        }
-        if (mask & 0x01) {
-            gfxsetrgb888(fg, ptr + 18);
-        } else {
-            gfxsetrgb888(bg, ptr + 18);
-        }
-        ptr += incr;
-        glyph++;
-    }
 
+    if (!bg) {
+        for (cy = 0 ; cy < lim ; cy++) {
+            val = *glyph;
+            mask = -(val & 0x40);
+            fg &= mask;
+            gfxsetrgb888(fg, ptr);
+            mask = -(val & 0x20);
+            fg &= mask;
+            gfxsetrgb888(fg, ptr);
+            mask = -(val & 0x10);
+            fg &= mask;
+            gfxsetrgb888(fg, ptr);
+            mask = -(val & 0x08);
+            fg &= mask;
+            gfxsetrgb888(fg, ptr);
+            mask = -(val & 0x04);
+            fg &= mask;
+            gfxsetrgb888(fg, ptr);
+            mask = -(val & 0x02);
+            fg &= mask;
+            gfxsetrgb888(fg, ptr);
+            mask = -(val & 0x01);
+            fg &= mask;
+            gfxsetrgb888(fg, ptr);
+            ptr += incr;
+            glyph++;
+        }
+    } else {
+        for (cy = 0 ; cy < lim ; cy++) {
+            mask = *glyph;
+            if (mask & 0x40) {
+                gfxsetrgb888(fg, ptr);
+            } else {
+                gfxsetrgb888(bg, ptr);
+            }
+            if (mask & 0x20) {
+                gfxsetrgb888(fg, ptr + 3);
+            } else {
+                gfxsetrgb888(bg, ptr + 3);
+            }
+            if (mask & 0x10) {
+                gfxsetrgb888(fg, ptr + 6);
+            } else {
+                gfxsetrgb888(bg, ptr + 6);
+            }
+            if (mask & 0x08) {
+                gfxsetrgb888(fg, ptr + 9);
+            } else {
+                gfxsetrgb888(bg, ptr + 9);
+            }
+            if (mask & 0x04) {
+                gfxsetrgb888(fg, ptr + 12);
+            } else {
+                gfxsetrgb888(bg, ptr + 12);
+            }
+            if (mask & 0x02) {
+                gfxsetrgb888(fg, ptr + 15);
+            } else {
+                gfxsetrgb888(bg, ptr + 15);
+            }
+            if (mask & 0x01) {
+                gfxsetrgb888(fg, ptr + 18);
+            } else {
+                gfxsetrgb888(bg, ptr + 18);
+            }
+            ptr += incr;
+            glyph++;
+        }
+    }
+        
     return;
 }
 
