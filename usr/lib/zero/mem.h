@@ -816,6 +816,42 @@ memgenadr(MEMPTR_T ptr)
     return adr;
 }
 
+static __inline__ MEMADR_T
+memgenofs(MEMPTR_T ptr)
+{
+    MEMADR_T  res = (MEMADR_T)ptr;
+    MEMWORD_T shift;
+    MEMADR_T  q;
+    MEMADR_T  r;
+    MEMADR_T  div9;
+    MEMADR_T  dec;
+
+#if (CLSIZE == 32)
+    shift = 3;
+#elif (CLSIZE == 64)
+    shift = 4;
+#endif
+    /* shift out some [mostly-aligned] low bits */
+    res >>= 16;
+    /* divide by 9 */
+    q = res - (res >> 3);
+    q = q + (q >> 6);
+    q = q + (q >> 12) + (q >> 24);
+    q = q >> 3;
+    r = res - q * 9;
+    div9 = q + ((r + 7) >> 4);
+    /* calculate res -= res/9 * 9 i.e. res % 9 (max 8) */
+    dec = div9 * 9;
+    res -= dec;
+    /* scale by shifting the result of the range 0..8 */
+    res <<= shift;
+    /* round down to a multiple of cacheline */
+    res &= ~(CLSIZE - 1);
+    /* add offset to original address */
+
+    return res;
+}
+
 /* compute adr + adr % 9 (# of words in offset, aligned to word boundary) */
 static __inline__ MEMUWORD_T *
 memgenhashtabadr(MEMUWORD_T *adr)
@@ -1005,12 +1041,10 @@ memcalcadr(MEMPTR_T ptr, MEMWORD_T size,
 {
     MEMPTR_T   adr = ptr;
     MEMWORD_T  diff = blksz - size;
-    MEMWORD_T  type;
-    MEMWORD_T  slot;
-    MEMWORD_T  bsz;
+    MEMADR_T   ofs = memgenofs(ptr);
 
-    if (align <= CLSIZE && diff >= 4 * CLSIZE) {
-        ptr = memgenadr(adr);
+    if (align <= CLSIZE && diff >= ofs) {
+        ptr += ofs;
     } else {
         ptr = memalignptr(adr, align);
     }
