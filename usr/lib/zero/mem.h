@@ -92,9 +92,8 @@ void                     memrelblk(struct membuf *buf, MEMWORD_T id);
 #if (MEMTEST)
 void                     memprintbuf(struct membuf *buf, const char *func);
 long                     _memchkptr(struct membuf *buf, MEMPTR_T ptr);
-long                     _memchkbuf(struct membuf *buf,
-                                    MEMWORD_T type,
-                                    MEMWORD_T nblk, MEMWORD_T flg,
+long                     _memchkbuf(struct membuf *buf, MEMWORD_T type,
+                                    MEMWORD_T nblk, MEMUWORD_T flg,
                                     const char *func);
 #endif
 #if defined(MEMBUFSTACK) && (MEMBUFSTACK)
@@ -227,7 +226,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMALIGNSHIFT       5
 #endif
 /* maximum small buf size (MEMBUFMAXBLKS << MEMMAXSMALLSLOT) + bookkeeping */
-#define MEMSMALLSLOTS       PAGESIZELOG2
+#define MEMSMALLSLOTS       (PAGESIZELOG2)
 #define MEMMAXSMALLSLOT     (PAGESIZELOG2 - 1)
 /* NOTES
  * -----
@@ -243,14 +242,18 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMMAXBIGSLOT       (MEMBIGSLOTS - 1)
 /* number of words in buf freemap */
 //#define MEMBUFBITMAPWORDS  (CLSIZE / WORDSIZE)
+#if (!MEMBUFSTACK)
+#define MEMBUFBITMAPWORDS   16
+#define MEMBUFMAXBLKS       (MEMBUFBITMAPWORDS * WORDSIZE * CHAR_BIT)
+#else
 #define MEMBUFBITMAPWORDS   (MEMBUFMAXBLKS / (CHAR_BIT * WORDSIZE))
 /* number of block-bits in buf freemap */
-//#define MEMBUFMAXBLKS       (MEMBUFBITMAPWORDS * WORDSIZE * CHAR_BIT)
-#define MEMBUFMAXBLKS       3968
+#define MEMBUFMAXBLKS       3072
 #if (MEMBUFMAXBLKS <= 65536)
 #define MEMBLKID_T          uint16_t
 #else
 #define MEMBLKID_T          uint32_t
+#endif
 #endif
 /* minimum allocation block size in bigbins */
 //#define MEMBIGMINSIZE      (2 * PAGESIZE)
@@ -258,16 +261,16 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMSMALLSLOT        6
 #define MEMMIDSLOT          9
 //#define MEMBIGSLOT          (MEMSMALLSLOTS - 1)
-#if 0
 #define MEMSMALLPAGESLOT    32
 #define MEMMIDPAGESLOT      64
 #define MEMBIGPAGESLOT      96
 #define MEMPAGESLOTS        128
-#endif
+#if 0
 #define MEMSMALLPAGESLOT    16
 #define MEMMIDPAGESLOT      32
 #define MEMBIGPAGESLOT      48
 #define MEMPAGESLOTS        64
+#endif
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
 #define MEMSMALLMAPSHIFT    20
 //#define MEMBUFMIDMAPSHIFT 22
@@ -283,7 +286,6 @@ struct membkt {
 #if (MEMDEBUGDEADLOCK)
     MEMUWORD_T     line;
 #endif
-    MEMWORD_T      bufsz;       // number of free bytes on list
     MEMWORD_T      nbuf;
 #if 0
     MEMWORD_T      nblk;        // # of per-buffer blocks; 0 for default
@@ -356,10 +358,8 @@ struct mem {
     struct membkt       bigbin[MEMBIGSLOTS];     // mapped blocks of 1 << slot
     struct membkt       pagebin[MEMPAGESLOTS];   // maps of PAGESIZE * slot
     struct membkt       smallbin[MEMSMALLSLOTS]; // blocks of 1 << slot
-#if 0
     struct membkt       deadpage[MEMPAGESLOTS];
     struct membkt       deadsmall[MEMSMALLSLOTS];
-#endif
 //    struct membufvals   bufvals;
 #if (MEMMULTITAB)
     struct memtabl0    *tab;     // allocation lookup structure
@@ -550,8 +550,10 @@ struct memhash {
  * - we have a 4-word header; adding total of 52 words as 13 hash-table entries
  *   lets us cache-color the table by adding a modulo-9 value to the pointer
  */
+#if 0
 #define MEMHASHBITS        18
 #define MEMHASHITEMS       (1U << MEMHASHBITS)
+#endif
 #if (MEMBIGHASHTAB)
 #define MEMHASHARRAYSIZE   (256 * WORDSIZE)
 #elif (MEMSMALLHASHTAB)
@@ -1011,14 +1013,14 @@ memgenhashtabadr(MEMUWORD_T *adr)
      ? (((slot) <= MEMSMALLSLOT)                                        \
         ? (MEMBUFMAXBLKS)                                               \
         : (((slot) <= MEMMIDSLOT)                                       \
-           ? (MEMBUFMAXBLKS >> 1)                                       \
-           : (MEMBUFMAXBLKS >> 3)))                                     \
+           ? (MEMBUFMAXBLKS >> 2)                                       \
+           : (MEMBUFMAXBLKS >> 4)))                                     \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMMIDPAGESLOT)                                   \
-           ? 16                                                         \
+           ? 4                                                          \
            : (((slot) <= MEMBIGPAGESLOT)                                \
-              ? 8                                                       \
-              : 4))                                                     \
+              ? 2                                                       \
+              : 1))                                                     \
         : (((slot) <= MEMSMALLMAPSHIFT)                                 \
            ? 4                                                          \
            : (((slot) <= MEMBIGMAPSHIFT)                                \
