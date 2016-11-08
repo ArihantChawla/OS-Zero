@@ -1800,7 +1800,7 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
     } else if (nfree == nblk) {
         /* queue or reclaim a free buffer */
         if (!isglob) {
-            if (!tls && tls != g_memtls) {
+            if (!tls || tls != g_memtls) {
 
                 return;
             }
