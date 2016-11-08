@@ -1806,16 +1806,14 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
             }
             if (tbkt) {
                 if (type == MEMSMALLBUF) {
-                    if (tbkt->nbuf > 1) {
-                        tbkt->nbuf--;
+                    if (tbkt->nbuf > 2) {
                         memdequeuebuftls(buf, tbkt);
                     } else {
                         
                         return;
                     }
                 } else if (type == MEMPAGEBUF) {
-                    if (tbkt->nbuf > 1) {
-                        tbkt->nbuf--;
+                    if (tbkt->nbuf > 2) {
                         memdequeuebuftls(buf, tbkt);
                     } else {
                         
