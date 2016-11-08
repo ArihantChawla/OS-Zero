@@ -206,16 +206,18 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
     } while (0)
 
 #define MEMSMALLTLSLIM      (32 * 1024 * 1024)
-#define MEMPAGETLSLIM       (32 * 1024 * 1024)
+#define MEMPAGETLSLIM       (16 * 1024 * 1024)
 #define MEMSMALLGLOBLIM     (~MEMWORD(0))
 #define MEMPAGEGLOBLIM      (64 * 1024 * 1024)
-#define MEMBIGGLOBLIM       (64 * 1024 * 1024)
+#define MEMBIGGLOBLIM       (128 * 1024 * 1024)
 
 /* determine minimal required alignment for blocks */
 #if defined(__BIGGEST_ALIGNMENT__)
-#define MEMMINALIGN         max(__BIGGEST_ALIGNMENT__, 2 * PTRSIZE)
+//#define MEMMINALIGN         max(__BIGGEST_ALIGNMENT__, 2 * PTRSIZE)
+#define MEMMINALIGN         __BIGGEST_ALIGNMENT__
 #else
-#define MEMMINALIGN         (2 * PTRSIZE) // allow for dual-word tagged pointers
+//#define MEMMINALIGN         (2 * PTRSIZE) // allow for dual-word tagged pointers
+#define MEMMINALIGN         PTRSIZE
 #endif
 #if (MEMMINALIGN == 8)
 #define MEMALIGNSHIFT       3
@@ -225,7 +227,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMALIGNSHIFT       5
 #endif
 /* maximum small buf size (MEMBUFMAXBLKS << MEMMAXSMALLSLOT) + bookkeeping */
-#define MEMSMALLSLOTS       16
+#define MEMSMALLSLOTS       PAGESIZELOG2
 #define MEMMAXSMALLSLOT     (PAGESIZELOG2 - 1)
 /* NOTES
  * -----
@@ -241,10 +243,10 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMMAXBIGSLOT       (MEMBIGSLOTS - 1)
 /* number of words in buf freemap */
 //#define MEMBUFBITMAPWORDS  (CLSIZE / WORDSIZE)
-#define MEMBUFBITMAPWORDS   16
+#define MEMBUFBITMAPWORDS   (MEMBUFMAXBLKS / (CHAR_BIT * WORDSIZE))
 /* number of block-bits in buf freemap */
 //#define MEMBUFMAXBLKS       (MEMBUFBITMAPWORDS * WORDSIZE * CHAR_BIT)
-#define MEMBUFMAXBLKS       4096
+#define MEMBUFMAXBLKS       3968
 #if (MEMBUFMAXBLKS <= 65536)
 #define MEMBLKID_T          uint16_t
 #else
@@ -253,17 +255,23 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 /* minimum allocation block size in bigbins */
 //#define MEMBIGMINSIZE      (2 * PAGESIZE)
 //#define MEMPAGESLOTS        (MEMWORD(1) << MEMBUFSLOTBITS)
-#define MEMSMALLSLOT        8
-#define MEMMIDSLOT          12
+#define MEMSMALLSLOT        6
+#define MEMMIDSLOT          9
 //#define MEMBIGSLOT          (MEMSMALLSLOTS - 1)
+#if 0
 #define MEMSMALLPAGESLOT    32
 #define MEMMIDPAGESLOT      64
 #define MEMBIGPAGESLOT      96
 #define MEMPAGESLOTS        128
+#endif
+#define MEMSMALLPAGESLOT    16
+#define MEMMIDPAGESLOT      32
+#define MEMBIGPAGESLOT      48
+#define MEMPAGESLOTS        64
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
-#define MEMSMALLMAPSHIFT    22
+#define MEMSMALLMAPSHIFT    20
 //#define MEMBUFMIDMAPSHIFT 22
-#define MEMBIGMAPSHIFT      26
+#define MEMBIGMAPSHIFT      24
 //#define MEMBUFHUGEMAPSHIFT  26
 
 struct membkt {
@@ -276,6 +284,7 @@ struct membkt {
     MEMUWORD_T     line;
 #endif
     MEMWORD_T      bufsz;       // number of free bytes on list
+    MEMWORD_T      nbuf;
 #if 0
     MEMWORD_T      nblk;        // # of per-buffer blocks; 0 for default
     MEMWORD_T      nmax;        // max # to buffer; 0 for default
@@ -289,7 +298,7 @@ struct membkt {
 #if (MEMDEBUGDEADLOCK)
                         - sizeof(MEMUWORD_T)
 #endif
-                        - sizeof(MEMUWORD_T)];
+                        - 2 * sizeof(MEMWORD_T)];
 };
 
 /* type-bits for allocation buffers */
@@ -1003,7 +1012,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
         ? (MEMBUFMAXBLKS)                                               \
         : (((slot) <= MEMMIDSLOT)                                       \
            ? (MEMBUFMAXBLKS >> 1)                                       \
-           : (MEMBUFMAXBLKS >> 2)))                                     \
+           : (MEMBUFMAXBLKS >> 3)))                                     \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMMIDPAGESLOT)                                   \
            ? 16                                                         \
