@@ -236,11 +236,7 @@ memprefork(void)
 #endif
 #endif
     }
-#if (MEMMULTITAB)
-    for (slot = 0 ; slot < MEMLVL1ITEMS ; slot++) {
-        memlkbit(&g_mem.tab[slot].tab);
-    }
-#elif (!MEMLFHASH)
+#if (!MEMLFHASH)
     if (g_mem.hash) {
         for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
             memlkbit(&g_mem.hash[slot].chain);
@@ -256,11 +252,7 @@ mempostfork(void)
 {
     MEMWORD_T slot;
 
-#if (MEMMULTITAB)
-    for (slot = 0 ; slot < MEMLVL1ITEMS ; slot++) {
-        memrelbit(&g_mem.tab[slot].tab);
-    }
-#elif (!MEMLFHASH)
+#if (!MEMLFHASH)
     if (g_mem.hash) {
         for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
             memrelbit(&g_mem.hash[slot].chain);
@@ -459,12 +451,11 @@ meminitsmallbuf(struct membuf *buf,
 #else
     membufinitfree(buf, MEMSMALLBUF, slot, nblk);
 #endif
-#if !defined(MEMBUFSTACK) || (!MEMBUFSTK)
+#if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
     nblk--;
     memsetbufnfree(buf, nblk);
-#else
-    membufgetfree(buf);
 #endif
+    membufgetfree(buf);
     VALGRINDMKPOOL(ptr, 0, 0);
 //    ptr = memcalcadr(ptr, size, align, 0);
     ptr = memcalcadr(ptr, size, bsz, align);
@@ -530,12 +521,11 @@ meminitpagebuf(struct membuf *buf,
 #else
     membufinitfree(buf, MEMSMALLBUF, slot, nblk);
 #endif
-#if !defined(MEMBUFSTACK) || (!MEMBUFSTK)
+#if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
     nblk--;
     memsetbufnfree(buf, nblk);
-#else
-    membufgetfree(buf);
 #endif
+    membufgetfree(buf);
     VALGRINDMKPOOL(ptr, 0, 0);
 //    ptr = memcalcadr(ptr, size, align, 0);
     ptr = memcalcadr(ptr, size, bsz, align);
@@ -596,11 +586,9 @@ meminitbigbuf(struct membuf *buf,
 #else
     membufinitfree(buf, MEMSMALLBUF, slot, nblk);
 #endif
-#if !defined(MEMBUFSTACK) || (!MEMBUFSTK)
+#if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
     nblk--;
     memsetbufnfree(buf, nblk);
-#else
-    membufgetfree(buf);
 #endif
     VALGRINDMKPOOL(ptr, 0, 0);
 //    ptr = memcalcadr(ptr, size, align, 0);
@@ -1441,6 +1429,7 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
             head->next = NULL;
         } else {
             id = membufgetfree(head);
+            nfree = memgetbufnfree(head);
 #if (MEMDEBUG)
             nblk = memgetbufnblk(head);
             crash(nfree > 0 && nfree <= nblk);
@@ -1450,7 +1439,9 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
             } else {
                 adr = membufpageadr(head, id);
             }
+#if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
             nfree--;
+#endif
 //            ptr = memcalcadr(head, adr, size, align, id);
             ptr = memcalcadr(adr, size, bsz, align);
             if (type != MEMPAGEBUF) {
@@ -1458,7 +1449,9 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
             } else {
                 memsetbuf(ptr, head, id);
             }
+#if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
             memsetbufnfree(head, nfree);
+#endif
             bkt->bufsz -= bsz;
             VALGRINDPOOLALLOC(head->base, ptr, size);
             if (!nfree) {
@@ -1474,7 +1467,7 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
                 head->prev = NULL;
                 head->next = NULL;
             }
-#if (MEMBUFSTACK)
+#if (MEMBUFSTACK) && 0
             memprintbufstk(head, "MEMGETBLKTLS\n");
 #endif
 
@@ -1562,7 +1555,9 @@ memgetblkdead(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
         } else {
             memsetbuf(ptr, head, id);
         }
+#if !defined(MEMBUFSTACK) || (MEMBUFSTACK)
         memsetbufnfree(head, nfree);
+#endif
         bkt->bufsz -= blksz;
         VALGRINDPOOLALLOC(head->base, ptr, size);
         /* head shall be disconnected from all lists */
@@ -1637,19 +1632,23 @@ memgetblkglob(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
 
         return NULL;
     }
-    nfree = memgetbufnfree(head);
     id = membufgetfree(head);
+    nfree = memgetbufnfree(head);
 #if (MEMDEBUG)
     nblk = memgetbufnblk(head);
     crash(nfree > 0 && nfree <= nblk);
 #endif
+#if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
     nfree--;
+#endif
     if (type != MEMPAGEBUF) {
         adr = membufblkadr(head, id);
     } else {
         adr = membufpageadr(head, id);
     }
+#if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
     memsetbufnfree(head, nfree);
+#endif
 //    ptr = memcalcadr(head, adr, size, align, id);
     ptr = memcalcadr(adr, size, bsz, align);
     memsetbuf(ptr, head, id);
@@ -1658,7 +1657,7 @@ memgetblkglob(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
 #endif
     bkt->bufsz -= bsz;
     VALGRINDPOOLALLOC(head->base, ptr, size);
-#if (MEMBUFSTACK)
+#if (MEMBUFSTACK) && 0
     memprintbufstk(head, "MEMGETBLKGLOB\n");
 #endif
     if (!nfree) {
@@ -1913,7 +1912,7 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
 
         return;
     }
-#if (MEMBUFSTACK)
+#if (MEMBUFSTACK) && 0
     memprintbufstk(head, "MEMRELBLK\n");
 #endif
 #if (MEMDEBUG)

@@ -1,6 +1,6 @@
 /* internal/test routines for the zero/mem.c module */
 
-#if (MEMTEST) || (MEMSTAT)
+#if (MEMTEST) || (MEMSTAT) || (MEMBUFSTACK)
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,7 +18,6 @@ void memprintbufstk(struct membuf *buf, const char *msg)
     fprintf(stderr, "%s\n", msg);
     fprintf(stderr, "NFREE\t%ld\n", buf->nfree);
     fprintf(stderr, "STKTOP\t%ld\n", buf->stktop);
-    fprintf(stderr, "STKLIM\t%ld\n", buf->stklim);
 
     return;
 }
@@ -48,6 +47,8 @@ memprintstat(void)
     fprintf(stderr, "hashitems\t%llu\n", stat->nhashitem);
 }
 #endif
+
+#if (MEMTEST)
 
 void
 memprintbuf(struct membuf *buf, const char *func)
@@ -149,6 +150,8 @@ _memchkbuf(struct membuf *buf, MEMWORD_T type,
 
     return 0;
 }
+
+#endif /* MEMTEST */
 
 #endif
 

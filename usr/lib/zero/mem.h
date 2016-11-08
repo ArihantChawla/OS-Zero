@@ -69,6 +69,38 @@ typedef zerofmtx      MEMLK_T;
 typedef zerospin      MEMLK_T;
 #endif
 
+struct membuf;
+
+void                     meminit(void);
+MEMPTR_T                 memgetblk(MEMWORD_T slot, MEMWORD_T type,
+                                   MEMWORD_T size, MEMWORD_T align);
+MEMPTR_T                 memsetbuf(MEMPTR_T ptr, struct membuf *buf,
+                                   MEMWORD_T id);
+#if (MEMMULTITAB)
+struct membuf          * memfindbuf(void *ptr, MEMWORD_T incr);
+#elif (MEMNEWHASH)
+MEMADR_T                 membufop(MEMPTR_T ptr, MEMWORD_T op,
+                                  struct membuf *buf,
+                                  MEMWORD_T id);
+#elif (MEMHASH)
+MEMADR_T                 memfindbuf(void *ptr, MEMWORD_T incr,
+                                    MEMADR_T *keyret);
+#else
+struct membuf          * memfindbuf(void *ptr, long rel);
+#endif
+void                     memrelblk(struct membuf *buf, MEMWORD_T id);
+#if (MEMTEST)
+void                     memprintbuf(struct membuf *buf, const char *func);
+long                     _memchkptr(struct membuf *buf, MEMPTR_T ptr);
+long                     _memchkbuf(struct membuf *buf,
+                                    MEMWORD_T type,
+                                    MEMWORD_T nblk, MEMWORD_T flg,
+                                    const char *func);
+#endif
+#if defined(MEMBUFSTACK) && (MEMBUFSTACK)
+void                     memprintbufstk(struct membuf *buf, const char *msg);
+#endif
+
 /* macros */
 
 #if (WORDSIZE == 4)
@@ -211,7 +243,8 @@ typedef zerospin      MEMLK_T;
 //#define MEMBUFBITMAPWORDS  (CLSIZE / WORDSIZE)
 #define MEMBUFBITMAPWORDS   16
 /* number of block-bits in buf freemap */
-#define MEMBUFMAXBLKS       (MEMBUFBITMAPWORDS * WORDSIZE * CHAR_BIT)
+//#define MEMBUFMAXBLKS       (MEMBUFBITMAPWORDS * WORDSIZE * CHAR_BIT)
+#define MEMBUFMAXBLKS       4096
 #if (MEMBUFMAXBLKS <= 65536)
 #define MEMBLKID_T          uint16_t
 #else
@@ -379,12 +412,60 @@ struct membuf {
     MEMUWORD_T              relmap[MEMBUFBITMAPWORDS];
     MEMBLKID_T              stk[MEMBUFMAXBLKS];
     MEMWORD_T               stktop;
-    MEMWORD_T               stklim;
+//    MEMWORD_T               stklim;
 #else
     MEMUWORD_T              freemap[MEMBUFBITMAPWORDS];
     MEMUWORD_T              relmap[MEMBUFBITMAPWORDS];
 #endif
 };
+
+#define memtlssize() rounduppow2(sizeof(struct memtls), 2 * PAGESIZE)
+struct memtls {
+    struct membkt     bigbin[MEMBIGSLOTS];      // mapped blocks of 1 << slot
+    struct membkt     pagebin[MEMPAGESLOTS];    // maps of PAGESIZE * slot
+    struct membkt     smallbin[MEMSMALLSLOTS];  // blocks of size 1 << slot
+#if (MEM_LK_TYPE & MEM_LK_PRIO)
+    struct priolkdata priolkdata;
+#endif
+    MEMWORD_T         nbytetab[MEMBUFTYPES];
+    MEMWORD_T         flg;
+#if 0
+    MEMUWORD_T        nbsmall;
+    MEMUWORD_T        nbpage;
+#endif
+};
+
+volatile struct memtls * meminittls(void);
+
+#define membufslotblkid(buf, ptr, slot)                                 \
+    (((MEMADR_T)(ptr) - (MEMADR_T)(buf)->base) >> (slot))
+#define membufslotblkadr(buf, ndx, slot)                                \
+    ((buf)->base + ((ndx) << (slot)))
+#define membufslotpageadr(buf, ndx, slot)                               \
+    ((buf)->base + (ndx)                                                \
+     * (MEMUWORD(PAGESIZE) + MEMUWORD(PAGESIZE) * (slot)))
+#define membufblkid(buf, ptr)                                           \
+    (membufslotblkid(buf, ptr, memgetbufslot(buf)))
+#define membufblkadr(buf, ndx)                                          \
+    (membufslotblkadr(buf, ndx, memgetbufslot(buf)))
+#define membufpageadr(buf, ndx)                                         \
+    (membufslotpageadr(buf, ndx, memgetbufslot(buf)))
+#define membufblksize(buf, type, slot)                                  \
+    ((type != MEMPAGEBUF)                                               \
+     ? (MEMUWORD(1) << (slot))                                          \
+     : (MEMUWORD(PAGESIZE) + MEMUWORD(PAGESIZE) * (slot)))
+
+/* mark the first block of buf as allocated */
+#define _memfillmap0(ptr, ofs, mask)                                    \
+    ((ptr)[(ofs)] = (mask) & ~MEMUWORD(1),                              \
+     (ptr)[(ofs) + 1] = (mask),                                         \
+     (ptr)[(ofs) + 2] = (mask),                                         \
+     (ptr)[(ofs) + 3] = (mask))
+#define _memfillmap(ptr, ofs, mask)                                     \
+    ((ptr)[(ofs)] = (mask),                                             \
+     (ptr)[(ofs) + 1] = (mask),                                         \
+     (ptr)[(ofs) + 2] = (mask),                                         \
+     (ptr)[(ofs) + 3] = (mask))
 
 #if (MEMMULTITAB)
 
@@ -426,8 +507,6 @@ struct memhashlist {
 #endif
 #endif
 #define MEMHASHNOTFOUND  0
-
-#endif /* MEMNEWHASH */
 
 struct memhashsubitem {
     MEMADR_T val;
@@ -490,51 +569,17 @@ struct memhash {
 #endif
 #endif /* MEMHASHSUBTABS */
 
-#define memtlssize() rounduppow2(sizeof(struct memtls), 2 * PAGESIZE)
-struct memtls {
-    struct membkt     bigbin[MEMBIGSLOTS];      // mapped blocks of 1 << slot
-    struct membkt     pagebin[MEMPAGESLOTS];    // maps of PAGESIZE * slot
-    struct membkt     smallbin[MEMSMALLSLOTS];  // blocks of size 1 << slot
-#if (MEM_LK_TYPE & MEM_LK_PRIO)
-    struct priolkdata priolkdata;
-#endif
-    MEMWORD_T         nbytetab[MEMBUFTYPES];
-    MEMWORD_T         flg;
-#if 0
-    MEMUWORD_T        nbsmall;
-    MEMUWORD_T        nbpage;
-#endif
-};
+static __inline__ void
+membufsetrel(struct membuf *buf, MEMWORD_T id)
+{
+    MEMWORD_T ndx = id;
 
-#define membufslotblkid(buf, ptr, slot)                                 \
-    (((MEMADR_T)(ptr) - (MEMADR_T)(buf)->base) >> (slot))
-#define membufslotblkadr(buf, ndx, slot)                                \
-    ((buf)->base + ((ndx) << (slot)))
-#define membufslotpageadr(buf, ndx, slot)                               \
-    ((buf)->base + (ndx)                                                \
-     * (MEMUWORD(PAGESIZE) + MEMUWORD(PAGESIZE) * (slot)))
-#define membufblkid(buf, ptr)                                           \
-    (membufslotblkid(buf, ptr, memgetbufslot(buf)))
-#define membufblkadr(buf, ndx)                                          \
-    (membufslotblkadr(buf, ndx, memgetbufslot(buf)))
-#define membufpageadr(buf, ndx)                                         \
-    (membufslotpageadr(buf, ndx, memgetbufslot(buf)))
-#define membufblksize(buf, type, slot)                                  \
-    ((type != MEMPAGEBUF)                                               \
-     ? (MEMUWORD(1) << (slot))                                          \
-     : (MEMUWORD(PAGESIZE) + MEMUWORD(PAGESIZE) * (slot)))
+    ndx >>= MEMWORDSIZESHIFT;
+    id &= (MEMWORD(1) << MEMWORDSIZESHIFT) - 1;
+    m_setbit((m_atomic_t *)&buf->relmap[ndx], id);
 
-/* mark the first block of buf as allocated */
-#define _memfillmap0(ptr, ofs, mask)                                    \
-    ((ptr)[(ofs)] = (mask) & ~MEMUWORD(1),                              \
-     (ptr)[(ofs) + 1] = (mask),                                         \
-     (ptr)[(ofs) + 2] = (mask),                                         \
-     (ptr)[(ofs) + 3] = (mask))
-#define _memfillmap(ptr, ofs, mask)                                     \
-    ((ptr)[(ofs)] = (mask),                                             \
-     (ptr)[(ofs) + 1] = (mask),                                         \
-     (ptr)[(ofs) + 2] = (mask),                                         \
-     (ptr)[(ofs) + 3] = (mask))
+    return;
+}
 
 #if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
 
@@ -552,82 +597,6 @@ membufinitfree(struct membuf *buf)
     _memfillmap(ptr, 8, bits);
     _memfillmap(ptr, 12, bits);
 #endif
-
-    return;
-}
-
-#else
-
-static __inline__ void
-membufinitfree(struct membuf *buf, MEMWORD_T type, MEMWORD_T slot,
-               MEMWORD_T nblk)
-{
-    MEMWORD_T   bsz = membufblksize(buf, type, slot);
-    MEMBLKID_T *stk = buf->stk;
-    MEMBLKID_T  id;
-    MEMWORD_T   cur;
-
-    buf->nfree = nblk;
-    buf->stktop = 0;
-    nblk--;
-    cur = 0;
-    buf->stklim = nblk;
-    id = 0;
-    while (cur <= nblk) {
-        stk[cur] = id;
-        id++;
-        cur++;
-    }
-    
-    return;
-}
-
-#endif
-
-static __inline__ void
-membufsetrel(struct membuf *buf, MEMWORD_T id)
-{
-    MEMWORD_T ndx = id;
-
-    ndx >>= MEMWORDSIZESHIFT;
-    id &= (MEMWORD(1) << MEMWORDSIZESHIFT) - 1;
-    m_setbit((m_atomic_t *)&buf->relmap[ndx], id);
-
-    return;
-}
-
-#if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
-
-static __inline__ void
-membuffreerel(struct membuf *buf)
-{
-#if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
-    MEMUWORD_T *freemap = buf->freemap;
-#endif
-    MEMUWORD_T *relmap = buf->relmap;
-    MEMWORD_T   nfree;
-    MEMUWORD_T  free;
-    MEMUWORD_T  rel;
-    MEMUWORD_T  cnt;
-    MEMWORD_T   ndx;
-
-    nfree = buf->nfree;
-    for (ndx = 0 ; ndx < MEMBUFBITMAPWORDS ; ndx++) {
-        rel = relmap[ndx];
-        free = freemap[ndx];
-        if (rel) {
-#if (WORDSIZE == 4)
-            cnt = bitcnt1u32(rel);
-#elif (WORDSIZE == 8)
-            cnt = bitcnt1u64(rel);
-#endif
-            relmap[ndx] = 0;
-            free |= rel;
-            nfree += cnt;
-            freemap[ndx] = free;
-        }
-    }
-    buf->nfree = nfree;
 
     return;
 }
@@ -665,7 +634,65 @@ membufgetfree(struct membuf *buf)
     return MEMNOBLK;                            // 1-bit not found
 }
 
+static __inline__ void
+membuffreerel(struct membuf *buf)
+{
+#if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
+    MEMUWORD_T *freemap = buf->freemap;
+#endif
+    MEMUWORD_T *relmap = buf->relmap;
+    MEMWORD_T   nfree;
+    MEMUWORD_T  free;
+    MEMUWORD_T  rel;
+    MEMUWORD_T  cnt;
+    MEMWORD_T   ndx;
+
+    nfree = buf->nfree;
+    for (ndx = 0 ; ndx < MEMBUFBITMAPWORDS ; ndx++) {
+        rel = relmap[ndx];
+        free = freemap[ndx];
+        if (rel) {
+#if (WORDSIZE == 4)
+            cnt = bitcnt1u32(rel);
+#elif (WORDSIZE == 8)
+            cnt = bitcnt1u64(rel);
+#endif
+            relmap[ndx] = 0;
+            free |= rel;
+            nfree += cnt;
+            freemap[ndx] = free;
+        }
+    }
+    buf->nfree = nfree;
+
+    return;
+}
+
 #else
+
+static __inline__ void
+membufinitfree(struct membuf *buf, MEMWORD_T type, MEMWORD_T slot,
+               MEMWORD_T nblk)
+{
+    MEMWORD_T   bsz = membufblksize(buf, type, slot);
+    MEMBLKID_T *stk = buf->stk;
+    MEMBLKID_T  id;
+    MEMWORD_T   cur;
+
+    buf->nfree = nblk;
+    buf->stktop = 0;
+    cur = 0;
+//    buf->stklim = nblk;
+    id = 0;
+    while (cur < nblk) {
+        stk[cur] = id;
+        cur++;
+        id++;
+    }
+    
+    return;
+}
+
 
 static __inline__ MEMWORD_T
 membufgetfree(struct membuf *buf)
@@ -679,8 +706,10 @@ membufgetfree(struct membuf *buf)
     cur++;
     buf->nfree = nfree;
     buf->stktop = cur;
+#if 0
     memprintbufstk(buf, "MEMBUFGETFREE");
     fprintf(stderr, "ID == %ld\n", id);
+#endif
 
     return id;
 }
@@ -696,8 +725,10 @@ membufputfree(struct membuf *buf, MEMBLKID_T id)
     buf->stk[cur] = id;
     buf->stktop = cur;
     buf->nfree = nfree;
+#if 0
     memprintbufstk(buf, "MEMBUFPUTFREE");
     fprintf(stderr, "ID == %ld\n", id);
+#endif
 
     return nfree;
 }
@@ -989,32 +1020,6 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #define memgetnbuftls(type, slot)  memnbuftls(type, slot)
 #define memgetnbufglob(type, slot) memnbufglob(type, slot)
 
-void                     meminit(void);
-volatile struct memtls * meminittls(void);
-MEMPTR_T                 memgetblk(MEMWORD_T slot, MEMWORD_T type,
-                                   MEMWORD_T size, MEMWORD_T align);
-MEMPTR_T                 memsetbuf(MEMPTR_T ptr, struct membuf *buf,
-                                   MEMWORD_T id);
-#if (MEMMULTITAB)
-struct membuf          * memfindbuf(void *ptr, MEMWORD_T incr);
-#elif (MEMNEWHASH)
-MEMADR_T                 membufop(MEMPTR_T ptr, MEMWORD_T op,
-                                  struct membuf *buf,
-                                  MEMWORD_T id);
-#elif (MEMHASH)
-MEMADR_T                 memfindbuf(void *ptr, MEMWORD_T incr,
-                                    MEMADR_T *keyret);
-#else
-struct membuf          * memfindbuf(void *ptr, long rel);
-#endif
-void                     memrelblk(struct membuf *buf, MEMWORD_T id);
-#if (MEMTEST)
-void                     memprintbuf(struct membuf *buf, const char *func);
-long                     _memchkptr(struct membuf *buf, MEMPTR_T ptr);
-long                     _memchkbuf(struct membuf *buf,
-                                    MEMWORD_T type,
-                                    MEMWORD_T nblk, MEMWORD_T flg,
-                                    const char *func);
 #endif
 
 #if (MEMSTAT)
@@ -1040,15 +1045,17 @@ memcalcadr(MEMPTR_T ptr, MEMWORD_T size,
            MEMWORD_T blksz, MEMWORD_T align)
 //          MEMWORD_T id)
 {
-    MEMPTR_T  adr = ptr;
-    MEMWORD_T diff = blksz - size;
-    MEMADR_T  ofs = memgenofs(ptr);
+    MEMPTR_T     adr = ptr;
+    MEMWORD_T    diff = blksz - size;
+    MEMADRDIFF_T ofs = memgenofs(ptr);
 
+#if 0
     if (align <= CLSIZE && diff >= ofs) {
-        ptr += ofs;
+         ptr += ofs;
     } else {
         ptr = memalignptr(adr, align);
     }
+#endif
 
     return ptr;
 }
