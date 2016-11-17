@@ -25,7 +25,7 @@ thrwait1(zerothrqueue *queue)
         queue = &thrsleepqueue;
     }
     htlistpush(queue, thr);
-    while (m_atomread(thr->sleep)) {
+    while (m_atomread(&thr->sleep)) {
         thryield();
     }
              
@@ -53,14 +53,14 @@ thrsleep2(zerothrqueue *queue, const struct timespec *absts)
             
             continue;
         } else {
-            if (m_atomread(thr->sleep)) {
+            if (m_atomread(&thr->sleep)) {
                 htlistrm(queue, thr);
             }
             
             return -1;
         }
     }
-    if (m_atomread(thr->sleep)) {
+    if (m_atomread(&thr->sleep)) {
         htlistrm(queue, thr);
     }
 #else
@@ -68,7 +68,7 @@ thrsleep2(zerothrqueue *queue, const struct timespec *absts)
     TIMESPEC_TO_TIMEVAL(&tvout, absts);
     do {
         if (timevalcmp(&tvout, &tvcur) > 0) {
-            if (m_atomread(thr->sleep)) {
+            if (m_atomread(&thr->sleep)) {
                 htlistrm(queue, thr);
             }
             

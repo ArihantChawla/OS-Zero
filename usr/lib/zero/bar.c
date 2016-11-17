@@ -80,7 +80,7 @@ barfreepool(zerobarpool *pool)
 {
     m_fetchadd32(&pool->nref, -1);
     do {
-        volatile long nref = m_atomread(pool->nref);
+        volatile long nref = m_atomread(&pool->nref);
 
         if (!nref) {
 
@@ -98,11 +98,11 @@ barwaitpool(zerobarpool *pool)
     long ret;
 
     do {
-        unsigned long seq = m_atomread(pool->cnt.vals.seq);
+        unsigned long seq = m_atomread(&pool->cnt.vals.seq);
         long          cnt = m_fetchaddu32(&pool->cnt.vals.cnt, 1);
 
         if (cnt < pool->num) {
-            while (m_atomread(pool->cnt.vals.seq) == seq) {
+            while (m_atomread(&pool->cnt.vals.seq) == seq) {
                 syswait(&pool->cnt.vals.seq, seq);
             }
             ret = 0;

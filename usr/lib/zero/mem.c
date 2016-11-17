@@ -216,13 +216,11 @@ memprefork(void)
 
     spinlk(&g_mem.initlk);
     memgetlk(&g_mem.heaplk);
-#if (!MEMLFHASH)
     if (g_mem.hash) {
         for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
             memlkbit(&g_mem.hash[slot].chain);
         }
     }
-#endif
     for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
 #if (MEMDEBUGDEADLOCK)
         memlkbitln(&g_mem.smallbin[slot]);
@@ -294,13 +292,11 @@ mempostfork(void)
         memrelbit(&g_mem.smallbin[slot].list);
 #endif
     }
-#if (!MEMLFHASH)
     if (g_mem.hash) {
         for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
             memrelbit(&g_mem.hash[slot].chain);
         }
     }
-#endif
     memrellk(&g_mem.heaplk);
     spinunlk(&g_mem.initlk);
 
@@ -658,9 +654,7 @@ memgethashitem(void)
     MEMADR_T        upval;
     long            n;
 
-#if (!MEMLFHASH)
     memlkbit(&g_mem.hashbuf);
-#endif
     upval = (MEMADR_T)g_mem.hashbuf;
     upval &= ~MEMLKBIT;
     if (upval) {
@@ -738,14 +732,10 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
     MEMADRDIFF_T            mask;
 #endif
 
-//    fprintf(stderr, "locking hash chain %lx\n", key);
-#if (!MEMLFHASH)
+    fprintf(stderr, "locking hash chain %lx\n", key);
     memlkbit(&g_mem.hash[key].chain);
-#endif
     upval = (MEMADR_T)g_mem.hash[key].chain;
-#if (!MEMLFHASH)
     upval &= ~MEMLKBIT;
-#endif
     found = 0;
     prev = NULL;
     blk = (struct memhash *)upval;
@@ -756,10 +746,8 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
         src = blk->tab;
         prev = NULL;
 //            slot = &src[7];
-#if (MEMBFHASH)
         do {
             n = min(lim, 16);
-#if (!MEMHASHRASTER)
             switch (n) {
                 /*
                  * if found, the mask will be -1 (all 1-bits), and val will be
@@ -872,232 +860,11 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                 break;
             }
         } while (1);
-#else
-        adr = page;
-        switch (n) {
-            /*
-             * if found, the mask will be -1 (all 1-bits), and val will be
-             * the item address
-             * if not found, the mask will be 0 and so will val/slot
-             */
-            case 16:
-                item = &src[15];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 15:
-                item = &src[14];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 14:
-                item = &src[13];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 13:
-                item = &src[12];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-                if (slot) {
-                    
-                    break;
-                }
-            case 12:
-                item = &src[11];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 11:
-                item = &src[10];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 10:
-                item = &src[9];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 9:
-                item = &src[8];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-                if (slot) {
-                    
-                    break;
-                }
-            case 8:
-                item = &src[7];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 7:
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-                item = &src[6];
-            case 6:
-                item = &src[5];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 5:
-                item = &src[4];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-                if (slot) {
-                    
-                    break;
-                }
-            case 4:
-                item = &src[3];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 3:
-                item = &src[2];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 2:
-                item = &src[1];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 1:
-                item = &src[0];
-                adr = item->adr;
-                if ((adr) && adr == page) {
-                    slot = item;
-                }
-            case 0:
-            default:
-                
-                break;
-        }
-        lim -= n;
-        src += n;
-        if (!slot && (n)) {
-            prev = blk;
-            blk = blk->chain;
-        } else if (slot) {
-            found++;
-            desc = slot->val;
-
-            break;
-        } else {
-
-            break;
-        }
-    } while (1);
-#endif
-#else
-        do {
-            n = min(lim, 8);
-//            slot = &src[7];
-            switch (n) {
-                case 8:
-                    if (src[7].adr == page) {
-                        slot = &src[7];
-                        found++;
-                        desc = slot->val;
-                        
-                        break;
-                    }
-                case 7:
-                    if (src[6].adr == page) {
-                        slot = &src[6];
-                        found++;
-                        desc = slot->val;
-                        
-                        break;
-                    }
-                case 6:
-                    if (src[5].adr == page) {
-                        slot = &src[5];
-                        found++;
-                        desc = slot->val;
-                        
-                        break;
-                    }
-                case 5:
-                    if (src[4].adr == page) {
-                        slot = &src[4];
-                        found++;
-                        desc = slot->val;
-                        
-                        break;
-                    }
-                case 4:
-                    if (src[3].adr == page) {
-                        slot = &src[3];
-                        found++;
-                        desc = slot->val;
-                        
-                        break;
-                    }
-                case 3:
-                    if (src[2].adr == page) {
-                        slot = &src[2];
-                        found++;
-                        desc = slot->val;
-                        
-                        break;
-                    }
-                case 2:
-                    if (src[1].adr == page) {
-                        slot = &src[1];
-                        found++;
-                        desc = slot->val;
-                        
-                        break;
-                    }
-                case 1:
-                    if (src[0].adr == page) {
-                        slot = &src[0];
-                        found++;
-                        desc = slot->val;
-                        
-                        break;
-                    }
-                case 0:
-                default:
-                    
-                    break;
-            }
-            lim -= n;
-            src += n;
-        } while ((lim) && !found);
-        if (!found) {
-            prev = blk;
-            blk = blk->chain;
-        }
-#endif
     }
 //    upval = (MEMADR_T)g_mem.hash[key].chain;
     if (!found) {
         if (op == MEMHASHDEL || op == MEMHASHCHK) {
-#if (!MEMLFHASH)
             memrelbit(&g_mem.hash[key].chain);
-#endif
 
             return MEMHASHNOTFOUND;
         } else {
@@ -1129,6 +896,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                         if (prev) {
                             prev->chain = blk->chain;
                             blk->chain = (struct memhash *)upval;
+                            fprintf(stderr, "releasing hash chain %lx\n", key);
 #if (MEMHASHLOCK)
                             g_mem.hash[key].chain = blk;
 #elif (MEMNEWHASH)
@@ -1136,9 +904,8 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                                         (m_atomic_t)blk);
 #endif
                         } else {
-#if (!MEMLFHASH)
+                            fprintf(stderr, "releasing hash chain %lx\n", key);
                             memrelbit(&g_mem.hash[key].chain);
-#endif
                         }
 
                         return desc;
@@ -1146,38 +913,40 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                     prev = blk;
                     blk = blk->chain;
                 } while (blk);
-            }
+            } else {
 #if (MEMSTAT)
-            g_memstat.nhashitem++;
+                g_memstat.nhashitem++;
 #endif
-            blk = memgethashitem();
-            slot = blk->tab;
-            blk->ntab = 1;
+                blk = memgethashitem();
+                slot = blk->tab;
+                blk->ntab = 1;
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
-            slot->nref = 1;
+                slot->nref = 1;
 #endif
 #if defined(MEMHASHNACT) && (MEMHASHNACT)
-            slot->nact = 1;
+                slot->nact = 1;
 #endif
-            blk->chain = (struct memhash *)upval;
+                blk->chain = (struct memhash *)upval;
 #if (MEMSTAT)
-            if (!upval) {
-                g_memstat.nhashchain++;
-            }
+                if (!upval) {
+                    g_memstat.nhashchain++;
+                }
 #endif
-            slot->adr = page;
-            slot->val = desc;
+                slot->adr = page;
+                slot->val = desc;
+                fprintf(stderr, "releasing hash chain %lx\n", key);
 #if (MEMHASHLOCK)
-            g_mem.hash[key].chain = blk;
-            memrellk(&g_mem.hash[key].lk);
+                g_mem.hash[key].chain = blk;
+                memrellk(&g_mem.hash[key].lk);
 #else
-            m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
-                        (m_atomic_t)blk);
+                m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
+                            (m_atomic_t)blk);
 #endif
 #if (MEMDEBUG)
-            crash(desc != 0);
+                crash(desc != 0);
 #endif
-            
+            }
+
             return desc;
         }
     } else {
@@ -1202,9 +971,6 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             } else {
                 memrelblk(buf, id);
             }
-#if 0
-            memrelblk(buf, id);
-#endif
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
             slot->nref--;
             n = blk->ntab;
@@ -1212,14 +978,16 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                 if (n == 1) {
                     if (prev) {
                         prev->chain = blk->chain;
-#if (!MEMLFHASH)
+                        fprintf(stderr, "releasing hash chain %lx\n", key);
                         memrelbit(&g_mem.hash[key].chain);
-#endif
                     } else {
+                        fprintf(stderr, "releasing hash chain %lx\n", key);
                         m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
                                     (m_atomic_t)blk->chain);
                     }
                     membufhashitem(blk);
+
+                    return desc;
                 } else {
                     n--;
                     src = &blk->tab[n];
@@ -1239,9 +1007,8 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
 #if (MEMDEBUG)
             crash(desc != 0);
 #endif
-#if (!MEMLFHASH)
+            fprintf(stderr, "releasing hash chain %lx\n", key);
             memrelbit(&g_mem.hash[key].chain);
-#endif
 
             return desc;
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
@@ -1253,12 +1020,12 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
         if (prev) {
             prev->chain = blk->chain;
             blk->chain = (struct memhash *)upval;
+            fprintf(stderr, "releasing hash chain %lx\n", key);
             m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
                         (m_atomic_t)blk);
-#if (!MEMLFHASH)
         } else {
+            fprintf(stderr, "releasing hash chain %lx\n", key);
             memrelbit(&g_mem.hash[key].chain);
-#endif
         }
     }
 #if (MEMDEBUG)
@@ -1319,7 +1086,7 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
 //            ptr = memcalcadr(buf, adr, size, align, id);
     ptr = memcalcadr(adr, size, bsz, align);
     if (type != MEMPAGEBUF) {
-        memsetbuf(ptr, buf, -1);
+        memsetbuf(ptr, buf, 0);
     } else {
         memsetbuf(ptr, buf, id);
     }
@@ -1709,7 +1476,7 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
     }
 #endif
     isglob = 0;
-    if (buf->info & MEMBUFGLOBBITID) {
+    if (buf->info & MEMBUFGLOBBIT) {
         isglob = 1;
     }
     type = memgetbuftype(buf);
@@ -1841,6 +1608,8 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
 #endif
             VALGRINDRMPOOL(buf->base);
             unmapanon(buf, buf->size);
+
+            return;
         }  else if (!isglob) {
             /* add buffer in front of global list */
             upval = (MEMADR_T)gbkt->list;
@@ -1858,13 +1627,23 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
             m_setbit(&buf->info, MEMBUFGLOBBITID);
             /* this will unlock the list (set the low-bit to zero) */
             m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
+
+            return;
         } else {
 #if (MEMDEBUGDEADLOCK)
             memrelbitln(gbkt);
 #else
             memrelbit(&gbkt->list);
 #endif
+
+            return;
         }
+    } else if (isglob) {
+#if (MEMDEBUGDEADLOCK)
+        memrelbitln(gbkt);
+#else
+        memrelbit(&gbkt->list);
+#endif
     }
 
     return;

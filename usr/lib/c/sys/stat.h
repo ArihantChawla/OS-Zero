@@ -3,31 +3,7 @@
 
 #include <features.h>
 #include <sys/types.h>
-
-#define __S_IFMT   0170000
-#define __S_IFIFO  0010000
-#define __S_IFCHR  0020000
-#define __S_IFDIR  0040000
-#define __S_IFBLK  0060000
-#define __S_IFREG  0100000
-#define __S_IFLNK  0120000
-#if (_BSD_SOURCE) || (USEUNIX98)
-#define __S_IFSOCK 0140000
-#endif
-#if (_POSIX_SOURCE) && (_POSIX_C_SOURCE >= 199309L)
-#define __S_IFMQ   1000000
-#define __S_IFSEM  2000000
-#define __S_IFSHM  4000000
-#endif
-#if !defined(_POSIX_SOURCE)
-#define __S_IFWHT  0x16000000
-#endif
-#define S_ISUID    0004000
-#define S_ISGID    0002000
-#if (_BSD_SOURCE)
-#define S_ISTXT    0001000
-#endif
-#define S_ISVTX    S_ISTXT
+#include <sys/bits/stat.h>
 
 #if (_BSD_SOURCE) || (USEUNIX98)
 /* public names */

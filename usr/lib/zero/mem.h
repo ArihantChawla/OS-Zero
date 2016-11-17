@@ -717,7 +717,7 @@ membufgetfree(struct membuf *buf)
     cur++;
     buf->nfree = nfree;
     buf->stktop = cur;
-#if 0
+#if (MEMTESTSTACK)
     memprintbufstk(buf, "MEMBUFGETFREE");
     fprintf(stderr, "ID == %ld\n", id);
 #endif
@@ -736,7 +736,7 @@ membufputfree(struct membuf *buf, MEMBLKID_T id)
     buf->stk[cur] = id;
     buf->stktop = cur;
     buf->nfree = nfree;
-#if 0
+#if (MEMTESTSTACK)
     memprintbufstk(buf, "MEMBUFPUTFREE");
     fprintf(stderr, "ID == %ld\n", id);
 #endif
@@ -937,7 +937,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
  */
 #if ((MEMNEWHASH) || (MEMHASH)) && !defined(MEMHASHITEMS)
 #define MEMHASHBITS   16
-#define MEMHASHITEMS  (MEMUWORD(1) << MEMHASHBITS)
+#define MEMHASHITEMS  (MEMWORD(1) << MEMHASHBITS)
 #elif (MEMMULTITAB)
 #if (PTRBITS > 32)
 #define MEMADRBITS    (ADRBITS - PAGESIZELOG2)

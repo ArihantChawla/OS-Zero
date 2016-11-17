@@ -13,26 +13,38 @@
 /*
  * NOTES
  * -----
+ * - all data structures use LSB byte- and bit-order
+ */
+
+/*
+ * inode structure
+ * ---------------
  * - inodes are fixed-size of 512 bytes
- * - for meta-blocks, id == meta - ofs == type
+ * - for meta-blocks, id == meta - meta == type
  * - for device-blocks, ofs == (((major) << 32) | (minor))
  */
 /* type-member values */
-#define FSNODE     0    // file-like objects
-#define FSDIR      1    // directory
-#define FSMETANODE 2    // metadata
-#define FSBLKGROUP 3    // block-group
-#define FSINODE    4    // file/node allocation info
-#define FSMOUNTPNT 5    // mountpoint
-#define FSCHRDEV   6    // character special
-#define FSBLKDEV   7    // block special
+#define FS0REG      0   // file-like objects
+#define FS0DIR      1   // directory
+#define FS0METANODE 2   // metadata
+#define FS0BLKGROUP 3   // block-group
+#define FS0INODE    4   // file/node allocation info
+#define FS0MOUNTPNT 5   // mountpoint
+#define FS0CHRDEV   6   // character special
+#define FS0BLKDEV   7   // block special
+#define FS0SYMLINK  8   // symbolic link
+#define FS0FIFO     9   // named pipe
+#define FS0SOCK     10  // socket
+#define FS0MQ       11  // message queue
+#define FS0SEM      12  // semaphore
+#define FS0SHM      13  // shared memory
 /* flag-bits for flg */
 #define INODENOBUF 0x80000000
 struct fs0inode {
     unsigned char name[FS0NAMELEN];     // 256 bytes @ 0        - name
     /* 32-bit fields */
     uint32_t      type;                 // 4 bytes @ 256        - node type
-    uint32_t      num;                  // 4 bytes @ 260        - inode number
+    uint32_t      id;                   // 4 bytes @ 260        - inode number
     uint32_t      uid;                  // 4 bytes @ 264        - user ID
     uint32_t      gid;                  // 4 bytes @ 268        - group ID
     uint32_t      flg;                  // 4 bytes @ 272        - perms & bits
@@ -45,7 +57,7 @@ struct fs0inode {
     uint64_t      mtime;                // 8 bytes @ 312        - mod time
     uint64_t      atime;                // 8 bytes @ 320        - access time
     /* 32-bit fields */
-    uint32_t      grp;                  // 4 bytes @ 328        - fs block-group
+    uint32_t      blkgrp;               // 4 bytes @ 328        - fs block-group
     uint32_t      indir1;               // 4 bytes @ 332        - indir-block #1
     uint32_t      indir2;               // 4 bytes @ 336        - indir-block #2
     uint32_t      indir3;               // 4 bytes @ 340        - indir-block #3
@@ -69,6 +81,16 @@ struct fs0supblk {
     uint32_t writesize; // write-buffer size (speculative allocation)
     uint64_t dev;       // physical device such as disk ID
     uint64_t nblk;      // number of blocks on FS
+};
+
+/* block groups */
+
+struct fs0blkgrp {
+    struct fs0supblk supblk;    // superblock copy
+    uint32_t         ninode;    // number of inodes in group
+    uint32_t         nblk;      // number of data blocks in group
+    uint32_t         blk1num;   // # of first data block (in disk units)
+    uint32_t         pad;       // pad to 64-bit boundary
 };
 
 #endif /* __KERN_IO_FS_FS0_H__ */
