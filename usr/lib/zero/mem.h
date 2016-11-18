@@ -247,11 +247,12 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMMAXBIGSLOT       (MEMBIGSLOTS - 1)
 /* number of words in buf freemap */
 //#define MEMBUFBITMAPWORDS  (CLSIZE / WORDSIZE)
-#if (!MEMBUFSTACK)
+#define MEMBUFBITMAPWORDS   (MEMBUFMAXBLKS / (CHAR_BIT * WORDSIZE))
+#if (!MEMBUFSTACK) && 0
 #define MEMBUFBITMAPWORDS   16
 #define MEMBUFMAXBLKS       (MEMBUFBITMAPWORDS * WORDSIZE * CHAR_BIT)
 #else
-#define MEMBUFBITMAPWORDS   (MEMBUFMAXBLKS / (CHAR_BIT * WORDSIZE))
+//#define MEMBUFBITMAPWORDS   (MEMBUFMAXBLKS / (CHAR_BIT * WORDSIZE))
 /* number of block-bits in buf freemap */
 #define MEMBUFMAXBLKS       4096
 #if (MEMBUFMAXBLKS <= 65536)
@@ -265,6 +266,10 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 //#define MEMPAGESLOTS        (MEMWORD(1) << MEMBUFSLOTBITS)
 #define MEMSMALLSLOT        6
 #define MEMMIDSLOT          9
+#define MEMBUFSMALLBLKS     1024
+#define MEMBUFMIDBLKS       256
+#define MEMBUFBIGBLKS       128
+#define MEMBUFMAXBLKS       MEMBUFSMALLBLKS
 //#define MEMBIGSLOT          (MEMSMALLSLOTS - 1)
 #define MEMSMALLPAGESLOT    32
 #define MEMMIDPAGESLOT      64
@@ -330,6 +335,7 @@ struct membkt {
 #define MEMHEAPBIT       (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 2))
 #endif
 #define MEMBUFNBLKBITS   16
+//#define MEMBUFMAXBLKS    (MEMWORD(1) << MEMBUFNBLKBITS)
 #define MEMBUFSLOTBITS   8
 #define MEMBUFSLOTSHIFT  (MEMBUFNBLKBITS)
 #define MEMBUFTYPESHIFT  (MEMBUFSLOTSHIFT + MEMBUFSLOTBITS)
@@ -1025,10 +1031,10 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #define memnbufblk(type, slot)                                          \
     (((type) == MEMSMALLBUF)                                            \
      ? (((slot) <= MEMSMALLSLOT)                                        \
-        ? (MEMBUFMAXBLKS)                                               \
+        ? (MEMBUFSMALLBLKS)                                             \
         : (((slot) <= MEMMIDSLOT)                                       \
-           ? (MEMBUFMAXBLKS >> 2)                                       \
-           : (MEMBUFMAXBLKS >> 4)))                                     \
+           ? (MEMBUFMIDBLKS)                                            \
+           : (MEMBUFBIGBLKS)))                                          \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMMIDPAGESLOT)                                   \
            ? 4                                                          \
