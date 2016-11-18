@@ -914,39 +914,38 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                     prev = blk;
                     blk = blk->chain;
                 } while (blk);
-            } else {
+            }
 #if (MEMSTAT)
-                g_memstat.nhashitem++;
+            g_memstat.nhashitem++;
 #endif
-                blk = memgethashitem();
-                slot = blk->tab;
-                blk->ntab = 1;
+            blk = memgethashitem();
+            slot = blk->tab;
+            blk->ntab = 1;
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
-                slot->nref = 1;
+            slot->nref = 1;
 #endif
 #if defined(MEMHASHNACT) && (MEMHASHNACT)
-                slot->nact = 1;
+            slot->nact = 1;
 #endif
-                blk->chain = (struct memhash *)upval;
+            blk->chain = (struct memhash *)upval;
 #if (MEMSTAT)
-                if (!upval) {
-                    g_memstat.nhashchain++;
-                }
+            if (!upval) {
+                g_memstat.nhashchain++;
+            }
 #endif
-                slot->adr = page;
-                slot->val = desc;
-                fprintf(stderr, "releasing hash chain %lx\n", key);
+            slot->adr = page;
+            slot->val = desc;
+            fprintf(stderr, "releasing hash chain %lx\n", key);
 #if (MEMHASHLOCK)
-                g_mem.hash[key].chain = blk;
-                memrellk(&g_mem.hash[key].lk);
+            g_mem.hash[key].chain = blk;
+            memrellk(&g_mem.hash[key].lk);
 #else
-                m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
-                            (m_atomic_t)blk);
+            m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
+                        (m_atomic_t)blk);
 #endif
 #if (MEMDEBUG)
-                crash(desc != 0);
+            crash(desc != 0);
 #endif
-            }
 
             return desc;
         }
