@@ -684,14 +684,17 @@ memgethashitem(void)
 //        meminithashitem(item);
     } else {
 #if (MEMBIGHASHTAB)
-        n = 4 * PAGESIZE / memhashsize();
-        bsz = 4 * PAGESIZE;
+        n = 16 * PAGESIZE / memhashsize();
+        bsz = 16 * PAGESIZE;
 #elif (MEMSMALLHASHTAB)
         n = 2 * PAGESIZE / memhashsize();
         bsz = 2 * PAGESIZE;
-#else
+#elif (MEMTINYHASHTAB)
         n = PAGESIZE / memhashsize();
         bsz = PAGESIZE;
+#else
+        n = 8 * PAGESIZE / memhashsize();
+        bsz = 8 * PAGESIZE;
 #endif
 #if (MEMSTAT)
         g_memstat.nbhash += bsz;
@@ -1127,7 +1130,7 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
         bkt->line = __LINE__;
 #endif
         bkt->nbuf--;
-        m_syncwrite((m_atomic_t *)&bkt->list, buf->next);
+        bkt->list = buf->next;
 #if (!MEMEMPTYTLS)
         buf->tls = NULL;
 #endif
