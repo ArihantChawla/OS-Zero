@@ -311,9 +311,9 @@ struct membkt {
 #define MEMBUFTYPEBITS   2
 //#define MEMTLSBIT        (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 1))
 #define MEMBUFLKBIT      (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 1))
-#define MEMBUFGLOBBIT    (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 2))
+//#define MEMBUFGLOBBIT    (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 2))
 #define MEMBUFLKBITID    (8 * sizeof(MEMUWORD_T) - 1)
-#define MEMBUFGLOBBITID  (8 * sizeof(MEMUWORD_T) - 2)
+//#define MEMBUFGLOBBITID  (8 * sizeof(MEMUWORD_T) - 2)
 #if !defined(MEMNOSBRK) || (MEMNOSBRK)
 #define MEMHEAPBIT       (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 2))
 #endif
