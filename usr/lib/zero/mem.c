@@ -1531,21 +1531,12 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
         }
 
         return;
-    }
-#if (MEMBUFSTACK) && 0
-    memprintbufstk(head, "MEMRELBLK\n");
-#endif
-#if (MEMDEBUG)
-    crash(nfree <= nblk);
-#endif
-    if (nfree == 1) {
-        if (!isglob) {
+    } else if (nfree == 1) {
 #if (MEMDEBUGDEADLOCK)
-            memlkbitln(gbkt);
+        memlkbitln(gbkt);
 #else
-            memlkbit(&gbkt->list);
+        memlkbit(&gbkt->list);
 #endif
-        }
         /* add buffer in front of global list */
         upval = (MEMADR_T)gbkt->list;
         buf->prev = NULL;
@@ -1567,11 +1558,13 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
     } else if (nfree == nblk) {
         /* queue or reclaim a free buffer */
         if (!isglob) {
+#if 0
             if (!tls || tls != g_memtls) {
 
                 return;
             }
-            if (tbkt) {
+#endif
+            if (type != MEMBIGBUF) {
                 if (type == MEMSMALLBUF) {
                     if (tbkt->nbuf > 2) {
                         memdequeuebuftls(buf, tbkt);
@@ -1597,12 +1590,12 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
         if (gbkt->nbuf > 4) {
             if (isglob) {
                 memdequeuebufglob(buf, gbkt);
-#if (MEMDEBUGDEADLOCK)
-                memrelbitln(gbkt);
-#else
-                memrelbit(&gbkt->list);
-#endif
             }
+#if (MEMDEBUGDEADLOCK)
+            memrelbitln(gbkt);
+#else
+            memrelbit(&gbkt->list);
+#endif
 #if (MEMSTAT)
             g_memstat.nbunmap += buf->size;
 #endif
