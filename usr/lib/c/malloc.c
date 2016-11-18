@@ -174,7 +174,7 @@ _realloc(void *ptr,
                 
                 return ptr;
             }
-            sz = max(sz, size);
+            sz = min(sz, size);
         }
         retptr = _malloc(size, MEMMINALIGN, 0);
         if (retptr) {
