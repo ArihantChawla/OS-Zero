@@ -111,8 +111,10 @@ _realloc(void *ptr,
          long rel)
 {
     MEMPTR_T       retptr = NULL;
+#if (MEMCACHECOLOR)
     MEMPTR_T       orig;
     MEMADRDIFF_T   delta;
+#endif
     MEMWORD_T      id;
 #if (MEMMULTITAB)
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
@@ -130,25 +132,38 @@ _realloc(void *ptr,
         
         return retptr;
     } else if (!size) {
-        free(ptr);
+        if (ptr) {
+            free(ptr);
+        }
         
         return NULL;
     } else {
         desc = membufop(ptr, MEMHASHCHK, NULL, 0);
+#if (MEMDEBUG)
+        crash(desc != MEMHASHNOTFOUND);
+#endif
         buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
         if (desc) {
             type = memgetbuftype(buf);
             slot = memgetbufslot(buf);
             if (type != MEMPAGEBUF) {
                 id = membufblkid(buf, ptr);
+#if (MEMCACHECOLOR)
                 orig = membufslotblkadr(buf, id, slot);
+#endif
             } else {
                 id = desc & MEMPAGEINFOMASK;
+#if (MEMCACHECOLOR)
                 orig = membufslotpageadr(buf, id, slot);
+#endif
             }
+#if (MEMCACHECOLOR)
             delta = orig - (MEMPTR_T)ptr;
+#endif
             sz = membufblksize(buf, type, slot);
+#if (MEMCACHECOLOR)
             sz -= delta;
+#endif
             if (size <= sz) {
                 
                 return ptr;

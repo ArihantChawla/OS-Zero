@@ -12,12 +12,17 @@
 #endif
 
 #if defined(MEMDEBUG)
-#define crash(expr)                                                     \
-    do {                                                                \
-        if (!(expr)) {                                                  \
-            *(uint8_t *)NULL = 0x00;                                    \
-        }                                                               \
-    } while (0)
+#include <stdio.h>
+#define crash(cond)                                                     \
+    (!(cond)                                                            \
+     ? ((void)0)                                                        \
+     : (fprintf(stderr,                                                 \
+                "Assertion failed: %s, file %s, function %s, line %d\n", \
+                #cond,                                                  \
+                __FILE__,                                               \
+                __func__,                                               \
+                __LINE__),                                              \
+        *(uint8_t *)NULL = 0x00))
 #endif
 
 /* generic memory manager definitions for libzero */
@@ -248,7 +253,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #else
 #define MEMBUFBITMAPWORDS   (MEMBUFMAXBLKS / (CHAR_BIT * WORDSIZE))
 /* number of block-bits in buf freemap */
-#define MEMBUFMAXBLKS       3072
+#define MEMBUFMAXBLKS       4096
 #if (MEMBUFMAXBLKS <= 65536)
 #define MEMBLKID_T          uint16_t
 #else
@@ -303,6 +308,13 @@ struct membkt {
                         - 2 * sizeof(MEMWORD_T)];
 };
 
+/*
+ * struct membufinfo {
+ *     unsigned nblk : MEMBUFNBLKBITS;
+ *     unsigned slot : MEMBUFSLOTBITS;
+ *     unsigned type : MEMBUFTYPEBITS;
+ * };
+ */
 /* type-bits for allocation buffers */
 #define MEMSMALLBUF      0x00
 #define MEMPAGEBUF       0x01
@@ -317,21 +329,21 @@ struct membkt {
 #if !defined(MEMNOSBRK) || (MEMNOSBRK)
 #define MEMHEAPBIT       (MEMUWORD(1) << (8 * sizeof(MEMUWORD_T) - 2))
 #endif
-#define MEMBUFSLOTBITS   12
+#define MEMBUFNBLKBITS   16
+#define MEMBUFSLOTBITS   8
 #define MEMBUFSLOTSHIFT  (MEMBUFNBLKBITS)
 #define MEMBUFTYPESHIFT  (MEMBUFSLOTSHIFT + MEMBUFSLOTBITS)
-#define MEMBUFNBLKBITS   12
 #if 0
 #define MEMBUFNFREEBITS   MEMBUFNBLKBITS
 #define MEMBUFNFREEMASK  (MEMBUFNBLKMASK << MEMBUFNFREESHIFT)
 #define MEMBUFNFREESHIFT  MEMBUFNBLKBITS
 #endif
 
-#define memsetbufnblk(buf, n)                                           \
+#define meminitbufnblk(buf, n)                                          \
     ((buf)->info |= (n))
-#define memsetbuftype(buf, t)                                           \
+#define meminitbuftype(buf, t)                                          \
     ((buf)->info |=  (t) << MEMBUFTYPESHIFT)
-#define memsetbufslot(buf, slot)                                        \
+#define meminitbufslot(buf, slot)                                       \
     ((buf->info)  |= (slot) << MEMBUFSLOTSHIFT)
 #define memsetbufnfree(buf, n)                                          \
     ((buf)->nfree = (n))
@@ -381,7 +393,9 @@ struct mem {
     unsigned long       prioval; // locklessinc priority locks
 #endif
     zerospin            initlk;  // lock for initialisation
+#if !defined(MEMNOSBRK) || !(MEMNOSBRK)
     MEMLK_T             heaplk;  // lock for sbrk()
+#endif
 };
 
 #if (MEMBITFIELD)
