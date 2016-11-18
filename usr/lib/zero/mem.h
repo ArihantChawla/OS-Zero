@@ -717,7 +717,7 @@ membufgetfree(struct membuf *buf)
     cur++;
     buf->nfree = nfree;
     buf->stktop = cur;
-#if (MEMTESTSTACK)
+#if (MEMTESTSTACK) && 0
     memprintbufstk(buf, "MEMBUFGETFREE");
     fprintf(stderr, "ID == %ld\n", id);
 #endif
@@ -736,7 +736,7 @@ membufputfree(struct membuf *buf, MEMBLKID_T id)
     buf->stk[cur] = id;
     buf->stktop = cur;
     buf->nfree = nfree;
-#if (MEMTESTSTACK)
+#if (MEMTESTSTACK) && 0
     memprintbufstk(buf, "MEMBUFPUTFREE");
     fprintf(stderr, "ID == %ld\n", id);
 #endif

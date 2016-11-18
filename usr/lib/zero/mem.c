@@ -1071,7 +1071,11 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
     nfree = memgetbufnfree(buf);
 #if (MEMDEBUG)
     nblk = memgetbufnblk(buf);
+#if defined(MEMBUFSTACK) && (MEMBUFSTACK)
+    crash(nfree >= 0 && nfree <= nblk);
+#else
     crash(nfree > 0 && nfree <= nblk);
+#endif
 #endif
     if (type != MEMPAGEBUF) {
         adr = membufblkadr(buf, id);
@@ -1259,7 +1263,11 @@ memgetblkglob(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
     nfree = memgetbufnfree(buf);
 #if (MEMDEBUG)
     nblk = memgetbufnblk(buf);
+#if defined(MEMBUFSTACK) && (MEMBUFSTACK)
+    crash(nfree >= 0 && nfree <= nblk);
+#else
     crash(nfree > 0 && nfree <= nblk);
+#endif
 #endif
 #if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
     nfree--;
