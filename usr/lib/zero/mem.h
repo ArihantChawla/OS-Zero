@@ -22,7 +22,7 @@
                 __FILE__,                                               \
                 __func__,                                               \
                 __LINE__),                                              \
-        *(uint8_t *)NULL = 0x00))
+        *(volatile uint8_t *)NULL = 0x00))
 #endif
 
 /* generic memory manager definitions for libzero */
@@ -128,7 +128,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 
 //#define MEMPAGEBIT      (MEMUWORD(1) << (PAGESIZELOG2 - 1))
 //#define MEMPAGEIDMASK   (MEMPAGEBIT - 1)
-#define MEMPAGEINFOMASK ((MEMUWORD(1) << PAGESIZELOG2) - 1)
+#define MEMPAGEIDMASK   ((MEMUWORD(1) << PAGESIZELOG2) - 1)
 /* use the low-order bit of the word or pointer to lock data */
 #define MEMLKBITID      0
 #define MEMLKBIT        (MEMUWORD(1) << MEMLKBITID)
@@ -254,6 +254,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #else
 //#define MEMBUFBITMAPWORDS   (MEMBUFMAXBLKS / (CHAR_BIT * WORDSIZE))
 /* number of block-bits in buf freemap */
+#if defined(MEMBUFSTACK) && (MEMBUFSTACK)
 #define MEMBUFMAXBLKS       4096
 #if (MEMBUFMAXBLKS <= 65536)
 #define MEMBLKID_T          uint16_t
@@ -261,11 +262,17 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMBLKID_T          uint32_t
 #endif
 #endif
+#endif
 /* minimum allocation block size in bigbins */
 //#define MEMBIGMINSIZE      (2 * PAGESIZE)
 //#define MEMPAGESLOTS        (MEMWORD(1) << MEMBUFSLOTBITS)
 #define MEMSMALLSLOT        6
 #define MEMMIDSLOT          9
+#if 0
+#define MEMBUFSMALLBLKS     1024
+#define MEMBUFMIDBLKS       512
+#define MEMBUFBIGBLKS       256
+#endif
 #define MEMBUFSMALLBLKS     1024
 #define MEMBUFMIDBLKS       256
 #define MEMBUFBIGBLKS       128
@@ -570,10 +577,8 @@ struct memhash {
  * - we have a 4-word header; adding total of 52 words as 13 hash-table entries
  *   lets us cache-color the table by adding a modulo-9 value to the pointer
  */
-#if 0
 #define MEMHASHBITS        18
-#define MEMHASHITEMS       (1U << MEMHASHBITS)
-#endif
+#define MEMHASHITEMS       (1 << MEMHASHBITS)
 #if (MEMBIGHASHTAB)
 #define MEMHASHARRAYSIZE   (256 * WORDSIZE)
 #elif (MEMSMALLHASHTAB)

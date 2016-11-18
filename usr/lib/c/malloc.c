@@ -131,6 +131,7 @@ _realloc(void *ptr,
     MEMUWORD_T        type;
     MEMUWORD_T        slot;
     size_t            sz;
+//    void          * (*sysrealloc)(void *, size_t);
     void          * (*sysrealloc)(void *, size_t);
 
     if (!ptr) {
@@ -148,7 +149,7 @@ _realloc(void *ptr,
 #if (MEMDEBUG) && 0
         crash(desc != MEMHASHNOTFOUND);
 #endif
-        buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
+        buf = (struct membuf *)(desc & ~MEMPAGEIDMASK);
         if (desc) {
             type = memgetbuftype(buf);
             slot = memgetbufslot(buf);
@@ -158,7 +159,7 @@ _realloc(void *ptr,
                 orig = membufslotblkadr(buf, id, slot);
 #endif
             } else {
-                id = desc & MEMPAGEINFOMASK;
+                id = desc & MEMPAGEIDMASK;
 #if (MEMCACHECOLOR)
                 orig = membufslotpageadr(buf, id, slot);
 #endif
@@ -175,24 +176,30 @@ _realloc(void *ptr,
                 return ptr;
             }
             sz = min(sz, size);
+            retptr = _malloc(size, MEMMINALIGN, 0);
+            if (retptr) {
+                memcpy(retptr, ptr, sz);
+                if (desc) {
+                    _free(ptr);
+                }
+                ptr = NULL;
+            }
+            if ((rel) && (ptr)) {
+                _free(ptr);
+            }
+        } else {
+            sysrealloc = g_sysalloc.realloc;
+            if (!sysrealloc) {
+                sysrealloc = dlsym(RTLD_NEXT, "realloc");
+                g_sysalloc.realloc = sysrealloc;
+            }
+            retptr = sysrealloc(ptr, size);
         }
-        retptr = _malloc(size, MEMMINALIGN, 0);
-        if (retptr) {
-            memcpy(retptr, ptr, sz);
-            _free(ptr);
-            ptr = NULL;
-        }
-        if ((rel) && (ptr)) {
-            _free(ptr);
-        }
-#if (MEMDEBUG)
-        crash(retptr != NULL);
-#endif
-        if (!retptr) {
+    }
+    if (!retptr) {
 #if defined(ENOMEM)
-            errno = ENOMEM;
+        errno = ENOMEM;
 #endif
-        }
     }
 
     return retptr;
@@ -243,11 +250,7 @@ __attribute__ ((assume_aligned(MEMMINALIGN)))
 #endif
 realloc(void *ptr, size_t size)
 {
-    void *retptr = _realloc(ptr, size, 0);
-
-#if (MEMDEBUG)
-    crash(retptr != NULL);
-#endif
+    void *   retptr = _realloc(ptr, size, 0);
 
     return retptr;
 }
