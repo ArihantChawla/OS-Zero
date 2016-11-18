@@ -764,6 +764,11 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                     mask = -((MEMADRDIFF_T)(item->adr == page));
                     val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
+                case 14:
+                    item = &src[13];
+                    mask = -((MEMADRDIFF_T)(item->adr == page));
+                    val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
+                    slot = (struct memhashitem *)val;
                 case 13:
                     item = &src[12];
                     mask = -((MEMADRDIFF_T)(item->adr == page));
@@ -788,15 +793,15 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                     mask = -((MEMADRDIFF_T)(item->adr == page));
                     val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
-                    if (slot) {
-
-                        break;
-                    }
                 case 8:
                     item = &src[7];
                     mask = -((MEMADRDIFF_T)(item->adr == page));
                     val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
+                    if (slot) {
+
+                        break;
+                    }
                 case 7:
                     item = &src[6];
                     mask = -((MEMADRDIFF_T)(item->adr == page));
@@ -807,10 +812,6 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                     mask = -((MEMADRDIFF_T)(item->adr == page));
                     val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
-                    if (slot) {
-
-                        break;
-                    }
                 case 5:
                     item = &src[4];
                     mask = -((MEMADRDIFF_T)(item->adr == page));
@@ -821,15 +822,15 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                     mask = -((MEMADRDIFF_T)(item->adr == page));
                     val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
+                    if (slot) {
+
+                        break;
+                    }
                 case 3:
                     item = &src[2];
                     mask = -((MEMADRDIFF_T)(item->adr == page));
                     val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     slot = (struct memhashitem *)val;
-                    if (slot) {
-
-                        break;
-                    }
                 case 2:
                     item = &src[1];
                     mask = -((MEMADRDIFF_T)(item->adr == page));
