@@ -8,6 +8,7 @@
 #endif
 #include <errno.h>
 #include <malloc.h>
+#include <dlfcn.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/mem.h>
@@ -18,13 +19,13 @@
 
 extern THREADLOCAL volatile struct memtls *g_memtls;
 extern struct mem                          g_mem;
+struct sysalloc                            g_sysalloc;
 
 static void *
 _malloc(size_t size, size_t align, long flg)
 {
     size_t  aln = max(align, MEMMINALIGN);
     size_t  sz = max(size, MEMMINBLK);
-//    size_t  asz = (aln <= PAGESIZE && aln <= sz) ? sz : sz + aln;
     size_t  asz = ((aln <= PAGESIZE)
                    ? max(aln, sz)
                    : sz + aln - 1);
@@ -77,10 +78,12 @@ _malloc(size_t size, size_t align, long flg)
 static void
 _free(void *ptr)
 {
-    MEMADR_T       desc;
+    MEMADR_T          desc;
 #if (MEMMULTITAB)
-    struct membuf *buf;
+    struct membuf    *buf;
 #endif
+    void             *handle;
+    void          * (*sysfree)(void *);
 
     if (!g_memtls) {
         meminittls();
@@ -93,6 +96,9 @@ _free(void *ptr)
     memfindbuf(ptr, 1);
 #else
     desc = membufop(ptr, MEMHASHDEL, NULL, 0);
+#if (MEMDEBUG) && 0
+    crash(desc != MEMHASHNOTFOUND);
+#endif
     if (desc) {
         VALGRINDFREE(ptr);
     }
@@ -110,25 +116,25 @@ _realloc(void *ptr,
          size_t size,
          long rel)
 {
-    MEMPTR_T       retptr = NULL;
+    MEMPTR_T          retptr = NULL;
 #if (MEMCACHECOLOR)
-    MEMPTR_T       orig;
-    MEMADRDIFF_T   delta;
+    MEMPTR_T          orig;
+    MEMADRDIFF_T      delta;
 #endif
-    MEMWORD_T      id;
+    MEMWORD_T         id;
 #if (MEMMULTITAB)
-    struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
+    struct membuf    *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
 #else
-    MEMADR_T       desc = 0;
-    struct membuf *buf;
+    MEMADR_T          desc = 0;
+    struct membuf    *buf;
 #endif
-//    MEMPTR_T       oldptr = (buf) ? membufgetptr(buf, ptr) : NULL;
-    MEMUWORD_T     type;
-    MEMUWORD_T     slot;
-    size_t         sz;
+    MEMUWORD_T        type;
+    MEMUWORD_T        slot;
+    size_t            sz;
+    void          * (*sysrealloc)(void *, size_t);
 
     if (!ptr) {
-        retptr = _malloc(size, 0, 0);
+        retptr = _malloc(size, MEMMINALIGN, 0);
         
         return retptr;
     } else if (!size) {
@@ -139,7 +145,7 @@ _realloc(void *ptr,
         return NULL;
     } else {
         desc = membufop(ptr, MEMHASHCHK, NULL, 0);
-#if (MEMDEBUG)
+#if (MEMDEBUG) && 0
         crash(desc != MEMHASHNOTFOUND);
 #endif
         buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
@@ -169,12 +175,12 @@ _realloc(void *ptr,
                 return ptr;
             }
             sz = max(sz, size);
-            retptr = _malloc(size, 0, 0);
-            if (retptr) {
-                memcpy(retptr, ptr, sz);
-                _free(ptr);
-                ptr = NULL;
-            }
+        }
+        retptr = _malloc(size, MEMMINALIGN, 0);
+        if (retptr) {
+            memcpy(retptr, ptr, sz);
+            _free(ptr);
+            ptr = NULL;
         }
         if ((rel) && (ptr)) {
             _free(ptr);
@@ -202,7 +208,7 @@ __attribute__ ((malloc))
 #endif
 malloc(size_t size)
 {
-    void *ptr = _malloc(size, 0, 0);
+    void *ptr = _malloc(size, MEMMINALIGN, 0);
 
     return ptr;
 }
@@ -225,7 +231,7 @@ calloc(size_t n, size_t size)
 
         return NULL;
     }
-    ptr = _malloc(sz, 0, MALLOCZEROBIT);
+    ptr = _malloc(sz, MEMMINALIGN, MALLOCZEROBIT);
 
     return ptr;
 }
@@ -244,6 +250,16 @@ realloc(void *ptr, size_t size)
 #endif
 
     return retptr;
+}
+
+void
+free(void *ptr)
+{
+    if (ptr) {
+        _free(ptr);
+    }
+
+    return;
 }
 
 #if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600)
@@ -279,16 +295,6 @@ posix_memalign(void **ret,
 }
 #endif
 
-void
-free(void *ptr)
-{
-    if (ptr) {
-        _free(ptr);
-    }
-
-    return;
-}
-
 #if defined(_BSD_SOURCE)
 void *
 #if defined(__GNUC__)
@@ -303,7 +309,7 @@ reallocf(void *ptr,
     if (ptr) {
         retptr = _realloc(ptr, size, 1);
     } else if (size) {
-        retptr = _malloc(size, 0, 0);
+        retptr = _malloc(size, MEMMINALIGN, 0);
     } else {
 
         return NULL;

@@ -11,9 +11,16 @@
 #define MALLOCINITBIT (1L << (sizeof(long) * CHAR_BIT - 1))
 #define MALLOCZEROBIT (1L << 0)
 
+#if 0
 /* flg-member bits */
 struct malloc {
     long           flg;
+};
+#endif
+
+struct sysalloc {
+    void * (*realloc)(void *ptr, size_t size);
+    void   (*free)(void *ptr);
 };
 
 #endif /* ___MALLOC_H__ */
