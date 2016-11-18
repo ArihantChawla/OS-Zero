@@ -2,13 +2,12 @@
 #define __KERN_IO_FS_FS0_H__
 
 #include <stdint.h>
-#include <kern/perm.h>
 
-#define FS0DEFBLKSIZE  32768
-#define FS0DEFFRAGSIZE 4096
+#define FS0DEFBLKSIZE  4096
+#define FS0DEFFRAGSIZE 1024
 
-#define FS0NAMELEN     256
-#define FS0INODELEN    512
+#define FS0NAMELEN     255
+#define FS0INODESIZE   512
 
 /*
  * NOTES
@@ -41,7 +40,7 @@
 /* flag-bits for flg */
 #define INODENOBUF 0x80000000
 struct fs0inode {
-    unsigned char name[FS0NAMELEN];     // 256 bytes @ 0        - name
+    unsigned char name[FS0NAMELEN + 1]; // 256 bytes @ 0        - name
     /* 32-bit fields */
     uint32_t      type;                 // 4 bytes @ 256        - node type
     uint32_t      id;                   // 4 bytes @ 260        - inode number
@@ -61,7 +60,7 @@ struct fs0inode {
     uint32_t      indir1;               // 4 bytes @ 332        - indir-block #1
     uint32_t      indir2;               // 4 bytes @ 336        - indir-block #2
     uint32_t      indir3;               // 4 bytes @ 340        - indir-block #3
-    uint32_t      _reserved[11];         // 44 bytes @ 340       - improvements
+    uint32_t      _reserved[11];        // 44 bytes @ 340       - for extensions
     uint32_t      dir[32];              // 128 bytes @ 384      - direct-blocks
 };
 

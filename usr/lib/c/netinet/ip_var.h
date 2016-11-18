@@ -1,6 +1,10 @@
 #ifndef __NETINET_IP_VAR_H__
 #define __NETINET_IP_VAR_H__
 
+/*
+ * REFERENCE: https://opensource.apple.com/source/xnu/xnu-792.13.8/bsd/netinet/ip_var.h
+ */
+
 #include <stdint.h>
 
 /* IP-header overlay for other protocols (TCP, UDP) */
