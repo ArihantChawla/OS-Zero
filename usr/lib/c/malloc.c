@@ -187,6 +187,7 @@ _realloc(void *ptr,
             if ((rel) && (ptr)) {
                 _free(ptr);
             }
+#if 0
         } else {
             sysrealloc = g_sysalloc.realloc;
             if (!sysrealloc) {
@@ -194,6 +195,7 @@ _realloc(void *ptr,
                 g_sysalloc.realloc = sysrealloc;
             }
             retptr = sysrealloc(ptr, size);
+#endif
         }
     }
     if (!retptr) {

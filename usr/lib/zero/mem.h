@@ -248,6 +248,10 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 /* number of words in buf freemap */
 //#define MEMBUFBITMAPWORDS  (CLSIZE / WORDSIZE)
 #define MEMBUFBITMAPWORDS   (MEMBUFMAXBLKS / (CHAR_BIT * WORDSIZE))
+#define MEMBUFSMALLBLKS     1024
+#define MEMBUFMIDBLKS       256
+#define MEMBUFBIGBLKS       64
+#define MEMBUFMAXBLKS       MEMBUFSMALLBLKS
 #if (!MEMBUFSTACK) && 0
 #define MEMBUFBITMAPWORDS   16
 #define MEMBUFMAXBLKS       (MEMBUFBITMAPWORDS * WORDSIZE * CHAR_BIT)
@@ -255,7 +259,6 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 //#define MEMBUFBITMAPWORDS   (MEMBUFMAXBLKS / (CHAR_BIT * WORDSIZE))
 /* number of block-bits in buf freemap */
 #if defined(MEMBUFSTACK) && (MEMBUFSTACK)
-#define MEMBUFMAXBLKS       4096
 #if (MEMBUFMAXBLKS <= 65536)
 #define MEMBLKID_T          uint16_t
 #else
@@ -267,26 +270,23 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 //#define MEMBIGMINSIZE      (2 * PAGESIZE)
 //#define MEMPAGESLOTS        (MEMWORD(1) << MEMBUFSLOTBITS)
 #define MEMSMALLSLOT        6
-#define MEMMIDSLOT          9
+#define MEMMIDSLOT          8
+#define MEMBIGSLOT          10
 #if 0
 #define MEMBUFSMALLBLKS     1024
 #define MEMBUFMIDBLKS       512
 #define MEMBUFBIGBLKS       256
 #endif
-#define MEMBUFSMALLBLKS     1024
-#define MEMBUFMIDBLKS       256
-#define MEMBUFBIGBLKS       128
-#define MEMBUFMAXBLKS       MEMBUFSMALLBLKS
 //#define MEMBIGSLOT          (MEMSMALLSLOTS - 1)
 #define MEMSMALLPAGESLOT    32
 #define MEMMIDPAGESLOT      64
 #define MEMBIGPAGESLOT      96
 #define MEMPAGESLOTS        128
 #if 0
-#define MEMSMALLPAGESLOT    16
-#define MEMMIDPAGESLOT      32
-#define MEMBIGPAGESLOT      48
-#define MEMPAGESLOTS        64
+#define MEMSMALLPAGESLOT    128
+#define MEMMIDPAGESLOT      256
+#define MEMBIGPAGESLOT      512
+#define MEMPAGESLOTS        1024
 #endif
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
 #define MEMSMALLMAPSHIFT    20
@@ -583,6 +583,8 @@ struct memhash {
 #define MEMHASHARRAYSIZE   (256 * WORDSIZE)
 #elif (MEMSMALLHASHTAB)
 #define MEMHASHARRAYSIZE   (64 * WORDSIZE)
+#elif (MEMTINYHASHTAB)
+#define MEMHASHARRAYSIZE   (32 * WORDSIZE)
 #else
 #define MEMHASHARRAYSIZE   (128 * WORDSIZE)
 #endif
@@ -1033,6 +1035,26 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #define membigbufsize(slot, nblk)                                       \
     (rounduppow2(membufblkofs(nblk) + (MEMUWORD(1) << (slot)) * (nblk), \
                  PAGESIZE))
+#if 0
+#define memnbufblk(type, slot)                                          \
+    (((type) == MEMSMALLBUF)                                            \
+     ? (((slot) <= MEMSMALLSLOT)                                        \
+        ? (MEMBUFSMALLBLKS << (MEMMIDSLOT - (slot)))                    \
+        : (((slot) <= MEMMIDSLOT)                                       \
+           ? (MEMBUFMIDBLKS << (MEMBIGSLOT - (slot)))                   \
+           : (MEMBUFBIGBLKS << (MEMBIGSLOT + 2 - (slot)))))             \
+     : (((type) == MEMPAGEBUF)                                          \
+        ? (((slot) <= MEMMIDPAGESLOT)                                   \
+           ? 8                                                          \
+           : (((slot) <= MEMBIGPAGESLOT)                                \
+              ? 4                                                       \
+              : 2))                                                     \
+        : (((slot) <= MEMSMALLMAPSHIFT)                                 \
+           ? 4                                                          \
+           : (((slot) <= MEMBIGMAPSHIFT)                                \
+              ? 2                                                       \
+              : 1))))
+#endif
 #define memnbufblk(type, slot)                                          \
     (((type) == MEMSMALLBUF)                                            \
      ? (((slot) <= MEMSMALLSLOT)                                        \

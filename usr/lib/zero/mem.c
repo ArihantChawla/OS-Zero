@@ -683,8 +683,16 @@ memgethashitem(void)
         m_syncwrite((m_atomic_t *)&g_mem.hashbuf, (m_atomic_t)item->chain);
 //        meminithashitem(item);
     } else {
+#if (MEMBIGHASHTAB)
         n = 4 * PAGESIZE / memhashsize();
         bsz = 4 * PAGESIZE;
+#elif (MEMSMALLHASHTAB)
+        n = 2 * PAGESIZE / memhashsize();
+        bsz = 2 * PAGESIZE;
+#else
+        n = PAGESIZE / memhashsize();
+        bsz = PAGESIZE;
+#endif
 #if (MEMSTAT)
         g_memstat.nbhash += bsz;
 #endif
@@ -1643,14 +1651,14 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
         if (tls) {
             if (type != MEMBIGBUF) {
                 if (type == MEMSMALLBUF) {
-                    if (tbkt->nbuf > 2) {
+                    if (tbkt->nbuf >= 8) {
                         memdequeuebuftls(buf, tbkt);
                     } else {
                         
                         return;
                     }
                 } else if (type == MEMPAGEBUF) {
-                    if (tbkt->nbuf > 2) {
+                    if (tbkt->nbuf >= 4) {
                         memdequeuebuftls(buf, tbkt);
                     } else {
                         
@@ -1665,7 +1673,7 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
 #endif
         }
 #if (MEMUNMAP)
-        if (gbkt->nbuf > 4) {
+        if (gbkt->nbuf >= 8) {
             if (!tls) {
                 memdequeuebufglob(buf, gbkt);
             }
