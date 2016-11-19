@@ -227,6 +227,11 @@ memprefork(void)
 #if !defined(MEMNOSBRK) || !(MEMNOSBRK)
     memgetlk(&g_mem.heaplk);
 #endif
+    if (g_mem.hash) {
+        for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
+            memlkbit(&g_mem.hash[slot].chain);
+        }
+    }
     for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
 #if (MEMDEBUGDEADLOCK)
         memlkbitln(&g_mem.smallbin[slot]);
@@ -262,11 +267,6 @@ memprefork(void)
 #endif
 #endif
     }
-    if (g_mem.hash) {
-        for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
-            memlkbit(&g_mem.hash[slot].chain);
-        }
-    }
 
     return;
 }
@@ -276,11 +276,6 @@ mempostfork(void)
 {
     MEMWORD_T slot;
 
-    if (g_mem.hash) {
-        for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
-            memrelbit(&g_mem.hash[slot].chain);
-        }
-    }
     for (slot = 0 ; slot < MEMPAGESLOTS ; slot++) {
 #if (MEMDEADBINS)
 #if (MEMDEBUGDEADLOCK)
@@ -315,6 +310,11 @@ mempostfork(void)
 #else
         memrelbit(&g_mem.smallbin[slot].list);
 #endif
+    }
+    if (g_mem.hash) {
+        for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
+            memrelbit(&g_mem.hash[slot].chain);
+        }
     }
 #if !defined(MEMNOSBRK) || !(MEMNOSBRK)
     memrellk(&g_mem.heaplk);
@@ -1653,20 +1653,11 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
         /* queue or reclaim a free buffer */
         if (tls) {
             if (type != MEMBIGBUF) {
-                if (type == MEMSMALLBUF) {
-                    if (tbkt->nbuf >= 8) {
-                        memdequeuebuftls(buf, tbkt);
-                    } else {
-                        
-                        return;
-                    }
-                } else if (type == MEMPAGEBUF) {
-                    if (tbkt->nbuf >= 4) {
-                        memdequeuebuftls(buf, tbkt);
-                    } else {
-                        
-                        return;
-                    }
+                if (tbkt->nbuf >= membktnbuftls(type, slot)) {
+                    memdequeuebuftls(buf, tbkt);
+                } else {
+                    
+                    return;
                 }
             }
 #if (MEMDEBUGDEADLOCK)
@@ -1675,8 +1666,7 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
             memlkbit(&gbkt->list);
 #endif
         }
-#if (MEMUNMAP)
-        if (gbkt->nbuf >= 8) {
+        if (MEMUNMAP && gbkt->nbuf >= membktnbufglob(type, slot)) {
             if (!tls) {
                 memdequeuebufglob(buf, gbkt);
             }
@@ -1692,9 +1682,7 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
             unmapanon(buf, buf->size);
 
             return;
-        }  else
-#endif /* MEMUNMAP */
-        if (tls) {
+        } else if (tls) {
             /* add buffer in front of global list */
             upval = (MEMADR_T)gbkt->list;
             buf->prev = NULL;
