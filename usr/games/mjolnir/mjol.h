@@ -238,29 +238,10 @@ mjolrmchase(struct mjolchr *data)
     return;
 }
 
-typedef struct mjolobj  * mjolcmdfunc(struct mjolchr *chr,
-                                      struct mjolobj *dest);
-typedef struct mjolobj  * mjolcmdmovefunc(struct mjolgame *game,
-                                          struct mjolchr *chr);
-
-extern void               mjolquitsig(int sig);
-extern void               mjolinit(struct mjolgame *game,
-                                   int argc, char *argv[]);
-extern void               mjolgetopt(struct mjolgame *game,
-                                     int argc, char *argv[]);
-extern struct mjolchr   * mjolmkplayer(void);
-extern void               mjolopenscr(struct mjolgame *game);
-extern void               mjolinitcmd(void);
-extern void               mjolinitobj(void);
-extern struct mjolroom ** mjolinitrooms(struct mjolgame *game, long *nroom);
-void                      mjolgendng(struct mjolgame *game);
-extern void               mjoldocmd(struct mjolgame *game, int ch);
-extern long               mjoldoturn(struct mjolgame *game,
-                                     struct mjolchr *data);
-extern long               mjolchaseall(struct mjolgame *game);
-
-extern void               dnginitobjmjol(void);
-extern void               mjolgameloop(struct mjolgame *game);
+typedef long             mjolcmdfunc(struct mjolchr *src,
+                                     struct mjolobj *dest);
+typedef struct mjolobj * mjolcmdmovefunc(struct mjolgame *game,
+                                         struct mjolchr *chr);
 
 #endif /* __MJOLNIR_MJOL_H__ */
 

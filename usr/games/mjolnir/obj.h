@@ -92,14 +92,15 @@ struct mjolobj {
 typedef void mjolfunc_t(struct dnggame *game,
                         struct dngobj *src, struct dngobj *dest);
 #endif
-extern void              dnginitobjmjol(void);
+
 typedef struct mjolobj * mjolmkfunc(void);
-extern struct mjolobj  * mjolmkfloor(void);
-extern struct mjolobj  * mjolmkcorridor(void);
-extern struct mjolobj  * mjolmkdoor(void);
-extern struct mjolobj  * mjolmkhorizwall(void);
-extern struct mjolobj  * mjolmkvertwall(void);
-extern struct mjolobj  * mjolmkstair(void);
+
+extern struct mjolobj * mjolmkfloor(void);
+extern struct mjolobj * mjolmkcorridor(void);
+extern struct mjolobj * mjolmkdoor(void);
+extern struct mjolobj * mjolmkhorizwall(void);
+extern struct mjolobj * mjolmkvertwall(void);
+extern struct mjolobj * mjolmkstair(void);
 
 #endif /* __MJOLNIR_OBJ_H__ */
 

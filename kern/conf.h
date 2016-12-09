@@ -27,7 +27,7 @@
 
 #define IOBUF         1
 #define NEWFONT       1
-#if !defined(BUFNMEG  )
+#if !defined(BUFNMEG)
 #define BUFNMEG       128
 #endif
 #define BUFNBYTE      (BUFNMEG * 1024 * 1024)
@@ -80,7 +80,7 @@
 
 /* planned and developed drivers */
 #define VBE           1         // VBE2 graphics driver
-#define VBEMTRR       1         // map memory write-combining
+#define VBEMTRR       0         // map memory write-combining
 #define PIC           0
 #define IOAPIC        0         // enable I/O APIC support
 #define SMBIOS        0         // SMBIOS (system management) support
@@ -91,8 +91,8 @@
 #define ACPICA        0         // ACPICA
 #define HPET          1         // high precision event timer support
 #define PS2DRV        0         // enable PS/2 mouse and keyboard drivers
-#define KBDUS         1         // PS/2 keyboard with US keymap
-#define PS2KBDSET2    1
+#define KBDUS         0         // PS/2 keyboard with US keymap
+#define PS2KBDSET2    0
 #define VGAGFX        0         // VGA graphics driver
 #define SB16          0         // Soundblaster 16 audio driver
 #define AC97          1         // AC97 audio drivers

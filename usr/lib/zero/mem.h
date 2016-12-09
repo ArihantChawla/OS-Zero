@@ -260,9 +260,9 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMBUFMIDBLKS       128
 #define MEMBUFBIGBLKS       32
 #endif
-#define MEMBUFSMALLBLKS     1992
-#define MEMBUFMIDBLKS       240
-#define MEMBUFBIGBLKS       112
+#define MEMBUFSMALLBLKS     1024
+#define MEMBUFMIDBLKS       256
+#define MEMBUFBIGBLKS       64
 #define MEMBUFMAXBLKS       MEMBUFSMALLBLKS
 #if (!MEMBUFSTACK) && 0
 #define MEMBUFBITMAPWORDS   16
@@ -525,6 +525,20 @@ volatile struct memtls * meminittls(void);
      (ptr)[(ofs) + 2] = (mask),                                         \
      (ptr)[(ofs) + 3] = (mask))
 
+#if defined(MEMHASHSUBTABS) && (MEMHASHSUBTABS)
+struct memhashslot {
+    MEMLK_T          lk;
+    struct memhash **itab;
+};
+#endif
+struct memhash {
+    struct memhash *chain;      // next array in this chain
+    MEMWORD_T       ntab;       // number of occupied slots in this table
+    struct memhash *tab;        // pointer to the item table
+    MEMWORD_T       pad;
+    MEMWORD_T       data;       // base address for the table
+};
+
 #if (MEMMULTITAB)
 
 /* toplevel lookup table item */
@@ -566,9 +580,11 @@ struct memhashlist {
 #endif
 #define MEMHASHNOTFOUND  0
 
+#if 0
 struct memhashsubitem {
     MEMADR_T val;
 };
+#endif
 
 struct memhashitem {
 #if (!MEMHASHSUBTABS)
@@ -580,27 +596,17 @@ struct memhashitem {
 #endif
 #endif
     MEMADR_T               adr;         // allocation address
-#if (MEMHASHSUBTABS)
-    struct memhashsubitem *tab;
-#else
     MEMADR_T               val;         // stored value
-#endif
-};
-
-struct memhash {
-    struct memhash     *chain;  // next array in this chain
-    MEMWORD_T           ntab;   // number of occupied slots in this table
-    struct memhashitem *tab;    // pointer to the item table
-    MEMWORD_T           pad;
-    MEMWORD_T           data;   // base address for the table
 };
 
 /*
  * - we have a 4-word header; adding total of 52 words as 13 hash-table entries
  *   lets us cache-color the table by adding a modulo-9 value to the pointer
  */
-#define MEMHASHBITS        17
+#define MEMHASHBITS        15
 #define MEMHASHITEMS       (1 << MEMHASHBITS)
+#define MEMHASHSUBTABBITS  8
+#define MEMHASHSUBTABITEMS (1 << MEMHASHSUBTABBITS)
 #if (MEMBIGHASHTAB)
 #define MEMHASHARRAYSIZE   (256 * WORDSIZE)
 #elif (MEMSMALLHASHTAB)
@@ -614,18 +620,18 @@ struct memhash {
     ((MEMHASHARRAYSIZE - offsetof(struct memhash, data))                \
      / sizeof(struct memhashitem))
 #define memhashsize()      MEMHASHARRAYSIZE
+#define memhashtabsize()   rounduppow2(MEMHASHSUBTABITEMS * sizeof(struct memhashitem *), \
+                                       PAGESIZE)
 
 #if (MEMHASHSUBTABS)
-#define MEMHASHSUBTABSIZE  MEMHASHARRAYSIZE
-#define MEMHASHSUBTABITEMS (MEMHASHARRAYSIZE / sizeof(struct memhashsubtab))
 #if (MEMHASHSUBTABITEMS == 32)
-#define MEMHASHTABSHIFT    5
+#define MEMHASHTABSHIFT    MEMHASHSUBTABBITS
 #elif (MEMHASHSUBTABITEMS == 64)
-#define MEMHASHTABSHIFT    6
+#define MEMHASHTABSHIFT    MEMHASHSUBTABBITS
 #elif (MEMHASHSUBTABITEMS == 128)
-#define MEMHASHTABSHIFT    7
+#define MEMHASHTABSHIFT    MEMHASHSUBTABBITS
 #elif (MEMHASHSUBTABITEMS == 256)
-#define MEMHASHTABSHIFT    8
+#define MEMHASHTABSHIFT    
 #endif
 #endif /* MEMHASHSUBTABS */
 
@@ -752,7 +758,6 @@ membufinitfree(struct membuf *buf, MEMWORD_T type, MEMWORD_T slot,
     
     return;
 }
-
 
 static __inline__ MEMWORD_T
 membufgetfree(struct membuf *buf)

@@ -14,7 +14,7 @@ i	- immediate
 m	- memory
 
 NOP	// no operation
-NOT     // NOT r/i, r
+NOT     // NOT r
 AND     // AND r/i, r
 OR      // OR r/i, r
 XOR     // XOR r/i, r
@@ -51,3 +51,17 @@ POPA    // POPA
 IN      // IN r/i, r
 OUT     // OUT r, r/i
 HLT     // HLT
+
+V86 Pseudo-I/O Devices
+----------------------
+
+Port	Brief
+----	-----
+0x0000	System Shutdown
+0x0001	Device Configuration (framebuffer etc.)
+0x0002	Interrupt Timer
+0x0003	Keyboard
+0x0004	Mouse
+0x0005	Console/Terminal
+0x0006	Virtual Tape
+
