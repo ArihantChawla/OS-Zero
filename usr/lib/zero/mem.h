@@ -261,7 +261,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMBUFBIGBLKS       32
 #endif
 #define MEMBUFSMALLBLKS     1024
-#define MEMBUFMIDBLKS       256
+#define MEMBUFMIDBLKS       128
 #define MEMBUFBIGBLKS       64
 #define MEMBUFMAXBLKS       MEMBUFSMALLBLKS
 #if (!MEMBUFSTACK) && 0
@@ -559,8 +559,9 @@ struct memitem {
 #elif (MEMNEWHASH)
 
 struct memhashlist {
-    MEMLK_T         lk;
+    m_atomic_t      lk;
     struct memhash *chain;
+    uint8_t         _pad[CLSIZE - sizeof(MEMLK_T) - sizeof(struct memchain *)];
 };
 
 #define MEMHASHDEL (-1)
@@ -589,14 +590,14 @@ struct memhashsubitem {
 struct memhashitem {
 #if (!MEMHASHSUBTABS)
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
-    MEMWORD_T              nref;        // reference count for the page
+    MEMWORD_T nref;     // reference count for the page
 #endif
 #if defined(MEMHASHNACT) && (MEMHASHNACT)
-    MEMWORD_T              nact;        // number of inserts, finds, and deletes
+    MEMWORD_T nact;     // number of inserts, finds, and deletes
 #endif
 #endif
-    MEMADR_T               adr;         // allocation address
-    MEMADR_T               val;         // stored value
+    MEMADR_T  adr;      // allocation address
+    MEMADR_T  val;      // stored value
 };
 
 /*
@@ -1081,7 +1082,7 @@ memgenhashtabadr(MEMWORD_T *adr)
            : (MEMBUFBIGBLKS)))                                          \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMSMALLPAGESLOT)                                 \
-           ? 16                                                          \
+           ? 16                                                         \
            : (((slot) <= MEMMIDPAGESLOT)                                \
               ? 8                                                       \
               : 4))                                                     \
