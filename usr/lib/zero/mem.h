@@ -252,21 +252,26 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 /* number of words in buf freemap */
 //#define MEMBUFBITMAPWORDS  (CLSIZE / WORDSIZE)
 #define MEMBUFBITMAPWORDS                                               \
-    rounduppow2(MEMBUFMAXBLKS / (CHAR_BIT * WORDSIZE), 16)
+    rounduppow2(MEMBUFMAXBLKS / (CHAR_BIT * WORDSIZE), 8)
         
 //#define MEMBUFBITMAPWORDS   32
 #if 0
-#define MEMBUFSMALLBLKS     512
-#define MEMBUFMIDBLKS       128
+#define MEMBUFSMALLBLKS     1024
+#define MEMBUFMIDBLKS       256
 #define MEMBUFBIGBLKS       32
 #endif
+#define MEMSLABSHIFT        18
 #define MEMBUFSMALLBLKS     1024
-#define MEMBUFMIDBLKS       128
-#define MEMBUFBIGBLKS       64
+#define MEMBUFMIDBLKS       512
+#define MEMBUFBIGBLKS       8
+#if 0
+#define MEMBUFSMALLBLKS     (1L << (MEMSLABSHIFT - MEMSMALLSLOT + 2))
+#define MEMBUFMIDBLKS       (1L << (MEMSLABSHIFT - MEMMIDSLOT + 4))
+#define MEMBUFBIGBLKS       8
+#endif
 #define MEMBUFMAXBLKS       MEMBUFSMALLBLKS
-#if (!MEMBUFSTACK) && 0
-#define MEMBUFBITMAPWORDS   16
-#define MEMBUFMAXBLKS       (MEMBUFBITMAPWORDS * WORDSIZE * CHAR_BIT)
+#if (!MEMBUFSTACK)
+//#define MEMBUFMAXBLKS       (MEMBUFBITMAPWORDS * WORDSIZE * CHAR_BIT)
 #else
 //#define MEMBUFBITMAPWORDS   (MEMBUFMAXBLKS / (CHAR_BIT * WORDSIZE))
 /* number of block-bits in buf freemap */
@@ -282,7 +287,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 //#define MEMBIGMINSIZE      (2 * PAGESIZE)
 //#define MEMPAGESLOTS        (MEMWORD(1) << MEMBUFSLOTBITS)
 #define MEMSMALLSLOT        7
-#define MEMMIDSLOT          9
+#define MEMMIDSLOT          PAGESIZELOG2
 //#define MEMBIGSLOT          (MEMSMALLSLOTS - 1)
 #if (MEMBIGPAGES)
 #define MEMSMALLPAGESLOT    32
@@ -296,9 +301,9 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMPAGESLOTS        128
 #endif
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
-#define MEMSMALLMAPSHIFT    23
+#define MEMSMALLMAPSHIFT    22
 //#define MEMBUFMIDMAPSHIFT 22
-#define MEMMIDMAPSHIFT      26
+#define MEMMIDMAPSHIFT      24
 //#define MEMBUFHUGEMAPSHIFT  26
 
 struct membkt {
@@ -604,7 +609,7 @@ struct memhashitem {
  * - we have a 4-word header; adding total of 52 words as 13 hash-table entries
  *   lets us cache-color the table by adding a modulo-9 value to the pointer
  */
-#define MEMHASHBITS        15
+#define MEMHASHBITS        17
 #define MEMHASHITEMS       (1 << MEMHASHBITS)
 #define MEMHASHSUBTABBITS  8
 #define MEMHASHSUBTABITEMS (1 << MEMHASHSUBTABBITS)
