@@ -209,11 +209,12 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
         (slot) = _res;                                                  \
     } while (0)
 
-#define MEMSMALLTLSLIM      (32 * 1024 * 1024)
-#define MEMPAGETLSLIM       (16 * 1024 * 1024)
-#define MEMSMALLGLOBLIM     (~MEMWORD(0))
-#define MEMPAGEGLOBLIM      (64 * 1024 * 1024)
-#define MEMBIGGLOBLIM       (128 * 1024 * 1024)
+#define MEMSMALLTLSLIM      (8 * 1024 * 1024)
+#define MEMPAGETLSLIM       (4 * 1024 * 1024)
+//#define MEMSMALLGLOBLIM     (~MEMWORD(0))
+#define MEMSMALLGLOBLIM     (64 * 1024 * 1024)
+#define MEMPAGEGLOBLIM      (16 * 1024 * 1024)
+#define MEMBIGGLOBLIM       (32 * 1024 * 1024)
 
 /* determine minimal required alignment for blocks */
 #if defined(__BIGGEST_ALIGNMENT__)
@@ -256,14 +257,14 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
         
 //#define MEMBUFBITMAPWORDS   32
 #if 0
-#define MEMBUFSMALLBLKS     1024
-#define MEMBUFMIDBLKS       256
+#define MEMBUFSMALLBLKS     512
+#define MEMBUFMIDBLKS       128
 #define MEMBUFBIGBLKS       32
 #endif
 #define MEMSLABSHIFT        18
-#define MEMBUFSMALLBLKS     1024
-#define MEMBUFMIDBLKS       512
-#define MEMBUFBIGBLKS       8
+#define MEMBUFSMALLBLKS     512
+#define MEMBUFMIDBLKS       64
+#define MEMBUFBIGBLKS       16
 #if 0
 #define MEMBUFSMALLBLKS     (1L << (MEMSLABSHIFT - MEMSMALLSLOT + 2))
 #define MEMBUFMIDBLKS       (1L << (MEMSLABSHIFT - MEMMIDSLOT + 4))
@@ -609,7 +610,7 @@ struct memhashitem {
  * - we have a 4-word header; adding total of 52 words as 13 hash-table entries
  *   lets us cache-color the table by adding a modulo-9 value to the pointer
  */
-#define MEMHASHBITS        17
+#define MEMHASHBITS        16
 #define MEMHASHITEMS       (1 << MEMHASHBITS)
 #define MEMHASHSUBTABBITS  8
 #define MEMHASHSUBTABITEMS (1 << MEMHASHSUBTABBITS)
@@ -847,6 +848,8 @@ membuffreerel(struct membuf *buf)
 #define memadjptr(ptr, sz)                                              \
     (&((MEMPTR_T)(ptr))[sz])
 
+#if (MEMCACHECOLOR)
+
 /* compute adr + adr % 9 (# of cachelines in offset, aligned to cl boundary) */
 static __inline__ MEMWORD_T *
 memgentlsadr(MEMWORD_T *adr)
@@ -991,12 +994,21 @@ memgenhashtabadr(MEMWORD_T *adr)
     return adr;
 }
 
+#else
+
+#define memgentlsadr(adr)     (adr)
+#define memgenadr(adr)        (adr)
+//#define memgenofs(adr)        (adr)
+#define memgenhashtabadr(adr) (adr)
+
+#endif /* MEMCACHECOLOR */
+
 /*
  * for 32-bit pointers, we can use a flat lookup table for bookkeeping pointers
  * - for bigger pointers, we use a hash (or multilevel) table
  */
 #if ((MEMNEWHASH) || (MEMHASH)) && !defined(MEMHASHITEMS)
-#define MEMHASHBITS   16
+#define MEMHASHBITS   14
 #define MEMHASHITEMS  (MEMWORD(1) << MEMHASHBITS)
 #elif (MEMMULTITAB)
 #if (PTRBITS > 32)

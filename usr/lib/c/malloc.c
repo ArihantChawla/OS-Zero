@@ -86,23 +86,36 @@ _free(void *ptr)
     void          * (*sysfree)(void *);
 
     if (!g_memtls) {
+#if 0
         meminittls();
         if (!g_memtls) {
 
             exit(ENOMEM);
         }
+#endif
+
+        return;
     }
 #if (MEMMULTITAB)
     memfindbuf(ptr, 1);
 #else
     desc = membufop(ptr, MEMHASHDEL, NULL, 0);
+#endif
 #if (MEMDEBUG) && 0
     crash(desc != MEMHASHNOTFOUND);
 #endif
     if (desc) {
         VALGRINDFREE(ptr);
-    }
+#if 0
+    } else {
+        sysfree = g_sysalloc.free;
+        if (!sysfree) {
+            sysfree = dlsym(RTLD_NEXT, "free");
+            g_sysalloc.free = sysfree;
+        }
+        sysfree(ptr);
 #endif
+    }
 
     return;
 }
@@ -187,7 +200,6 @@ _realloc(void *ptr,
             if ((rel) && (ptr)) {
                 _free(ptr);
             }
-#if 0
         } else {
             sysrealloc = g_sysalloc.realloc;
             if (!sysrealloc) {
@@ -195,7 +207,6 @@ _realloc(void *ptr,
                 g_sysalloc.realloc = sysrealloc;
             }
             retptr = sysrealloc(ptr, size);
-#endif
         }
     }
     if (!retptr) {
