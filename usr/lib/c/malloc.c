@@ -64,8 +64,8 @@ _malloc(size_t size, size_t align, long flg)
         }
     }
 #if (MEMDEBUG)
-    crash(ptr != NULL);
-    crash (!((MEMADR_T)ptr & (aln - 1)));
+    crash(!ptr);
+    crash ((MEMADR_T)ptr & (aln - 1));
 #endif
 #if 0
     fprintf(stderr, "_MALLOC(%ld, %lx, %lx): %p\n",
@@ -192,14 +192,13 @@ _realloc(void *ptr,
             retptr = _malloc(size, MEMMINALIGN, 0);
             if (retptr) {
                 memcpy(retptr, ptr, sz);
-                if (desc) {
-                    _free(ptr);
-                }
+                _free(ptr);
                 ptr = NULL;
             }
             if ((rel) && (ptr)) {
                 _free(ptr);
             }
+#if 0
         } else {
             sysrealloc = g_sysalloc.realloc;
             if (!sysrealloc) {
@@ -207,6 +206,7 @@ _realloc(void *ptr,
                 g_sysalloc.realloc = sysrealloc;
             }
             retptr = sysrealloc(ptr, size);
+#endif
         }
     }
     if (!retptr) {
@@ -226,7 +226,11 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 __attribute__ ((malloc))
 #endif
+#if defined(MALLOCGNULD)
+__wrap_malloc(size_t size)
+#else
 malloc(size_t size)
+#endif
 {
     void *ptr = _malloc(size, MEMMINALIGN, 0);
 
@@ -239,7 +243,11 @@ __attribute__ ((alloc_size(1, 2)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 __attribute__ ((malloc))
 #endif
+#if defined(MALLOCGNULD)
+__wrap_calloc(size_t n, size_t size)
+#else
 calloc(size_t n, size_t size)
+#endif
 {
     size_t  sz = n * size;
     void   *ptr = NULL;
@@ -261,7 +269,11 @@ void *
 __attribute__ ((alloc_size(2)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 #endif
+#if defined(MALLOCGNULD)
+__wrap_realloc(void *ptr, size_t size)
+#else
 realloc(void *ptr, size_t size)
+#endif
 {
     void *   retptr = _realloc(ptr, size, 0);
 
@@ -269,7 +281,11 @@ realloc(void *ptr, size_t size)
 }
 
 void
+#if defined(MALLOCGNULD)
+__wrap_free(void *ptr)
+#else
 free(void *ptr)
+#endif
 {
     if (ptr) {
         _free(ptr);
@@ -284,9 +300,11 @@ int
 __attribute__ ((alloc_size(3)))
 __attribute__ ((alloc_align(2)))
 #endif
-posix_memalign(void **ret,
-               size_t align,
-               size_t size)
+#if (MALLOCGNULD)
+__wrap_posix_memalign(void **ret, size_t align, size_t size)
+#else
+posix_memalign(void **ret, size_t align, size_t size)
+#endif
 {
     void *ptr = NULL;
 
@@ -303,7 +321,7 @@ posix_memalign(void **ret,
         }
     }
 #if (MEMDEBUG)
-    crash(ptr != NULL);
+    crash(!ptr);
 #endif
     *ret = ptr;
 
@@ -317,8 +335,11 @@ void *
 __attribute__ ((alloc_size(2)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 #endif
-reallocf(void *ptr,
-         size_t size)
+#if defined(MALLOCGNULD)
+__wrap_reallocf(void *ptr, size_t size)
+#else
+reallocf(void *ptr, size_t size)
+#endif
 {
     void *retptr;
 
@@ -331,7 +352,7 @@ reallocf(void *ptr,
         return NULL;
     }
 #if (MEMDEBUG)
-    crash(retptr != NULL);
+    crash(!retptr);
 #endif
 
     return retptr;
@@ -345,8 +366,11 @@ __attribute__ ((alloc_size(2)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 __attribute__ ((malloc))
 #endif
-memalign(size_t align,
-         size_t size)
+#if defined(MALLOCGNULD)
+__wrap_memalign(size_t align, size_t size)
+#else
+memalign(size_t align, size_t size)
+#endif
 {
     void   *ptr = NULL;
 
@@ -356,12 +380,13 @@ memalign(size_t align,
         ptr = _malloc(size, align, 0);
     }
 #if (MEMDEBUG)
-    crash(ptr != NULL);
+    crash(!ptr);
 #endif
 
     return ptr;
 }
 
+void *
 #if defined(_ISOC11_SOURCE)
 #if defined(__GNUC__)
 __attribute__ ((alloc_align(1)))
@@ -369,9 +394,11 @@ __attribute__ ((alloc_size(2)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 __attribute__ ((malloc))
 #endif
-void *
-aligned_alloc(size_t align,
-              size_t size)
+#if defined(MALLOCGNULD)
+__wrap_aligned_alloc(size_t align, size_t size)
+#else
+aligned_alloc(size_t align, size_t size)
+#endif
 {
     void   *ptr = NULL;
 
@@ -381,7 +408,7 @@ aligned_alloc(size_t align,
         ptr = _malloc(size, align, 0);
     }
 #if (MEMDEBUG)
-    crash(ptr != NULL);
+    crash(!ptr);
 #endif
 
     return ptr;
@@ -399,13 +426,17 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(PAGESIZE)))
 __attribute__ ((malloc))
 #endif
+#if defined(MALLOCGNULD)
+__wrap_valloc(size_t size)
+#else
 valloc(size_t size)
+#endif
 {
     void *ptr;
 
     ptr = _malloc(size, PAGESIZE, 0);
 #if (MEMDEBUG)
-    crash(ptr != NULL);
+    crash(!ptr);
 #endif
     
     return ptr;
@@ -419,13 +450,17 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(PAGESIZE)))
 __attribute__ ((malloc))
 #endif
+#if defined(GNUMALLOCLD)
+__wrap_pvalloc(size_t size)
+#else
 pvalloc(size_t size)
+#endif
 {
     size_t  sz = rounduppow2(size, PAGESIZE);
     void   *ptr = _malloc(sz, PAGESIZE, 0);
 
 #if (MEMDEBUG)
-    crash(ptr != NULL);
+    crash(!ptr);
 #endif
 
     return ptr;
@@ -441,8 +476,11 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 __attribute__ ((malloc))
 #endif
-_aligned_malloc(size_t size,
-                size_t align)
+#if defined(MALLOCGNULD)
+__wrap__aligned_malloc(size_t size, size_t align)
+#else
+_aligned_malloc(size_t size, size_t align)
+#endif
 {
     void   *ptr = NULL;
 
@@ -452,14 +490,18 @@ _aligned_malloc(size_t size,
         ptr = _malloc(size, align, 0);
     }
 #if (MEMDEBUG)
-    crash(ptr != NULL);
+    crash(!ptr);
 #endif
 
     return ptr;
 }
 
 void
+#if defined(MALLOCGNULD)
+__wrap__aligned_free(void *ptr)
+#else
 _aligned_free(void *ptr)
+#endif
 {
     if (ptr) {
         _free(ptr);
@@ -479,8 +521,11 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 __attribute__ ((malloc))
 #endif
-_mm_malloc(size_t size,
-           size_t align)
+#if defined(MALLOCGNULD)
+__wrap__mm_malloc(size_t size, size_t align)
+#else
+_mm_malloc(size_t size, size_t align)
+#endif
 {
     void   *ptr = NULL;
 
@@ -490,14 +535,18 @@ _mm_malloc(size_t size,
         ptr = _malloc(size, align, 0);
     }
 #if (MEMDEBUG)
-    crash(ptr != NULL);
+    crash(!ptr);
 #endif
 
     return ptr;
 }
 
 void
+#if defined(MALLOCGNULD)
+__wrap__mm_free(void *ptr)
+#else
 _mm_free(void *ptr)
+#endif
 {
     if (ptr) {
         _free(ptr);
@@ -509,7 +558,11 @@ _mm_free(void *ptr)
 #endif /* _INTEL_SOURCE && !__GNUC__ */
 
 void
+#if defined(MALLOCGNULD)
+__wrap_cfree(void *ptr)
+#else
 cfree(void *ptr)
+#endif
 {
     if (ptr) {
         _free(ptr);
