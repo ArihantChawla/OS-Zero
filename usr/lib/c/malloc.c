@@ -450,7 +450,7 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(PAGESIZE)))
 __attribute__ ((malloc))
 #endif
-#if defined(GNUMALLOCLD)
+#if defined(MALLOCGNULD)
 __wrap_pvalloc(size_t size)
 #else
 pvalloc(size_t size)
@@ -647,5 +647,26 @@ malloc_size(void *ptr)
     }
 
     return sz;
+}
+
+size_t
+xmalloc(size_t size)
+{
+
+    return malloc(size);
+}
+
+size_t
+xcalloc(size_t n, size_t size)
+{
+
+    return calloc(n, size);
+}
+
+size_t
+xrealloc(void *ptr, size_t size)
+{
+
+    return realloc(ptr, size);
 }
 
