@@ -332,7 +332,7 @@ NORETURN
 void
 memexit(int sig)
 {
-#if (MEMSTAT) && 0
+#if (MEMSTAT)
     memprintstat();
 #endif
 
@@ -343,7 +343,7 @@ NORETURN
 void
 memquit(int sig)
 {
-#if (MEMSTAT) && 0
+#if (MEMSTAT)
     memprintstat();
 #endif
     fprintf(stderr, "CAUGHT signal %d, aborting\n", sig);

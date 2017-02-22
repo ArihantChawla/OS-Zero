@@ -209,11 +209,11 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
         (slot) = _res;                                                  \
     } while (0)
 
-#define MEMSMALLTLSLIM      (32 * 1024 * 1024)
-#define MEMPAGETLSLIM       (64 * 1024 * 1024)
-#define MEMSMALLGLOBLIM     (16 * 1024 * 1024)
-#define MEMPAGEGLOBLIM      (32 * 1024 * 1024)
-#define MEMBIGGLOBLIM       (64 * 1024 * 1024)
+#define MEMSMALLTLSLIM      (8 * 1024 * 1024)
+#define MEMPAGETLSLIM       (16 * 1024 * 1024)
+#define MEMSMALLGLOBLIM     (32 * 1024 * 1024)
+#define MEMPAGEGLOBLIM      (64 * 1024 * 1024)
+#define MEMBIGGLOBLIM       (128 * 1024 * 1024)
 
 /* determine minimal required alignment for blocks */
 #if defined(__BIGGEST_ALIGNMENT__)
@@ -256,7 +256,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
     rounduppow2(MEMBUFMAXBLKS / (CHAR_BIT * WORDSIZE), 8)
         
 //#define MEMBUFBITMAPWORDS   32
-#define MEMSLABSHIFT        18
+#define MEMSLABSHIFT        20
 #define MEMBUFMAXBLKS       (1L << (MEMSLABSHIFT - MEMALIGNSHIFT))
 #if (!MEMBUFSTACK)
 //#define MEMBUFMAXBLKS       (MEMBUFBITMAPWORDS * WORDSIZE * CHAR_BIT)
@@ -597,7 +597,11 @@ struct memhashitem {
  * - we have a 4-word header; adding total of 52 words as 13 hash-table entries
  *   lets us cache-color the table by adding a modulo-9 value to the pointer
  */
+#if (MEMBIGHASH)
+#define MEMHASHBITS        20
+#else
 #define MEMHASHBITS        17
+#endif
 #define MEMHASHITEMS       (1 << MEMHASHBITS)
 #if (MALLOCHASHSUBTABS)
 #define MEMHASHSUBTABBITS  8
@@ -1100,6 +1104,25 @@ memgenhashtabadr(MEMWORD_T *adr)
         : (((slot) <= MEMSMALLMAPSHIFT)                                 \
            ? 8                                                          \
            : 1)))
+#elif (MEMOPTBUF)
+#define memnbufblk(type, slot)                                          \
+    (((type) == MEMSMALLBUF)                                            \
+     ? (((slot) <= MEMSMALLSLOT)                                        \
+        ? (1L << (MEMSLABSHIFT - (slot)))                               \
+        : (((type <= MEMMIDSLOT))                                       \
+           ? (1L << (MEMSLABSHIFT - (slot) + 1))                        \
+           : (1L << (MEMSLABSHIFT - (slot) + 2))))                      \
+     : (((type) == MEMPAGEBUF)                                          \
+        ? (((slot) <= MEMSMALLPAGESLOT)                                 \
+           ? 32                                                         \
+           : (((slot) <= MEMMIDPAGESLOT)                                \
+              ? 16                                                      \
+              : 8))                                                     \
+        : (((slot) <= MEMSMALLMAPSHIFT)                                 \
+           ? 16                                                         \
+           : (((slot) <= MEMMIDMAPSHIFT)                                \
+              ? 8                                                       \
+              : 2))))
 #else
 #define memnbufblk(type, slot)                                          \
     (((type) == MEMSMALLBUF)                                            \
