@@ -256,7 +256,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
     rounduppow2(MEMBUFMAXBLKS / (CHAR_BIT * WORDSIZE), 8)
         
 //#define MEMBUFBITMAPWORDS   32
-#define MEMSLABSHIFT        20
+#define MEMSLABSHIFT        18
 #define MEMBUFMAXBLKS       (1L << (MEMSLABSHIFT - MEMALIGNSHIFT))
 #if (!MEMBUFSTACK)
 //#define MEMBUFMAXBLKS       (MEMBUFBITMAPWORDS * WORDSIZE * CHAR_BIT)
@@ -291,7 +291,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
 #define MEMSMALLMAPSHIFT    22
 //#define MEMBUFMIDMAPSHIFT 22
-#define MEMMIDMAPSHIFT      26
+#define MEMMIDMAPSHIFT      24
 //#define MEMBUFHUGEMAPSHIFT  26
 
 struct membkt {
@@ -1114,15 +1114,15 @@ memgenhashtabadr(MEMWORD_T *adr)
            : (1L << (MEMSLABSHIFT - (slot) + 2))))                      \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMSMALLPAGESLOT)                                 \
-           ? 32                                                         \
+           ? 128                                                        \
            : (((slot) <= MEMMIDPAGESLOT)                                \
-              ? 16                                                      \
-              : 8))                                                     \
+              ? 64                                                      \
+              : 32))                                                    \
         : (((slot) <= MEMSMALLMAPSHIFT)                                 \
-           ? 16                                                         \
+           ? 32                                                         \
            : (((slot) <= MEMMIDMAPSHIFT)                                \
-              ? 8                                                       \
-              : 2))))
+              ? 16                                                      \
+              : 4))))
 #else
 #define memnbufblk(type, slot)                                          \
     (((type) == MEMSMALLBUF)                                            \
