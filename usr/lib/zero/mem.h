@@ -132,52 +132,19 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 /* use the low-order bit of the word or pointer to lock data */
 #define MEMLKBITID      0
 #define MEMLKBIT        (MEMWORD(1) << MEMLKBITID)
-#if (MEMDEBUGDEADLOCK)
-#if (MEMDEBUGLOCK)
-#define memlkbitln(ptr)                                                 \
-    do {                                                                \
-        do {                                                            \
-            fprintf(stderr, "LK(%ld): owned by line %d\n", __LINE__,    \
-                    (ptr)->line);                                       \
-        } while (m_cmpsetbit((m_atomic_t *)&(ptr)->list, MEMLKBITID));  \
-        (ptr)->line = __LINE__;                                         \
-    } while (0)
-#define memrelbitln(ptr)                                                \
-    do {                                                                \
-        (ptr)->line = -1;                                               \
-        m_clrbit((m_atomic_t *)&(ptr)->list, MEMLKBITID);               \
-    } while (0)
-#else
-#define memlkbitln(ptr)                                                 \
-    do {                                                                \
-        do {                                                            \
-            ;                                                           \
-        } while (m_cmpsetbit((m_atomic_t *)&(ptr)->list, MEMLKBITID));  \
-        (ptr)->line = __LINE__;                                         \
-    } while (0)
-#define memrelbitln(ptr)                                                \
-    do {                                                                \
-        (ptr)->line = -1;                                               \
-        m_clrbit((m_atomic_t *)&(ptr)->list, MEMLKBITID);               \
-    } while (0)
-#endif
-#endif
-#if (MEMDEBUGLOCK)
-#define memlkbit(ptr)                                                   \
-    do {                                                                \
-        fprintf(stderr, "LK: %s: %d\n", __FILE__, __LINE__);            \
-    } while (m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID))
-#define memrelbit(ptr) (fprintf(stderr, "UNLK: %s: %d\n", __FILE__, __LINE__), \
-                        m_clrbit((m_atomic_t *)ptr, MEMLKBIT))
-#else
+
 #define memtrylkbit(ptr)                                                \
     (!m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID))
 #define memlkbit(ptr)                                                   \
     do {                                                                \
-        ;                                                               \
-    } while (m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID))
-#define memrelbit(ptr) m_clrbit((m_atomic_t *)ptr, MEMLKBITID)
-#endif
+        if (!m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID)) {              \
+            m_waitint();                                                \
+        } else {                                                        \
+                                                                        \
+            break;                                                      \
+        }                                                               \
+    } while (1)
+#define memrelbit(ptr) m_cmpclrbit((m_atomic_t *)ptr, MEMLKBITID)
 
 #if (WORDSIZE == 4)
 #define memcalcslot(sz, slot)                                           \
@@ -209,11 +176,11 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
         (slot) = _res;                                                  \
     } while (0)
 
-#define MEMSMALLTLSLIM      (8 * 1024 * 1024)
-#define MEMPAGETLSLIM       (16 * 1024 * 1024)
+#define MEMSMALLTLSLIM      (4 * 1024 * 1024)
+#define MEMPAGETLSLIM       (8 * 1024 * 1024)
 #define MEMSMALLGLOBLIM     (32 * 1024 * 1024)
 #define MEMPAGEGLOBLIM      (64 * 1024 * 1024)
-#define MEMBIGGLOBLIM       (128 * 1024 * 1024)
+#define MEMBIGGLOBLIM       (256 * 1024 * 1024)
 
 /* determine minimal required alignment for blocks */
 #if defined(__BIGGEST_ALIGNMENT__)
@@ -233,10 +200,10 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 /* maximum small buf size (MEMBUFMAXBLKS << MEMMAXSMALLSLOT) + bookkeeping */
 #define MEMSMALLSLOTS       rounduppow2(MEMMAXSMALLSLOT, 8)
 #if (MEMBIGPAGES)
-#define MEMMAXSMALLSLOT     (PAGESIZELOG2 - 1)
+//#define MEMMAXSMALLSLOT     (PAGESIZELOG2 - 1)
 #else
 //#define MEMMAXSMALLSLOT     (PAGESIZELOG2 - 1)
-#define MEMMAXSMALLSLOT     (PAGESIZELOG2 + 1)
+#define MEMMAXSMALLSLOT     (PAGESIZELOG2 + 4)
 #endif
 /* NOTES
  * -----
@@ -280,12 +247,12 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #if (MEMBIGPAGES)
 #define MEMSMALLPAGESLOT    32
 #define MEMMIDPAGESLOT      64
-#define MEMBIGPAGESLOT      128
-#define MEMPAGESLOTS        256
+#define MEMBIGPAGESLOT      256
+#define MEMPAGESLOTS        512
 #else
-#define MEMSMALLPAGESLOT    8
-#define MEMMIDPAGESLOT      32
-#define MEMBIGPAGESLOT      128
+#define MEMSMALLPAGESLOT    16
+#define MEMMIDPAGESLOT      64
+#define MEMBIGPAGESLOT      256
 #define MEMPAGESLOTS        512
 #endif
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
@@ -607,7 +574,9 @@ struct memhashitem {
 #define MEMHASHSUBTABBITS  8
 #define MEMHASHSUBTABITEMS (1 << MEMHASHSUBTABBITS)
 #endif
-#if (MEMBIGHASHTAB)
+#if (MEMHUGEHASHTAB)
+#define MEMHASHARRAYSIZE   (512 * WORDSIZE)
+#elif (MEMBIGHASHTAB)
 #define MEMHASHARRAYSIZE   (256 * WORDSIZE)
 #elif (MEMSMALLHASHTAB)
 #define MEMHASHARRAYSIZE   (64 * WORDSIZE)
@@ -743,12 +712,14 @@ membufinitfree(struct membuf *buf, MEMWORD_T type, MEMWORD_T slot,
     MEMWORD_T   bsz = membufblksize(buf, type, slot);
     MEMBLKID_T *stk = buf->stk;
     MEMBLKID_T  id;
-    MEMWORD_T   cur;
+//    MEMWORD_T   cur;
 
     buf->nfree = nblk;
     buf->stktop = 0;
     cur = 0;
-//    buf->stklim = nblk;
+#if (MEMBUFSTACK)
+    buf->stklim = nblk;
+#endif
 #if 0
     id = 0;
     while (cur < nblk) {
@@ -758,8 +729,8 @@ membufinitfree(struct membuf *buf, MEMWORD_T type, MEMWORD_T slot,
     }
 #endif
     while (cur < nblk) {
-        stk[cur] = id;
-        cur++;
+        stk[id] = id;
+        id++;
     }
     
     return;
@@ -1065,7 +1036,7 @@ memgenhashtabadr(MEMWORD_T *adr)
 #define membufblkofs(nblk)                                              \
     (rounduppow2(membufhdrsize() + (nblk) * sizeof(MEMPTR_T), PAGESIZE))
 #endif
-#define memusesmallbuf(sz)     ((sz) <= (PAGESIZE << 1))
+#define memusesmallbuf(sz)     ((sz) <= (PAGESIZE << 3))
 #if (MEMBIGPAGES)
 #define memusepagebuf(sz)      ((sz) <= (PAGESIZE * MEMPAGESLOTS))
 #define mempagebufsize(slot, nblk)                                      \

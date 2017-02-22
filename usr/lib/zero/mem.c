@@ -729,14 +729,14 @@ memgethashitem(void)
 //        meminithashitem(item);
     } else {
 #if (MEMBIGHASHTAB)
+        n = 64 * PAGESIZE / memhashsize();
+        bsz = 64 * PAGESIZE;
+#elif (MEMSMALLHASHTAB)
         n = 16 * PAGESIZE / memhashsize();
         bsz = 16 * PAGESIZE;
-#elif (MEMSMALLHASHTAB)
-        n = 2 * PAGESIZE / memhashsize();
-        bsz = 2 * PAGESIZE;
 #elif (MEMTINYHASHTAB)
-        n = PAGESIZE / memhashsize();
-        bsz = PAGESIZE;
+        n = 4 * PAGESIZE / memhashsize();
+        bsz = 4 * PAGESIZE;
 #else
         n = 8 * PAGESIZE / memhashsize();
         bsz = 8 * PAGESIZE;
