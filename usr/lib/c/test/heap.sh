@@ -9,6 +9,7 @@ CCFLAGS="-D_GNU_SOURCE -D_FORTIFY_SOURCE=2 -Wall -Wundef -Wextra -Wpointer-arith
 
 # As of October 24 2011, gcc -O2 produces slower code than -O // vendu
 # - same thing with -finline-functions and -funroll-loops
+# UPDATE February 22 2017, -finline-functions is worth it :)
 $CC $CCFLAGS $CCOPTFLAGS -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -I../.. -o heap heap.c -pthread
 $CC $CCFLAGS $CCOPTFLAGS -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -I../.. -o llheap lockless_allocator/ll_alloc.c heap.c -pthread
 $CC $CCFLAGS $CCOPTFLAGS -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -I../.. -o tcheap heap.c -Wl,-L/usr/local/lib -ltcmalloc -pthread
