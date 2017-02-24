@@ -179,7 +179,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMSMALLTLSLIM      (8 * 1024 * 1024)
 #define MEMPAGETLSLIM       (16 * 1024 * 1024)
 #define MEMSMALLGLOBLIM     (128 * 1024 * 1024)
-#define MEMPAGEGLOBLIM      (128 * 1024 * 1024)
+#define MEMPAGEGLOBLIM      (256 * 1024 * 1024)
 #define MEMBIGGLOBLIM       (1024 * 1024 * 1024)
 
 /* determine minimal required alignment for blocks */
