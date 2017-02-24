@@ -649,6 +649,8 @@ malloc_size(void *ptr)
     return sz;
 }
 
+#if 0
+
 size_t
 xmalloc(size_t size)
 {
@@ -669,4 +671,6 @@ xrealloc(void *ptr, size_t size)
 
     return realloc(ptr, size);
 }
+
+#endif
 

@@ -361,7 +361,7 @@ meminit(void)
 
 //    fprintf(stderr, "MEMHASHARRAYITEMS == %d\n", MEMHASHARRAYITEMS);
 //    spinlk(&g_mem.initlk);
-#if 0
+#if (MEMSIGNAL)
     signal(SIGQUIT, memexit);
     signal(SIGINT, memexit);
     signal(SIGTERM, memexit);
@@ -1772,7 +1772,7 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
             memlkbit(&gbkt->list);
 #endif
         }
-        if (MEMUNMAP && gbkt->nbuf >= membktnbufglob(type, slot)) {
+        if ((MEMUNMAP) && gbkt->nbuf >= membktnbufglob(type, slot)) {
             if (!tls) {
                 memdequeuebufglob(buf, gbkt);
             }
