@@ -141,8 +141,8 @@ _realloc(void *ptr,
     MEMADR_T          desc = 0;
     struct membuf    *buf;
 #endif
-    MEMUWORD_T        type;
-    MEMUWORD_T        slot;
+    MEMWORD_T         type;
+    MEMWORD_T         slot;
     size_t            sz;
 //    void          * (*sysrealloc)(void *, size_t);
     void          * (*sysrealloc)(void *, size_t);
@@ -583,8 +583,8 @@ malloc_usable_size(void *ptr)
     struct membuf *buf = (struct membuf *)desc;
 #endif
     size_t         sz = 0;
-    MEMUWORD_T     type;
-    MEMUWORD_T     slot;
+    MEMWORD_T      type;
+    MEMWORD_T      slot;
 
     if (buf) {
         type = memgetbuftype(buf);

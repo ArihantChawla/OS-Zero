@@ -176,10 +176,10 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
         (slot) = _res;                                                  \
     } while (0)
 
-#define MEMSMALLTLSLIM      (8 * 1024 * 1024)
-#define MEMPAGETLSLIM       (16 * 1024 * 1024)
-#define MEMSMALLGLOBLIM     (128 * 1024 * 1024)
-#define MEMPAGEGLOBLIM      (256 * 1024 * 1024)
+#define MEMSMALLTLSLIM      (16 * 1024 * 1024)
+#define MEMPAGETLSLIM       (64 * 1024 * 1024)
+#define MEMSMALLGLOBLIM     (256 * 1024 * 1024)
+#define MEMPAGEGLOBLIM      (512 * 1024 * 1024)
 #define MEMBIGGLOBLIM       (1024 * 1024 * 1024)
 
 /* determine minimal required alignment for blocks */
