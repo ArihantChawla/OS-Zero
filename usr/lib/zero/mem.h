@@ -1048,12 +1048,12 @@ memgenhashtabadr(MEMWORD_T *adr)
             : (MEMSLABSHIFT - (slot) + 2))))                            \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMSMALLPAGESLOT)                                 \
-           ? 32                                                         \
+           ? 64                                                         \
            : (((slot) <= MEMMIDPAGESLOT)                                \
-              ? 16                                                      \
+              ? 32                                                      \
               : (((slot) <= MEMBIGPAGESLOT)                             \
-                 ? 8                                                    \
-                 : 4)))                                                 \
+                 ? 16                                                    \
+                 : 8)))                                                 \
         : (((slot) <= MEMSMALLMAPSLOT)                                  \
            ? 16                                                         \
            : (((slot) <= MEMMIDMAPSLOT)                                 \
