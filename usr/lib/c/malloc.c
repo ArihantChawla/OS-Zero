@@ -637,8 +637,8 @@ malloc_size(void *ptr)
     struct membuf *buf = (struct membuf *)desc;
 #endif
     size_t         sz = 0;
-    MEMUWORD_T     type;
-    MEMUWORD_T     slot;
+    MEMWORD_T      type;
+    MEMWORD_T      slot;
 
     if (buf) {
         type = memgetbuftype(buf);
