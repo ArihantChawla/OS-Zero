@@ -38,7 +38,7 @@ memreltls(void *arg)
     MEMWORD_T               slot;
 //    MEMWORD_T               bufsz;
     MEMWORD_T               nbuf;
-    MEMWORD_T               nb;
+//    MEMWORD_T               nb;
     struct membuf          *buf;
     struct membuf          *head;
     MEMADR_T                upval;
@@ -197,7 +197,7 @@ meminittls(void)
 #if (MEMDYNTLS)
     tls = mapanon(0, memtlssize());
     if (tls != MAP_FAILED) {
-        adr = (struct memtls *)memgentlsadr((MEMUWORD_T *)tls);
+        adr = (struct memtls *)memgentlsadr((MEMWORD_T *)tls);
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
         val = memgetprioval();
         priolkinit(&adr->priolkdata, val);

@@ -26,10 +26,7 @@
 #include <zero/asm.h>
 //#if defined(__KERNEL__) && (__MTKERNEL__)
 #if !defined(__KERNEL__)
-#if defined(PTHREAD)
-/* on some Linux setups, the pthread library declares no prototype */
-extern int pthread_yield(void);
-#elif defined(__linux__)
+#if !defined(PTHREAD) && defined(__linux__)
 #include <sched.h>
 #endif
 #endif /* !defined(__KERNEL__) */

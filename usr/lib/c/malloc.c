@@ -226,11 +226,7 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 __attribute__ ((malloc))
 #endif
-#if defined(MALLOCGNULD)
-__wrap_malloc(size_t size)
-#else
 malloc(size_t size)
-#endif
 {
     void *ptr = _malloc(size, MEMMINALIGN, 0);
 
@@ -243,11 +239,7 @@ __attribute__ ((alloc_size(1, 2)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 __attribute__ ((malloc))
 #endif
-#if defined(MALLOCGNULD)
-__wrap_calloc(size_t n, size_t size)
-#else
 calloc(size_t n, size_t size)
-#endif
 {
     size_t  sz = n * size;
     void   *ptr = NULL;
@@ -269,11 +261,7 @@ void *
 __attribute__ ((alloc_size(2)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 #endif
-#if defined(MALLOCGNULD)
-__wrap_realloc(void *ptr, size_t size)
-#else
 realloc(void *ptr, size_t size)
-#endif
 {
     void *   retptr = _realloc(ptr, size, 0);
 
@@ -281,11 +269,7 @@ realloc(void *ptr, size_t size)
 }
 
 void
-#if defined(MALLOCGNULD)
-__wrap_free(void *ptr)
-#else
 free(void *ptr)
-#endif
 {
     if (ptr) {
         _free(ptr);
@@ -300,11 +284,7 @@ int
 __attribute__ ((alloc_size(3)))
 __attribute__ ((alloc_align(2)))
 #endif
-#if (MALLOCGNULD)
-__wrap_posix_memalign(void **ret, size_t align, size_t size)
-#else
 posix_memalign(void **ret, size_t align, size_t size)
-#endif
 {
     void *ptr = NULL;
 
@@ -335,11 +315,7 @@ void *
 __attribute__ ((alloc_size(2)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 #endif
-#if defined(MALLOCGNULD)
-__wrap_reallocf(void *ptr, size_t size)
-#else
 reallocf(void *ptr, size_t size)
-#endif
 {
     void *retptr;
 
@@ -366,11 +342,7 @@ __attribute__ ((alloc_size(2)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 __attribute__ ((malloc))
 #endif
-#if defined(MALLOCGNULD)
-__wrap_memalign(size_t align, size_t size)
-#else
 memalign(size_t align, size_t size)
-#endif
 {
     void   *ptr = NULL;
 
@@ -394,11 +366,7 @@ __attribute__ ((alloc_size(2)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 __attribute__ ((malloc))
 #endif
-#if defined(MALLOCGNULD)
-__wrap_aligned_alloc(size_t align, size_t size)
-#else
 aligned_alloc(size_t align, size_t size)
-#endif
 {
     void   *ptr = NULL;
 
@@ -426,11 +394,7 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(PAGESIZE)))
 __attribute__ ((malloc))
 #endif
-#if defined(MALLOCGNULD)
-__wrap_valloc(size_t size)
-#else
 valloc(size_t size)
-#endif
 {
     void *ptr;
 
@@ -450,11 +414,7 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(PAGESIZE)))
 __attribute__ ((malloc))
 #endif
-#if defined(MALLOCGNULD)
-__wrap_pvalloc(size_t size)
-#else
 pvalloc(size_t size)
-#endif
 {
     size_t  sz = rounduppow2(size, PAGESIZE);
     void   *ptr = _malloc(sz, PAGESIZE, 0);
@@ -476,11 +436,7 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 __attribute__ ((malloc))
 #endif
-#if defined(MALLOCGNULD)
-__wrap__aligned_malloc(size_t size, size_t align)
-#else
 _aligned_malloc(size_t size, size_t align)
-#endif
 {
     void   *ptr = NULL;
 
@@ -497,11 +453,7 @@ _aligned_malloc(size_t size, size_t align)
 }
 
 void
-#if defined(MALLOCGNULD)
-__wrap__aligned_free(void *ptr)
-#else
 _aligned_free(void *ptr)
-#endif
 {
     if (ptr) {
         _free(ptr);
@@ -521,11 +473,7 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 __attribute__ ((malloc))
 #endif
-#if defined(MALLOCGNULD)
-__wrap__mm_malloc(size_t size, size_t align)
-#else
 _mm_malloc(size_t size, size_t align)
-#endif
 {
     void   *ptr = NULL;
 
@@ -542,11 +490,7 @@ _mm_malloc(size_t size, size_t align)
 }
 
 void
-#if defined(MALLOCGNULD)
-__wrap__mm_free(void *ptr)
-#else
 _mm_free(void *ptr)
-#endif
 {
     if (ptr) {
         _free(ptr);
@@ -558,11 +502,7 @@ _mm_free(void *ptr)
 #endif /* _INTEL_SOURCE && !__GNUC__ */
 
 void
-#if defined(MALLOCGNULD)
-__wrap_cfree(void *ptr)
-#else
 cfree(void *ptr)
-#endif
 {
     if (ptr) {
         _free(ptr);
