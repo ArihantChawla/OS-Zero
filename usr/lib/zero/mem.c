@@ -60,15 +60,15 @@ memreltls(void *arg)
 #if (MEMBUFRELMAP)
                 membuffreerel(head);
 #endif
-                buf = head;
                 nbuf++;
+                buf = head;
 #if (MEMBUFRELMAP)
 //                membuffreerel(buf);
 #endif
                 buf->tls = NULL;
                 while (buf->next) {
-                    buf = buf->next;
                     nbuf++;
+                    buf = buf->next;
 #if (MEMBUFRELMAP)
                     membuffreerel(buf);
 #endif
@@ -116,16 +116,16 @@ memreltls(void *arg)
             head = src->list;
             nbuf = 0;
             if (head) {
-#if (MEMBUFRELMAP) && (!MEMDEADBINS)
+#if (MEMBUFRELMAP)
                 membuffreerel(head);
 #endif
                 buf = head;
                 nbuf++;
                 buf->tls = NULL;
                 while (buf->next) {
-                    buf = buf->next;
                     nbuf++;
-#if (MEMBUFRELMAP) && (!MEMDEADBINS)
+                    buf = buf->next;
+#if (MEMBUFRELMAP)
                     membuffreerel(buf);
 #endif
                     buf->tls = NULL;
@@ -1290,7 +1290,7 @@ memgetblkdead(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
         
         return NULL;
     }
-#if (MEMBUFRELMAP)
+#if (MEMBUFRELMAP) && 0
     membuffreerel(buf);
 #endif
     id = membufgetfree(buf);
@@ -1693,7 +1693,9 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
             buf->next = head;
             tbkt->nbuf++;
             tbkt->list = buf;
+#if (!MEMDEADBINS)
             membuffreerel(buf);
+#endif
         } else {
 #if 0
             if (tls) {
