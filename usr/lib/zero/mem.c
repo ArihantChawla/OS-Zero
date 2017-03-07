@@ -57,7 +57,7 @@ memreltls(void *arg)
             head = src->list;
             nbuf = 0;
             if (head) {
-#if (MEMBUFRELMAP) && (!MEMDEADBINS)
+#if (MEMBUFRELMAP)
                 membuffreerel(head);
 #endif
                 buf = head;
@@ -69,7 +69,7 @@ memreltls(void *arg)
                 while (buf->next) {
                     buf = buf->next;
                     nbuf++;
-#if (MEMBUFRELMAP) && (!MEMDEADBINS)
+#if (MEMBUFRELMAP)
                     membuffreerel(buf);
 #endif
 #if (MEMBUFRELMAP)
