@@ -814,10 +814,8 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
     MEMWORD_T               type;
     MEMWORD_T               lim;
     MEMUWORD_T              n;
-#if (MEMBFHASH)
     struct memhashitem     *item;
     MEMADRDIFF_T            mask;
-#endif
 
 //    fprintf(stderr, "LOCK: %lx\n", key);
     fmtxlk(&g_mem.hash[key].lk);
