@@ -86,7 +86,7 @@
 #define SMBIOS        0         // SMBIOS (system management) support
 #define APIC          1         // local [per-CPU] APIC support
 #define PCI           1         // PCI bus driver
-#define ATA           1         // ATA/ATAPI/SATA/SATAPI
+#define ATA           0         // ATA/ATAPI/SATA/SATAPI
 #define ACPI          0         // ACPI
 #define ACPICA        0         // ACPICA
 #define HPET          1         // high precision event timer support
@@ -95,7 +95,7 @@
 #define PS2KBDSET2    0
 #define VGAGFX        0         // VGA graphics driver
 #define SB16          0         // Soundblaster 16 audio driver
-#define AC97          1         // AC97 audio drivers
+#define AC97          0         // AC97 audio drivers
 #define ENS1370       0         // Ensoniq 1370 audio driver
 
 #endif /* __KERN_CONF_H__ */

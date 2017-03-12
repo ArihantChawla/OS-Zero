@@ -81,12 +81,6 @@ kinitprot(unsigned long pmemsz)
                           :
                           : "rm" (sp));
     meminit(min(pmemsz, lim), min(KERNVIRTBASE, lim));
-#if (PLASMA)
-    plasmainit();
-#if (!PLASMAFOREVER)
-    plasmaloop(1);
-#endif
-#endif
     cpuinit(0);
     procinit(PROCKERN, SCHEDNOCLASS);
     taskinitenv();
@@ -98,6 +92,12 @@ kinitprot(unsigned long pmemsz)
     consinit(768 / vbefontw, 1024 / vbefonth);
 #elif (VBE)
     consinit(768 >> 3, 1024 >> 3);
+#endif
+#if (PLASMA)
+    plasmainit();
+#if (!PLASMAFOREVER)
+    plasmaloop(1);
+#endif
 #endif
 #if (PS2DRV)
     ps2init();

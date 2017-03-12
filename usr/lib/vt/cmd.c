@@ -3,7 +3,7 @@
 #include <vt/vt.h>
 
 int
-vtspawncdm(struct vt *vt)
+vtspawncmd(struct vt *vt)
 {
     int   retval = 0;
 //    pid_t pid;

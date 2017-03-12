@@ -142,6 +142,17 @@ void limitfps(struct fpsctx* t);
 void
 plasmainit(void)
 {
+    int x, y;
+
+#if (PLASMAMODLUT)
+    for (x = 0 ; x < INTER_WIDTH ; x++) {
+        modxlut[x] = -(!!(x % vbefontw));
+    }
+    for (y = 0 ; y < INTER_HEIGHT ; y++) {
+        modylut[y] = y % vbefonth;
+    }
+#endif
+
     plasmafb = vbescreen.fbuf;
 #if (PLASMADOUBLEBUF)
     plasmabuf = kcalloc(INTER_WIDTH * INTER_HEIGHT
@@ -162,6 +173,7 @@ plasmaloop(long nsec)
     long        nfrm = PLASMAFPS * nsec;
 
 //    plasmainit();
+    vbeclrscr(GFX_BLACK);
     if (nfrm < 0) {
         for ( ; ; ) {
             plasmadraw();
@@ -404,15 +416,6 @@ void drawPlasma(SDL_Surface *surface)
     p1_sinposx = p1_sinpos_start_x;
     p2_sinposx = p2_sinpos_start_x;
     p3_sinposx = p3_sinpos_start_x;
-
-#if (PLASMAMODLUT)
-    for (x = 0 ; x < INTER_WIDTH ; x++) {
-        modxlut[x] = -(!!(x % vbefontw));
-    }
-    for (y = 0 ; y < INTER_HEIGHT ; y++) {
-        modylut[y] = y % vbefonth;
-    }
-#endif
 
     for (y = 0; y < INTER_HEIGHT; y++) {
 

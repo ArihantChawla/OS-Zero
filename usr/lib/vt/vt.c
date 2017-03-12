@@ -240,53 +240,6 @@ vtinitfonts(struct vt *vt)
     return 1;
 }
 
-#if 0
-long
-vtinitcolors(struct vt *vt)
-{
-    struct uienv_xorg *env = vt->ui.env;
-    struct uiapi      *api = vt->ui.api;
-    void              *deftab;
-    void              *xtermtab;
-
-    if (api->initcolors) {
-        deftab = api->initcolors(env, vtdefcolortab, 16);
-        if (!deftab) {
-            
-            return 0;
-        }
-        xtermtab = api->initcolors(env, vtxtermcolortab, 256);
-        if (!xtermtab) {
-            free(deftab);
-            
-            return 0;
-        }
-    } else {
-        deftab = vtdefcolortab;
-        xtermtab = vtxtermcolortab;
-    }
-    vt->colormap.deftab = deftab;
-    vt->colormap.xtermtab = xtermtab;
-
-    return 1;
-}
-
-long
-vtinitfonts(struct vt *vt)
-{
-    struct uiapi *api = vt->ui.api;
-
-    if (api->initfont) {
-        if (!api->initfont(&vt->ui, &vt->font, VTDEFFONT)) {
-
-            return 0;
-        }
-    }
-
-    return 1;
-}
-#endif
-
 struct vt *
 vtinit(struct vt *vt, int argc, char *argv[])
 {
