@@ -5,7 +5,7 @@
 #endif
 #include <vt/vt.h>
 #if !defined(FREE)
-#define FREE(x) FREE(x)
+#define FREE(x) free(x)
 #endif
 #if !defined(MALLOC)
 #define MALLOC(x) malloc(x)
