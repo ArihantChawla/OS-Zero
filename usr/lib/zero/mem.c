@@ -224,6 +224,9 @@ static void
 memprefork(void)
 {
     MEMWORD_T slot;
+#if (MEMHASHSUBTABS)
+    MEMWORD_T ofs;
+#endif
 
     spinlk(&g_mem.initlk);
 #if !defined(MEMNOSBRK) || !(MEMNOSBRK)
@@ -231,8 +234,11 @@ memprefork(void)
 #endif
     if (g_mem.hash) {
         for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
-//            memlkbit(&g_mem.hash[slot].chain);
-            fmtxlk(&g_mem.hash[slot].lk);
+#if (MEMHASHSUBTABS)
+            fmtxlk(&g_mem.hash[slot]->lk);
+#else
+            memlkbit(&g_mem.hash[slot].chain);
+#endif
         }
     }
     for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
@@ -316,8 +322,11 @@ mempostfork(void)
     }
     if (g_mem.hash) {
         for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
-//            memrelbit(&g_mem.hash[slot].chain);
-            fmtxunlk(&g_mem.hash[slot].lk);
+#if (MEMHASHSUBTABS)
+            fmtxunlk(&g_mem.hash[slot]->lk);
+#else
+            memrelbit(&g_mem.hash[slot].chain);
+#endif
         }
     }
 #if !defined(MEMNOSBRK) || !(MEMNOSBRK)
@@ -353,11 +362,15 @@ memquit(int sig)
 void
 meminit(void)
 {
-#if !defined(MEMNOSBRK) || !(MEMNOSBRK)
-    void       *heap;
-    intptr_t    ofs;
+#if (MEMHASHSUBTABS)
+    struct memhash *hash;
+    MEMWORD_T       ndx;
 #endif
-    void       *ptr;
+#if !defined(MEMNOSBRK) || !(MEMNOSBRK)
+    void           *heap;
+    intptr_t        ofs;
+#endif
+    void           *ptr;
 
 //    fprintf(stderr, "MEMHASHARRAYITEMS == %d\n", MEMHASHARRAYITEMS);
 //    spinlk(&g_mem.initlk);
@@ -373,14 +386,28 @@ meminit(void)
 #if (MEMSTAT)
     atexit(memprintstat);
 #endif
+#if (MEMHASHSUBTABS)
+    ptr = mapanon(0, MEMHASHITEMS * sizeof(struct memhashbkt));
+#if (MEMSTAT)
+    g_memstat.nbhashtab = MEMHASHITEMS * sizeof(struct memhashbkt);
+#endif
+#else
     ptr = mapanon(0, MEMHASHITEMS * sizeof(struct memhashlist));
 #if (MEMSTAT)
     g_memstat.nbhashtab = MEMHASHITEMS * sizeof(struct memhashlist);
+#endif
 #endif
     if (ptr == MAP_FAILED) {
         crash(ptr == MAP_FAILED);
     }
     g_mem.hash = ptr;
+#if (MEMHASHSUBTABS)
+    hash = ptr;
+    for (ndx = 0 ; ndx < MEMHASHITEMS ; ndx++) {
+        g_mem.hash[ndx] = hash;
+        hash++;
+    }
+#endif
 #if !defined(MEMNOSBRK) || !(MEMNOSBRK)
 //    memgetlk(&g_mem.heaplk);
     heap = growheap(0);
@@ -620,76 +647,6 @@ meminitbigbuf(struct membuf *buf,
     return ptr;
 }
 
-#if (MEMHASHSUBTABS)
-
-static struct memhashitem *
-memgethashsubtab(struct memhashslot *slot)
-{
-    struct memhash *item;
-    MEMPTR_T        first;
-    MEMWORD_T       bsz;
-    MEMADR_T        upval;
-
-    upval = (MEMADR_T)g_mem.hashbuf;
-    upval &= ~MEMLKBIT;
-    if (upval) {
-        item = (struct memnhash *)upval;
-        m_syncwrite((m_atomic_t *)&g_mem.hashbuf, (m_atomic_t)item->chain);
-    } else {
-        bsz = rounduppow2(memhashtabsize(), PAGESIZE);
-        item = mapanon(0, bsz);
-        if (item == MAP_FAILED) {
-
-            abort();
-        }
-        first = (MEMPTR_T)item;
-        if (item == MAP_FAILED) {
-
-            abort();
-        }
-        slot->itab = item;
-    }
-
-    return item;
-}
-
-#if 0
-static void
-memrelhashsubtab(struct memhashslot *slot)
-{
-    MEMWORD_T bsz = rounduppow2(memhashtabsize(), PAGESIZE);
-
-    unmapanon(0, bsz);
-    slot->itab = NULL;
-
-    return;
-}
-#endif
-
-#endif
-
-#if (MEMNEWHASHTAB) && (MEMHASHSUBTABS)
-static void
-meminithashitem(MEMPTR_T data)
-{
-    struct memhash *item = (struct memhash *)data;
-    MEMUWORD_T     *uptr;
-
-    if (!memgethashsubtab(item)) {
-
-        abort();
-    }
-#if 0
-    uptr = (MEMUWORD_T *)data;
-    data += offsetof(struct memhash, data);
-    item->chain = NULL;
-    item->ntab = 0;
-    item->itab = (struct memhashitem *)uptr;
-#endif
-
-    return;
-}
-#else
 static void
 meminithashitem(MEMPTR_T data)
 {
@@ -706,7 +663,6 @@ meminithashitem(MEMPTR_T data)
 
     return;
 }
-#endif
 
 static struct memhash *
 memgethashitem(void)
@@ -769,6 +725,21 @@ memgethashitem(void)
     return item;
 }
 
+#if defined(MEMHASHSUBTABS) && (MEMHASHSUBTABS)
+static void
+meminithashbkt(struct memhashbkt *bkt)
+{
+    struct memhash **item = &bkt->tab[0];
+    MEMWORD_T        ndx;
+
+    for (ndx = 0 ; ndx < (1L << (MEMHASHSUBTABSHIFT + PAGESIZELOG2)) ; ndx++) {
+        item[ndx] = memgethashitem();
+    }
+
+    return;
+}
+#endif
+
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
 static void
 membufhashitem(struct memhash *item)
@@ -795,12 +766,16 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
 {
     volatile struct memtls *tls;
     MEMPTR_T                adr = ptr;
-    MEMADR_T                page = (MEMADR_T)adr >> PAGESIZELOG2;
 #if (MEMHASHSUBTABS)
-    MEMADR_T                ofs = ((MEMADR_T)adr
-                                   >> (PAGESIZELOG2 + MEMALIGNSHIFT));
-#endif
+    MEMADR_T                page = ((MEMADR_T)adr
+                                    >> (MEMHASHSUBTABSHIFT + PAGESIZELOG2));
+    MEMADR_T                ofs = ((MEMADR_T)adr >> PAGESIZELOG2
+                                   & ((1L << (MEMHASHSUBTABSHIFT)) - 1));
+    MEMUWORD_T              key = memhashptr(adr) & (MEMHASHITEMS - 1);
+#else
+    MEMADR_T                page = ((MEMADR_T)adr >> PAGESIZELOG2);
     MEMUWORD_T              key = memhashptr(page) & (MEMHASHITEMS - 1);
+#endif
     MEMADR_T                desc = (MEMADR_T)buf;
     MEMADR_T                upval;
     MEMADR_T                val;
@@ -816,25 +791,24 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
     MEMUWORD_T              n;
     struct memhashitem     *item;
     MEMADRDIFF_T            mask;
-
+    
 //    fprintf(stderr, "LOCK: %lx\n", key);
-    fmtxlk(&g_mem.hash[key].lk);
 #if (!MEMHASHSUBTABS)
+    fmtxlk(&g_mem.hash[key].lk);
     upval = (MEMADR_T)g_mem.hash[key].chain;
 #else
-#if (MEMHASHSUBTABS)
-    ofs &= (MEMHASHSUBTABITEMS - 1);
-#endif
+    fmtxlk(&g_mem.hash[key]->lk);
+    upval = (MEMADR_T)g_mem.hash[key]->tab[ofs];
 //    upval &= ~MEMLKBIT;
     if (!upval) {
         if (op != MEMHASHADD) {
-            fmtxunlk(&g_mem.hash[key].lk);
-
+            fmtxunlk(&g_mem.hash[key]->lk);
+            
             return MEMHASHNOTFOUND;
         } else {
             blk = memgethashitem();
             if (!blk) {
-
+                
                 return MEMHASHNOTFOUND;
             }
             desc |= id;
@@ -853,12 +827,13 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
 #endif
 //                        fprintf(stderr, "REL: %lx\n", key);
             blk->chain = NULL;
-            g_mem.hash[key].chain = blk;
-            fmtxunlk(&g_mem.hash[key].lk);
-
+            g_mem.hash[key]->tab[ofs] = blk;
+            fmtxunlk(&g_mem.hash[key]->lk);
+            
             return desc;
+        }
     }
-#endif
+#endif /* MEMHASHSUBTABS */
     dest = NULL;
     prev = NULL;
 #if (!MEMHASHSUBTABS)
@@ -866,9 +841,6 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
 #endif
     desc |= id;
     slot = NULL;
-#if (MEMHASHSUBTABS)
-    upval = (MEMADR_T)&blk->tab[ofs];
-#endif
     blk = (struct memhash *)upval;
     if (blk) {
         do {
@@ -934,7 +906,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                             
                             break;
                         }
-                   case 8:
+                    case 8:
                         item = &src[7];
                         mask = -(item->adr == page);
                         val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
@@ -1003,8 +975,12 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
     if (!slot) {
         if (op == MEMHASHDEL || op == MEMHASHCHK) {
 //            fprintf(stderr, "REL: %lx\n", key);
+#if (MEMHASHSUBTABS)
+            fmtxunlk(&g_mem.hash[key]->lk);
+#else
             fmtxunlk(&g_mem.hash[key].lk);
-
+#endif
+            
             return MEMHASHNOTFOUND;
         } else if (dest) {
             n = *cnt;
@@ -1012,8 +988,12 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             n++;
             dest->val = desc;
             *cnt = n;
+#if (MEMHASHSUBTABS)
+            fmtxunlk(&g_mem.hash[key]->lk);
+#else
             fmtxunlk(&g_mem.hash[key].lk);
-
+#endif
+            
             return desc;
         } else {
 //            desc = (MEMADR_T)buf;
@@ -1041,9 +1021,17 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                         if (prev) {
                             prev->chain = blk->chain;
                             blk->chain = (struct memhash *)upval;
+#if (MEMHASHSUBTABS)
+                            g_mem.hash[key]->tab[ofs]->chain = blk;
+#else
                             g_mem.hash[key].chain = blk;
+#endif
                         }
+#if (MEMHASHSUBTABS)
+                        fmtxunlk(&g_mem.hash[key]->lk);
+#else
                         fmtxunlk(&g_mem.hash[key].lk);
+#endif
                         
                         return desc;
                     }
@@ -1055,12 +1043,6 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             g_memstat.nhashitem++;
 #endif
             blk = memgethashitem();
-#if defined(MEMHASHSUBTABS) && (MEMHASHSUBTABS)
-            if (!memgethashsubtab(blk)) {
-
-                abort();
-            }
-#endif
             slot = blk->tab;
             blk->ntab = 1;
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
@@ -1078,12 +1060,17 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             slot->adr = page;
             slot->val = desc;
 //            fprintf(stderr, "REL: %lx\n", key);
+#if (MEMHASHSUBTABS)
+            g_mem.hash[key]->tab[ofs]->chain = blk;
+            fmtxunlk(&g_mem.hash[key]->lk);
+#else
             g_mem.hash[key].chain = blk;
             fmtxunlk(&g_mem.hash[key].lk);
+#endif
 #if (MEMDEBUG)
             crash(desc == 0);
 #endif
-
+            
             return desc;
         }
     } else {
@@ -1116,11 +1103,19 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
                     if (prev) {
                         prev->chain = blk->chain;
                     } else {
+#if (MEMHASHSUBTABS)
+                        g_mem.hash[key]->tab[ofs].chain = blk;
+#else
                         g_mem.hash[key].chain = blk;
+#endif
                     }
-                    fmtxunlk(&g_mem.hash[key].lk);
                     membufhashitem(blk);
-
+#if (MEMHASHSUBTABS)
+                    fmtxunlk(&g_mem.hash[key]->lk);
+#else
+                    fmtxunlk(&g_mem.hash[key].lk);
+#endif
+                    
                     return desc;
                 } else {
                     n--;
@@ -1141,8 +1136,12 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
             crash(desc == 0);
 #endif
 //            fprintf(stderr, "REL: %lx\n", key);
+#if (MEMHASHSUBTABS)
+            fmtxunlk(&g_mem.hash[key]->lk);
+#else
             fmtxunlk(&g_mem.hash[key].lk);
-
+#endif
+            
             return desc;
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
         } else if (op == MEMHASHADD) {
@@ -1155,7 +1154,11 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
         prev->chain = blk->chain;
         blk->chain = (struct memhash *)upval;
     }
+#if (MEMHASHSUBTABS)
+    fmtxunlk(&g_mem.hash[key]->lk);
+#else
     fmtxunlk(&g_mem.hash[key].lk);
+#endif
 #if (MEMDEBUG)
     crash(desc == 0);
 #endif
@@ -1167,7 +1170,7 @@ MEMPTR_T
 memsetbuf(MEMPTR_T ptr, struct membuf *buf, MEMWORD_T id)
 {
     MEMADR_T desc = membufop(ptr, MEMHASHADD, buf, id);
-
+    
     return (MEMPTR_T)desc;
 }
 

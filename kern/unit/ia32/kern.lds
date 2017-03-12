@@ -67,6 +67,8 @@ SECTIONS {
 	util.o(.text)
 	util.o(.data)
 /*	util.o(.bss) */
+	ps2.o(.text)
+	ps2.o(.data)
 	vbe.o(.text)
 	vbe.o(.data)
 /*	vbe.o(.bss) */

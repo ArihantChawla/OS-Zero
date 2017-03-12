@@ -235,10 +235,10 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMSMALLSLOT        10
 #define MEMMIDSLOT          15
 //#define MEMBIGSLOT          (MEMSMALLSLOTS - 1)
-#define MEMSMALLPAGESLOT    16
-#define MEMMIDPAGESLOT      32
-#define MEMBIGPAGESLOT      64
-#define MEMPAGESLOTS        128
+#define MEMSMALLPAGESLOT    32
+#define MEMMIDPAGESLOT      64
+#define MEMBIGPAGESLOT      128
+#define MEMPAGESLOTS        256
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
 #define MEMSMALLMAPSLOT     22
 #define MEMMIDMAPSLOT       24
@@ -330,34 +330,39 @@ struct membufvals {
 #define MEMINITBIT   (1L << 0)
 #define MEMNOHEAPBIT (1L << 1)
 struct mem {
-    struct membkt       bigbin[MEMBIGSLOTS];
-    struct membkt       pagebin[MEMPAGESLOTS];
-    struct membkt       smallbin[MEMSMALLSLOTS];
-    struct membkt       deadpage[MEMPAGESLOTS];
-    struct membkt       deadsmall[MEMSMALLSLOTS];
+    struct membkt        bigbin[MEMBIGSLOTS];
+    struct membkt        pagebin[MEMPAGESLOTS];
+    struct membkt        smallbin[MEMSMALLSLOTS];
+#if (MEMDEADBINS)
+    struct membkt        deadpage[MEMPAGESLOTS];
+    struct membkt        deadsmall[MEMSMALLSLOTS];
+#endif
 //    struct membufvals   bufvals;
 #if (MEMMULTITAB)
-    struct memtabl0    *tab;     // allocation lookup structure
+    struct memtabl0     *tab;     // allocation lookup structure
+#elif (MEMHASHSUBTABS)
+    struct memhashbkt  **hash;
+    struct memhash      *hashbuf;
 #elif (MEMNEWHASH)
-    struct memhashlist *hash;    // hash table
-    struct memhash     *hashbuf; // buffer for hash items
+    struct memhashlist  *hash;    // hash table
+    struct memhash      *hashbuf; // buffer for hash items
 #endif
-    MEMWORD_T           flg;     // memory interface flags
-    MEMWORD_T           nbytetab[MEMBUFTYPES];
+    MEMWORD_T            flg;     // memory interface flags
+    MEMWORD_T            nbytetab[MEMBUFTYPES];
 #if 0
-    MEMWORD_T           nbsmall;
-    MEMWORD_T           nbpage;
-    MEMWORD_T           nbbig;
+    MEMWORD_T            nbsmall;
+    MEMWORD_T            nbpage;
+    MEMWORD_T            nbbig;
 #endif
-    struct membuf      *heap;    // heap allocations (try sbrk(), then mmap())
-    struct membuf      *maps;    // mapped blocks
+    struct membuf       *heap;    // heap allocations (try sbrk(), then mmap())
+    struct membuf       *maps;    // mapped blocks
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
-    zerospin            priolk;
-    unsigned long       prioval; // locklessinc priority locks
+    zerospin             priolk;
+    unsigned long        prioval; // locklessinc priority locks
 #endif
-    zerospin            initlk;  // lock for initialisation
+    zerospin             initlk;  // lock for initialisation
 #if !defined(MEMNOSBRK) || !(MEMNOSBRK)
-    MEMLK_T             heaplk;  // lock for sbrk()
+    MEMLK_T              heaplk;  // lock for sbrk()
 #endif
 };
 
@@ -427,34 +432,18 @@ volatile struct memtls * meminittls(void);
     (((MEMADR_T)(ptr) - (MEMADR_T)(buf)->base) >> (slot))
 #define membufslotblkadr(buf, ndx, slot)                                \
     ((buf)->base + ((ndx) << (slot)))
-#if (MEMBIGPAGES)
 #define membufslotpageadr(buf, ndx, slot)                               \
-    ((buf)->base + (ndx)                                                \
-     * MEMWORD(PAGESIZE) + MEMWORD(PAGESIZE) * (slot))
+    ((buf)->base + (ndx) * (MEMWORD(PAGESIZE) + PAGESIZE * (slot)))
 #define membufpageadr(buf, ndx)                                         \
     (membufslotpageadr(buf, ndx, memgetbufslot(buf)))
-#else
-#define membufslotpageadr(buf, ndx, slot)                               \
-    ((buf)->base + (ndx)                                                \
-     * MEMWORD(PAGESIZE) + MEMWORD(PAGESIZE) * (slot))
-#define membufpageadr(buf, ndx)                                         \
-    (membufslotpageadr(buf, ndx, memgetbufslot(buf)))
-#endif
 #define membufblkid(buf, ptr)                                           \
     (membufslotblkid(buf, ptr, memgetbufslot(buf)))
 #define membufblkadr(buf, ndx)                                          \
     (membufslotblkadr(buf, ndx, memgetbufslot(buf)))
-#if (MEMBIGPAGES)
 #define membufblksize(buf, type, slot)                                  \
     ((type != MEMPAGEBUF)                                               \
      ? (MEMWORD(1) << (slot))                                           \
-     : (MEMWORD(PAGESIZE) + MEMWORD(PAGESIZE) * (slot)))
-#else
-#define membufblksize(buf, type, slot)                                  \
-    ((type != MEMPAGEBUF)                                               \
-     ? (MEMWORD(1) << (slot))                                           \
-     : (MEMWORD(PAGESIZE) + MEMWORD(PAGESIZE) * (slot)))
-#endif
+     : (MEMWORD(PAGESIZE) + (MEMWORD(PAGESIZE) * (slot))))
 
 /* mark the first block of buf as allocated */
 #define _memfillmap0(ptr, ofs, mask)                                    \
@@ -467,20 +456,6 @@ volatile struct memtls * meminittls(void);
      (ptr)[(ofs) + 1] = (mask),                                         \
      (ptr)[(ofs) + 2] = (mask),                                         \
      (ptr)[(ofs) + 3] = (mask))
-
-#if defined(MEMHASHSUBTABS) && (MEMHASHSUBTABS)
-struct memhashslot {
-    MEMLK_T          lk;
-    struct memhash **itab;
-};
-#endif
-struct memhash {
-    struct memhash     *chain;  // next array in this chain
-    MEMWORD_T           ntab;   // number of occupied slots in this table
-    struct memhashitem *tab;    // pointer to the item table
-    MEMWORD_T           pad;
-    MEMWORD_T           data;   // base address for the table
-};
 
 #if (MEMMULTITAB)
 
@@ -499,64 +474,24 @@ struct memitem {
     MEMADR_T val;
 };
 
-#elif (MEMNEWHASH)
-
-struct memhashlist {
-    m_atomic_t      lk;
-    struct memhash *chain;
-    uint8_t         _pad[CLSIZE - sizeof(MEMLK_T) - sizeof(struct memchain *)];
-};
-
-#define MEMHASHDEL (-1)
-#define MEMHASHCHK (0)
-#define MEMHASHADD (1)
-
-#if (MEMHASHMURMUR)
-#define memhashptr(page) MurmurHash3Mixer((MEMADR_T)page)
 #else
-#if (WORDSIZE == 4)
-#define memhashptr(page)                                                \
-    (tmhash32((MEMADR_T)page))
-#elif (WORDSIZE == 8)
-#define memhashptr(page)                                                \
-    (tmhash64((MEMADR_T)page))
-#endif
-#endif
-#define MEMHASHNOTFOUND  0
 
-#if 0
-struct memhashsubitem {
-    MEMADR_T val;
-};
-#endif
+#define MEMHASHDEL      (-1)
+#define MEMHASHCHK        0
+#define MEMHASHADD        1
+#define MEMHASHNOTFOUND   0
 
 struct memhashitem {
-#if (!MEMHASHSUBTABS)
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
     MEMWORD_T nref;     // reference count for the page
 #endif
 #if defined(MEMHASHNACT) && (MEMHASHNACT)
     MEMWORD_T nact;     // number of inserts, finds, and deletes
 #endif
-#endif
     MEMADR_T  adr;      // allocation address
     MEMADR_T  val;      // stored value
 };
 
-/*
- * - we have a 4-word header; adding total of 52 words as 13 hash-table entries
- *   lets us cache-color the table by adding a modulo-9 value to the pointer
- */
-#if (MEMBIGHASH)
-#define MEMHASHBITS        20
-#else
-#define MEMHASHBITS        17
-#endif
-#define MEMHASHITEMS       (1 << MEMHASHBITS)
-#if defined(MALLOCHASHSUBTABS) && (MALLOCHASHSUBTABS)
-#define MEMHASHSUBTABBITS  8
-#define MEMHASHSUBTABITEMS (1 << MEMHASHSUBTABBITS)
-#endif
 #if (MEMHUGEHASHTAB)
 #define MEMHASHARRAYSIZE   (512 * WORDSIZE)
 #elif (MEMBIGHASHTAB)
@@ -572,20 +507,65 @@ struct memhashitem {
     ((MEMHASHARRAYSIZE - offsetof(struct memhash, data))                \
      / sizeof(struct memhashitem))
 #define memhashsize()      MEMHASHARRAYSIZE
-#define memhashtabsize()   rounduppow2(MEMHASHSUBTABITEMS * sizeof(struct memhashitem *), \
-                                       PAGESIZE)
+#endif
+#if (MEMBIGHASH)
+#define MEMHASHBITS        20
+#else
+#define MEMHASHBITS        17
+#endif
+#if (MEMHASHSUBTABS)
+#define MEMHASHITEMS       (1 << (MEMHASHBITS - MEMHASHSUBTABSHIFT))
+#define MEMHASHSUBTABSHIFT 8
+#define MEMHASHSUBTABITEMS (1 << MEMHASHSUBTABSHIFT)
+#else
+#define MEMHASHITEMS       (1 << MEMHASHBITS)
+#endif
+
+struct memhash {
+    struct memhash     *chain;  // next array in this chain
+    MEMWORD_T           ntab;   // number of occupied slots in this table
+    struct memhashitem *tab;    // pointer to the item table
+    MEMWORD_T           pad;
+    MEMWORD_T           data;   // base address for the table
+};
 
 #if (MEMHASHSUBTABS)
-#if (MEMHASHSUBTABITEMS == 32)
-#define MEMHASHTABSHIFT    MEMHASHSUBTABBITS
-#elif (MEMHASHSUBTABITEMS == 64)
-#define MEMHASHTABSHIFT    MEMHASHSUBTABBITS
-#elif (MEMHASHSUBTABITEMS == 128)
-#define MEMHASHTABSHIFT    MEMHASHSUBTABBITS
-#elif (MEMHASHSUBTABITEMS == 256)
-#define MEMHASHTABSHIFT    
+struct memhashbkt {
+    m_atomic_t      lk;
+    struct memhash *tab[1L << MEMHASHSUBTABSHIFT];
+};
 #endif
-#endif /* MEMHASHSUBTABS */
+
+#if (MEMNEWHASH)
+
+struct memhashlist {
+    m_atomic_t      lk;
+    struct memhash *chain;
+    uint8_t         _pad[CLSIZE - sizeof(MEMLK_T) - sizeof(struct memchain *)];
+};
+
+#if (MEMHASHMURMUR)
+#define memhashptr(page) MurmurHash3Mixer((MEMADR_T)page)
+#else
+#if (WORDSIZE == 4)
+#define memhashptr(page)                                                \
+    (tmhash32((MEMADR_T)page))
+#elif (WORDSIZE == 8)
+#define memhashptr(page)                                                \
+    (tmhash64((MEMADR_T)page))
+#endif
+#endif
+
+#if 0
+struct memhashsubitem {
+    MEMADR_T val;
+};
+#endif
+
+/*
+ * - we have a 4-word header; adding total of 52 words as 13 hash-table entries
+ *   lets us cache-color the table by adding a modulo-9 value to the pointer
+ */
 
 static __inline__ void
 membufsetrel(struct membuf *buf, MEMWORD_T id)
@@ -1006,13 +986,13 @@ memgenhashtabadr(MEMWORD_T *adr)
     (rounduppow2(membufhdrsize() + (nblk) * sizeof(MEMPTR_T), PAGESIZE))
 #endif
 #define memusesmallbuf(sz)     ((sz) <= PAGESIZE)
-#define memusepagebuf(sz)      ((sz) <= (2 * PAGESIZE * MEMPAGESLOTS))
+#define memusepagebuf(sz)      ((sz) <= PAGESIZE * MEMPAGESLOTS)
 #define memsmallbufsize(slot, nblk)                                     \
     (rounduppow2(membufblkofs(nblk) + ((nblk) << (slot)),               \
                  PAGESIZE))
 #define mempagebufsize(slot, nblk)                                      \
     (rounduppow2(membufblkofs(nblk)                                     \
-                 + 2 * (PAGESIZE + PAGESIZE * (slot)) * (nblk),         \
+                 + PAGESIZE + (PAGESIZE * (slot)) * (nblk),             \
                  PAGESIZE))
 #define membigbufsize(slot, nblk)                                       \
     (rounduppow2(membufblkofs(nblk) + (MEMWORD(1) << (slot)) * (nblk),  \
@@ -1027,18 +1007,18 @@ memgenhashtabadr(MEMWORD_T *adr)
             : (MEMSLABSHIFT - (slot) + 2))))                            \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMSMALLPAGESLOT)                                 \
-           ? 64                                                         \
-           : (((slot) <= MEMMIDPAGESLOT)                                \
-              ? 32                                                      \
-              : (((slot) <= MEMBIGPAGESLOT)                             \
-                 ? 16                                                   \
-                 : 8)))                                                 \
-        : (((slot) <= MEMSMALLMAPSLOT)                                  \
            ? 16                                                         \
-           : (((slot) <= MEMMIDMAPSLOT)                                 \
+           : (((slot) <= MEMMIDPAGESLOT)                                \
               ? 8                                                       \
-              : (((slot) <= MEMBIGMAPSLOT)                              \
+              : (((slot) <= MEMBIGPAGESLOT)                             \
                  ? 4                                                    \
+                 : 2)))                                                 \
+        : (((slot) <= MEMSMALLMAPSLOT)                                  \
+           ? 8                                                          \
+           : (((slot) <= MEMMIDMAPSLOT)                                 \
+              ? 4                                                       \
+              : (((slot) <= MEMBIGMAPSLOT)                              \
+                 ? 2                                                    \
                  : 1)))))
 #else
 #define memnbufblk(type, slot)                                          \
@@ -1062,10 +1042,10 @@ memgenhashtabadr(MEMWORD_T *adr)
 #define membktnbuftls(type, slot)                                       \
     (((type) == MEMSMALLBUF)                                            \
      ? (((slot) <= MEMSMALLSLOT)                                        \
-        ? 16                                                            \
+        ? 4                                                             \
         : (((slot) <= MEMMIDSLOT)                                       \
-           ? 8                                                          \
-           : 4))                                                        \
+           ? 2                                                          \
+           : 1))                                                        \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMSMALLPAGESLOT)                                 \
            ? 8                                                          \

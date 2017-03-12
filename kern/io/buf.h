@@ -48,8 +48,8 @@ typedef int32_t bufval_t;
 #define BUFMINSIZE     (1UL << BUFMINSIZELOG2)
 #define BUFMINSIZELOG2 PAGESIZELOG2
 #define BUFNOFSBIT     BUFMINSIZELOG2
-#define BUFSIZE        (1UL << BUFSIZELOG2)
-#define BUFSIZELOG2    16
+#define BUFMAXSIZE     (1UL << BUFMAXSIZELOG2)
+#define BUFMAXSIZELOG2 16
 /* size of buffer cache */
 #define BUFNBYTE       (BUFNMEG * 1024 * 1024)
 /* max # of cached blocks */

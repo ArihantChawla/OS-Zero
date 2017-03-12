@@ -165,9 +165,11 @@ kinitprot(unsigned long pmemsz)
             ;
         }
     }
+#if 0
     kprintf("%lu kilobytes of buffer cache @ %p..%p\n",
             vmpagestat.nbuf << (PAGESIZELOG2 - 10),
             vmpagestat.buf, vmpagestat.bufend);
+#endif
     /* allocate unused device regions (in 3.5G..4G) */
 //    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffffU - DEVMEMBASE + 1);
 //    taskinitenv();
