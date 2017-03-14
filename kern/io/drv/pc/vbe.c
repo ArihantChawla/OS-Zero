@@ -370,7 +370,6 @@ vbedrawcharbg(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg)
     uint32_t     mask;
     gfxargb32_t  pix;
 
-#if 0
     if (!bg) {
         for (cy = 0 ; cy < lim ; cy++) {
             val = *glyph;
@@ -381,32 +380,31 @@ vbedrawcharbg(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg)
             pix = fg;
             mask = -(val & 0x20);
             pix &= mask;
-            gfxsetrgb888(pix, ptr);
+            gfxsetrgb888(pix, ptr + 3);
             pix = fg;
             mask = -(val & 0x10);
             pix &= mask;
-            gfxsetrgb888(pix, ptr);
+            gfxsetrgb888(pix, ptr + 6);
             pix = fg;
             mask = -(val & 0x08);
             pix &= mask;
-            gfxsetrgb888(pix, ptr);
+            gfxsetrgb888(pix, ptr + 9);
             pix = fg;
             mask = -(val & 0x04);
             pix &= mask;
-            gfxsetrgb888(pix, ptr);
+            gfxsetrgb888(pix, ptr + 12);
             pix = fg;
             mask = -(val & 0x02);
             pix &= mask;
-            gfxsetrgb888(pix, ptr);
+            gfxsetrgb888(pix, ptr + 15);
             pix = fg;
             mask = -(val & 0x01);
             pix &= mask;
-            gfxsetrgb888(pix, ptr);
+            gfxsetrgb888(pix, ptr + 18);
             ptr += incr;
             glyph++;
         }
     } else {
-#endif
         for (cy = 0 ; cy < lim ; cy++) {
             mask = *glyph;
             if (mask & 0x40) {
@@ -447,9 +445,7 @@ vbedrawcharbg(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg)
             ptr += incr;
             glyph++;
         }
-#if 0
     }
-#endif
         
     return;
 }
