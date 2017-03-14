@@ -440,8 +440,8 @@ memcachebufhdr(MEMWORD_T type, MEMWORD_T slot)
     MEMWORD_T      bsz;
     MEMWORD_T      hsz = membufhdrsize(type, slot);
 
-    bsz = 8 * membufhdrsize(type, slot);
-    n = 8;
+    bsz = rounduppow2(16 * membufhdrsize(type, slot), PAGESIZE);
+    n = 16;
     hdr = mapanon(0, bsz);
     first = (MEMPTR_T)hdr;
     if (hdr == MAP_FAILED) {
@@ -464,6 +464,8 @@ memcachebufhdr(MEMWORD_T type, MEMWORD_T slot)
     } else {
         m_syncwrite((m_atomic_t *)&g_mem.bighdr[slot], (m_atomic_t)first);
     }
+
+    return hdr;
 }
 
 static struct membuf *
@@ -1942,7 +1944,9 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
 #endif
             VALGRINDRMPOOL(buf->base);
             unmapanon(buf, buf->size);
+#if (MEMMAPHDR)
             memputbufhdr(buf, type, slot);
+#endif
 
             return;
         } else if (tls) {

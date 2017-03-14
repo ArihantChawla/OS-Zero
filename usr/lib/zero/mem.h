@@ -992,7 +992,7 @@ memgenhashtabadr(MEMWORD_T *adr)
     (rounduppow2(sizeof(struct membuf)                                  \
                  + memnbufblk(type, slot) * sizeof(MEMPTR_T), PAGESIZE))
 #define membufblkofs(nblk)                                              \
-    (rounduppow2(sizeof(struct membuf), PAGESIZE)))
+    (rounduppow2(sizeof(struct membuf), PAGESIZE))
 #if 0
 #define membufblkofs(nblk)     (membufhdrsize(slot, nblk))
 #endif
