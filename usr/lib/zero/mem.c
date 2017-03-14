@@ -427,10 +427,123 @@ meminit(void)
     return;
 }
 
+#if (MEMMAPHDR)
+
+struct membuf *
+memcachebufhdr(MEMWORD_T type, MEMWORD_T slot)
+{
+    struct membuf *hdr;
+    struct membuf *prev;
+    MEMPTR_T       first;
+    MEMPTR_T       next;
+    MEMWORD_T      n;
+    MEMWORD_T      bsz;
+    MEMWORD_T      hsz = membufhdrsize(type, slot);
+
+    bsz = 8 * membufhdrsize(type, slot);
+    n = 8;
+    hdr = mapanon(0, bsz);
+    first = (MEMPTR_T)hdr;
+    if (hdr == MAP_FAILED) {
+        
+        abort();
+    }
+//        upval = (MEMADR_T)g_mem.hashbuf;
+    first += hsz;
+//        upval &= ~MEMLKBIT;
+    next = first;
+    while (--n) {
+        prev = (struct membuf *)next;
+        next += hsz;
+        prev->next = (struct membuf *)next;
+    }
+    if (type == MEMSMALLBUF) {
+        m_syncwrite((m_atomic_t *)&g_mem.smallhdr[slot], (m_atomic_t)first);
+    } else if (type == MEMPAGEBUF) {
+        m_syncwrite((m_atomic_t *)&g_mem.pagehdr[slot], (m_atomic_t)first);
+    } else {
+        m_syncwrite((m_atomic_t *)&g_mem.bighdr[slot], (m_atomic_t)first);
+    }
+}
+
+static struct membuf *
+memgetbufhdr(MEMWORD_T type, MEMWORD_T slot)
+{
+    struct membuf *hdr;
+    MEMADR_T       upval;
+
+    if (type == MEMSMALLBUF) {
+        memlkbit(&g_mem.smallhdr[slot]);
+        upval = (MEMADR_T)g_mem.smallhdr[slot];
+        upval &= ~MEMLKBIT;
+        if (!upval) {
+            hdr = memcachebufhdr(MEMSMALLBUF, slot);
+        } else {
+            hdr = (struct membuf *)upval;
+            m_syncwrite(&g_mem.smallhdr[slot], hdr->next);
+        }
+    } else if (type ==  MEMPAGEBUF) {
+        memlkbit(&g_mem.pagehdr[slot]);
+        upval = (MEMADR_T)g_mem.pagehdr[slot];
+        upval &= ~MEMLKBIT;
+        if (!upval) {
+            hdr = memcachebufhdr(MEMPAGEBUF, slot);
+        } else {
+            hdr = (struct membuf *)upval;
+            m_syncwrite(&g_mem.pagehdr[slot], hdr->next);
+        }
+    } else {
+        memlkbit(&g_mem.bighdr[slot]);
+        upval = (MEMADR_T)g_mem.bighdr[slot];
+        upval &= ~MEMLKBIT;
+        if (!upval) {
+            hdr = memcachebufhdr(MEMBIGBUF, slot);
+        } else {
+            hdr = (struct membuf *)upval;
+            m_syncwrite(&g_mem.bighdr[slot], hdr->next);
+        }
+    }
+
+    return hdr;
+}
+
+static void
+memputbufhdr(struct membuf *buf, MEMWORD_T type, MEMWORD_T slot)
+{
+    MEMADR_T upval;
+    
+    if (type == MEMSMALLBUF) {
+        memlkbit(&g_mem.smallhdr[slot]);
+        upval = g_mem.smallhdr[slot];
+        upval &= ~MEMLKBIT;
+        buf->next = (struct membuf *)upval;
+        m_syncwrite(&g_mem.smallhdr[slot], buf);
+    } else if (type == MEMPAGEBUF) {
+        memlkbit(&g_mem.pagehdr[slot]);
+        upval = g_mem.pagehdr[slot];
+        upval &= ~MEMLKBIT;
+        buf->next = (struct membuf *)upval;
+        m_syncwrite(&g_mem.pagehdr[slot], buf);
+    } else {
+        memlkbit(&g_mem.bighdr[slot]);
+        upval = g_mem.bighdr[slot];
+        upval &= ~MEMLKBIT;
+        buf->next = (struct membuf *)upval;
+        m_syncwrite(&g_mem.bighdr[slot], buf);
+    }
+
+    return;
+}
+
+#endif /* MEMMAPHDR */
+
 static struct membuf *
 memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
 {
     MEMPTR_T       adr = SBRK_FAILED;
+#if (MEMMAPHDR)
+    struct membuf *hdr;
+#endif
     MEMWORD_T      bufsz = memsmallbufsize(slot, nblk);
     MEMWORD_T      flg = 0;
     struct membuf *buf;
@@ -467,7 +580,12 @@ memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
 //        g_memstat.nbmap += bufsz;
 #endif
     }
+#if !(MEMMAPHDR)
     buf = (struct membuf *)adr;
+#else
+    buf = memgetbufhdr(MEMSMALLBUF, slot);
+#endif
+    buf->base = adr;
     buf->info = flg;    // possible MEMHEAPBIT
     meminitbufslot(buf, slot);
     meminitbufnblk(buf, nblk);
@@ -487,11 +605,17 @@ meminitsmallbuf(struct membuf *buf,
                 MEMWORD_T nblk)
 {
     MEMPTR_T  adr = (MEMPTR_T)buf;
+#if !(MEMMAPHDR)
     MEMPTR_T  ptr = adr + membufblkofs(nblk);
+#else
+    MEMPTR_T  ptr = buf->base;
+#endif
     MEMWORD_T bsz = MEMWORD(1) << slot;
 
     /* initialise freemap */
+#if !(MEMMAPHDR)
     buf->base = ptr;
+#endif
 #if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
     membufinitfree(buf);
 #else
@@ -530,7 +654,12 @@ memallocpagebuf(MEMWORD_T slot, MEMWORD_T nblk)
         
         return NULL;
     }
+#if !(MEMMAPHDR)
     buf = (struct membuf *)adr;
+#else
+    buf = memgetbufhdr(MEMPAGEBUF, slot);
+#endif
+    buf->base = adr;
 #if (MEMBITFIELD)
     memclrbufflg(buf, 1);
 #else
@@ -557,12 +686,18 @@ meminitpagebuf(struct membuf *buf,
                MEMWORD_T size, MEMWORD_T align,
                MEMWORD_T nblk)
 {
-    MEMPTR_T adr = (MEMPTR_T)buf;
-    MEMPTR_T ptr = adr + membufblkofs(nblk);
+    MEMPTR_T  adr = (MEMPTR_T)buf;
+#if !(MEMMAPHDR)
+    MEMPTR_T  ptr = adr + membufblkofs(nblk);
+#else
+    MEMPTR_T  ptr = buf->base;
+#endif
     MEMWORD_T bsz = PAGESIZE + slot * PAGESIZE;
 
     /* initialise freemap */
+#if !(MEMMAPHDR)
     buf->base = ptr;
+#endif
 #if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
     membufinitfree(buf);
 #else
@@ -598,7 +733,12 @@ memallocbigbuf(MEMWORD_T slot, MEMWORD_T nblk)
         
         return NULL;
     }
+#if !(MEMMAPHDR)
     buf = (struct membuf *)adr;
+#else
+    buf = memgetbufhdr(MEMBIGBUF, slot);
+#endif
+    buf->base = adr;
 #if (MEMBITFIELD)
     memclrbufflg(buf, 1);
 #else
@@ -625,10 +765,16 @@ meminitbigbuf(struct membuf *buf,
               MEMWORD_T nblk)
 {
     MEMPTR_T  adr = (MEMPTR_T)buf;
+#if !(MEMMAPHDR)
     MEMPTR_T  ptr = adr + membufblkofs(nblk);
+#else
+    MEMPTR_T  ptr = buf->base;
+#endif
     MEMWORD_T bsz = MEMWORD(1) << slot;
 
+#if !(MEMMAPHDR)
     buf->base = ptr;
+#endif
 #if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
     membufinitfree(buf);
 #else
@@ -688,7 +834,10 @@ memgethashitem(void)
         m_syncwrite((m_atomic_t *)&g_mem.hashbuf, (m_atomic_t)item->chain);
 //        meminithashitem(item);
     } else {
-#if (MEMBIGHASHTAB)
+#if (MEMHASHSUBTABS)
+        n = 32 * PAGESIZE / memhashsize();
+        bsz = 32 * PAGESIZE;
+#elif (MEMBIGHASHTAB)
         n = 64 * PAGESIZE / memhashsize();
         bsz = 64 * PAGESIZE;
 #elif (MEMSMALLHASHTAB)
@@ -1793,6 +1942,7 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
 #endif
             VALGRINDRMPOOL(buf->base);
             unmapanon(buf, buf->size);
+            memputbufhdr(buf, type, slot);
 
             return;
         } else if (tls) {
