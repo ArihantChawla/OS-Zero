@@ -363,14 +363,14 @@ void
 meminit(void)
 {
 #if (MEMHASHSUBTABS)
-    struct memhash *hash;
-    MEMWORD_T       ndx;
+    struct memhashbkt *hash;
+    MEMWORD_T          ndx;
 #endif
 #if !defined(MEMNOSBRK) || !(MEMNOSBRK)
-    void           *heap;
-    intptr_t        ofs;
+    void              *heap;
+    intptr_t           ofs;
 #endif
-    void           *ptr;
+    void              *ptr;
 
 //    fprintf(stderr, "MEMHASHARRAYITEMS == %d\n", MEMHASHARRAYITEMS);
 //    spinlk(&g_mem.initlk);
@@ -400,9 +400,13 @@ meminit(void)
     if (ptr == MAP_FAILED) {
         crash(ptr == MAP_FAILED);
     }
-    g_mem.hash = ptr;
 #if (MEMHASHSUBTABS)
     hash = ptr;
+    ptr = mapanon(0, MEMHASHITEMS * sizeof(struct memhashbkt *));
+#if (MEMSTAT)
+    g_memstat.nbhashtab = MEMHASHITEMS * sizeof(struct memhashbkt *);
+#endif
+    g_mem.hash = ptr;
     for (ndx = 0 ; ndx < MEMHASHITEMS ; ndx++) {
         g_mem.hash[ndx] = hash;
         hash++;

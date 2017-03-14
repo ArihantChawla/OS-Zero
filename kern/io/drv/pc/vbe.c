@@ -334,22 +334,22 @@ vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg)
             gfxsetrgb888(fg, ptr);
         }
         if (mask & 0x20) {
-            gfxsetrgb888(fg, ptr + 3);
+            gfxsetrgb888(fg, &ptr[3]);
         }
         if (mask & 0x10) {
-            gfxsetrgb888(fg, ptr + 6);
+            gfxsetrgb888(fg, &ptr[6]);
         }
         if (mask & 0x08) {
-            gfxsetrgb888(fg, ptr + 9);
+            gfxsetrgb888(fg, &ptr[9]);
         }
         if (mask & 0x04) {
-            gfxsetrgb888(fg, ptr + 12);
+            gfxsetrgb888(fg, &ptr[12]);
         }
         if (mask & 0x02) {
-            gfxsetrgb888(fg, ptr + 15);
+            gfxsetrgb888(fg, &ptr[15]);
         }
         if (mask & 0x01) {
-            gfxsetrgb888(fg, ptr + 18);
+            gfxsetrgb888(fg, &ptr[18]);
         }
         glyph++;
         ptr += incr;
@@ -380,27 +380,27 @@ vbedrawcharbg(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg)
             pix = fg;
             mask = -(val & 0x20);
             pix &= mask;
-            gfxsetrgb888(pix, ptr + 3);
+            gfxsetrgb888(pix, &ptr[3]);
             pix = fg;
             mask = -(val & 0x10);
             pix &= mask;
-            gfxsetrgb888(pix, ptr + 6);
+            gfxsetrgb888(pix, &ptr[6]);
             pix = fg;
             mask = -(val & 0x08);
             pix &= mask;
-            gfxsetrgb888(pix, ptr + 9);
+            gfxsetrgb888(pix, &ptr[9]);
             pix = fg;
             mask = -(val & 0x04);
             pix &= mask;
-            gfxsetrgb888(pix, ptr + 12);
+            gfxsetrgb888(pix, &ptr[12]);
             pix = fg;
             mask = -(val & 0x02);
             pix &= mask;
-            gfxsetrgb888(pix, ptr + 15);
+            gfxsetrgb888(pix, &ptr[15]);
             pix = fg;
             mask = -(val & 0x01);
             pix &= mask;
-            gfxsetrgb888(pix, ptr + 18);
+            gfxsetrgb888(pix, &ptr[18]);
             ptr += incr;
             glyph++;
         }
@@ -413,34 +413,34 @@ vbedrawcharbg(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg)
                 gfxsetrgb888(bg, ptr);
             }
             if (mask & 0x20) {
-                gfxsetrgb888(fg, ptr + 3);
+                gfxsetrgb888(fg, &ptr[3]);
             } else {
-                gfxsetrgb888(bg, ptr + 3);
+                gfxsetrgb888(bg, &ptr[3]);
             }
             if (mask & 0x10) {
-                gfxsetrgb888(fg, ptr + 6);
+                gfxsetrgb888(fg, &ptr[6]);
             } else {
-                gfxsetrgb888(bg, ptr + 6);
+                gfxsetrgb888(bg, &ptr[6]);
             }
             if (mask & 0x08) {
-                gfxsetrgb888(fg, ptr + 9);
+                gfxsetrgb888(fg, &ptr[9]);
             } else {
-                gfxsetrgb888(bg, ptr + 9);
+                gfxsetrgb888(bg, &ptr[9]);
             }
             if (mask & 0x04) {
-                gfxsetrgb888(fg, ptr + 12);
+                gfxsetrgb888(fg, &ptr[12]);
             } else {
-                gfxsetrgb888(bg, ptr + 12);
+                gfxsetrgb888(bg, &ptr[12]);
             }
             if (mask & 0x02) {
-                gfxsetrgb888(fg, ptr + 15);
+                gfxsetrgb888(fg, &ptr[15]);
             } else {
-                gfxsetrgb888(bg, ptr + 15);
+                gfxsetrgb888(bg, &ptr[15]);
             }
             if (mask & 0x01) {
-                gfxsetrgb888(fg, ptr + 18);
+                gfxsetrgb888(fg, &ptr[18]);
             } else {
-                gfxsetrgb888(bg, ptr + 18);
+                gfxsetrgb888(bg, &ptr[18]);
             }
             ptr += incr;
             glyph++;

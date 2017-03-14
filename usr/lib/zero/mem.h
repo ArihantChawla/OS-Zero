@@ -433,7 +433,7 @@ volatile struct memtls * meminittls(void);
 #define membufslotblkadr(buf, ndx, slot)                                \
     ((buf)->base + ((ndx) << (slot)))
 #define membufslotpageadr(buf, ndx, slot)                               \
-    ((buf)->base + (ndx) * (MEMWORD(PAGESIZE) + PAGESIZE * (slot)))
+    ((buf)->base + (ndx) * (PAGESIZE + PAGESIZE * (slot)))
 #define membufpageadr(buf, ndx)                                         \
     (membufslotpageadr(buf, ndx, memgetbufslot(buf)))
 #define membufblkid(buf, ptr)                                           \
@@ -443,7 +443,7 @@ volatile struct memtls * meminittls(void);
 #define membufblksize(buf, type, slot)                                  \
     ((type != MEMPAGEBUF)                                               \
      ? (MEMWORD(1) << (slot))                                           \
-     : (MEMWORD(PAGESIZE) + (MEMWORD(PAGESIZE) * (slot))))
+     : (PAGESIZE) + (PAGESIZE) * (slot))
 
 /* mark the first block of buf as allocated */
 #define _memfillmap0(ptr, ofs, mask)                                    \
@@ -992,7 +992,7 @@ memgenhashtabadr(MEMWORD_T *adr)
                  PAGESIZE))
 #define mempagebufsize(slot, nblk)                                      \
     (rounduppow2(membufblkofs(nblk)                                     \
-                 + PAGESIZE + (PAGESIZE * (slot)) * (nblk),             \
+                 + (PAGESIZE + PAGESIZE * (slot)) * (nblk),             \
                  PAGESIZE))
 #define membigbufsize(slot, nblk)                                       \
     (rounduppow2(membufblkofs(nblk) + (MEMWORD(1) << (slot)) * (nblk),  \
