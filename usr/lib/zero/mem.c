@@ -372,6 +372,9 @@ meminit(void)
 #endif
     void              *ptr;
 
+    fprintf(stderr, "MEMBUFMAXBLKS: %ld\n", MEMBUFMAXBLKS);
+    fprintf(stderr, "struct membuf: %ld bytes (%ld)\n",
+            (long)sizeof(struct membuf), (long)offsetof(struct membuf, stk));
 //    fprintf(stderr, "MEMHASHARRAYITEMS == %d\n", MEMHASHARRAYITEMS);
 //    spinlk(&g_mem.initlk);
 #if (MEMSIGNAL)
@@ -430,7 +433,11 @@ meminit(void)
 #if (MEMNEWHDR)
 
 struct membuf *
+#if (MEMBUFSTACK)
+memcachebufhdr(MEMWORD_T type)
+#else
 memcachebufhdr(MEMWORD_T type, MEMWORD_T nblk)
+#endif
 {
     struct membuf **cache;
     struct membuf  *hdr;
@@ -439,9 +446,13 @@ memcachebufhdr(MEMWORD_T type, MEMWORD_T nblk)
     MEMPTR_T        next;
     MEMWORD_T       n;
     MEMWORD_T       bsz;
+#if (MEMBUFSTACK)
+    MEMWORD_T       hsz = rounduppow2(sizeof(struct membuf), CLSIZE);
+#else
     MEMWORD_T       hsz = membufhdrsize(type, nblk);
+#endif
 
-    n = 4;
+    n = 64;
     bsz = n * hsz;
     hdr = mapanon(0, bsz);
     first = (MEMPTR_T)hdr;
@@ -2026,6 +2037,7 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
             VALGRINDRMPOOL(buf->base);
 #if (MEMMAPHDR)
             unmapanon(buf->base, buf->size);
+            unmapanon(buf->stk, buf->stklim * sizeof(MEMBLKID_T));
             memputbufhdr(buf, type);
 #else
             unmapanon(buf, buf->size);
