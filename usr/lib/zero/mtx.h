@@ -1,7 +1,7 @@
 #ifndef __ZERO_MTX_H__
 #define __ZERO_MTX_H__
 
-#define ZEROFMTXYIELD 0
+#define ZEROFMTXYIELD 1
 #if !defined(ZEROMTX)
 #define ZEROMTX       0
 #endif
