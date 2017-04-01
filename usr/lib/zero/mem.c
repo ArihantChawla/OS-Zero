@@ -376,11 +376,7 @@ meminit(void)
 #if (MEMNEWHDR)
 
 struct membuf *
-#if (MEMMAPSTACK)
-memcachebufhdr(MEMWORD_T type)
-#else
 memcachebufhdr(MEMWORD_T type, MEMWORD_T nblk)
-#endif
 {
     struct membuf **cache;
     struct membuf  *hdr;
@@ -392,11 +388,21 @@ memcachebufhdr(MEMWORD_T type, MEMWORD_T nblk)
 #if (MEMMAPSTACK)
     MEMWORD_T       hsz = membufhdrsize();
 #else
-    MEMWORD_T       hsz = membufhdrsize(type, nblk);
-#endif
+    MEMWORD_T       hsz = membufhdrsize(type);
+#endif    
 
-    n = 64;
+#if (MEMMAPSTACK)
+    if (type == MEMSMALLBUF) {
+        n = 4;
+        bsz = 4 * hsz;
+    } else {
+        n = 4 * PAGESIZE / hsz;
+        bsz = rounduppow2(n * hsz, PAGESIZE);
+    }
+#else
+    n = 4;
     bsz = n * hsz;
+#endif
     hdr = mapanon(0, bsz);
     first = (MEMPTR_T)hdr;
     if (hdr == MAP_FAILED) {
@@ -439,11 +445,7 @@ memgetbufhdr(MEMWORD_T type, MEMWORD_T nblk)
     upval = (MEMADR_T)*cache;
     upval &= ~MEMLKBIT;
     if (!upval) {
-#if (MEMMAPSTACK)
-        hdr = memcachebufhdr(type);
-#else
         hdr = memcachebufhdr(type, nblk);
-#endif
     } else {
         hdr = (struct membuf *)upval;
         m_syncwrite((m_atomic_t *)cache, (m_atomic_t)hdr->next);
@@ -631,7 +633,7 @@ memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
 //        g_memstat.nbmap += bufsz;
 #endif
     }
-#if !(MEMMAPHDR)
+#if !(MEMMAPHDR) && !(MEMNEWHDR)
     buf = (struct membuf *)adr;
 #else
     buf = memgetbufhdr(MEMSMALLBUF, nblk);
@@ -667,7 +669,7 @@ meminitsmallbuf(struct membuf *buf,
 #if !(MEMMAPHDR)
     buf->base = ptr;
 #endif
-    membufinitstk(buf, nblk);
+//    membufinitstk(buf, nblk);
     membufpopblk(buf);
     VALGRINDMKPOOL(ptr, 0, 0);
 //    ptr = memcalcadr(ptr, size, align, 0);
@@ -696,7 +698,7 @@ memallocpagebuf(MEMWORD_T slot, MEMWORD_T nblk)
         
         return NULL;
     }
-#if !(MEMMAPHDR)
+#if !(MEMMAPHDR) && !(MEMNEWHDR)
     buf = (struct membuf *)adr;
 #else
     buf = memgetbufhdr(MEMPAGEBUF, nblk);
@@ -1925,16 +1927,14 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
             g_memstat.nbunmap += buf->size;
 #endif
             VALGRINDRMPOOL(buf->base);
-#if (MEMMAPHDR)
-            unmapanon(buf->base, buf->size);
+#if (MEMNEWHDR)
 #if (MEMMAPSTACK)
             unmapanon(buf->stk, buf->stksize);
+            buf->stksize = 0;
+            buf->stk = NULL;
 #endif
-#if (MEMNEWHDR)
+            unmapanon(buf->base, buf->size);
             memputbufhdr(buf, type);
-#else
-            memputbufhdr(buf, type, slot);
-#endif
 #else
             unmapanon(buf, buf->size);
 #endif
