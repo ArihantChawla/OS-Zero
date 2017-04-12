@@ -25,10 +25,18 @@ static void *
 _malloc(size_t size, size_t align, long flg)
 {
     size_t  aln = max(align, MEMMINALIGN);
-    size_t  sz = max(size, MEMMINBLK);
-    size_t  asz = ((aln <= PAGESIZE)
+#if (MEMBLKHDR)
+    size_t  sz = max(rounduppow2(size + memblkhdrsize(), MEMMINBLK),
+                     MEMMINBLK);
+    size_t  asz = ((aln <= MEMMINALIGN)
                    ? max(aln, sz)
                    : sz + aln - 1);
+#else
+    size_t  sz = max(size, MEMMINBLK);
+    size_t  asz = ((aln <= MEMMINALIGN)
+                   ? max(aln, sz)
+                   : sz + aln - 1);
+#endif
     long    type = (memusesmallbuf(asz)
                     ? MEMSMALLBUF
                     : (memusepagebuf(asz)

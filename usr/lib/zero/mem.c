@@ -521,7 +521,7 @@ memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
     buf = (struct membuf *)adr;
     adr += membufhdrsize(nblk);
     buf->base = adr;
-    buf->info = flg;    // possible MEMHEAPBIT
+    buf->flg = flg;    // possible MEMHEAPBIT
     meminitbufslot(buf, slot);
     meminitbufnblk(buf, nblk);
     meminitbuftype(buf, MEMSMALLBUF);
@@ -577,7 +577,7 @@ memallocpagebuf(MEMWORD_T slot, MEMWORD_T nblk)
     buf = (struct membuf *)adr;
     adr += membufhdrsize(nblk);
     buf->base = adr;
-    buf->info = 0;
+    buf->flg = 0;
     meminitbufslot(buf, slot);
     meminitbufnblk(buf, nblk);
     meminitbuftype(buf, MEMPAGEBUF);
@@ -641,11 +641,7 @@ memallocbigbuf(MEMWORD_T slot, MEMWORD_T nblk)
     buf = (struct membuf *)adr;
     adr += membufhdrsize(nblk);
     buf->base = adr;
-#if (MEMBITFIELD)
-    memclrbufflg(buf, 1);
-#else
-    buf->info = 0;
-#endif
+    buf->flg = 0;
     meminitbufslot(buf, slot);
     meminitbufnblk(buf, nblk);
     meminitbuftype(buf, MEMBIGBUF);
@@ -805,8 +801,32 @@ membufhashitem(struct memhash *item)
 }
 #endif
 
+#if (MEMBLKHDR)
+
 MEMADR_T
 membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
+{
+    MEMADR_T          desc = (MEMADR_T)buf;
+    struct memblkhdr *hdr;
+
+    if (op == MEMHASHDEL) {
+        desc = memgetblkdesc(ptr);
+        memputblkdesc(ptr, 0);
+    } else if (op = MEMHASHADD) {
+        desc |= id;
+        memputblkdesc(ptr, desc);
+    } else {
+        desc = memgetblkdesc(ptr);
+    }
+
+    return desc;
+}
+
+#else /* !MEMBLKHDR */
+
+MEMADR_T
+membufop(MEMPTR_T ptr, MEMWORD_T op,
+         struct membuf *buf, MEMWORD_T id)
 {
     volatile struct memtls *tls;
     MEMPTR_T                adr = ptr;
@@ -1122,10 +1142,8 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
         slot->nact++;
 #endif
         if (op == MEMHASHDEL) {
-            if (type == MEMPAGEBUF) {
-                id = desc & MEMPAGEIDMASK;
-                desc &= ~MEMPAGEIDMASK;
-            }
+            id = desc & MEMPAGEIDMASK;
+            desc &= ~MEMPAGEIDMASK;
             buf = (struct membuf *)desc;
 //            tls = buf->tls;
             type = memgetbuftype(buf);
@@ -1212,10 +1230,12 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
     return desc;
 }
 
+#endif
+
 MEMPTR_T
 memsetbuf(MEMPTR_T ptr, struct membuf *buf, MEMWORD_T id)
 {
-    MEMADR_T desc = membufop(ptr, MEMHASHADD, buf, id);
+    MEMADR_T  desc = membufop(ptr, MEMHASHADD, buf, id);
     
     return (MEMPTR_T)desc;
 }
