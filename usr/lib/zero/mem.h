@@ -14,7 +14,7 @@
 #if defined(MEMDEBUG)
 #include <stdio.h>
 #define crash(cond)                                                     \
-    (!(cond)                                                            \
+    ((cond)                                                             \
      ? ((void)0)                                                        \
      : (fprintf(stderr,                                                 \
                 "Assertion failed: %s, file %s, function %s, line %d\n", \
@@ -183,7 +183,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMPAGEGLOBLIM      (512 * 1024 * 1024)
 #define MEMBIGGLOBLIM       (1024 * 1024 * 1024)
 
-#define MEMMINALIGN         CLSIZE
+//#define MEMMINALIGN         CLSIZE
 #if !defined(MEMMINALIGN)
 /* determine minimal required alignment for blocks */
 #if defined(__BIGGEST_ALIGNMENT__)
@@ -284,19 +284,23 @@ struct membkt {
 #define MEMBIGBUF        0x02
 #define MEMBUFTYPES      3
 #define MEMBUFTYPEBITS   2
-//#define MEMTLSBIT        (MEMWORD(1) << (8 * sizeof(MEMWORD_T) - 1))
-#define MEMBUFLKBIT      (MEMWORD(1) << (8 * sizeof(MEMWORD_T) - 1))
-//#define MEMBUFGLOBBIT    (MEMWORD(1) << (8 * sizeof(MEMWORD_T) - 2))
-#define MEMBUFLKBITID    (8 * sizeof(MEMWORD_T) - 1)
+//#define MEMBUFLKBIT      (MEMWORD(1) << (8 * sizeof(MEMWORD_T) - 1))
+//#define MEMBUFLKBITID    (8 * sizeof(MEMWORD_T) - 1)
 //#define MEMBUFGLOBBITID  (8 * sizeof(MEMWORD_T) - 2)
 #if !defined(MEMNOSBRK) || !(MEMNOSBRK)
-#define MEMHEAPBIT       (MEMWORD(1) << (8 * sizeof(MEMWORD_T) - 2))
+#define MEMBUFHEAPBIT    (MEMWORD(1) << (CHAR_BIT * sizeof(MEMWORD_T) - 1))
+#define MEMFLAGBITS      1
+#else
+#define MEMBUFFLAGBITS   0
 #endif
+#define MEMBUFSLOTBITS                                                  \
+    (CHAR_BIT * sizeof(MEMWORD_T) - MEMBUFTYPEBITS - MEMBUFFLAGBITS)
+#if 0
 #define MEMBUFNBLKBITS   16
 //#define MEMBUFMAXBLKS    (MEMWORD(1) << MEMBUFNBLKBITS)
-#define MEMBUFSLOTBITS   12
 #define MEMBUFSLOTSHIFT  (MEMBUFNBLKBITS)
 #define MEMBUFTYPESHIFT  (MEMBUFSLOTSHIFT + MEMBUFSLOTBITS)
+#endif
 #if 0
 #define MEMBUFNFREEBITS   MEMBUFNBLKBITS
 #define MEMBUFNFREEMASK  (MEMBUFNBLKMASK << MEMBUFNFREESHIFT)
@@ -304,23 +308,39 @@ struct membkt {
 #endif
 
 #define meminitbufnblk(buf, n)                                          \
-    ((buf)->info |= (n))
+    ((buf)->nblk = (n))
+#define meminitbuftype(buf, t)                                          \
+    ((buf)->info |=  (t))
+#define meminitbufslot(buf, slot)                                       \
+    ((buf->info) |= (slot) << MEMBUFTYPEBITS)
+#if 0
+#define meminitbufnblk(buf, n)                                          \
+    ((buf)->nblk = (n))
 #define meminitbuftype(buf, t)                                          \
     ((buf)->info |=  (t) << MEMBUFTYPESHIFT)
 #define meminitbufslot(buf, slot)                                       \
     ((buf->info)  |= (slot) << MEMBUFSLOTSHIFT)
+#endif
 #define memsetbufnfree(buf, n)                                          \
     ((buf)->nfree = (n))
 #define memgetbufheapflg(buf)                                           \
     ((buf)->info & MEMHEAPBIT)
 #define memgetbufnblk(buf)                                              \
-    ((buf)->info & ((MEMWORD(1) << MEMBUFNBLKBITS) - 1))
+    ((buf)->nblk)
 #define memgetbufnfree(buf)                                             \
     ((buf)->nfree)
 #define memgetbuftype(buf)                                              \
+    ((buf)->info & ((MEMWORD(1) << MEMBUFTYPEBITS) - 1))
+#define memgetbufslot(buf)                                              \
+    (((buf)->info >> MEMBUFTYPEBITS) & ((MEMWORD(1) << MEMBUFSLOTBITS) - 1))
+#if 0
+#define memgetbufnblk(buf)                                              \
+    ((buf)->info & ((MEMWORD(1) << MEMBUFNBLKBITS) - 1))
+#define memgetbuftype(buf)                                              \
     (((buf)->info >>  MEMBUFTYPESHIFT) & ((MEMWORD(1) << MEMBUFTYPEBITS) - 1))
 #define memgetbufslot(buf)                                              \
-    (((buf)->info >> MEMBUFSLOTSHIFT) & ((MEMWORD(1) << MEMBUFSLOTBITS) - 1))
+    (((buf)->info >> MEMBUFTYPEBITS) & ((MEMWORD(1) << MEMBUFSLOTBITS) - 1))
+#endif
 
 struct membufvals {
     MEMWORD_T *nblk[MEMBUFTYPES];
@@ -331,18 +351,20 @@ struct membufvals {
 #define MEMINITBIT   (1L << 0)
 #define MEMNOHEAPBIT (1L << 1)
 struct mem {
+    struct membkt        pagebin[MEMPAGESLOTS];
 //    struct membuf       *bighdr[MEMBIGSLOTS];
     struct membkt        bigbin[MEMBIGSLOTS];
 //    struct membuf       *pagehdr[MEMPAGESLOTS];
-    struct membkt        pagebin[MEMPAGESLOTS];
 //    struct membuf       *smallhdr[MEMSMALLSLOTS];
     struct membkt        smallbin[MEMSMALLSLOTS];
 #if (MEMDEADBINS)
     struct membkt        deadpage[MEMPAGESLOTS];
     struct membkt        deadsmall[MEMSMALLSLOTS];
 #endif
-    struct membuf       *hdrbuf;
+    struct membuf       *smallhdr;
+    struct membuf       *bighdr;
     struct membuf       *stkbuf;
+    struct membuf       *bigbuf;
 //    struct membufvals   bufvals;
 #if (MEMMULTITAB)
     struct memtabl0     *tab;     // allocation lookup structure
@@ -372,16 +394,6 @@ struct mem {
 #endif
 };
 
-#if (MEMBITFIELD)
-struct membufinfo {
-    unsigned int nblk  : MEMBUFNBLKBITS;
-    unsigned int nfree : MEMBUFNBLKBITS;
-    unsigned int slot  : MEMBUFSLOTBITS;
-    unsigned int type  : MEMBUFTYPEBITS;
-    unsigned int flg   : MEMBUFFLGBITS;
-};
-#endif
-
 /*
  * buf structure for allocating runs of pages; crafted to fit in 8 words
  * (typical cacheline size)
@@ -392,46 +404,29 @@ struct membufinfo {
 
 #define MEMNOBLK (MEMWORD(-1))
 
-#if (MEMMAPSTACK)
-#define membufhdrsize()                                                 \
-    (rounduppow2(sizeof(struct membuf), CLSIZE))
-#elif (MEMNEWHDR)
-#define membufhdrsize(type)                                             \
-    (((type) == MEMSMALLBUF)                                            \
-     ? rounduppow2(offsetof(struct membuf, stk)                         \
-                   + (nblk) * sizeof(MEMBLKID_T),                       \
-                   PAGESIZE)                                            \
-     : rounduppow2(sizeof(struct membuf), PAGESIZE))
-#endif
+#define membufhdrsize(nblk)                                             \
+    (sizeof(struct membuf) + (nblk) * sizeof(MEMBLKID_T))
 struct membuf {
     volatile struct memtls *tls;
     MEMPTR_T                base; // base address for allocations
-#if (MEMBITFIELD)
-    struct membufinfo       info;
-#else
-    MEMWORD_T               info; // slot + # of total & free blks
-#endif
+    MEMWORD_T               info; // slot + buffer type
     struct membuf          *heap; // previous buf in heap for bufs from sbrk()
     struct membuf          *prev; // previous buf in chain
     struct membuf          *next; // next buf in chain
     MEMWORD_T               size; // allocation blocks
+    MEMWORD_T               nblk;
     MEMWORD_T               nfree;
     MEMWORD_T               freemap[MEMBUFBITMAPWORDS];
     MEMWORD_T               relmap[MEMBUFBITMAPWORDS];
     MEMWORD_T               stktop;
     MEMWORD_T               stklim;
-#if (MEMMAPSTACK)
-    MEMBLKID_T             *stk;
-    MEMWORD_T               stksize;
-#elif (MEMMAPHDR) || (MEMNEWHDR)
     MEMBLKID_T              stk[EMPTY];
-#endif
 };
 
 #define memtlssize() rounduppow2(sizeof(struct memtls), 2 * PAGESIZE)
 struct memtls {
-    struct membkt     bigbin[MEMBIGSLOTS];
     struct membkt     pagebin[MEMPAGESLOTS];
+    struct membkt     bigbin[MEMBIGSLOTS];
     struct membkt     smallbin[MEMSMALLSLOTS];
 #if (MEM_LK_TYPE & MEM_LK_PRIO)
     struct priolkdata priolkdata;
@@ -727,22 +722,10 @@ membuffreemap(struct membuf *buf)
 static __inline__ void
 membufinitstk(struct membuf *buf, MEMWORD_T nblk)
 {
-#if (MEMMAPSTACK)
-    MEMBLKID_T *stk;
-    MEMWORD_T   ssz = rounduppow2(nblk * sizeof(MEMBLKID_T), PAGESIZE);
-#else
     MEMBLKID_T *stk = buf->stk;
-#endif
     MEMWORD_T   ndx;
     MEMBLKID_T  id;
 
-#if (MEMMAPSTACK)
-    stk = mapanon(0, ssz);
-    if (stk == MAP_FAILED) {
-
-        abort();
-    }
-#endif
     buf->nfree = nblk;
     buf->stktop = 0;
     buf->stklim = nblk;
@@ -753,10 +736,6 @@ membufinitstk(struct membuf *buf, MEMWORD_T nblk)
         ndx++;
         id++;
     }
-#if (MEMMAPSTACK)
-    buf->stksize = ssz;
-    buf->stk = stk;
-#endif
     
     return;
 }
@@ -1050,31 +1029,15 @@ memgenhashtabadr(MEMWORD_T *adr)
  */
 //#define membufptrtabsize(nblk) (MEMBUFMAXBLKS * sizeof(MEMPTR_T))
 //#define membufslot(buf)       (memgetbufslot(buf))
-#if 0
-#define membufblkofs(nblk)                                              \
-    (rounduppow2(sizeof(struct membuf), PAGESIZE))
-#endif
 #define memusesmallbuf(sz)     ((sz) <= PAGESIZE)
 #define memusepagebuf(sz)      ((sz) <= PAGESIZE * MEMPAGESLOTS)
-#if (MEMMAPHDR) || (MEMNEWHDR)
 #define memsmallbufsize(slot, nblk)                                     \
-    ((nblk) << (slot))
+    (rounduppow2(membufhdrsize(nblk) + (nblk) << (slot), PAGESIZE))
 #define mempagebufsize(slot, nblk)                                      \
-    ((PAGESIZE + PAGESIZE * (slot)) * (nblk))
-#define membigbufsize(slot, nblk)                                       \
-    ((nblk) << (slot))
-#else
-#define memsmallbufsize(slot, nblk)                                     \
-    (rounduppow2(membufblkofs(nblk) + ((nblk) << (slot)),               \
-                 PAGESIZE))
-#define mempagebufsize(slot, nblk)                                      \
-    (rounduppow2(membufblkofs(nblk)                                     \
-                 + (PAGESIZE + PAGESIZE * (slot)) * (nblk),             \
+    (rounduppow2(membufhdrsize(nblk) + (PAGESIZE + PAGESIZE * (slot)) * (nblk), \
                  PAGESIZE))
 #define membigbufsize(slot, nblk)                                       \
-    (rounduppow2(membufblkofs(nblk) + (MEMWORD(1) << (slot)) * (nblk),  \
-                 PAGESIZE))
-#endif
+    (rounduppow2(membufhdrsize(nblk) + (nblk) << (slot), PAGESIZE))
 #define memnbufblk(type, slot)                                          \
     (((type) == MEMSMALLBUF)                                            \
      ? (1L << (MEMSLABSHIFT - (slot)))                                  \

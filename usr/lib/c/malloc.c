@@ -64,8 +64,8 @@ _malloc(size_t size, size_t align, long flg)
         }
     }
 #if (MEMDEBUG)
-    crash(!ptr);
-    crash ((MEMADR_T)ptr & (aln - 1));
+    crash(ptr);
+    crash (!((MEMADR_T)ptr & (aln - 1)));
 #endif
 #if 0
     fprintf(stderr, "_MALLOC(%ld, %lx, %lx): %p\n",
@@ -102,7 +102,7 @@ _free(void *ptr)
     desc = membufop(ptr, MEMHASHDEL, NULL, 0);
 #endif
 #if (MEMDEBUG) && 0
-    crash(desc != MEMHASHNOTFOUND);
+    crash(desc == MEMHASHNOTFOUND);
 #endif
     if (desc) {
         VALGRINDFREE(ptr);
@@ -160,7 +160,7 @@ _realloc(void *ptr,
     } else {
         desc = membufop(ptr, MEMHASHCHK, NULL, 0);
 #if (MEMDEBUG) && 0
-        crash(desc != MEMHASHNOTFOUND);
+        crash(desc == MEMHASHNOTFOUND);
 #endif
         buf = (struct membuf *)(desc & ~MEMPAGEIDMASK);
         if (desc) {
@@ -301,7 +301,7 @@ posix_memalign(void **ret, size_t align, size_t size)
         }
     }
 #if (MEMDEBUG)
-    crash(!ptr);
+    crash(ptr);
 #endif
     *ret = ptr;
 
@@ -328,7 +328,7 @@ reallocf(void *ptr, size_t size)
         return NULL;
     }
 #if (MEMDEBUG)
-    crash(!retptr);
+    crash(retptr);
 #endif
 
     return retptr;
@@ -352,7 +352,7 @@ memalign(size_t align, size_t size)
         ptr = _malloc(size, align, 0);
     }
 #if (MEMDEBUG)
-    crash(!ptr);
+    crash(ptr);
 #endif
 
     return ptr;
@@ -376,7 +376,7 @@ aligned_alloc(size_t align, size_t size)
         ptr = _malloc(size, align, 0);
     }
 #if (MEMDEBUG)
-    crash(!ptr);
+    crash(ptr);
 #endif
 
     return ptr;
@@ -400,7 +400,7 @@ valloc(size_t size)
 
     ptr = _malloc(size, PAGESIZE, 0);
 #if (MEMDEBUG)
-    crash(!ptr);
+    crash(ptr);
 #endif
     
     return ptr;
@@ -420,7 +420,7 @@ pvalloc(size_t size)
     void   *ptr = _malloc(sz, PAGESIZE, 0);
 
 #if (MEMDEBUG)
-    crash(!ptr);
+    crash(ptr);
 #endif
 
     return ptr;
@@ -446,7 +446,7 @@ _aligned_malloc(size_t size, size_t align)
         ptr = _malloc(size, align, 0);
     }
 #if (MEMDEBUG)
-    crash(!ptr);
+    crash(ptr);
 #endif
 
     return ptr;
@@ -483,7 +483,7 @@ _mm_malloc(size_t size, size_t align)
         ptr = _malloc(size, align, 0);
     }
 #if (MEMDEBUG)
-    crash(!ptr);
+    crash(ptr);
 #endif
 
     return ptr;
