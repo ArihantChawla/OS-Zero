@@ -17,11 +17,18 @@
 #define NLEVEL    24
 #define diceshift(l) (MINLOG2 + (l))
 
+#if (DNG_RANDMT32)
+#define dngsrand(x) srandmt32(x)
+#define dngrand()   randmt32()
+#else
+#define dngsrand(x) srand(x)
+#define dngrand()   rand()
+#endif
 #if (DICE_SRAND_TIME)
 #include <time.h>
-#define diceroll(max) (srandmt32(time(NULL)), (randmt32() % (max)) + 1)
+#define diceroll(max) (dngsrand(time(NULL)), (dngrand() % (max)) + 1)
 #else
-#define diceroll(max) ((randmt32() % (max)) + 1)
+#define diceroll(max) ((dngrand() % (max)) + 1)
 #endif
 
 static __inline__ unsigned long

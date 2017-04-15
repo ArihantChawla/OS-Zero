@@ -13,7 +13,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#if (DNG_RANDMT32)
 #include <zero/randmt32.h>
+#endif
 #include "dice.h"
 
 void
@@ -55,7 +57,11 @@ diceinit(unsigned long seed)
     if (!seed) {
         seed = 0xffffffff;
     }
+#if (DNG_RANDMT32)
     srandmt32(seed);
+#else
+    srand(seed);
+#endif
 
     return;
 }
