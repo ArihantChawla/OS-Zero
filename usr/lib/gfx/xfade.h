@@ -37,7 +37,7 @@
 /* tested OK */
 #define gfxxfade1_jose(src1, src2, dest, val)                           \
     do {                                                                \
-        gfxargb32_t _tmp;                                               \
+        gfxargb32 _tmp;                                                 \
                                                                         \
         _tmp = INTERP_256(0xff - (val), src1, dest);                    \
         (dest) = INTERP_256((val), src2, _tmp);                         \

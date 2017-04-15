@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-#define DECK_GFX_LFB 0  // use linear framebuffer for graphics
-
-typedef uint32_t deckuword_t;
+#define SUPPORT_DECK_GFX_LFB 1  // use linear framebuffer for graphics
+#define SUPPORT_POSIX_MQ     1  // POSIX [priority] message queues
+#define SUPPORT_SYSV_MQ      1  // System V message queues
 
 #endif /* __DECK_CONF_H__ */
 

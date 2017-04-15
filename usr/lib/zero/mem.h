@@ -1061,7 +1061,7 @@ memgenhashtabadr(MEMWORD_T *adr)
                  ? 4                                                    \
                  : 2)))                                                 \
         : (((slot) <= MEMSMALLMAPSLOT)                                  \
-           ? 16                                                         \
+           ? 8                                                          \
            : (((slot) <= MEMMIDMAPSLOT)                                 \
               ? 4                                                       \
               : (((slot) <= MEMBIGMAPSLOT)                              \
@@ -1072,6 +1072,46 @@ memgenhashtabadr(MEMWORD_T *adr)
     (((type) == MEMSMALLBUF)                                            \
      ? 2                                                                \
      : 1)
+#if (!MEMUNMAP)
+#define membktnbufglob(type, slot) (~MEMWORD(0))
+#else
+#define membktnbufglob(type, slot)                                      \
+    (((type) == MEMSMALLBUF)                                            \
+     ? (((slot) <= MEMSMALLSLOT)                                        \
+        ? 8                                                             \
+        : (((slot) <= MEMMIDSLOT)                                       \
+           ? 4                                                          \
+           : 2))                                                        \
+     : (((type) == MEMPAGEBUF)                                          \
+        ? (((slot) <= MEMSMALLPAGESLOT)                                 \
+           ? 8                                                          \
+           : (((slot) <= MEMMIDPAGESLOT)                                \
+              ? 4                                                       \
+              : 2))                                                     \
+        : 1))
+#if 0
+#define membktnbufglob(type, slot)                                      \
+    (((type) == MEMSMALLBUF)                                            \
+     ? (((slot) <= MEMSMALLSLOT)                                        \
+        ? 8                                                             \
+        : (((slot) <= MEMMIDSLOT)                                       \
+           ? 4                                                          \
+           : 2))                                                        \
+     : (((type) == MEMPAGEBUF)                                          \
+        ? (((slot) <= MEMSMALLPAGESLOT)                                 \
+           ? 8                                                          \
+           : (((slot) <= MEMMIDPAGESLOT)                                \
+              ? 4                                                       \
+              : 2))                                                     \
+        : (((slot) <= MEMSMALLMAPSLOT)                                  \
+           ? 8                                                          \
+           : (((slot) <= MEMMIDMAPSLOT)                                 \
+              ? 4                                                       \
+              : (((slot) <= MEMBIGMAPSLOT)                              \
+                 ? 2                                                    \
+                 : 1)))))
+#endif
+#endif
 #if 0
 #define membktnbuftls(type, slot)                                       \
     (((type) == MEMSMALLBUF)                                            \
@@ -1109,7 +1149,6 @@ memgenhashtabadr(MEMWORD_T *adr)
               ? 4                                                       \
               : 2))                                                     \
         : 0))
-#endif
 #if (!MEMUNMAP)
 #define membktnbufglob(type, slot) (~MEMWORD(0))
 #else
@@ -1133,6 +1172,7 @@ memgenhashtabadr(MEMWORD_T *adr)
               : (((slot) <= MEMBIGMAPSLOT)                              \
                  ? 8                                                   \
                  : 2)))))
+#endif
 #endif
 
 #define memgetnbufblk(type, slot)  memnbufblk(type, slot)

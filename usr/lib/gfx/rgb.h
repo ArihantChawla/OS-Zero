@@ -14,7 +14,7 @@
 #define GFX_BLACK     0x00000000
 #define GFX_WHITE     0xffffffff
 //#define GFX_GREEN     0x0000bf00
-#define GFX_NOALPHA   (-1)
+#define GFX_NO_ALPHA  0
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 
@@ -23,7 +23,7 @@
 #define GFX_GREEN_OFS 8
 #define GFX_BLUE_OFS  0
 
-struct gfxargb32 {
+struct gfxpix32 {
     uint8_t blue;
     uint8_t green;
     uint8_t red;
@@ -37,7 +37,7 @@ struct gfxargb32 {
 #define GFX_GREEN_OFS 16
 #define GFX_BLUE_OFS  24
 
-struct gfxargb32 {
+struct gfxpix32 {
     uint8_t alpha;
     uint8_t red;
     uint8_t green;
@@ -46,9 +46,9 @@ struct gfxargb32 {
 
 #endif /* __BYTE_ORDER */
 
-typedef int32_t gfxargb32_t;
-typedef int16_t gfxrgb555_t;
-typedef int16_t gfxrgb565_t;
+typedef int32_t gfxpix32;
+typedef int16_t gfxpix555;
+typedef int16_t gfxpix565;
 
 /* pix is 32-bit word */
 #define gfxgetalpha(pix) ((pix) >> GFX_ALPHA_OFS)          // alpha component
@@ -57,10 +57,10 @@ typedef int16_t gfxrgb565_t;
 #define gfxgetblue(pix)  (((pix) >> GFX_BLUE_OFS) & 0xff)  // blue component
 
 /* pointer version; faster byte-fetches from memory */
-#define gfxgetalpha_p(ptr) (((struct gfxargb32 *)(ptr))->alpha)
-#define gfxgetred_p(ptr)   (((struct gfxargb32 *)(ptr))->red)
-#define gfxgetgreen_p(ptr) (((struct gfxargb32 *)(ptr))->green)
-#define gfxgetblue_p(ptr)  (((struct gfxargb32 *)(ptr))->blue)
+#define gfxgetalpha_p(ptr) (((struct gfxpix32 *)(ptr))->alpha)
+#define gfxgetred_p(ptr)   (((struct gfxpix32 *)(ptr))->red)
+#define gfxgetgreen_p(ptr) (((struct gfxpix32 *)(ptr))->green)
+#define gfxgetblue_p(ptr)  (((struct gfxpix32 *)(ptr))->blue)
 
 /* approximation for c / 0xff */
 #define gfxdiv255(c)                                                    \
@@ -84,10 +84,10 @@ typedef int16_t gfxrgb565_t;
 #define gfxmkpix_p(dest, a, r, g, b)                                    \
     ((dest) = gfxmkpix(a, r, g, b))
 #define gfxsetpix_p(p, a, r, g, b)                                      \
-    (((struct gfxargb32 *)(ptr))->alpha = (a),                          \
-     ((struct gfxargb32 *)(ptr))->red = (r),                            \
-     ((struct gfxargb32 *)(ptr))->green = (g),                          \
-     ((struct gfxargb32 *)(ptr))->blue = (b))
+    (((struct gfxpix32 *)(ptr))->alpha = (a),                          \
+     ((struct gfxpix32 *)(ptr))->red = (r),                            \
+     ((struct gfxpix32 *)(ptr))->green = (g),                          \
+     ((struct gfxpix32 *)(ptr))->blue = (b))
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 
@@ -97,17 +97,28 @@ typedef int16_t gfxrgb565_t;
 #define GFX_RGB888_RED_OFS         2
 #define GFX_RGB888_GREEN_OFS       1
 #define GFX_RGB888_BLUE_OFS        0
+
 #else
+
 #define GFX_RGB888_RED_OFS         0
 #define GFX_RGB888_GREEN_OFS       1
 #define GFX_RGB888_BLUE_OFS        2
 
 #endif
 
+#define GFX_ARGB32_ALPHA_MASK      0xff000000
+#define GFX_ARGB32_RED_MASK        0x00ff0000
+#define GFX_ARGB32_GREEN_MASK      0x0000ff00
+#define GFX_ARGB32_BLUE_MASK       0x000000ff
+
+#define GFX_RGB888_RED_MASK        0x00ff0000
+#define GFX_RGB888_GREEN_MASK      0x0000ff00
+#define GFX_RGB888_BLUE_MASK       0x000000ff
+
 #define GFX_RGB555_RED_MASK        0x00007c00
 #define GFX_RGB555_GREEN_MASK      0x000003e0
 #define GFX_RGB555_BLUE_MASK       0x0000001f
-//#define GFX_RGB555_MASK            0x00007fff
+#define GFX_RGB555_MASK            0x00007fff
 
 #define GFX_RGB555_RED_SHIFT       7
 #define GFX_RGB555_GREEN_SHIFT     2
@@ -116,14 +127,14 @@ typedef int16_t gfxrgb565_t;
 #define GFX_RGB565_RED_MASK        0x0000f800
 #define GFX_RGB565_GREEN_MASK      0x000007e0
 #define GFX_RGB565_BLUE_MASK       0x0000001f
-//#define GFX_RGB565_MASK            0x0000ffff
+#define GFX_RGB565_MASK            0x0000ffff
 
 #define GFX_RGB565_RED_SHIFT       8
 #define GFX_RGB565_GREEN_SHIFT     3
 #define GFX_RGB565_BLUE_SHIFT     -3
 
 #define gfxtopix(dst, pix) (gfxto##dst(pix))
-#define gfxtoargb32(pix)   (pix)
+#define gfxtopix32(pix)   (pix)
 
 #define gfxtorgb555(pix)                                                \
     (gfxtoc(gfxgetred(pix),                                             \
@@ -147,18 +158,16 @@ typedef int16_t gfxrgb565_t;
               GFX_RGB565_BLUE_MASK,                                     \
               GFX_RGB565_BLUE_SHIFT))
 
-#define gfxsetargb32_p(pix, ptr, aval)                                  \
+#define gfxsetpix32_p(pix, ptr, aval)                                   \
     do {                                                                \
-        gfxargb32_t       _pix = (pix);                                 \
-        struct gfxargb32 *_src = (struct gfxargb32 *)&_pix;             \
-        struct gfxargb32 *_dest = (struct gfxargb32 *)(ptr);            \
+        gfxpix32          _pix = (pix);                                 \
+        struct gfxpix32 *_src = (struct gfxpix32 *)&_pix;             \
+        struct gfxpix32 *_dest = (struct gfxpix32 *)(ptr);            \
                                                                         \
         _dest->red = gfxgetred_p(_src);                                 \
         _dest->green = gfxgetgreen_p(_src);                             \
         _dest->blue = gfxgetblue_p(_src);                               \
-        if (alpha != GFX_NOALPHA) {                                     \
-            _dest->alpha = (aval);                                      \
-        }                                                               \
+        _dest->alpha = (aval);                                          \
     } while (0)
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)

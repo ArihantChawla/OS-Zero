@@ -19,13 +19,13 @@
 
 #define gfxalphablendhiq(src, dest, aval)                               \
     do {                                                                \
-        gfxargb32_t _a = (aval);                                        \
-        gfxargb32_t _sr = gfxredval(src);                               \
-        gfxargb32_t _sg = gfxgreenval(src);                             \
-        gfxargb32_t _sb = gfxblueval(src);                              \
-        gfxargb32_t _dr;                                                \
-        gfxargb32_t _dg;                                                \
-        gfxargb32_t _db;                                                \
+        gfxargb32 _a = (aval);                                          \
+        gfxargb32 _sr = gfxredval(src);                                 \
+        gfxargb32 _sg = gfxgreenval(src);                               \
+        gfxargb32 _sb = gfxblueval(src);                                \
+        gfxargb32 _dr;                                                  \
+        gfxargb32 _dg;                                                  \
+        gfxargb32 _db;                                                  \
                                                                         \
         if ((aval) == 0xff) {                                           \
             _dr = _sr;                                                  \
@@ -44,13 +44,13 @@
 
 #define gfxalphablendhiq_p(src, dest, aval)                             \
     do {                                                                \
-        gfxargb32_t _a = (aval);                                        \
-        gfxargb32_t _sr = gfxredval_p(src);                             \
-        gfxargb32_t _sg = gfxgreenval_p(src);                           \
-        gfxargb32_t _sb = gfxblueval_p(src);                            \
-        gfxargb32_t _dr = gfxredval_p(dest);                            \
-        gfxargb32_t _dg = gfxgreenval_p(dest);                          \
-        gfxargb32_t _db = gfxblueval_p(dest);                           \
+        gfxargb32 _a = (aval);                                          \
+        gfxargb32 _sr = gfxredval_p(src);                               \
+        gfxargb32 _sg = gfxgreenval_p(src);                             \
+        gfxargb32 _sb = gfxblueval_p(src);                              \
+        gfxargb32 _dr = gfxredval_p(dest);                              \
+        gfxargb32 _dg = gfxgreenval_p(dest);                            \
+        gfxargb32 _db = gfxblueval_p(dest);                             \
                                                                         \
         _dr = gfxalphablendchiq(_sr, _dr, _a);                          \
         _dg = gfxalphablendchiq(_sg, _dg, _a);                          \
@@ -60,13 +60,13 @@
 
 #define gfxalphablendloq(src, dest, aval)                               \
     do {                                                                \
-        gfxargb32_t _a = (aval);                                        \
-        gfxargb32_t _sr = gfxredval(src);                               \
-        gfxargb32_t _sg = gfxgreenval(src);                             \
-        gfxargb32_t _sb = gfxblueval(src);                              \
-        gfxargb32_t _dr = gfxgfxredval(dest);                           \
-        gfxargb32_t _dg = gfxgreenval(dest);                            \
-        gfxargb32_t _db = gfxblueval(dest);                             \
+        gfxargb32 _a = (aval);                                          \
+        gfxargb32 _sr = gfxredval(src);                                 \
+        gfxargb32 _sg = gfxgreenval(src);                               \
+        gfxargb32 _sb = gfxblueval(src);                                \
+        gfxargb32 _dr = gfxgfxredval(dest);                             \
+        gfxargb32 _dg = gfxgreenval(dest);                              \
+        gfxargb32 _db = gfxblueval(dest);                               \
                                                                         \
         _dr = gfxalphablendfast(_sr, _dr, _a);                          \
         _dg = gfxalphablendfast(_sg, _dg, _a);                          \
@@ -76,13 +76,13 @@
 
 #define gfxalphablendloq_p(src, dest, aval)                             \
     do {                                                                \
-            gfxargb32_t _a = (aval);                                    \
-        gfxargb32_t _sr = gfxredval_p(src);                             \
-        gfxargb32_t _sg = gfxgreenval_p(src);                           \
-        gfxargb32_t _sb = gfxblueval_p(src);                            \
-        gfxargb32_t _dr = gfxredval_p(dest);                            \
-        gfxargb32_t _dg = gfxgreenval_p(dest);                          \
-        gfxargb32_t _db = gfxblueval_p(dest);                           \
+        gfxargb32 _a = (aval);                                          \
+        gfxargb32 _sr = gfxredval_p(src);                               \
+        gfxargb32 _sg = gfxgreenval_p(src);                             \
+        gfxargb32 _sb = gfxblueval_p(src);                              \
+        gfxargb32 _dr = gfxredval_p(dest);                              \
+        gfxargb32 _dg = gfxgreenval_p(dest);                            \
+        gfxargb32 _db = gfxblueval_p(dest);                             \
                                                                         \
         _dr = gfxalphablendfast(_sr, _dr, _a);                          \
         _dg = gfxalphablendfast(_sg, _dg, _a);                          \
@@ -108,17 +108,17 @@
 
 #define gfxalphablend_nodiv(src, dest, a)                               \
     do {                                                                \
-        gfxargb32_t _m1 = 0x00ff00ff;                                   \
-        gfxargb32_t _m2 = 0xff00ff00;                                   \
-        gfxargb32_t _ss = (src) >> 8;                                   \
-        gfxargb32_t _ds = (dest) >> 8;                                  \
+        gfxargb32 _m1 = 0x00ff00ff;                                     \
+        gfxargb32 _m2 = 0xff00ff00;                                     \
+        gfxargb32 _ss = (src) >> 8;                                     \
+        gfxargb32 _ds = (dest) >> 8;                                    \
                                                                         \
         (dest) =  (((((((_ss) & _m1) - ((_ds) & _m1)) * (a))            \
                      + ((dest) & _m2)) & _m2)                           \
                    + (((((((src) & _m1)                                 \
                           - ((dest) & _m1)) * (a)) >> 8)                \
                        + ((dest) & _m1)) & _m1));                       \
-} while (0)
+    } while (0)
 
 #define gfxalphablendloq_asm_mmx(src, dest, aval)                       \
     do {                                                                \
@@ -176,13 +176,13 @@
 
 #define gfxalphablend_hiq_const(src, dest, a)                           \
     do {                                                                \
-        gfxargb32_t _a = (a);                                           \
-        gfxargb32_t _sr = gfxredval(src);                               \
-        gfxargb32_t _sg = gfxgreenval(src);                             \
-        gfxargb32_t _sb = gfxblueval(src);                              \
-        gfxargb32_t _dr = gfxredval(dest);                              \
-        gfxargb32_t _dg = gfxgreenval(dest);                            \
-        gfxargb32_t _db = gfxblueval(dest);                             \
+        gfxargb32 _a = (a);                                             \
+        gfxargb32 _sr = gfxredval(src);                                 \
+        gfxargb32 _sg = gfxgreenval(src);                               \
+        gfxargb32 _sb = gfxblueval(src);                                \
+        gfxargb32 _dr = gfxredval(dest);                                \
+        gfxargb32 _dg = gfxgreenval(dest);                              \
+        gfxargb32 _db = gfxblueval(dest);                               \
                                                                         \
         _dr = gfxalphablendc(_sr, _dr, _a);                             \
         _dg = gfxalphablendc(_sg, _dg, _a);                             \
@@ -192,14 +192,14 @@
 
 #define gfxalphablend_hiq_const2(src, dest, a)                          \
     do {                                                                \
-        gfxargb32_t _a = (a);                                           \
-        gfxargb32_t _sr;                                                \
-        gfxargb32_t _dr;                                                \
-        gfxargb32_t _sg;                                                \
-        gfxargb32_t _dg;                                                \
-        gfxargb32_t _sb;                                                \
-        gfxargb32_t _db;                                                \
-        gfxargb32_t _mask = 0xff;                                       \
+        gfxargb32 _a = (a);                                             \
+        gfxargb32 _sr;                                                  \
+        gfxargb32 _dr;                                                  \
+        gfxargb32 _sg;                                                  \
+        gfxargb32 _dg;                                                  \
+        gfxargb32 _sb;                                                  \
+        gfxargb32 _db;                                                  \
+        gfxargb32 _mask = 0xff;                                         \
                                                                         \
         _sb = (src) & _mask;                                            \
         _db = (dest) & _mask;                                           \
@@ -221,13 +221,13 @@
 
 #define gfxalphablendfast_const(src, dest, a)                           \
     do {                                                                \
-        gfxargb32_t _a = (a);                                           \
-        gfxargb32_t _sr = gfxredval(src);                               \
-        gfxargb32_t _sg = gfxgreenval(src);                             \
-        gfxargb32_t _sb = gfxblueval(src);                              \
-        gfxargb32_t _dr = gfxredval(dest);                              \
-        gfxargb32_t _dg = gfxgreenval(dest);                            \
-        gfxargb32_t _db = gfxblueval(dest);                             \
+        gfxargb32 _a = (a);                                             \
+        gfxargb32 _sr = gfxredval(src);                                 \
+        gfxargb32 _sg = gfxgreenval(src);                               \
+        gfxargb32 _sb = gfxblueval(src);                                \
+        gfxargb32 _dr = gfxredval(dest);                                \
+        gfxargb32 _dg = gfxgreenval(dest);                              \
+        gfxargb32 _db = gfxblueval(dest);                               \
                                                                         \
         _dr = gfxalphablendc2(_sr, _dr, _a);                            \
         _dg = gfxalphablendc2(_sg, _dg, _a);                            \
@@ -237,13 +237,13 @@
 
 #define gfxalphablendfast_const2(src, dest, a)                          \
     do {                                                                \
-        uint64_t _rbmask = 0x00ff00ff00ff00ffULL;                       \
-        uint64_t _gamask = 0xff00ff00ff00ff00ULL;                       \
-        gfxargb32_t _srcrb;                                             \
-        gfxargb32_t _destrb;                                            \
-        gfxargb32_t _destag;                                            \
-        gfxargb32_t _val1;                                              \
-        gfxargb32_t _val2;                                              \
+        uint64_t  _rbmask = 0x00ff00ff00ff00ffULL;                      \
+        uint64_t  _gamask = 0xff00ff00ff00ff00ULL;                      \
+        gfxargb32 _srcrb;                                               \
+        gfxargb32 _destrb;                                              \
+        gfxargb32 _destag;                                              \
+        gfxargb32 _val1;                                                \
+        gfxargb32 _val2;                                                \
                                                                         \
         _srcrb = (src);                                                 \
         _destrb = (dest);                                               \

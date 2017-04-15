@@ -2,13 +2,15 @@
 #define __DECK_DECK_H__
 
 #include <deck/conf.h>
-#include <stdint.h>
-#include <endian.h>
+#include <deck/types.h>
 #include <sys/socket.h>
-//#include <zero/ev.h>
-
-#if (DECK_GFX_LFB)
-#include <deck/lfb.h>
+#if (SUPPORT_POSIX_MQ)
+#include <mqueue.h>
+#endif
+#if (SUPPORT_SYSV_MQ)
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 #endif
 
 /* endian-field values; byte-order */
@@ -16,19 +18,40 @@
 #define DECK_BIG_ENDIAN    1
 /* protocol-field values */
 #define DECK_CONN_SHM      0
-#define DECK_CONN_IP4      1
-#define DECK_CONN_IP6      2
+#define DECK_CONN_MQ       1
+#define DECK_CONN_IP4      2
+#define DECK_CONN_IP6      3
 /* gfxtype-field values */
-#define DECK_GFX_LFB       0
+#define DECK_GFX_LFB       0    // linear framebuffer
+
+struct deckconnmq_posix {
+    const char   *name;
+    mqd_t         desc;
+    unsigned int  prio;
+};
+
+struct deckconnmq_sysv {
+    int qid;
+};
+
+struct deckconn {
+    union {
+        void                    *shm;   // shared memory region
+        struct sockaddr_storage  sock;  // socket
+        struct deckconnmq_posix  posix; // POSIX message queue
+        struct deckconnmq_sysv   sysv;  // System V message queue
+    } info;
+    deckuword                    type;  // connection type
+    deckuword                    endian; // remote byte-order
+};
 
 /* structure for functionality similar to X and such desktop/screen servers */
 struct deck {
-    deckuword_t              screen; // screen ID
-    deckuword_t              endian; // desktop-machine word endianess
-    deckuword_t              conntype; // connection type
-    deckuword_t              gfxtype; // graphics interface such as DECK_GFX_LFB
-    struct sockaddr_storage  sockaddr; // remote connection address
-    void                    *gfx; // graphics interface
+    struct deckconn  conn;      // local or remote connection attributes
+    deckuword        screen;    // screen ID
+    deckuword        endian;    // desktop-machine word endianess
+    deckuword        gfxtype;   // graphics interface, e.g. DECK_GFX_LFB
+    void            *gfxatr;    // graphics interface attributes
 };
 
 #endif /* __DECK_DECK_H__ */

@@ -3,8 +3,6 @@
 
 /* FIXME: make X11 optional */
 
-#include <zero/param.h>
-#include <zero/cdecl.h>
 #include <gfx/x11.h>
 #include <gfx/rgb.h>
 
@@ -18,21 +16,22 @@ struct gfximg {
 #endif
 
 struct gfximg_x11 {
-    char            *fname;
-    gfxargb32_t     *data;
-    gfxargb32_t     *maskdata;
-    unsigned long    w;
-    unsigned long    h;
-    Imlib_Image     *imlib2;
-    XImage          *xim;
+    char            *fname;     // file name
+    gfxargb32       *data;      // image data
+    gfxargb32       *maskdata;  // image mask
+    unsigned long    w;         // width
+    unsigned long    h;         // height
+    Imlib_Image     *imlib2;    // for Imlib2 support
+    XImage          *xim;       // for X11/XOrg support
 #if (USE_SHM)
+    /* support for X11/XOrg shared memory extension XShm */
     int              shmid;
     int              pmapshmid;
     XShmSegmentInfo  ximseg;
     XShmSegmentInfo  pmapseg;
 #endif
-    Pixmap           pmap;
-    Pixmap           mask;
+    Pixmap           pmap;      // cached rendition of image
+    Pixmap           mask;      // cached mask
 };
 
 #endif /* __GFX_TYPES_H__ */
