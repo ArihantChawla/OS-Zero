@@ -97,12 +97,12 @@ static SDL_Surface* logo;
 #endif
 
 #if (__KERNEL__)
-static gfxargb32_t modxlut[INTER_WIDTH];
-static gfxargb32_t modylut[INTER_HEIGHT];
+static gfxpix32 modxlut[INTER_WIDTH];
+static gfxpix32 modylut[INTER_HEIGHT];
 #if (!PLASMAKMALLOC)
-static uint8_t     rtab[INTER_WIDTH * INTER_HEIGHT];
-static uint8_t     gtab[INTER_WIDTH * INTER_HEIGHT];
-static uint8_t     btab[INTER_WIDTH * INTER_HEIGHT];
+static uint8_t  rtab[INTER_WIDTH * INTER_HEIGHT];
+static uint8_t  gtab[INTER_WIDTH * INTER_HEIGHT];
+static uint8_t  btab[INTER_WIDTH * INTER_HEIGHT];
 #endif
 #endif
 
@@ -366,51 +366,51 @@ void drawPlasma(SDL_Surface *surface)
 {
     int x, y;
 
-    static uint16_t p1_xoff = 0xf000,
-                    p1_yoff = 0xe000,
-                    p2_xoff = 0x0001,
-                    p2_yoff = 0x0003,
-                    p3_xoff = 0x0000,
-                    p3_yoff = 0x0000;
+    static uint16_t  p1_xoff = 0xf000,
+                     p1_yoff = 0xe000,
+                     p2_xoff = 0x0001,
+                     p2_yoff = 0x0003,
+                     p3_xoff = 0x0000,
+                     p3_yoff = 0x0000;
 
 #if 0                    
-    static uint16_t p1_fade = 0x0000,
-                    p2_fade = 0x0000,
-                    p3_fade = 0x0000;
+    static uint16_t  p1_fade = 0x0000,
+                     p2_fade = 0x0000,
+                     p3_fade = 0x0000;
 #endif
-    static uint16_t p1_fade = 0x0000;
+    static uint16_t  p1_fade = 0x0000;
     
-    uint16_t    p1_sinpos_start_x = p1_xoff;
-    uint16_t    p1_sinpos_start_y = p1_yoff;
-    uint16_t    p1_sinposy;
-    uint16_t    p1_sinposx;
-    int         p1_palettePos = OFFSET_MAG;
+    uint16_t         p1_sinpos_start_x = p1_xoff;
+    uint16_t         p1_sinpos_start_y = p1_yoff;
+    uint16_t         p1_sinposy;
+    uint16_t         p1_sinposx;
+    int              p1_palettePos = OFFSET_MAG;
 
-    uint16_t    p2_sinpos_start_x = p2_xoff;
-    uint16_t    p2_sinpos_start_y = p2_yoff;
-    uint16_t    p2_sinposy;
-    uint16_t    p2_sinposx;
-    int         p2_palettePos = OFFSET_MAG;
+    uint16_t         p2_sinpos_start_x = p2_xoff;
+    uint16_t         p2_sinpos_start_y = p2_yoff;
+    uint16_t         p2_sinposy;
+    uint16_t         p2_sinposx;
+    int              p2_palettePos = OFFSET_MAG;
     
-    uint16_t    p3_sinpos_start_x = p3_xoff;
-    uint16_t    p3_sinpos_start_y = p3_yoff;
-    uint16_t    p3_sinposy;
-    uint16_t    p3_sinposx;
-    int         p3_palettePos = OFFSET_MAG;
+    uint16_t         p3_sinpos_start_x = p3_xoff;
+    uint16_t         p3_sinpos_start_y = p3_yoff;
+    uint16_t         p3_sinposy;
+    uint16_t         p3_sinposx;
+    int              p3_palettePos = OFFSET_MAG;
         
-    unsigned ypos = 0;
+    unsigned         ypos = 0;
 
 #if (__KERNEL__)
 #if (PLASMAMODLUT)
-    gfxargb32_t  mask;
+    gfxpix32         mask;
 #endif
 #if (PLASMADOUBLEBUF)
-    uint8_t *dest = plasmabuf;
+    uint8_t         *dest = plasmabuf;
 #else
-    uint8_t *dest = plasmafb;
+    uint8_t         *dest = plasmafb;
 #endif
 #else
-    uint32_t *dest = surface->pixels;
+    uint32_t        *dest = surface->pixels;
 #endif
 
     p1_sinposx = p1_sinpos_start_x;
@@ -444,12 +444,12 @@ void drawPlasma(SDL_Surface *surface)
 #if (PLASMAMODLUT)
         if (modylut[y]) {
             for (x = 0; x < OUT_WIDTH; x++) {
-                int srcpos;
+                int      srcpos;
                 uint32_t colour;
 #if (__KERNEL__)
-                gfxargb32_t r;
-                gfxargb32_t g;
-                gfxargb32_t b;
+                gfxpix32 r;
+                gfxpix32 g;
+                gfxpix32 b;
 #endif
                 
                 mask = modxlut[x];
@@ -480,12 +480,12 @@ void drawPlasma(SDL_Surface *surface)
 #else /* !PLASMAMODLUT */
         if (y % vbefonth) {
             for (x = 0; x < OUT_WIDTH; x++) {
-                int srcpos;
+                int      srcpos;
                 uint32_t colour;
 #if (__KERNEL__)
-                gfxargb32_t r;
-                gfxargb32_t g;
-                gfxargb32_t b;
+                gfxpix32 r;
+                gfxpix32 g;
+                gfxpix32 b;
 #endif
                 
 

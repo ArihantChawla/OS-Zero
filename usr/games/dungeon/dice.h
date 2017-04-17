@@ -6,29 +6,29 @@
 #endif
 
 /* standard D20 dice set */
-#define DICE_1D4  4
-#define DICE_1D6  6
-#define DICE_1D8  8
-#define DICE_1D10 10
-#define DICE_1D12 12
-#define DICE_1D20 20
+#define DICE_1D4        4
+#define DICE_1D6        6
+#define DICE_1D8        8
+#define DICE_1D10       10
+#define DICE_1D12       12
+#define DICE_1D20       20
 
-#define MINLOG2   2
-#define NLEVEL    24
-#define diceshift(l) (MINLOG2 + (l))
+#define MINLOG2         2
+#define NLEVEL          24
+#define diceshift(l)    (MINLOG2 + (l))
 
 #if (DNG_RANDMT32)
-#define dngsrand(x) srandmt32(x)
-#define dngrand()   randmt32()
+#define dngsrand(x)     srandmt32(x)
+#define dngrand()       randmt32()
 #else
-#define dngsrand(x) srand(x)
-#define dngrand()   rand()
+#define dngsrand(x)     srand(x)
+#define dngrand()       rand()
 #endif
 #if (DICE_SRAND_TIME)
 #include <time.h>
-#define diceroll(max) (dngsrand(time(NULL)), (dngrand() % (max)) + 1)
+#define diceroll(max)   (dngsrand(time(NULL)), (dngrand() % (max)) + 1)
 #else
-#define diceroll(max) ((dngrand() % (max)) + 1)
+#define diceroll(max)   ((dngrand() % (max)) + 1)
 #endif
 
 static __inline__ unsigned long

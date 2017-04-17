@@ -48,8 +48,8 @@ long         vbefontw = 7;
 long         vbefonth = 13;
 #endif
 
-//void vbeputpix(gfxargb32_t pix, int x, int row);
-void vbeputpix(gfxargb32_t pix, uint8_t *ptr);
+//void vbeputpix(gfxpix32 pix, int x, int row);
+void vbeputpix(gfxpix32 pix, uint8_t *ptr);
 void vbeputs(char *str);
 void vbeputchar(int ch);
 
@@ -271,7 +271,7 @@ vbeprintinfo(void)
 }
 
 INLINE void
-vbeputpix(gfxargb32_t pix, uint8_t *ptr)
+vbeputpix(gfxpix32 pix, uint8_t *ptr)
 {
     gfxsetrgb888(pix, ptr);
 
@@ -279,7 +279,7 @@ vbeputpix(gfxargb32_t pix, uint8_t *ptr)
 }
 
 void
-vbeclrscr(gfxargb32_t pix)
+vbeclrscr(gfxpix32 pix)
 {
     uint8_t *ptr = vbepixadr(0, 0);
     long     incr = vbescreen.pixsize;
@@ -313,7 +313,7 @@ vbeclrscr(gfxargb32_t pix)
 #if (NEWFONT)
 
 void
-vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg)
+vbedrawchar(unsigned char c, int x, int y, gfxpix32 fg)
 {
     long      lim = vbefonth;
     long      cy;
@@ -359,16 +359,16 @@ vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg)
 }
 
 void
-vbedrawcharbg(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg)
+vbedrawcharbg(unsigned char c, int x, int y, gfxpix32 fg, gfxpix32 bg)
 {
-    long         lim = vbefonth;
-    long         cy;
-    long         incr = vbescreen.w * (vbescreen.nbpp >> 3);
-    uint16_t    *glyph = (uint16_t *)vgafontbuf + (int)c * vbefonth;
-    uint8_t     *ptr = vbepixadr(x, y);
-    uint32_t     val;
-    uint32_t     mask;
-    gfxargb32_t  pix;
+    long      lim = vbefonth;
+    long      cy;
+    long      incr = vbescreen.w * (vbescreen.nbpp >> 3);
+    uint16_t *glyph = (uint16_t *)vgafontbuf + (int)c * vbefonth;
+    uint8_t  *ptr = vbepixadr(x, y);
+    uint32_t  val;
+    uint32_t  mask;
+    gfxpix32  pix;
 
     if (!bg) {
         for (cy = 0 ; cy < lim ; cy++) {
@@ -453,7 +453,7 @@ vbedrawcharbg(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg)
 #else
 
 void
-vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg)
+vbedrawchar(unsigned char c, int x, int y, gfxpix32 fg)
 {
     long     cy;
     long     incr = vbescreen.w * (vbescreen.nbpp >> 3);
@@ -496,7 +496,7 @@ vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg)
 }
 
 void
-vbedrawcharbg(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg)
+vbedrawcharbg(unsigned char c, int x, int y, gfxpix32 fg, gfxpix32 bg)
 {
     long     cy;
     long     incr = vbescreen.w * (vbescreen.nbpp >> 3);

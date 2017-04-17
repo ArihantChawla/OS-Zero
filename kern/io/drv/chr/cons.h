@@ -17,8 +17,8 @@ typedef void consputcharfunc(int ch);
 struct cons {
     consputsfunc    *puts;      // function to draw a string
     consputcharfunc *putchar;   // function to draw a character
-    gfxargb32_t      fg;        // foreground pixel value
-    gfxargb32_t      bg;        // background pixel value
+    gfxpix32         fg;        // foreground pixel value
+    gfxpix32         bg;        // background pixel value
     void            *buf;       // draw buffer (text or framebuffer)
     long             col;       // current column
     long             row;       // current row

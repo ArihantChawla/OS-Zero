@@ -9,10 +9,10 @@
 #include <kern/unit/x86/boot.h>
 
 void vbeinitcons(int w, int h);
-void vbeclrscr(gfxargb32_t pix);
-void vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg);
-void vbedrawcharbg(unsigned char c, int x, int y, gfxargb32_t fg,
-                   gfxargb32_t bg);
+void vbeclrscr(gfxpix32 pix);
+void vbedrawchar(unsigned char c, int x, int y, gfxpix32 fg);
+void vbedrawcharbg(unsigned char c, int x, int y, gfxpix32 fg,
+                   gfxpix32 bg);
 
 #define VBEINFOADR       0xa000
 #define VBEMODEADR       0xb000
