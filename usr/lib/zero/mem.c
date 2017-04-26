@@ -702,13 +702,17 @@ MEMADR_T
 membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
 {
     MEMADR_T          desc = (MEMADR_T)buf;
+    MEMWORD_T         type;
     struct memblkhdr *hdr;
 
+    type = buf->type;
     if (op == MEMHASHDEL) {
         desc = memgetblkdesc(ptr);
         memputblkdesc(ptr, 0);
     } else if (op = MEMHASHADD) {
-        desc |= id;
+        if (type != MEMSMALLBUF) {
+            desc |= id;
+        }
         memputblkdesc(ptr, desc);
     } else {
         desc = memgetblkdesc(ptr);
