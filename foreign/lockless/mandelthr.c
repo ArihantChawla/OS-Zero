@@ -36,19 +36,36 @@ struct mandelthr {
     int ylim;
 };
 
+struct mandel {
+    volatile int nthr;
+};
+
+struct mandel_x11 {
+    Display *dpy;
+    Window   win;
+    XImage  *bitmap;
+    Atom     wmdelmsg;
+    GC       gc;
+};
+
+static struct mandel     g_mandel;
+static struct mandel_x11 g_x11;
+
 /* X11 data */
+#if 0
 static Display *dpy;
 static Window win;
 static XImage *bitmap;
 static Atom wmDeleteMessage;
 static GC gc;
 static volatile int g_nthr;
+#endif
 
 static void exit_x11(void)
 {
-    XDestroyImage(bitmap);
-    XDestroyWindow(dpy, win);
-    XCloseDisplay(dpy);
+    XDestroyImage(g_x11.bitmap);
+    XDestroyWindow(g_x11.dpy, g_x11.win);
+    XCloseDisplay(g_x11.dpy);
 }
 
 static void init_x11(int size)
@@ -57,34 +74,33 @@ static void init_x11(int size)
 
     XInitThreads();
     /* Attempt to open the display */
-    dpy = XOpenDisplay(NULL);
+    g_x11.dpy = XOpenDisplay(NULL);
 	
     /* Failure */
-    if (!dpy) exit(0);
+    if (!g_x11.dpy) exit(0);
 	
-    unsigned long white = WhitePixel(dpy,DefaultScreen(dpy));
-    unsigned long black = BlackPixel(dpy,DefaultScreen(dpy));
+    unsigned long white = WhitePixel(g_x11.dpy,DefaultScreen(g_x11.dpy));
+    unsigned long black = BlackPixel(g_x11.dpy,DefaultScreen(g_x11.dpy));
 	
 
-    win = XCreateSimpleWindow(dpy,
-                              DefaultRootWindow(dpy),
+    g_x11.win = XCreateSimpleWindow(g_x11.dpy,
+                              DefaultRootWindow(g_x11.dpy),
                               0, 0,
                               size, size,
                               0, black,
                               white);
 	
     /* We want to be notified when the window appears */
-//    XSelectInput(dpy, win, StructureNotifyMask);
-    XSelectInput(dpy, win, ExposureMask);
+    XSelectInput(g_x11.dpy, g_x11.win, ExposureMask);
 	
     /* Make it appear */
-    XMapWindow(dpy, win);
+    XMapWindow(g_x11.dpy, g_x11.win);
 
 #if 0
     while (1)
 	{
             XEvent e;
-            XNextEvent(dpy, &e);
+            XNextEvent(g_x11.dpy, &e);
             if (e.type == MapNotify) break;
 	}
 #endif
@@ -92,7 +108,7 @@ static void init_x11(int size)
     while (1)
 	{
             XEvent e;
-            XNextEvent(dpy, &e);
+            XNextEvent(g_x11.dpy, &e);
             if (e.type == Expose) break;
 	}
 	
@@ -100,14 +116,14 @@ static void init_x11(int size)
     char name[128] = "Mandelbrot";
     char *n = name;
     Status st = XStringListToTextProperty(&n, 1, &tp);
-    if (st) XSetWMName(dpy, win, &tp);
+    if (st) XSetWMName(g_x11.dpy, g_x11.win, &tp);
 
     /* Wait for the MapNotify event */
-    XFlush(dpy);
+    XFlush(g_x11.dpy);
 	
     int ii, jj;
-    int depth = DefaultDepth(dpy, DefaultScreen(dpy));
-    Visual *visual = DefaultVisual(dpy, DefaultScreen(dpy));
+    int depth = DefaultDepth(g_x11.dpy, DefaultScreen(g_x11.dpy));
+    Visual *visual = DefaultVisual(g_x11.dpy, DefaultScreen(g_x11.dpy));
     int total;
 
     /* Determine total bytes needed for image */
@@ -128,13 +144,13 @@ static void init_x11(int size)
 	}
 	
     /* Make bitmap */
-    bitmap = XCreateImage(dpy, visual, depth,
+    g_x11.bitmap = XCreateImage(g_x11.dpy, visual, depth,
                           ZPixmap, 0, malloc(total),
                           size, size, 32, 0);
 	
     /* Init GC */
-    gc = XCreateGC(dpy, win, 0, NULL);
-    XSetForeground(dpy, gc, black);
+    g_x11.gc = XCreateGC(g_x11.dpy, g_x11.win, 0, NULL);
+    XSetForeground(g_x11.dpy, g_x11.gc, black);
 	
     if (bytes_per_pixel != 4)
 	{
@@ -143,10 +159,10 @@ static void init_x11(int size)
             exit(0);
 	}
 	
-    XSelectInput(dpy, win, ExposureMask | KeyPressMask | StructureNotifyMask);
+    XSelectInput(g_x11.dpy, g_x11.win, ExposureMask | KeyPressMask | StructureNotifyMask);
 	
-    wmDeleteMessage = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
-    XSetWMProtocols(dpy, win, &wmDeleteMessage, 1);
+    g_x11.wmdelmsg = XInternAtom(g_x11.dpy, "WM_DELETE_WINDOW", False);
+    XSetWMProtocols(g_x11.dpy, g_x11.win, &g_x11.wmdelmsg, 1);
 }
 
 //#define MAX_ITER	(1 << 14)
@@ -210,14 +226,14 @@ static void display_sse2(int size, float xmin, float xmax, float ymin, float yma
                     
                     mandel_sse(cr, (v4sf)ci, counts);
                     
-                    ((unsigned *) bitmap->data)[x + y * size] = cols[counts[0]];
-                    ((unsigned *) bitmap->data)[x + 1 + y * size] = cols[counts[1]];
-                    ((unsigned *) bitmap->data)[x + 2 + y * size] = cols[counts[2]];
-                    ((unsigned *) bitmap->data)[x + 3 + y * size] = cols[counts[3]];
+                    ((unsigned *) g_x11.bitmap->data)[x + y * size] = cols[counts[0]];
+                    ((unsigned *) g_x11.bitmap->data)[x + 1 + y * size] = cols[counts[1]];
+                    ((unsigned *) g_x11.bitmap->data)[x + 2 + y * size] = cols[counts[2]];
+                    ((unsigned *) g_x11.bitmap->data)[x + 3 + y * size] = cols[counts[3]];
 		}
                 
                 /* Display it line-by-line for speed */
-                XPutImage(dpy, win, gc, bitmap,
+                XPutImage(g_x11.dpy, g_x11.win, g_x11.gc, g_x11.bitmap,
                           0, y, 0, y,
                           size, 1);
             }
@@ -227,7 +243,7 @@ static void display_sse2(int size, float xmin, float xmax, float ymin, float yma
         }
     }
     
-    XFlush(dpy);
+    XFlush(g_x11.dpy);
 }
 
 #elif (SSE2)
@@ -257,21 +273,21 @@ static void display_sse2(int size, float xmin, float xmax, float ymin, float yma
                     
                     mandel_sse(cr, ci, counts);
                     
-                    ((unsigned *) bitmap->data)[x + y * size] = cols[counts[0]];
-                    ((unsigned *) bitmap->data)[x + 1 + y * size] = cols[counts[1]];
-                    ((unsigned *) bitmap->data)[x + 2 + y * size] = cols[counts[2]];
-                    ((unsigned *) bitmap->data)[x + 3 + y * size] = cols[counts[3]];
+                    ((unsigned *) g_x11.bitmap->data)[x + y * size] = cols[counts[0]];
+                    ((unsigned *) g_x11.bitmap->data)[x + 1 + y * size] = cols[counts[1]];
+                    ((unsigned *) g_x11.bitmap->data)[x + 2 + y * size] = cols[counts[2]];
+                    ((unsigned *) g_x11.bitmap->data)[x + 3 + y * size] = cols[counts[3]];
 		}
             
             /* Display it line-by-line for speed */
-                XPutImage(dpy, win, gc, bitmap,
+                XPutImage(g_x11.dpy, g_x11.win, g_x11.gc, g_x11.bitmap,
                           0, y, 0, y,
                           size, 1);
             }
         }
     }
     
-    XFlush(dpy);
+    XFlush(g_x11.dpy);
 }
 
 #elif (DOUBLE)
@@ -324,7 +340,7 @@ static void display_double(int size, double xmin, double xmax, double ymin, doub
 			
                     counts = mandel_double(cr, ci);
 			
-                    ((unsigned *) bitmap->data)[x + y*size] = cols[counts];
+                    ((unsigned *) g_x11.bitmap->data)[x + y*size] = cols[counts];
 
 #if (OPTIMIZED)
                     cr += xscal;
@@ -332,7 +348,7 @@ static void display_double(int size, double xmin, double xmax, double ymin, doub
 		}
 		
             /* Display it line-by-line for speed */
-            XPutImage(dpy, win, gc, bitmap,
+            XPutImage(g_x11.dpy, g_x11.win, g_x11.gc, g_x11.bitmap,
                       0, y, 0, y,
                       size, 1);
 #if (OPTIMIZED)
@@ -340,7 +356,7 @@ static void display_double(int size, double xmin, double xmax, double ymin, doub
 #endif
 	}
 	
-    XFlush(dpy);
+    XFlush(g_x11.dpy);
 }
 
 #elif FLOAT
@@ -390,14 +406,14 @@ static void display_float(int size, float xmin, float xmax, float ymin, float ym
                     ci = ymin + y * yscal;
 #endif
                     counts = mandel_float(cr, ci);
-                    ((unsigned *) bitmap->data)[x + y*size] = cols[counts];
+                    ((unsigned *) g_x11.bitmap->data)[x + y*size] = cols[counts];
 #if (OPTIMIZED)
                     cr += xscal;
 #endif
 		}
 
             /* Display it line-by-line for speed */
-            XPutImage(dpy, win, gc, bitmap,
+            XPutImage(g_x11.dpy, g_x11.win, g_x11.gc, g_x11.bitmap,
                       0, y, 0, y,
                       size, 1);
 #if (OPTIMIZED)
@@ -405,7 +421,7 @@ static void display_float(int size, float xmin, float xmax, float ymin, float ym
 #endif
 	}
 	
-    XFlush(dpy);
+    XFlush(g_x11.dpy);
 }
 
 #endif /* SSE2 */
@@ -434,7 +450,7 @@ mandel_start(void *arg)
 #elif (FLOAT)
     display_float(ASIZE, xmin, xmax, ymin, ymax, args->yofs, args->ylim);
 #endif
-    g_nthr--;
+    g_mandel.nthr--;
 
     pthread_exit(NULL);
 }
@@ -443,13 +459,13 @@ mandel_start(void *arg)
 
 int main(void)
 {
-    int   nthr = get_nprocs_conf();
-    int   ndx;
-    int   delta = ASIZE / nthr;
-    int   ofs = 0;
-    struct mandelthr *args;
-    pthread_t *thrtab = calloc(nthr, sizeof(pthread_t));
-    pthread_t **thrptrtab = calloc(nthr, sizeof(pthread_t *));
+    int                nthr = get_nprocs_conf();
+    int                ndx;
+    int                delta = ASIZE / nthr;
+    int                ofs = 0;
+    struct mandelthr  *args;
+    pthread_t         *thrtab = calloc(nthr, sizeof(pthread_t));
+    pthread_t        **thrptrtab = calloc(nthr, sizeof(pthread_t *));
 
     fprintf(stderr, "mandel launching %d threads\n", nthr);
     /* Make a window! */
@@ -457,7 +473,7 @@ int main(void)
 	
     init_colours();
 
-    g_nthr = nthr;
+    g_mandel.nthr = nthr;
     for (ndx = 0 ; ndx < nthr ; ndx++) {
         args = calloc(1, sizeof(struct mandelthr));
         args->yofs = ofs;
@@ -470,12 +486,12 @@ int main(void)
     }
     do {
         pthread_yield();
-    } while (g_nthr);
+    } while (g_mandel.nthr);
 
-    XPutImage(dpy, win, gc, bitmap,
+    XPutImage(g_x11.dpy, g_x11.win, g_x11.gc, g_x11.bitmap,
               0, 0, 0, 0,
               ASIZE, ASIZE);
-    XFlush(dpy);
+    XFlush(g_x11.dpy);
 
 //    display_double(ASIZE, xmin, xmax, ymin, ymax);
 
@@ -486,12 +502,12 @@ int main(void)
             KeySym key;
             char text[255];
 		
-            XNextEvent(dpy, &event);
+            XNextEvent(g_x11.dpy, &event);
 	
             /* Just redraw everything on expose */
             if ((event.type == Expose) && !event.xexpose.count)
 		{
-                    XPutImage(dpy, win, gc, bitmap,
+                    XPutImage(g_x11.dpy, g_x11.win, g_x11.gc, g_x11.bitmap,
                               0, 0, 0, 0,
                               ASIZE, ASIZE);
 		}
@@ -505,7 +521,7 @@ int main(void)
 		
             /* Or simply close the window */
             if ((event.type == ClientMessage) &&
-                ((Atom) event.xclient.data.l[0] == wmDeleteMessage))
+                ((Atom) event.xclient.data.l[0] == g_x11.wmdelmsg))
 		{
                     break;
 		}
