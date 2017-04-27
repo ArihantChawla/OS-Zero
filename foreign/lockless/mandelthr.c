@@ -121,8 +121,8 @@ static void init_x11(int size)
     /* Wait for the MapNotify event */
     XFlush(g_x11.dpy);
 	
-    int ii, jj;
-    int depth = DefaultDepth(g_x11.dpy, DefaultScreen(g_x11.dpy));
+    unsigned int ii, jj;
+    unsigned int depth = DefaultDepth(g_x11.dpy, DefaultScreen(g_x11.dpy));
     Visual *visual = DefaultVisual(g_x11.dpy, DefaultScreen(g_x11.dpy));
     int total;
 
