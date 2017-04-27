@@ -451,6 +451,7 @@ int main(void)
     pthread_t *thrtab = calloc(nthr, sizeof(pthread_t));
     pthread_t **thrptrtab = calloc(nthr, sizeof(pthread_t *));
 
+    fprintf(stderr, "mandel launching %d threads\n", nthr);
     /* Make a window! */
     init_x11(ASIZE);
 	
