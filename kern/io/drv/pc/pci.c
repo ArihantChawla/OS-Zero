@@ -40,13 +40,14 @@ void
 pciregdrv(uint16_t vendor, uint16_t devid,
           const char *str, pciinitfunc_t *initfunc)
 {
+    struct pcidev    *dev;
     struct pcidrvent *ptr = pcidrvtab[vendor];
     struct pcidrvent *drv;
 
     if (initfunc) {
-        kprintf("PCI: allocating %lx IDs (%lx)\n",
-                65536 * sizeof(struct pcidrvent), vendor);
         if (!ptr) {
+            kprintf("PCI: allocating %ld IDs (%lx)\n",
+                    65536 * sizeof(struct pcidrvent), vendor);
             ptr = kmalloc(65536 * sizeof(struct pcidrvent));
             if (ptr) {
                 kbzero(ptr, 65536 * sizeof(struct pcidrvent));
@@ -54,10 +55,12 @@ pciregdrv(uint16_t vendor, uint16_t devid,
             }
         }
         if (ptr) {
-            kprintf("PCI: allocating ID %lx\n", devid);
+            kprintf("PCI: allocating ID %lx (vendor == %lx)\n", devid, vendor);
             drv = &ptr[devid];
             drv->init = initfunc;
+            dev = &pcidevtab[drv->devid];
             drv->str = str;
+            initfunc(dev);
         }
     }
 
@@ -67,10 +70,9 @@ pciregdrv(uint16_t vendor, uint16_t devid,
 long
 pciprobe(void)
 {
-    long              type = ~0L;
+    long              type = 0;
     struct pcidrvent *drv;
     struct pcidev    *dev;
-    pciinitfunc_t    *initfunc = NULL;
     long              tmp;
     uint16_t          vendor;
     uint16_t          devid;
@@ -99,17 +101,12 @@ pciprobe(void)
                 kprintf("PCI: vendor: 0x%lx, devid == 0x%lx\n", vendor, devid);
                 drv = pcifinddrv(vendor, devid);
                 if (drv) {
-                    initfunc = drv->init;
-                    if (initfunc) {
-                        kprintf("PCI: initialising %s\n", drv->str);
-                        dev = &pcidevtab[ndev];
-                        dev->vendor = vendor;
-                        dev->id = devid;
-//                        dev->bus = bus;
-//                        dev->slot = slot;
-                        ndev++;
-                        initfunc(dev);
-                    }
+                    kprintf("PCI: initialising %s\n", drv->str);
+                    dev = &pcidevtab[ndev];
+                    drv->devid = ndev;
+                    dev->vendor = vendor;
+                    dev->id = devid;
+                    ndev++;
                 }
             }
         }
@@ -125,17 +122,13 @@ pciprobe(void)
                 kprintf("PCI: vendor: 0x%lx, devid == 0x%lx\n", vendor, devid);
                 drv = pcifinddrv(vendor, devid);
                 if (drv) {
-                    initfunc = drv->init;
-                    if (initfunc) {
-                        kprintf("PCI: initialising %s\n", drv->str);
-                        dev = &pcidevtab[ndev];
-                        dev->vendor = vendor;
-                        dev->id = devid;
+                    kprintf("PCI: initialising %s\n", drv->str);
+                    dev = &pcidevtab[ndev];
+                    dev->vendor = vendor;
+                    dev->id = devid;
 //                        dev->bus = bus;
 //                        dev->slot = slot;
-                        ndev++;
-                        initfunc(dev);
-                    }
+                    ndev++;
                 }
             }
             outw(0, PCICONFADR1);
@@ -143,7 +136,7 @@ pciprobe(void)
         pcidrv.ndev = ndev;
     }
 
-    return type;
+return type;
 }
 
 void
@@ -165,8 +158,8 @@ pcireg(void)
 void
 pciinit(void)
 {
-    pcireg();
     pcidrv.type = pciprobe();
+    pcireg();
 
     return;
 }
@@ -255,7 +248,7 @@ pciregdrv(uint16_t vendor, uint16_t devid, char *str, pciinitfunc_t *initfunc)
     vd |= devid;
     key1 = vd >> 20;
     key2 = (vd >> 10) & 0x3ff;
-    key3 = vd & 0x3ff;
+    key3 = vd & 0xfff;
     kprintf("REG: %x:%x:%x - %s - ", key1, key2, key3, str);
     ptr1 = ((void **)pcidrvtab)[key1];
     if (!ptr1) {

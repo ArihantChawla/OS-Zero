@@ -121,14 +121,14 @@ _rdpmc(struct _tickval *tp, int id)
 #define PROFDECLTICK(id)                                                \
     struct _tickval __tv##id[2]
 #define profinittick(id)                                                \
-    (__tv##id[0].u64 = __tv##id[1].u64 = UINT64_C(0))
+    (__tv##id[0].u.u64 = __tv##id[1].u.u64 = UINT64_C(0))
 //    memset(&__tv##id, 0, sizeof(__tv##id))
 #define profstarttick(id)                                               \
     _rdtsc(&__tv##id[0])
 #define profstoptick(id)                                                \
     _rdtsc(&__tv##id[1])
 #define proftickdiff(id)                                                \
-    (__tv##id[1].u64 - __tv##id[0].u64)
+    (__tv##id[1].u.u64 - __tv##id[0].u.u64)
 
 #if defined(__cplusplus)
 }

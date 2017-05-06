@@ -70,19 +70,29 @@ static void exit_x11(void)
 
 static void init_x11(int size)
 {
-    int bytes_per_pixel;
+    char           name[128] = "Mandelbrot";
+    int            bytes_per_pixel;
+    unsigned long  white;
+    unsigned long  black;
+    XTextProperty  tp;
+    char          *n = name;
+    Status         st;
+    unsigned int   ii, jj;
+    unsigned int   depth;
+    Visual        *visual;
+    int            total;
 
     XInitThreads();
     /* Attempt to open the display */
     g_x11.dpy = XOpenDisplay(NULL);
-	
+    white = WhitePixel(g_x11.dpy,DefaultScreen(g_x11.dpy));
+    black = BlackPixel(g_x11.dpy,DefaultScreen(g_x11.dpy));
+    depth = DefaultDepth(g_x11.dpy, DefaultScreen(g_x11.dpy));
+    visual = DefaultVisual(g_x11.dpy, DefaultScreen(g_x11.dpy));
+    
     /* Failure */
     if (!g_x11.dpy) exit(0);
 	
-    unsigned long white = WhitePixel(g_x11.dpy,DefaultScreen(g_x11.dpy));
-    unsigned long black = BlackPixel(g_x11.dpy,DefaultScreen(g_x11.dpy));
-	
-
     g_x11.win = XCreateSimpleWindow(g_x11.dpy,
                               DefaultRootWindow(g_x11.dpy),
                               0, 0,
@@ -100,6 +110,7 @@ static void init_x11(int size)
     while (1)
 	{
             XEvent e;
+
             XNextEvent(g_x11.dpy, &e);
             if (e.type == MapNotify) break;
 	}
@@ -108,24 +119,17 @@ static void init_x11(int size)
     while (1)
 	{
             XEvent e;
+
             XNextEvent(g_x11.dpy, &e);
             if (e.type == Expose) break;
 	}
 	
-    XTextProperty tp;
-    char name[128] = "Mandelbrot";
-    char *n = name;
-    Status st = XStringListToTextProperty(&n, 1, &tp);
+    st = XStringListToTextProperty(&n, 1, &tp);
     if (st) XSetWMName(g_x11.dpy, g_x11.win, &tp);
 
     /* Wait for the MapNotify event */
     XFlush(g_x11.dpy);
 	
-    unsigned int ii, jj;
-    unsigned int depth = DefaultDepth(g_x11.dpy, DefaultScreen(g_x11.dpy));
-    Visual *visual = DefaultVisual(g_x11.dpy, DefaultScreen(g_x11.dpy));
-    int total;
-
     /* Determine total bytes needed for image */
     ii = 1;
     jj = (depth - 1) >> 2;
@@ -188,12 +192,15 @@ static void init_colours(void)
 #if (NEWSSE2)
 
 /* For each point, evaluate its colour */
+#if 0
 static void display_sse2(int size, float xmin, float xmax, float ymin, float ymax, int yofs, int ylim)
+#endif
+static void display_sse2(int width, int height, float xmin, float xmax, float ymin, float ymax, int yofs, int ylim)
 {
     int x, y;
-    
-    float xscal = (xmax - xmin) / size;
-    float yscal = (ymax - ymin) / size;
+    int xpos, ypos;
+    float xscal = (xmax - xmin) / width;
+    float yscal = (ymax - ymin) / height;
     
     unsigned counts[4];
     
@@ -211,12 +218,13 @@ static void display_sse2(int size, float xmin, float xmax, float ymin, float yma
     
     for (y = yofs; y < ylim; y++) {
 	{
-            for (x = 0; x < size; x += 4) {
+            for (ypos = 0 ; ypos < height ; ypos++) {
+                for (xpos = 0; xpos < size; xpos += 4) {
 		{
-                    v4sf cr = { xmin + x * xscal,
-                                xmin + (x + 1) * xscal,
-                                xmin + (x + 2) * xscal,
-                                xmin + (x + 3) * xscal };
+                    v4sf cr = { xmin + xpos * xscal,
+                                xmin + (xpos + 1) * xscal,
+                                xmin + (xpos + 2) * xscal,
+                                xmin + (xpos + 3) * xscal };
 #if (!OPTIMIZED) || 1
                     v4sf ci = { ymin + y * yscal,
                                 ymin + y * yscal,
@@ -226,10 +234,10 @@ static void display_sse2(int size, float xmin, float xmax, float ymin, float yma
                     
                     mandel_sse(cr, (v4sf)ci, counts);
                     
-                    ((unsigned *) g_x11.bitmap->data)[x + y * size] = cols[counts[0]];
-                    ((unsigned *) g_x11.bitmap->data)[x + 1 + y * size] = cols[counts[1]];
-                    ((unsigned *) g_x11.bitmap->data)[x + 2 + y * size] = cols[counts[2]];
-                    ((unsigned *) g_x11.bitmap->data)[x + 3 + y * size] = cols[counts[3]];
+                    ((unsigned *) g_x11.bitmap->data)[xpos + y * size] = cols[counts[0]];
+                    ((unsigned *) g_x11.bitmap->data)[xpos + 1 + y * size] = cols[counts[1]];
+                    ((unsigned *) g_x11.bitmap->data)[xpos + 2 + y * size] = cols[counts[2]];
+                    ((unsigned *) g_x11.bitmap->data)[xpos + 3 + y * size] = cols[counts[3]];
 		}
                 
                 /* Display it line-by-line for speed */
@@ -427,7 +435,8 @@ static void display_float(int size, float xmin, float xmax, float ymin, float ym
 #endif /* SSE2 */
 
 /* Image size */
-#define ASIZE 1000
+//#define ASIZE 1000
+#define ASIZE 1280
 
 /* Comment out this for benchmarking */
 //#define WAIT_EXIT

@@ -22,8 +22,8 @@
 
 #define VMFLATPHYSTAB 1
 #define USERMODE      0
-#define PLASMA        0
-#define PLASMAFOREVER 0
+#define PLASMA        1
+#define PLASMAFOREVER 1
 
 #if !defined(FASTINTR)
 #define FASTINTR      1
@@ -84,7 +84,7 @@
 
 /* planned and developed drivers */
 #define VBE           1         // VBE2 graphics driver
-#define VBEMTRR       0         // map memory write-combining
+#define VBEMTRR       1         // map graphics framebuffer write-combining
 #define PIC           0
 #define IOAPIC        0         // enable I/O APIC support
 #define SMBIOS        0         // SMBIOS (system management) support
@@ -99,7 +99,7 @@
 #define PS2KBDSET2    0
 #define VGAGFX        0         // VGA graphics driver
 #define SB16          0         // Soundblaster 16 audio driver
-#define AC97          1         // AC97 audio drivers
+#define AC97          0         // AC97 audio drivers
 #define ENS1370       0         // Ensoniq 1370 audio driver
 
 #endif /* __KERN_CONF_H__ */

@@ -136,21 +136,21 @@ kinitprot(unsigned long pmemsz)
     logoprint();
 //    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
     /* HID devices */
-#if (PCI)
-    /* initialise PCI bus driver */
-    pciinit();
-#endif
 #if (ATA)
     /* initialise ATA driver */
     atainit();
 #endif
-#if (SB16)
-    /* initialise Soundblaster 16 driver */
-    sb16init();
+#if (PCI)
+    /* initialise PCI bus driver */
+    pciinit();
 #endif
 #if (AC97)
     /* initialise AC97 audio driver */
     ac97init();
+#endif
+#if (SB16)
+    /* initialise Soundblaster 16 driver */
+    sb16init();
 #endif
 #if (ACPI)
     /* initialise ACPI subsystem */

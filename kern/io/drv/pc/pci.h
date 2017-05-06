@@ -73,6 +73,7 @@ struct pcidev {
 //    struct pcidev *prev;
 //    struct pcidev *next;
     char          *str;
+    long           ndx;
     uint16_t       vendor;
     uint16_t       id;
     uint8_t        bus;
@@ -228,6 +229,7 @@ typedef void pciinitfunc_t(struct pcidev *dev);
 struct pcidrvent {
     pciinitfunc_t *init;
     const char    *str;
+    long           devid;
 };
 
 extern struct pcidev pcidevtab[PCINDEV];
