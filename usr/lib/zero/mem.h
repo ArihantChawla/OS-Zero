@@ -119,17 +119,22 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #endif
 
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
-#define memgetlk(lp) priolkget(lp)
-#define memrellk(lp) priolkrel(lp)
+#define memgetlk(lp)    priolkget(lp)
+#define memrellk(lp)    priolkrel(lp)
 #elif (MEM_LK_TYPE == MEM_LK_FMTX)
-#define memgetlk(lp) fmtxlk(lp)
-#define memrellk(lp) fmtxunlk(lp)
+#define memgetlk(lp)    fmtxlk(lp)
+#define memrellk(lp)    fmtxunlk(lp)
 #elif (MEM_LK_TYPE == MEM_LK_SPIN)
-#define memgetlk(lp) spinlk(lp)
-#define memrellk(lp) spinunlk(lp)
+#define memgetlk(lp)    spinlk(lp)
+#define memrellk(lp)    spinunlk(lp)
 #elif (MEM_LK_TYPE == MEM_LK_SPINWT)
-#define memgetlk(lp) spinwtlk(lp, ZEROSPINLKVAL, 4096)
-#define memrellk(lp) spinwtunlk(lp)
+#define memgetlk(lp)    spinwtlk(lp, ZEROSPINLKVAL, 4096)
+#define memrellk(lp)    spinwtunlk(lp)
+#endif
+
+#if (MEMBKTLOCK)
+#define memlkbkt(bkt)   memgetlk(&bkt->lk)
+#define memunlkbkt(bkt) memrellk(&bkt->lk)
 #endif
 
 //#define MEMPAGEBIT      (MEMWORD(1) << (PAGESIZELOG2 - 1))
@@ -208,7 +213,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
         MEMUWORD_T _res = sz;                                           \
                                                                         \
         _res--;                                                         \
-        _res >>= 3 + PAGESIZELOG2;                                      \
+        _res >>= 4 + PAGESIZELOG2;                                      \
         (slot) = _res;                                                  \
     } while (0)
 
@@ -281,16 +286,25 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMBIGPAGESLOT      256
 #define MEMPAGESLOTS        512
 #endif
-#define MEMSMALLPAGESLOT    8
-#define MEMMIDPAGESLOT      16
-#define MEMBIGPAGESLOT      32
-#define MEMPAGESLOTS        64
+#define MEMSMALLPAGESLOT    4
+#define MEMMIDPAGESLOT      8
+#define MEMBIGPAGESLOT      16
+#define MEMPAGESLOTS        32
+#define MEMSMALLPAGELIM     (MEMSMALLPAGESLOT + 4)
+#define MEMMIDPAGELIM       (MEMMIDPAGESLOT + 3)
+#define MEMBIGPAGELIM       (MEMBIGPAGESLOT + 2)
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
 #define MEMSMALLMAPSLOT     23
 #define MEMMIDMAPSLOT       25
 #define MEMBIGMAPSLOT       27
+#define MEMSMALLMAPLIM      (MEMSMALLMAPSLOT + 2)
+#define MEMMIDMAPLIM        (MEMMIDMAPSLOT + 1)
+#define MEMBIGMAPLIM        (MEMBIGMAPSLOT)
 
 struct membkt {
+#if (MEMBKTLOCK)
+    MEMLK_T        lk;
+#endif
 #if (MEMLFDEQ)
     struct lfdeq   list;
 #else
@@ -298,6 +312,10 @@ struct membkt {
 #endif
     MEMWORD_T      nbuf;
     uint8_t        _pad[CLSIZE
+#if (MEMBKTLOCK)
+                        + CLSIZE
+                        - sizeof(MEMLK_T)
+#endif
 #if (MEMLFDEQ)
                         - sizeof(struct lfdeq)
 #else
@@ -486,7 +504,7 @@ volatile struct memtls * meminittls(void);
 #define membufslotblkadr(buf, ndx, slot)                                \
     ((buf)->base + ((ndx) << (slot)))
 #define membufslotpageadr(buf, ndx, slot)                               \
-    ((buf)->base + (ndx) * (8 * PAGESIZE + 8 * PAGESIZE * (slot)))
+    ((buf)->base + (ndx) * (16 * PAGESIZE + 16 * PAGESIZE * (slot)))
 #define membufpageadr(buf, ndx)                                         \
     (membufslotpageadr(buf, ndx, memgetbufslot(buf)))
 #define membufblkid(buf, ptr)                                           \
@@ -496,7 +514,7 @@ volatile struct memtls * meminittls(void);
 #define membufblksize(buf, type, slot)                                  \
     ((type != MEMPAGEBUF)                                               \
      ? (MEMWORD(1) << (slot))                                           \
-     : (8 * PAGESIZE + 8 * PAGESIZE * (slot)))
+     : (16 * PAGESIZE + 16 * PAGESIZE * (slot)))
 
 /* mark the first block of buf as allocated */
 #define _memfillmap0(ptr, ofs, mask)                                    \
@@ -922,14 +940,33 @@ membuffreestk(struct membuf *buf)
 //#define membufptrtabsize(nblk) (MEMBUFMAXBLKS * sizeof(MEMPTR_T))
 //#define membufslot(buf)       (memgetbufslot(buf))
 #define memusesmallbuf(sz)     ((sz) <= PAGESIZE)
-#define memusepagebuf(sz)      ((sz) <= 8 * PAGESIZE * MEMPAGESLOTS)
+#define memusepagebuf(sz)      ((sz) <= 16 * PAGESIZE * MEMPAGESLOTS)
 #define memsmallbufsize(slot, nblk)                                     \
     (rounduppow2(membufhdrsize(nblk) + ((nblk) << (slot)), PAGESIZE))
 #define mempagebufsize(slot, nblk)                                      \
-    (rounduppow2(membufhdrsize(nblk) + (8 * PAGESIZE + 8 * PAGESIZE * (slot)) * (nblk), \
+    (rounduppow2(membufhdrsize(nblk) + (16 * PAGESIZE + 16 * PAGESIZE * (slot)) * (nblk), \
                  PAGESIZE))
 #define membigbufsize(slot, nblk)                                       \
     (rounduppow2(membufhdrsize(nblk) + ((nblk) << (slot)), PAGESIZE))
+#define memnbufblk(type, slot)                                          \
+    (((type) == MEMSMALLBUF)                                            \
+     ? (1L << (MEMSLABSHIFT - (slot)))                                  \
+     : (((type) == MEMPAGEBUF)                                          \
+        ? (((slot) <= MEMSMALLPAGESLOT)                                 \
+           ? (1L << (MEMSMALLPAGELIM - (slot)))                         \
+           : (((slot) <= MEMMIDPAGESLOT)                                \
+              ? (1L << (MEMMIDPAGELIM - (slot)))                        \
+              : (((slot) <= MEMBIGPAGESLOT)                             \
+                 ? (1L << (MEMBIGPAGELIM - (slot)))                     \
+                 : 1)))                                                 \
+        : (((slot) <= MEMSMALLMAPSLOT)                                  \
+           ? 8                                                          \
+           : (((slot) <= MEMMIDMAPSLOT)                                 \
+              ? 4                                                       \
+              : (((slot) <= MEMBIGMAPSLOT)                              \
+                 ? 2                                                    \
+                 : 1)))))
+#if 0
 #define memnbufblk(type, slot)                                          \
     (((type) == MEMSMALLBUF)                                            \
      ? (1L << (MEMSLABSHIFT - (slot)))                                  \
@@ -948,6 +985,7 @@ membuffreestk(struct membuf *buf)
               : (((slot) <= MEMBIGMAPSLOT)                              \
                  ? 4                                                    \
                  : 1)))))
+#endif
 
 #define membktnbuftls(type, slot)                                       \
     (((type) == MEMSMALLBUF)                                            \
@@ -959,17 +997,17 @@ membuffreestk(struct membuf *buf)
 #define membktnbufglob(type, slot)                                      \
     (((type) == MEMSMALLBUF)                                            \
      ? (((slot) <= MEMSMALLSLOT)                                        \
-        ? 8                                                             \
+        ? 4                                                             \
         : (((slot) <= MEMMIDSLOT)                                       \
-           ? 4                                                          \
-           : 2))                                                        \
+           ? 2                                                          \
+           : 1))                                                        \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMSMALLPAGESLOT)                                 \
-           ? 8                                                          \
+           ? 4                                                          \
            : (((slot) <= MEMMIDPAGESLOT)                                \
-              ? 4                                                       \
-              : 2))                                                     \
-        : 1))
+              ? 2                                                       \
+              : 1))                                                     \
+        : 0))
 #if 0
 #define membktnbufglob(type, slot)                                      \
     (((type) == MEMSMALLBUF)                                            \
