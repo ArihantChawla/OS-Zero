@@ -26,8 +26,7 @@ _malloc(size_t size, size_t align, long flg)
 {
     size_t  aln = max(align, MEMMINALIGN);
 #if (MEMBLKHDR)
-    size_t  sz = max(rounduppow2(size + memblkhdrsize(), MEMMINBLK),
-                     MEMMINBLK);
+    size_t  sz = rounduppow2(size + memblkhdrsize(), MEMMINBLK);
     size_t  asz = ((aln <= MEMMINALIGN)
                    ? max(aln, sz)
                    : sz + aln - 1);

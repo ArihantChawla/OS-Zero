@@ -27,12 +27,13 @@
 
 /* generic memory manager definitions for libzero */
 
-#define MEM_LK_NONE 0x01        // don't use locks; single-thread
-#define MEM_LK_PRIO 0x02        // priority-based locklessinc.com lock
-#define MEM_LK_FMTX 0x04        // anonymous non-recursive mutex
-#define MEM_LK_SPIN 0x08        // spinlock
+#define MEM_LK_NONE   0x01      // don't use locks; single-thread
+#define MEM_LK_PRIO   0x02      // priority-based locklessinc.com lock
+#define MEM_LK_FMTX   0x04      // anonymous non-recursive mutex
+#define MEM_LK_SPIN   0x08      // spinlock
+#define MEM_LK_SPINWT 0x10      // spin-wait lock
 
-#define MEM_LK_TYPE MEM_LK_PRIO // type of locks to use
+#define MEM_LK_TYPE   MEM_LK_PRIO // type of locks to use
 
 #include <limits.h>
 #include <stddef.h>
@@ -70,7 +71,7 @@ typedef uint8_t * MEMPTR_T;     // could be char * too; needs to be single-byte
 typedef struct priolk MEMLK_T;
 #elif (MEM_LK_TYPE == MEM_LK_FMTX)
 typedef zerofmtx      MEMLK_T;
-#elif (MEM_LK_TYPE == MEM_LK_SPIN)
+#elif (MEM_LK_TYPE == MEM_LK_SPIN) || (MEM_LK_TYPE == MEM_LK_SPINWT)
 typedef zerospin      MEMLK_T;
 #endif
 
@@ -124,6 +125,9 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #elif (MEM_LK_TYPE == MEM_LK_SPIN)
 #define memgetlk(lp) spinlk(lp)
 #define memrellk(lp) spinunlk(lp)
+#elif (MEM_LK_TYPE == MEM_LK_SPINWT)
+#define memgetlk(lp) spinwtlk(lp, ZEROSPINLKVAL, 4096)
+#define memrellk(lp) spinwtunlk(lp)
 #endif
 
 //#define MEMPAGEBIT      (MEMWORD(1) << (PAGESIZELOG2 - 1))
@@ -135,6 +139,34 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 
 #define memtrylkbit(ptr)                                                \
     (!m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID))
+#if (MEMSPINBITLOCK)
+#define memlkbit(ptr)                                                   \
+    do {                                                                \
+        unsigned long _loop = 1;                                        \
+                                                                        \
+        do {                                                            \
+            unsigned long _n = 4096;                                    \
+                                                                        \
+            do {                                                        \
+                _n--;                                                   \
+            } while ((_n) && !m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID)); \
+            if (_n) {                                                   \
+                                                                        \
+                break;                                                  \
+            } else {                                                    \
+                do {                                                    \
+                    if (!m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID)) {  \
+                        m_waitint();                                    \
+                    } else {                                            \
+                        _loop = 0;                                      \
+                                                                        \
+                        break;                                          \
+                    }                                                   \
+                } while (1);                                            \
+            }                                                           \
+        } while (_loop);                                                \
+    } while (0)
+#else
 #define memlkbit(ptr)                                                   \
     do {                                                                \
         if (!m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID)) {              \
@@ -144,6 +176,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
             break;                                                      \
         }                                                               \
     } while (1)
+#endif
 //#define memrelbit(ptr) m_cmpclrbit((m_atomic_t *)ptr, MEMLKBITID)
 #define memrelbit(ptr) m_clrbit((m_atomic_t *)ptr, MEMLKBITID)
 
@@ -177,8 +210,8 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
         (slot) = _res;                                                  \
     } while (0)
 
-#define MEMSMALLTLSLIM      (64 * 1024 * 1024)
-#define MEMPAGETLSLIM       (128 * 1024 * 1024)
+#define MEMSMALLTLSLIM      (8 * 1024 * 1024)
+#define MEMPAGETLSLIM       (16 * 1024 * 1024)
 #define MEMSMALLGLOBLIM     (128 * 1024 * 1024)
 #define MEMPAGEGLOBLIM      (256 * 1024 * 1024)
 #define MEMBIGGLOBLIM       (512 * 1024 * 1024)
@@ -246,10 +279,10 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 #define MEMBIGPAGESLOT      256
 #define MEMPAGESLOTS        512
 #endif
-#define MEMSMALLPAGESLOT    16
-#define MEMMIDPAGESLOT      32
-#define MEMBIGPAGESLOT      64
-#define MEMPAGESLOTS        128
+#define MEMSMALLPAGESLOT    8
+#define MEMMIDPAGESLOT      16
+#define MEMBIGPAGESLOT      32
+#define MEMPAGESLOTS        64
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
 #define MEMSMALLMAPSLOT     23
 #define MEMMIDMAPSLOT       25
@@ -428,7 +461,7 @@ struct membuf {
     MEMBLKID_T              stk[EMPTY];
 };
 
-#define memtlssize() rounduppow2(sizeof(struct memtls), 2 * PAGESIZE)
+#define memtlssize() rounduppow2(sizeof(struct memtls), 8 * PAGESIZE)
 struct memtls {
     struct membkt     pagebin[MEMPAGESLOTS];
     struct membkt     bigbin[MEMBIGSLOTS];
@@ -835,6 +868,45 @@ membuffreestk(struct membuf *buf)
 
 #if (MEMCACHECOLOR)
 
+static __inline__ MEMWORD_T *
+memgentlsadr(MEMWORD_T *adr)
+{
+    /* division by 9 */
+    MEMADR_T res = (MEMADR_T)adr;
+    MEMADR_T q;
+    MEMADR_T r;
+    MEMADR_T div9;
+    MEMADR_T dec;
+    MEMADR_T ofs;
+
+    /* compute adr + (adr >> 16) % 9; # of offset cachelines, aligned to cl */
+    res >>= 16;
+    /* divide by 9 */
+    q = res - (res >> 3);
+//    ofs = res;
+    q = q + (q >> 6);
+//    ofs &= 0x07;
+    q = q + (q >> 12) + (q >> 24);
+//    ofs = max(0, --ofs);
+    q = q >> 3;
+//    ofs <<= PAGESIZELOG2;
+    r = res - q * 9;
+    div9 = q + ((r + 7) >> 4);
+    /* calculate res -= res/9 * 9 i.e. res % 9 (max 8) */
+    dec = div9 * 9;
+    res -= dec;
+//    adr += ofs;
+    /* scale to 0..256 (machine words) */
+    res <<= 5;
+    /* align to cacheline */
+    res &= ~(CLSIZE - 1);
+    /* add to original pointer */
+    adr += res;
+
+    return adr;
+}
+
+#if 0
 /* compute adr + adr % 9 (# of cachelines in offset, aligned to cl boundary) */
 static __inline__ MEMWORD_T *
 memgentlsadr(MEMWORD_T *adr)
@@ -866,6 +938,7 @@ memgentlsadr(MEMWORD_T *adr)
 
     return adr;
 }
+#endif
 
 static __inline__ MEMPTR_T
 memgenadr(MEMPTR_T ptr)
@@ -1058,18 +1131,18 @@ memgenhashtabadr(MEMWORD_T *adr)
      ? (1L << (MEMSLABSHIFT - (slot)))                                  \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMSMALLPAGESLOT)                                 \
-           ? 32                                                         \
+           ? 64                                                         \
            : (((slot) <= MEMMIDPAGESLOT)                                \
-              ? 16                                                      \
+              ? 32                                                      \
               : (((slot) <= MEMBIGPAGESLOT)                             \
-                 ? 8                                                    \
-                 : 4)))                                                 \
+                 ? 16                                                   \
+                 : 8)))                                                 \
         : (((slot) <= MEMSMALLMAPSLOT)                                  \
-           ? 8                                                          \
+           ? 16                                                         \
            : (((slot) <= MEMMIDMAPSLOT)                                 \
-              ? 4                                                       \
+              ? 8                                                       \
               : (((slot) <= MEMBIGMAPSLOT)                              \
-                 ? 2                                                    \
+                 ? 4                                                    \
                  : 1)))))
 
 #define membktnbuftls(type, slot)                                       \

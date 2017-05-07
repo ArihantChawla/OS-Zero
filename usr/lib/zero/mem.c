@@ -141,7 +141,9 @@ memreltls(void *arg)
         nb += bufsz;
         g_mem.nbytetab[MEMSMALLBUF] = bufsz;
 #endif
+#if (MEM_LK_TYPE == MEM_LK_PRIO)
         priolkfin();
+#endif
         if (adr) {
             unmapanon(adr, memtlssize());
         }

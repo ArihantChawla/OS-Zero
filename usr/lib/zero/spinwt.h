@@ -60,7 +60,7 @@ spinwtlk(volatile long *sp, long val, long niter)
  * release spin-wait lock
  */
 static __inline__ void
-spinwtunlk(volatile long *sp, long val, long niter)
+spinwtunlk(volatile long *sp)
 {
     m_membar();
     *sp = ZEROSPININITVAL;
