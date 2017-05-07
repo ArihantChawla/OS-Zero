@@ -80,8 +80,9 @@ struct membuf;
 void                     meminit(void);
 MEMPTR_T                 memgetblk(MEMWORD_T slot, MEMWORD_T type,
                                    MEMWORD_T size, MEMWORD_T align);
-MEMPTR_T                 memsetbuf(MEMPTR_T ptr, struct membuf *buf,
-                                   MEMWORD_T id);
+MEMADR_T                 membufop(MEMPTR_T ptr, MEMWORD_T op,
+                                  struct membuf *buf, MEMWORD_T id,
+                                  MEMADR_T pad);
 #if (!MEMBLKHDR)
 #if (MEMMULTITAB)
 struct membuf          * memfindbuf(void *ptr, MEMWORD_T incr);
@@ -385,6 +386,11 @@ struct membkt {
 #define memgetbufslot(buf)                                              \
     ((buf)->slot)
 
+#define memsetblk(ptr, buf, id, pad) membufop(ptr, MEMBUFADD, buf, id, pad)
+#define memdelblk(ptr)               membufop(ptr, MEMBUFDEL, NULL, 0, 0)
+#define memchkblk(ptr)               membufop(ptr, MEMBUFCHK, NULL, 0, 0)
+#define memchkpad(ptr)               membufop(ptr, MEMGETPAD, NULL, 0, 0)
+
 #if 0
 struct membufvals {
     MEMWORD_T *nblk[MEMBUFTYPES];
@@ -440,12 +446,15 @@ struct mem {
 };
 
 #if (MEMBLKHDR)
-#define memblkhdrsize()   (sizeof(struct memblkhdr))
-#define memputblkdesc(ptr, d)                                        \
-    (((struct memblkhdr *)(ptr))[-1].desc = (d))
-#define memgetblkdesc(ptr) (((struct memblkhdr *)(ptr))[-1].desc)
+#define memblkhdrsize()        (sizeof(struct memblkhdr))
+#define memputblkdesc(ptr, d)  (((MEMADR_T *)(ptr))[-2] = (d))
+#define memgetblkdesc(ptr)     (((MEMADR_T *)(ptr))[-2])
+#define memputblkpad(ptr, pad) (((MEMADR_T *)(ptr))[-1] = (pad))
+#define memgetblkpad(ptr)      (((MEMADR_T *)(ptr))[-1])
+    
 struct memblkhdr {
     MEMADR_T desc;
+    MEMADR_T size;
 };
 #endif
 
@@ -460,7 +469,8 @@ struct memblkhdr {
 #define MEMNOBLK (MEMWORD(-1))
 
 #define membufhdrsize(nblk)                                             \
-    (sizeof(struct membuf) + (nblk) * sizeof(MEMBLKID_T))
+    (rounduppow2(sizeof(struct membuf) + (nblk) * sizeof(MEMBLKID_T),   \
+                 PAGESIZE))
 struct membuf {
     volatile struct memtls *tls;
     MEMPTR_T                base; // base address for allocations
@@ -548,15 +558,16 @@ struct memitem {
 #else
 
 #if (MEMBLKHDR)
-#define MEMHASHDEL        0
-#define MEMHASHCHK        1
-#define MEMHASHADD        2
+#define MEMBUFDEL      0
+#define MEMBUFCHK      1
+#define MEMBUFADD      2
+#define MEMGETPAD      3
 #else
-#define MEMHASHDEL      (-1)
-#define MEMHASHCHK        0
-#define MEMHASHADD        1
+#define MEMBUFDEL      (-1)
+#define MEMBUFCHK      0
+#define MEMBUFADD      1
 #endif
-#define MEMHASHNOTFOUND   0
+#define MEMBUFNOTFOUND 0
 
 struct memhashitem {
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
@@ -960,11 +971,11 @@ membuffreestk(struct membuf *buf)
                  ? (1L << (MEMBIGPAGELIM - (slot)))                     \
                  : 1)))                                                 \
         : (((slot) <= MEMSMALLMAPSLOT)                                  \
-           ? 8                                                          \
+           ? (1L << (MEMSMALLMAPLIM - (slot)))                          \
            : (((slot) <= MEMMIDMAPSLOT)                                 \
-              ? 4                                                       \
+              ? (1L << (MEMMIDMAPLIM - (slot)))                         \
               : (((slot) <= MEMBIGMAPSLOT)                              \
-                 ? 2                                                    \
+                 ? (1L << (MEMBIGMAPLIM - (slot)))                      \
                  : 1)))))
 #if 0
 #define memnbufblk(type, slot)                                          \
@@ -1308,16 +1319,21 @@ memgenhashtabadr(MEMWORD_T *adr)
 
 static __inline__ MEMPTR_T
 memcalcadr(MEMPTR_T ptr, MEMWORD_T size,
-           MEMWORD_T blksz, MEMWORD_T align)
+           MEMWORD_T blksz, MEMWORD_T align,
+           MEMADR_T *padret)
 {
-    MEMPTR_T     adr = ptr;
-    MEMWORD_T    diff = blksz - size;
-    MEMADRDIFF_T ofs = memgenofs(ptr);
-
+    MEMPTR_T  adr = ptr;
+    MEMWORD_T diff = blksz - size;
+    MEMADR_T  ofs = memgenofs(ptr);
+    
     if (align <= CLSIZE && diff >= ofs) {
-         ptr += ofs;
+        ptr += ofs;
     } else {
         ptr = memalignptr(adr, align);
+        ofs = ptr - adr;
+    }
+    if (padret) {
+        *padret = ofs;
     }
 
     return ptr;
@@ -1325,7 +1341,23 @@ memcalcadr(MEMPTR_T ptr, MEMWORD_T size,
 
 #else
 
-#define memcalcadr(ptr, size, blksz, align) memalignptr(ptr, align)
+static __inline__ MEMPTR_T
+memcalcadr(MEMPTR_T ptr, MEMWORD_T size,
+           MEMWORD_T blksz, MEMWORD_T align,
+           MEMADR_T *padret)
+{
+    MEMPTR_T adr = ptr;
+    MEMADR_T ofs;
+
+    ptr = memalignptr(adr, align);
+    if (padret) {
+        ofs = ptr - adr;
+        *padret = ofs;
+    }
+
+    return ptr;
+}
+
 #define memgentlsadr(adr)                   (adr)
 #define memgenadr(adr)                      (adr)
 #define memgenofs(adr)                      (adr)

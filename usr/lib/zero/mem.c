@@ -445,6 +445,7 @@ meminitsmallbuf(struct membuf *buf,
     MEMPTR_T  adr = (MEMPTR_T)buf;
     MEMPTR_T  ptr = buf->base;
     MEMWORD_T bsz = MEMWORD(1) << slot;
+    MEMADR_T  pad;
 
     /* initialise pointer stack */
     membufinitstk(buf, nblk);
@@ -452,11 +453,11 @@ meminitsmallbuf(struct membuf *buf,
     membufpopblk(buf);
     VALGRINDMKPOOL(ptr, 0, 0);
 //    ptr = memcalcadr(ptr, size, align, 0);
-    ptr = memcalcadr(ptr, size, bsz, align);
+    ptr = memcalcadr(ptr, size, bsz, align, &pad);
 #if 0
     ptr = memalignptr(ptr, align);
 #endif
-    memsetbuf(ptr, buf, 0);
+    memsetblk(ptr, buf, 0, pad);
 #if (MEMTEST)
     _memchkptr(buf, ptr);
 #endif
@@ -505,6 +506,7 @@ meminitpagebuf(struct membuf *buf,
     MEMPTR_T  adr = (MEMPTR_T)buf;
     MEMPTR_T  ptr = buf->base;
     MEMWORD_T bsz = PAGESIZE + slot * PAGESIZE;
+    MEMADR_T  pad;
 
     /* initialise stack */
     membufinitstk(buf, nblk);
@@ -519,8 +521,8 @@ meminitpagebuf(struct membuf *buf,
     membufpopblk(buf);
     VALGRINDMKPOOL(ptr, 0, 0);
 //    ptr = memcalcadr(ptr, size, align, 0);
-    ptr = memcalcadr(ptr, size, bsz, align);
-    memsetbuf(ptr, buf, 0);
+    ptr = memcalcadr(ptr, size, bsz, align, &pad);
+    memsetblk(ptr, buf, 0, pad);
 #if (MEMTEST)
     _memchkptr(buf, ptr);
 #endif
@@ -568,6 +570,7 @@ meminitbigbuf(struct membuf *buf,
     MEMPTR_T  adr = (MEMPTR_T)buf;
     MEMPTR_T  ptr = buf->base;
     MEMWORD_T bsz = MEMWORD(1) << slot;
+    MEMADR_T  pad;
 
     /* initialise pointer stack */
     membufinitstk(buf, nblk);
@@ -578,8 +581,8 @@ meminitbigbuf(struct membuf *buf,
 //    membufscanblk(buf);
     VALGRINDMKPOOL(buf, 0, 0);
 //    ptr = memcalcadr(ptr, size, align, 0);
-    ptr = memcalcadr(ptr, size, bsz, align);
-    memsetbuf(ptr, buf, 0);
+    ptr = memcalcadr(ptr, size, bsz, align, &pad);
+    memsetblk(ptr, buf, 0, pad);
 #if (MEMTEST)
     _memchkptr(buf, ptr);
 #endif
@@ -747,15 +750,15 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
     upval = (MEMADR_T)g_mem.hash[key]->tab[ofs];
 //    upval &= ~MEMLKBIT;
     if (!upval) {
-        if (op != MEMHASHADD) {
+        if (op != MEMBUFADD) {
             fmtxunlk(&g_mem.hash[key]->lk);
             
-            return MEMHASHNOTFOUND;
+            return MEMBUFNOTFOUND;
         } else {
             blk = memgethashitem();
             if (!blk) {
                 
-                return MEMHASHNOTFOUND;
+                return MEMBUFNOTFOUND;
             }
             desc |= id;
             slot = &blk->tab[0];
@@ -919,7 +922,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
         } while ((blk) && !slot);
     }
     if (!slot) {
-        if (op == MEMHASHDEL || op == MEMHASHCHK) {
+        if (op == MEMBUFDEL || op == MEMBUFCHK) {
 //            fprintf(stderr, "REL: %lx\n", key);
 #if (MEMHASHSUBTABS)
             fmtxunlk(&g_mem.hash[key]->lk);
@@ -927,7 +930,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
             memrelbit(&g_mem.hash[key].chain);
 #endif
             
-            return MEMHASHNOTFOUND;
+            return MEMBUFNOTFOUND;
         } else if (dest) {
             n = *cnt;
             dest->adr = page;
@@ -1023,7 +1026,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
 #if defined(MEMHASHNACT) && (MEMHASHNACT)
         slot->nact++;
 #endif
-        if (op == MEMHASHDEL) {
+        if (op == MEMBUFDEL) {
             id = desc & MEMPAGEIDMASK;
             desc &= ~MEMPAGEIDMASK;
             buf = (struct membuf *)desc;
@@ -1090,7 +1093,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
             
             return desc;
 #if defined(MEMHASHNREF) && (MEMHASHNREF)
-        } else if (op == MEMHASHADD) {
+        } else if (op == MEMBUFADD) {
             slot->nref++;
 #endif
         }
@@ -1115,37 +1118,45 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
 #else /* MEMBLKHDR */
 
 MEMADR_T
-membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
+membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id,
+         MEMADR_T pad)
 {
-    MEMADR_T          desc = (MEMADR_T)buf;
+    MEMADR_T          val = (MEMADR_T)buf;
     MEMWORD_T         type;
     struct memblkhdr *hdr;
 
-    type = buf->type;
-    if (op == MEMHASHDEL) {
-        desc = memgetblkdesc(ptr);
+    if (op == MEMBUFDEL) {
+        val = memgetblkdesc(ptr);
         memputblkdesc(ptr, 0);
-    } else if (op == MEMHASHADD) {
+        memputblkpad(ptr, 0);
+    } else if (op == MEMBUFADD) {
+        type = buf->type;
         if (type != MEMSMALLBUF) {
-            desc |= id;
+            val |= id;
         }
-        memputblkdesc(ptr, desc);
+        memputblkdesc(ptr, val);
+        memputblkpad(ptr, pad);
+    } else if (op == MEMBUFCHK) {
+        val = memgetblkdesc(ptr);
     } else {
-        desc = memgetblkdesc(ptr);
+        /* op == MEMBUFGETPAD */
+        val = memgetblkpad(ptr);
     }
 
-    return desc;
+    return val;
 }
 
 #endif
 
+#if 0
 MEMPTR_T
-memsetbuf(MEMPTR_T ptr, struct membuf *buf, MEMWORD_T id)
+memsetbuf(MEMPTR_T ptr, struct membuf *buf, MEMWORD_T id, MEMADR_T pad)
 {
-    MEMADR_T  desc = membufop(ptr, MEMHASHADD, buf, id);
+    MEMADR_T  desc = membufop(ptr, MEMBUFADD, buf, id, pad);
     
     return (MEMPTR_T)desc;
 }
+#endif
 
 MEMPTR_T
 memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
@@ -1155,6 +1166,7 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
     MEMPTR_T                 ptr;
     MEMPTR_T                 adr;
     MEMWORD_T                bsz;
+    MEMADR_T                 pad;
     MEMWORD_T                nfree;
 #if (MEMDEBUG)
     MEMWORD_T                nblk;
@@ -1165,9 +1177,12 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
     if (type == MEMSMALLBUF) {
         bsz = MEMWORD(1) << slot;
         bkt = &g_memtls->smallbin[slot];
-    } else {
+    } else if (type == MEMPAGEBUF) {
         bsz = PAGESIZE + PAGESIZE * slot;
         bkt = &g_memtls->pagebin[slot];
+    } else {
+        bsz = MEMWORD(1) << slot;
+        bkt = &g_memtls->bigbin[slot];
     }
 //    memprintbufstk(buf, "MEMGETBLKTLS\n");
     buf = bkt->list;
@@ -1201,11 +1216,11 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
     nfree--;
 #endif
 //            ptr = memcalcadr(buf, adr, size, align, id);
-    ptr = memcalcadr(adr, size, bsz, align);
+    ptr = memcalcadr(adr, size, bsz, align, &pad);
     if (type != MEMPAGEBUF) {
-        memsetbuf(ptr, buf, 0);
+        memsetblk(ptr, buf, 0, pad);
     } else {
-        memsetbuf(ptr, buf, id);
+        memsetblk(ptr, buf, id, pad);
     }
 #if !defined(MEMBUFSTACK) || (!MEMBUFSTACK)
     memsetbufnfree(buf, nfree);
@@ -1240,6 +1255,7 @@ memgetblkdead(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
     struct membuf          *buf;
     MEMPTR_T                adr;
     MEMWORD_T               bsz;
+    MEMADR_T                pad;
     MEMWORD_T               nfree;
 #if (MEMDEBUG)
     MEMWORD_T               nblk;
@@ -1286,11 +1302,11 @@ memgetblkdead(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
     nfree--;
 #endif
 //            ptr = memcalcadr(buf, adr, size, align, id);
-    ptr = memcalcadr(adr, size, bsz, align);
+    ptr = memcalcadr(adr, size, bsz, align, &pad);
     if (type != MEMPAGEBUF) {
-        memsetbuf(ptr, buf, 0);
+        memsetblk(ptr, buf, 0, pad);
     } else {
-        memsetbuf(ptr, buf, id);
+        memsetblk(ptr, buf, id, pad);
     }
 #if !defined(MEMBUFSTACK) || (MEMBUFSTACK)
     memsetbufnfree(buf, nfree);
@@ -1340,6 +1356,7 @@ memgetblkglob(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
     MEMPTR_T                ptr;
     MEMPTR_T                adr;
     MEMWORD_T               bsz;
+    MEMADR_T                pad;
     MEMWORD_T               nfree;
 #if (MEMDEBUG)
     MEMWORD_T               nblk;
@@ -1401,8 +1418,8 @@ memgetblkglob(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
     memsetbufnfree(buf, nfree);
 #endif
 //    ptr = memcalcadr(buf, adr, size, align, id);
-    ptr = memcalcadr(adr, size, bsz, align);
-    memsetbuf(ptr, buf, id);
+    ptr = memcalcadr(adr, size, bsz, align, &pad);
+    memsetblk(ptr, buf, id, pad);
 #if (MEMTEST) && 0
     _memchkptr(buf, ptr);
 #endif

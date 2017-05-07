@@ -137,7 +137,9 @@ typedef uint64_t           uintptr_t;
 #define WCHAR_MAX        (~(wchar_t)0)
 #define WINT_MIN         ((wint_t)0)
 #define WINT_MAX         (~(wint_t)0)
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 #define SIZE_MAX         (~(size_t)0)
+#endif
 
 #endif /* __x86_64_ || __amd64__ || __i386__ */
 
