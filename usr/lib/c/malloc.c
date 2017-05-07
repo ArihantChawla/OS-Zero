@@ -44,6 +44,11 @@ _malloc(size_t size, size_t align, long flg)
     long    slot;
     void   *ptr;
 
+    if (type != MEMPAGEBUF) {
+        memcalcslot(asz, slot);
+    } else {
+        memcalcpageslot(asz, slot);
+    }
     if (!g_memtls) {
         meminittls();
         if (!g_memtls) {
@@ -53,11 +58,6 @@ _malloc(size_t size, size_t align, long flg)
 
             return NULL;
         }
-    }
-    if (type != MEMPAGEBUF) {
-        memcalcslot(asz, slot);
-    } else {
-        memcalcpageslot(asz, slot);
     }
     ptr = memgetblk(slot, type, size, aln);
     if (!ptr) {

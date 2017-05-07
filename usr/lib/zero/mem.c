@@ -220,6 +220,7 @@ memprefork(void)
 #if !defined(MEMNOSBRK) || !(MEMNOSBRK)
     memgetlk(&g_mem.heaplk);
 #endif
+#if (!MEMBLKHDR)
     if (g_mem.hash) {
         for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
 #if (MEMHASHSUBTABS)
@@ -229,6 +230,7 @@ memprefork(void)
 #endif
         }
     }
+#endif
     for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
         memlkbit(&g_mem.smallbin[slot].list);
 #if (MEMDEADBINS)
@@ -268,6 +270,7 @@ mempostfork(void)
 #endif
         memrelbit(&g_mem.smallbin[slot].list);
     }
+#if (!MEMBLKHDR)
     if (g_mem.hash) {
         for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
 #if (MEMHASHSUBTABS)
@@ -277,6 +280,7 @@ mempostfork(void)
 #endif
         }
     }
+#endif
 #if !defined(MEMNOSBRK) || !(MEMNOSBRK)
     memrellk(&g_mem.heaplk);
 #endif
@@ -334,6 +338,7 @@ meminit(void)
 #if (MEMSTAT)
     atexit(memprintstat);
 #endif
+#if (!MEMBLKHDR)
 #if (MEMHASHSUBTABS)
     ptr = mapanon(0, MEMHASHITEMS * sizeof(struct memhashbkt));
 #if (MEMSTAT)
@@ -360,6 +365,7 @@ meminit(void)
         hash++;
     }
 #endif
+#endif /* !MEMBLKHDR */
 #if !defined(MEMNOSBRK) || !(MEMNOSBRK)
 //    memgetlk(&g_mem.heaplk);
     heap = growheap(0);
@@ -581,6 +587,8 @@ meminitbigbuf(struct membuf *buf,
     return ptr;
 }
 
+#if (!MEMBLKHDR)
+
 static void
 meminithashitem(MEMPTR_T data)
 {
@@ -697,33 +705,6 @@ membufhashitem(struct memhash *item)
     return;
 }
 #endif
-
-#if (MEMBLKHDR)
-
-MEMADR_T
-membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
-{
-    MEMADR_T          desc = (MEMADR_T)buf;
-    MEMWORD_T         type;
-    struct memblkhdr *hdr;
-
-    type = buf->type;
-    if (op == MEMHASHDEL) {
-        desc = memgetblkdesc(ptr);
-        memputblkdesc(ptr, 0);
-    } else if (op = MEMHASHADD) {
-        if (type != MEMSMALLBUF) {
-            desc |= id;
-        }
-        memputblkdesc(ptr, desc);
-    } else {
-        desc = memgetblkdesc(ptr);
-    }
-
-    return desc;
-}
-
-#else /* !MEMBLKHDR */
 
 MEMADR_T
 membufop(MEMPTR_T ptr, MEMWORD_T op,
@@ -1128,6 +1109,31 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
     crash(desc == 0);
 #endif
     
+    return desc;
+}
+
+#else /* MEMBLKHDR */
+
+MEMADR_T
+membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
+{
+    MEMADR_T          desc = (MEMADR_T)buf;
+    MEMWORD_T         type;
+    struct memblkhdr *hdr;
+
+    type = buf->type;
+    if (op == MEMHASHDEL) {
+        desc = memgetblkdesc(ptr);
+        memputblkdesc(ptr, 0);
+    } else if (op == MEMHASHADD) {
+        if (type != MEMSMALLBUF) {
+            desc |= id;
+        }
+        memputblkdesc(ptr, desc);
+    } else {
+        desc = memgetblkdesc(ptr);
+    }
+
     return desc;
 }
 

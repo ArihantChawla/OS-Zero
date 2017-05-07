@@ -95,6 +95,7 @@ razohash(void *ptr, size_t len, size_t nbit)
 #endif
     } else if (len == 4) {
         uint32_t *vp = ptr;
+        /* FIXME: implement this */
     } else {
         unsigned char *ucp = (unsigned char *)ptr;
         unsigned int   u;
