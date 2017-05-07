@@ -1323,7 +1323,7 @@ memcalcadr(MEMPTR_T ptr, MEMWORD_T size,
            MEMADR_T *padret)
 {
     MEMPTR_T  adr = ptr;
-    MEMWORD_T diff = blksz - size;
+    MEMADR_T diff = blksz - size;
     MEMADR_T  ofs = memgenofs(ptr);
     
     if (align <= CLSIZE && diff >= ofs) {

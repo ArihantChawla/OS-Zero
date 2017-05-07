@@ -121,6 +121,87 @@ _free(void *ptr)
     return;
 }
 
+#if (MEMBLKHDR)
+
+void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_size(2)))
+__attribute__ ((assume_aligned(MEMMINALIGN)))
+#endif
+_realloc(void *ptr,
+         size_t size,
+         long rel)
+{
+    MEMPTR_T          retptr = NULL;
+#if (MEMMULTITAB)
+    struct membuf    *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
+#else
+    MEMADR_T          desc = 0;
+    struct membuf    *buf;
+#endif
+    MEMWORD_T         type;
+    MEMWORD_T         slot;
+    size_t            sz;
+    size_t            pad;
+//    void          * (*sysrealloc)(void *, size_t);
+    void          * (*sysrealloc)(void *, size_t);
+
+    if (!ptr) {
+        retptr = _malloc(size, MEMMINALIGN, 0);
+        
+        return retptr;
+    } else if (!size) {
+        if (ptr) {
+            free(ptr);
+        }
+        
+        return NULL;
+    } else {
+        pad = memchkpad(ptr);
+        if (pad) {
+            desc = memchkblk(ptr);
+            desc &= ~MEMPAGEIDMASK;
+            buf = (struct membuf *)desc;
+            type = memgetbuftype(buf);
+            slot = memgetbufslot(buf);
+            sz = membufblksize(buf, type, slot);
+            sz -= pad;
+            if (size <= sz) {
+                
+                return ptr;
+            }
+            sz = min(sz, size);
+            retptr = _malloc(size, MEMMINALIGN, 0);
+            if (retptr) {
+                memcpy(retptr, ptr, sz);
+                _free(ptr);
+                ptr = NULL;
+            }
+            if ((rel) && (ptr)) {
+                _free(ptr);
+            }
+#if 0
+        } else {
+            sysrealloc = g_sysalloc.realloc;
+            if (!sysrealloc) {
+                sysrealloc = dlsym(RTLD_NEXT, "realloc");
+                g_sysalloc.realloc = sysrealloc;
+            }
+            retptr = sysrealloc(ptr, size);
+#endif
+        }
+    }
+    if (!retptr) {
+#if defined(ENOMEM)
+        errno = ENOMEM;
+#endif
+    }
+
+    return retptr;
+}
+
+#else
+
 void *
 #if defined(__GNUC__)
 __attribute__ ((alloc_size(2)))
@@ -218,6 +299,8 @@ _realloc(void *ptr,
 
     return retptr;
 }
+
+#endif
 
 /* API FUNCTIONS */
 
