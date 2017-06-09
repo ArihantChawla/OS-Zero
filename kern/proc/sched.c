@@ -16,11 +16,11 @@
 #endif
 #include <kern/unit/ia32/task.h>
 
-void                   schedinitset(void);
-FASTCALL struct task * schedswitchtask(struct task *curtask);
-void                   schedsetready(struct task *task);
-void                   schedsetstopped(struct task *task);
-void                   schedsetzombie(struct proc *proc);
+void                     schedinitset(void);
+FASTCALL struct task   * schedswitchtask(struct task *curtask);
+void                     schedsetready(struct task *task);
+void                     schedsetstopped(struct task *task);
+void                     schedsetzombie(struct proc *proc);
 
 extern struct cpu        cputab[NCPU];
 extern struct proc      *proczombietab[NTASK];
