@@ -284,18 +284,18 @@ slabcomb(struct mempool *pool, struct memmag *mag)
                 mag3 = memmaggetprev(mag1);
                 mag4 = memmaggetnext(mag1);
                 if ((mag3) && (mag4)) {
-                    memmagsetnext(mag3, mag4);
-                    memmagsetprev(mag4, mag3);
+                    memsetmagnext(mag3, mag4);
+                    memsetmagprev(mag4, mag3);
                 } else if (mag3) {
-                    memmagsetnext(mag3, mag4); // NULL
+                    memsetmagnext(mag3, mag4); // NULL
                 } else if (mag4) {
-                    memmagsetprev(mag4, mag3); // NULL
+                    memsetmagprev(mag4, mag3); // NULL
                     bkt[bktid1].list = mag4;
                 } else {
                     bkt[bktid1].list = NULL;
                 }
-                memmagclrinfo(mag);
-                memmagclrlink(mag);
+                memclrmaginfo(mag);
+                memclrmaglink(mag);
 //                bktid2++;
                 bktid1++;
                 ofs <<= 1;
@@ -313,23 +313,23 @@ slabcomb(struct mempool *pool, struct memmag *mag)
                 mag3 = memmaggetprev(mag2);
                 mag4 = memmaggetnext(mag2);
                 if ((mag3) && (mag4)) {
-                    memmagsetnext(mag3, mag4);
-                    memmagsetprev(mag4, mag3);
+                    memsetmagnext(mag3, mag4);
+                    memsetmagprev(mag4, mag3);
                 } else if (mag3) {
-                    memmagsetnext(mag3, mag4); // NULL;
+                    memsetmagnext(mag3, mag4); // NULL;
                 } else if (mag4) {
-                    memmagsetprev(mag4, mag3); // NULL
+                    memsetmagprev(mag4, mag3); // NULL
                     bkt[bktid1].list = mag4;
                 } else {
                     bkt[bktid1].list = NULL;
                 }
-                memmagclrinfo(mag2);
-                memmagclrlink(mag2);
+                memclrmaginfo(mag2);
+                memclrmaglink(mag2);
                 bktid2++;
-                memmagclrinfo(mag1);
-                memmagclrlink(mag1);
-                memmagsetbkt(mag1, bktid2);
-                memmagsetfree(mag1);
+                memclrmaginfo(mag1);
+                memclrmaglink(mag1);
+                memsetmagbkt(mag1, bktid2);
+                memsetmagfree(mag1);
                 bktid1 = bktid2;
                 ofs <<= 1;
                 mag1 = NULL;
@@ -341,13 +341,13 @@ slabcomb(struct mempool *pool, struct memmag *mag)
     }
     if (ret) {
         mag1 = bkt[bktid].list;
-        memmagclrinfo(mag);
-        memmagclrlink(mag);
-        memmagsetbkt(mag, bktid1);
-        memmagsetfree(mag);
+        memclrmaginfo(mag);
+        memclrmaglink(mag);
+        memsetmagbkt(mag, bktid1);
+        memsetmagfree(mag);
         if (mag1) {
-            memmagsetprev(mag1, mag);
-            memmagsetnext(mag, mag1);
+            memsetmagprev(mag1, mag);
+            memsetmagnext(mag, mag1);
         }
         bkt[bktid1].list = mag;
     }
@@ -380,24 +380,24 @@ slabsplit(struct mempool *pool, struct memmag *mag, unsigned long dest)
         ptr -= sz;
         mag1 = memgetmag(ptr, pool);
         mag2 = bkt[bktid].list;
-        memmagclrinfo(mag1);
-        memmagclrlink(mag1);
-        memmagsetbkt(mag1, bktid);
-        memmagsetfree(mag1);
+        memclrmaginfo(mag1);
+        memclrmaglink(mag1);
+        memsetmagbkt(mag1, bktid);
+        memsetmagfree(mag1);
         if (mag2) {
-            memmagsetprev(mag2, mag1);
-            memmagsetnext(mag1, mag2);
+            memsetmagprev(mag2, mag1);
+            memsetmagnext(mag1, mag2);
         }
         bkt[bktid].list = mag1;
     }
     mag1 = bkt[dest].list;
-    memmagclrinfo(mag);
-    memmagclrlink(mag);
-    memmagsetbkt(mag, dest);
-    memmagsetfree(mag);
+    memclrmaginfo(mag);
+    memclrmaglink(mag);
+    memsetmagbkt(mag, dest);
+    memsetmagfree(mag);
     if (mag1) {
-        memmagsetprev(mag1, mag);
-        memmagsetnext(mag, mag1);
+        memsetmagprev(mag1, mag);
+        memsetmagnext(mag, mag1);
     }
     bkt[dest].list = mag;
 #if (__KERNEL__ && (MEMDIAG))
@@ -428,10 +428,10 @@ slaballoc(struct mempool *pool, unsigned long nb, unsigned long flg)
             if (mag1) {
                 mag2 = memmaggetnext(mag1);
                 if (mag2) {
-                    memmagclrprev(mag2);
+                    memclrmagprev(mag2);
                 }
                 pool->tab[bktid2].list = mag2;
-                memmagclrlink(mag1);
+                memclrmaglink(mag1);
                 slabsplit(pool, mag1, bktid1);
                 mag1 = pool->tab[bktid1].list;
             }
@@ -440,12 +440,12 @@ slaballoc(struct mempool *pool, unsigned long nb, unsigned long flg)
     if (mag1) {
         mag2 = memmaggetnext(mag1);
         if (mag2) {
-            memmagclrprev(mag2);
+            memclrmagprev(mag2);
         }
         pool->tab[bktid1].list = mag2;
-        memmagclrfree(mag1);
-        memmagclrlink(mag1);
-        memmagsetflg(mag1, flg);
+        memclrmagfree(mag1);
+        memclrmaglink(mag1);
+        memsetmagflg(mag1, flg);
         ptr = memgetadr(mag1, pool);
     }
     fmtxunlk(&pool->lk);
@@ -471,14 +471,14 @@ slabfree(struct mempool *pool, void *ptr)
 #if (!MEMTEST)
     vmfreephys(ptr, 1UL << bktid);
 #endif
-    memmagsetfree(mag1);
+    memsetmagfree(mag1);
     if (!slabcomb(pool, mag1)) {
         mag2 = bkt[bktid].list;
-        memmagclrlink(mag1);
+        memclrmaglink(mag1);
         if (mag2) {
-            memmagsetprev(mag2, mag1);
+            memsetmagprev(mag2, mag1);
         }
-        memmagsetnext(mag1, mag2);
+        memsetmagnext(mag1, mag2);
         bkt[bktid].list = mag1;
     }
     fmtxunlk(&pool->lk);

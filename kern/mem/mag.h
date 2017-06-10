@@ -49,37 +49,37 @@ struct memmag {
 
 #endif
 
-#define memmagclrinfo(mp)                                               \
+#define memclrmaginfo(mp)                                               \
     ((mp)->info = ((m_ureg_t)0))
-#define memmagclrbkt(mp)                                                \
+#define memclrmagbkt(mp)                                                \
     ((mp)->info &= ~MEMBKTMASK)
-#define memmagsetbkt(mp, bkt)                                           \
-    (memmagclrbkt(mp), (mp)->info |= (bkt))
+#define memsetmagbkt(mp, bkt)                                           \
+    (memclrmagbkt(mp), (mp)->info |= (bkt))
 #define memmaggetbkt(mp)                                                \
     ((mp)->info & MEMBKTMASK)
 #define memmagisfree(mp)                                                \
     (!((mp)->info & MEMFREE))
-#define memmagsetfree(mp)                                               \
+#define memsetmagfree(mp)                                               \
     ((mp)->info |= MEMFREE)
-#define memmagclrfree(mp)                                               \
+#define memclrmagfree(mp)                                               \
     ((mp)->info &= ~MEMFREE)
-#define memmagsetflg(mp, flg)                                           \
+#define memsetmagflg(mp, flg)                                           \
     ((mp)->info |= (flg))
-#define memmagclrflg(mp)                                                \
+#define memclrmagflg(mp)                                                \
     ((mp)->info &= ~MEMFLGBITS)
-#define memmagclrlink(mp)                                               \
+#define memclrmaglink(mp)                                               \
     ((mp)->prev = (mp)->next = NULL)
-#define memmagsetprev(mp, hdr)                                          \
+#define memsetmagprev(mp, hdr)                                          \
     ((mp)->prev = hdr)
-#define memmagsetnext(mp, hdr)                                          \
+#define memsetmagnext(mp, hdr)                                          \
     ((mp)->next = hdr)
 #define memmaggetprev(mp)                                               \
     ((mp)->prev)
 #define memmaggetnext(mp)                                               \
     ((mp)->next)
-#define memmagclrprev(mp)                                               \
+#define memclrmagprev(mp)                                               \
     ((mp)->prev = NULL)
-#define memmagclrnext(mp)                                               \
+#define memclrmagnext(mp)                                               \
     ((mp)->next = NULL)
 
 #endif /* __KERN_MEM_MAG_H__ */

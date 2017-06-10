@@ -69,7 +69,7 @@ memalloc(size_t nb, long flg)
             mag->base = (uintptr_t)ptr;
             mag->n = 1;
             mag->ndx = 1;
-            memmagsetbkt(mag, bktid);
+            memsetmagbkt(mag, bktid);
             mag->prev = NULL;
             mag->next = NULL;
         }
@@ -97,7 +97,7 @@ memalloc(size_t nb, long flg)
                 mag->base = (uintptr_t)ptr;
                 mag->n = n;
                 mag->ndx = 1;
-                memmagsetbkt(mag, bktid);
+                memsetmagbkt(mag, bktid);
                 for (ndx = 1 ; ndx < n ; ndx++) {
                     u8ptr += bsz;
                     mag->ptab[ndx] = u8ptr;

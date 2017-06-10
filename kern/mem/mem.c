@@ -95,10 +95,10 @@ meminitvirt(struct mempool *pool, size_t lim)
     while ((nbyte) && bktid >= PAGESIZELOG2) {
         if (nbyte & sz) {
             mag = memgetmag(adr, pool);
-            memmagclrinfo(mag);
-            memmagclrlink(mag);
-            memmagsetbkt(mag, bktid);
-            memmagsetfree(mag);
+            memclrmaginfo(mag);
+            memclrmaglink(mag);
+            memsetmagbkt(mag, bktid);
+            memsetmagfree(mag);
             tab[bktid].list = mag;
             nbyte -= sz;
             adr += sz;
