@@ -38,20 +38,21 @@
 #define SYS_FCTL      32
 #define SYS_POLL      33
 #define SYS_SELECT    34
-#define SYS_SEMINIT   35
-#define SYS_SEMUP     36
-#define SYS_SEMDOWN   37
-#define SYS_SEMOP     38
-#define SYS_MQINIT    39
-#define SYS_MQSEND    40
-#define SYS_MQRECV    41
-#define SYS_MQCTL     42
-#define SYS_EVREG     43
-#define SYS_EVSEND    44
-#define SYS_EVRECV    45
-#define SYS_EVCTL     46
+#define SYS_EPOLL     35
+#define SYS_SEMINIT   36
+#define SYS_SEMUP     37
+#define SYS_SEMDOWN   38
+#define SYS_SEMOP     39
+#define SYS_MQINIT    40
+#define SYS_MQSEND    41
+#define SYS_MQRECV    42
+#define SYS_MQCTL     43
+#define SYS_EVREG     44
+#define SYS_EVSEND    45
+#define SYS_EVRECV    46
+#define SYS_EVCTL     47
 
-#define NSYSCALL      45
+#define NSYSCALL      48
 
 #endif /* __KERN_SYSCALLNUM_H__ */
 

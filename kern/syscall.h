@@ -217,6 +217,7 @@ typedef intptr_t sysreg_t;
  * - perform file control operations
  * sysreg_t sys_poll(struct pollfd *fds, sysreg_t nfd, sysreg_t timeout);
  * sysreg_t sys_select(sysreg_t nfds, struct select *arg);
+ * sysreg_t sys_epoll(sysreg_t desc, sysreg_t cmd, void *arg);
  */
 
 /*
@@ -241,12 +242,12 @@ typedef intptr_t sysreg_t;
 #define SYSCTL_HALT     0x01U   // halt() and reboot()
 #define SYSCTL_SYSINFO  0x02U   // sysinfo()
 #define SYSCTL_SYSCONF  0x03U   // sysconf(); probe system parameters
-#define SYSCTL_SYSSTAT  0x03U   // query system statistics; getrusage()
-#define SYSCTL_TIME     0x04U   // system clock access
-#define SYSCTL_PROF     0x05U   // profile system execution
-#define SYSCTL_TRACE    0x06U   // trace system execution
-#define SYSCTL_CHROOT   0x07U   // change process root directory
-#define SYSCTL_JAIL     0x08U   // set jail parameters
+#define SYSCTL_SYSSTAT  0x04U   // query system statistics; getrusage()
+#define SYSCTL_TIME     0x05U   // system clock access
+#define SYSCTL_PROF     0x06U   // profile system execution
+#define SYSCTL_TRACE    0x07U   // trace system execution
+#define SYSCTL_CHROOT   0x08U   // change process root directory
+#define SYSCTL_JAIL     0x09U   // set jail parameters
 
 /* SYSCTL_TRACE */
 #define SYSCTL_TRACEON  0x00U
