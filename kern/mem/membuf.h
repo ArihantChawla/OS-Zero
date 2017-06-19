@@ -20,8 +20,8 @@
 #define MEMBUF_BLK_SHIFT    (PAGESIZELOG2 + 1)          // blk of 2 * PAGESIZE
 #define MEMBUF_BLK_SIZE     (1 << MEMBUF_BLK_SHIFT)
 #define MEMBUF_BLK_MINSIZE  (MEMBUF_PKT_LEN + 1)
-#define MEMBUF_DATA_LEN     ((long)(MEMBUF_SIZE - sizeof(struct memhdr)))
-#define MEMBUF_PKT_LEN      ((long)(MEMBUF_DATA_LEN - sizeof(struct mempkt)))
+#define MEMBUF_DATA_LEN     ((long)(MEMBUF_SIZE - sizeof(struct kmemhdr)))
+#define MEMBUF_PKT_LEN      ((long)(MEMBUF_DATA_LEN - sizeof(struct kmempkt)))
 #define MEMBUF_BLK_MIN_SIZE (MEMBUF_PKT_LEN + 1)
 #define MEMBUF_MAX_COMPRESS (MEMBUF_PKT_LEN >> 1)
 
@@ -106,13 +106,13 @@
 #define MEMBUF_CHKSUM_L5_VALID  (1 << 29)
 #define MEMBUF_CHKSUM_MERGED    (1 << 30)
 /* record/packet header in first mb of chain; MEMBUF_PKTHDR is set */
-struct mempkt {
-    struct netif  *rcvif;       // receiver interface
-    long           len;         // total packet length
-    uint8_t       *hdr;         // packet header
-    int32_t        flg;         // checksum and other flags
-    int32_t        chksum;      // checksum data
-    struct membuf *aux;         // extra data buffer, e.g. IPSEC
+struct kmempkt {
+    struct netif   *recvif;     // receiver interface
+    long            len;        // total packet length
+    uint8_t        *hdr;        // packet header
+    int32_t         flg;        // checksum and other flags
+    int32_t         chksum;     // checksum data
+    struct kmembuf *aux;        // extra data buffer, e.g. IPSEC
 };
 
 /* external buffer types */
@@ -130,7 +130,7 @@ struct mempkt {
 #define MEMBUF_EXT_QUAD_PAGE  5          // 4 * PAGESIZE bytes
 #define MEMBUF_EXT_PACKET     6          // mb + memblk from packet zone
 #define MEMBUF_EXT_DATA       7          // external membuf (M_IOVEC)
-struct memext {
+struct kmemext {
     uint8_t     *buf;   // buffer base address
     m_atomic_t   nref;  // external reference count
     long         size;  // buffer size
@@ -139,23 +139,23 @@ struct memext {
     long         type;  // storage type
 };
 
-struct memhdr {
-    uint8_t       *data;         // data address
-    long           len;         // # of bytes in membuf
-    long           type;        // buffer type
-    long           flg;         // flags
-    struct membuf *next;        // next buffer in chain
-    struct membuf *nextpkt;     // next packet in chain
+struct kmemhdr {
+    uint8_t        *data;       // data address
+    long            len;        // # of bytes in membuf
+    long            type;       // buffer type
+    long            flg;        // flags
+    struct kmembuf *next;       // next buffer in chain
+    struct kmembuf *nextpkt;    // next packet in chain
 };
 
-struct membuf {
-    struct memhdr             hdr;
+struct kmembuf {
+    struct kmemhdr             hdr;
     union {
         struct {
-            struct mempkt     pkt;      // MEMBUF_PKTHDR is set
+            struct kmempkt     pkt;     // MEMBUF_PKTHDR is set
             union {
-                struct memext ext;
-                uint8_t       buf[MEMBUF_PKT_LEN];
+                struct kmemext ext;
+                uint8_t        buf[MEMBUF_PKT_LEN];
             } data;
         } s;
         uint8_t               buf[MEMBUF_DATA_LEN];
@@ -185,19 +185,19 @@ struct membuf {
 #define mbextbuf(mb)      (((mb)->u.s.data.ext.buf))
 #define mbextsize(mb)     (((mb)->u.s.data.ext.size))
 
-struct mempktaux {
+struct kmempktaux {
     long af;
     long type;
 };
 
-struct membufbkt {
-    m_atomic_t     lk;
-    m_atomic_t     nref;
-    long           flg;
-    long           nbuf;
-    long           nblk;
-    struct membuf *buflist;
-    uint8_t        _pad[CLSIZE - 5 * sizeof(long) - 1 * sizeof(void *)];
+struct kmembufbkt {
+    m_atomic_t      lk;
+    m_atomic_t      nref;
+    long            flg;
+    long            nbuf;
+    long            nblk;
+    struct kmembuf *buflist;
+    uint8_t         _pad[CLSIZE - 5 * sizeof(long) - 1 * sizeof(void *)];
 };
 
 #include <kern/mem/bits/membuf.h>

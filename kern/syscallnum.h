@@ -40,8 +40,8 @@
 #define SYS_SELECT    34
 #define SYS_EPOLL     35
 #define SYS_SEMINIT   36
-#define SYS_SEMUP     37
-#define SYS_SEMDOWN   38
+#define SYS_SEMWAIT   37
+#define SYS_SEMSIGNAL 38
 #define SYS_SEMOP     39
 #define SYS_MQINIT    40
 #define SYS_MQSEND    41

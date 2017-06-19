@@ -374,14 +374,14 @@ struct membkt {
     ((buf)->slot = (slot))
 #if 0
 #define meminitbuftype(buf, t)                                          \
-    ((buf)->info |=  (t))
+    ((buf)->flg |=  (t))
 #define meminitbufslot(buf, slot)                                       \
-    ((buf->info) |= (slot) << MEMBUFTYPEBITS)
+    ((buf->flg) |= (slot) << MEMBUFTYPEBITS)
 #endif
 #define memsetbufnfree(buf, n)                                          \
     ((buf)->nfree = (n))
 #define memgetbufheapflg(buf)                                           \
-    ((buf)->info & MEMHEAPBIT)
+    ((buf)->flg & MEMHEAPBIT)
 #define memgetbufnblk(buf)                                              \
     ((buf)->nblk)
 #define memgetbufnfree(buf)                                             \
@@ -404,8 +404,8 @@ struct membufvals {
 };
 #endif
 
-#define MEMINITBIT   (1L << 0)
-#define MEMNOHEAPBIT (1L << 1)
+#define MEMINITBIT (1L << 0)
+#define MEMHEAPBIT (1L << 1)
 struct mem {
     /* global allocation freelists */
     struct membkt        pagebin[MEMPAGESLOTS];

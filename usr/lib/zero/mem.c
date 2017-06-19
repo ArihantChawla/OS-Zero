@@ -18,6 +18,10 @@
 #include <zero/hash.h>
 #include <zero/valgrind.h>
 
+#if !defined(MEMUNMAP)
+#define MEMUNMAP 0
+#endif
+
 static pthread_once_t               g_initonce = PTHREAD_ONCE_INIT;
 static pthread_key_t                g_thrkey;
 #if (!MEMDYNTLS)
@@ -374,6 +378,7 @@ meminit(void)
         growheap(ofs);
     }
 //    memrellk(&g_mem.heaplk);
+    g_mem.flg |= MEMHEAPBIT;
 #endif
     g_mem.flg |= MEMINITBIT;
 //    spinunlk(&g_mem.initlk);
@@ -390,7 +395,7 @@ memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
     struct membuf *buf;
 
 #if !defined(MEMNOSBRK) || !(MEMNOSBRK)
-    if (!(g_mem.flg & MEMNOHEAPBIT)) {
+    if (g_mem.flg & MEMHEAPBIT) {
         /* try to allocate from heap (sbrk()) */
         memgetlk(&g_mem.heaplk);
         adr = growheap(bufsz);
@@ -401,7 +406,6 @@ memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
 #endif
             g_mem.flg |= MEMHEAPBIT;
         } else {
-            g_mem.flg |= MEMNOHEAPBIT;
             memrellk(&g_mem.heaplk);
         }
     }
@@ -1387,7 +1391,7 @@ memgetblkglob(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
 #else
         m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)buf->next);
 #endif
-//        m_clrbit((m_atomic_t *)&buf->info, MEMBUFGLOBBITID);
+//        m_clrbit((m_atomic_t *)&buf->flg, MEMBUFGLOBBITID);
 #if 0
         buf->prev = NULL;
         buf->next = NULL;
@@ -1663,7 +1667,7 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
         }
         buf->next = head;
         gbkt->nbuf++;
-//        m_setbit(&buf->info, MEMBUFGLOBBITID);
+//        m_setbit(&buf->flg, MEMBUFGLOBBITID);
             /* this will unlock the list (set the low-bit to zero) */
         m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
 #endif /* MEMEMPTYTLS */
@@ -1719,7 +1723,7 @@ memrelblk(struct membuf *buf, MEMWORD_T id)
             buf->next = head;
             buf->tls = NULL;
             gbkt->nbuf++;
-//            m_setbit(&buf->info, MEMBUFGLOBBITID);
+//            m_setbit(&buf->flg, MEMBUFGLOBBITID);
             /* this will unlock the list (set the low-bit to zero) */
 #if (MEMBKTLOCK)
             gbkt->list = buf;

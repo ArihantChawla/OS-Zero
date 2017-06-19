@@ -149,10 +149,10 @@ typedef intptr_t sysreg_t;
  * - allocate semaphore and initialise it with value cnt
  * void      sys_rmsem(uintptr_t id);
  * - deallocate semaphore
- * sysreg_t      sys_semup(uintptr_t sem, sysreg_t n);
- * - increase semaphore value by n
- * sysreg_t      sys_semdown(uintptr_t sem, sysreg_t n);
- * - attempt to decrease semaphore value by n
+ * sysreg_t  sys_semwait(uintptr_t sem, sysreg_t n);
+ * - decrease semaphore value by n
+ * sysreg_t  sys_semsignal(uintptr_t sem, sysreg_t n);
+ * - attempt to increase semaphore value by n
  *
  * read-write locks
  * ----------------

@@ -49,7 +49,7 @@ struct lfdeq {
 #define LFDEQSIZE rounduppow2(sizeof(struct lfdeq), CLSIZE)
 
 void        lfdeqinitqueue(struct lfdeq *lfdeq);
-void        lfdeqenqueue(struct lfdeq *lfdeq, LFDEQ_VAL_T val);
+LFDEQ_VAL_T lfdeqenqueue(struct lfdeq *lfdeq, LFDEQ_VAL_T val);
 LFDEQ_VAL_T lfdeqdequeue(struct lfdeq *lfdeq);
 
 #endif /* __ZERO_LFDEQ_H__ */
