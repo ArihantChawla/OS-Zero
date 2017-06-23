@@ -27,7 +27,7 @@ _malloc(size_t size, size_t align, long flg)
     size_t  aln = max(align, MEMMINALIGN);
 #if (MEMBLKHDR)
     size_t  sz = max(size, MEMMINBLK);
-    size_t  bsz = sz + max(MEMMINBLK, memblkhdrsize());
+    size_t  bsz = sz + max(MEMMINBLK, membufhdrsize());
     size_t  asz = ((aln <= MEMMINALIGN)
                    ? max(aln, bsz)
                    : bsz + aln - 1);
@@ -60,7 +60,7 @@ _malloc(size_t size, size_t align, long flg)
             return NULL;
         }
     }
-    ptr = memgetblk(slot, type, size, aln);
+    ptr = memgetblk(slot, type, asz, aln);
     if (!ptr) {
 #if defined(ENOMEM)
         errno = ENOMEM;

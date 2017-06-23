@@ -349,26 +349,15 @@ meminit(void)
     g_memstat.nbhashtab = MEMHASHITEMS * sizeof(struct memhashbkt);
 #endif
 #else
-    ptr = mapanon(0, MEMHASHITEMS * sizeof(struct memhashlist));
+    ptr = mapanon(0, MEMHASHITEMS * sizeof(struct memhash));
 #if (MEMSTAT)
-    g_memstat.nbhashtab = MEMHASHITEMS * sizeof(struct memhashlist);
+    g_memstat.nbhashtab = MEMHASHITEMS * sizeof(struct memhash);
 #endif
 #endif
     if (ptr == MAP_FAILED) {
         crash(ptr == MAP_FAILED);
     }
-#if (MEMHASHSUBTABS)
-    hash = ptr;
-    ptr = mapanon(0, MEMHASHITEMS * sizeof(struct memhashbkt *));
-#if (MEMSTAT)
-    g_memstat.nbhashtab = MEMHASHITEMS * sizeof(struct memhashbkt *);
-#endif
     g_mem.hash = ptr;
-    for (ndx = 0 ; ndx < MEMHASHITEMS ; ndx++) {
-        g_mem.hash[ndx] = hash;
-        hash++;
-    }
-#endif
 #endif /* !MEMBLKHDR */
 #if !defined(MEMNOSBRK) || !(MEMNOSBRK)
 //    memgetlk(&g_mem.heaplk);
@@ -426,7 +415,9 @@ memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
 #endif
     }
     buf = (struct membuf *)adr;
-    adr += membufmapsize();
+    adr += sizeof(struct membuf);
+    buf->stk = adr;
+    adr += nblk * sizeof(MEMBLKID_T);
     buf->base = adr;
     buf->flg = flg;    // possible MEMHEAPBIT
     meminitbufslot(buf, slot);
@@ -452,8 +443,12 @@ meminitsmallbuf(struct membuf *buf,
     MEMADR_T  pad;
 
     /* initialise free-bitmaps */
+#if 0
     membufinitmap(buf, nblk);
     membufscanblk(buf, &tmp);
+#endif
+    membufinitstk(buf, nblk);
+    membufpopblk(buf);
     VALGRINDMKPOOL(ptr, 0, 0);
     ptr = memcalcadr(ptr, size, bsz, align, &pad);
 #if 0
@@ -481,7 +476,10 @@ memallocpagebuf(MEMWORD_T slot, MEMWORD_T nblk)
         return NULL;
     }
     buf = (struct membuf *)adr;
-    adr += membufhdrsize(nblk);
+//    adr += membufmapsize();
+    adr += membufmapsize();
+    buf->freemap = adr;
+    adr += MEMBUFBITMAPWORDS * WORDSIZE;
     buf->base = adr;
     buf->flg = 0;
     meminitbufslot(buf, slot);
@@ -513,6 +511,10 @@ meminitpagebuf(struct membuf *buf,
     /* initialise free-bitmaps */
     membufinitmap(buf, nblk);
     membufscanblk(buf, &tmp);
+#if 0
+    membufinitstk(buf, nblk);
+    membufpopblk(buf);
+#endif
     VALGRINDMKPOOL(ptr, 0, 0);
     ptr = memcalcadr(ptr, size, bsz, align, &pad);
     memsetblk(ptr, buf, 0);
@@ -537,7 +539,10 @@ memallocbigbuf(MEMWORD_T slot, MEMWORD_T nblk)
         return NULL;
     }
     buf = (struct membuf *)adr;
-    adr += membufhdrsize(nblk);
+//    adr += membufmapsize();
+    adr += membufmapsize();
+    buf->freemap = adr;
+    adr += MEMBUFBITMAPWORDS * WORDSIZE;
     buf->base = adr;
     buf->flg = 0;
     meminitbufslot(buf, slot);
@@ -568,6 +573,10 @@ meminitbigbuf(struct membuf *buf,
     /* initialise free-bitmaps */
     membufinitmap(buf, nblk);
     membufscanblk(buf, &tmp);
+#if 0
+    membufinitstk(buf, nblk);
+    membufpopblk(buf);
+#endif
     VALGRINDMKPOOL(buf, 0, 0);
     ptr = memcalcadr(ptr, size, bsz, align, &pad);
     memsetblk(ptr, buf, 0);
@@ -1026,7 +1035,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
                 id = membufblkid(buf, ptr);
             }
             tls = buf->tls;
-            if (tls && tls != g_memtls) {
+            if ((MEMBUFRELMAP) && (tls) && tls != g_memtls) {
                 membufsetrel(buf, id);
             } else {
                 memrelblk(buf, id);
@@ -1178,7 +1187,11 @@ memgetblktls(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
 
         return NULL;
     }
-    id = membufscanblk(buf, &nfree);
+    if (type == MEMSMALLBUF) {
+        id = membufpopblk(buf);
+    } else {
+        id = membufscanblk(buf, &nfree);
+    }
 #if (MEMDEBUG)
     nblk = memgetbufnblk(buf);
 #if defined(MEMBUFSTACK) && (MEMBUFSTACK)
@@ -1358,7 +1371,11 @@ memgetblkglob(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
 
         return NULL;
     }
-    id = membufscanblk(buf, &nfree);
+    if (type == MEMSMALLBUF) {
+        id = membufpopblk(buf);
+    } else {
+        id = membufscanblk(buf, &nfree);
+    }
 #if (MEMDEBUG)
     nblk = memgetbufnblk(buf);
 #if defined(MEMBUFSTACK) && (MEMBUFSTACK)

@@ -58,28 +58,29 @@ typedef zpmulong zpmureg;
 #define ZPM_BNC     0x1b        // branch if carry not set
 /* stack operations */
 #define ZPM_POP     0x1c        // pop from stack
-#define ZPM_PUSH    0x1d        // push on stack
-#define ZPM_PUSHA   0x1e        // push all registers on stack
+#define ZPM_POPA    0x1d        // pop all registers from stack
+#define ZPM_PUSH    0x1e        // push on stack
+#define ZPM_PUSHA   0x1f        // push all registers on stack
 /* load and store operations */
-#define ZPM_LDA     0x1f        // load accumulator (register)
-#define ZPM_STA     0x20        // store accumulator
+#define ZPM_LDA     0x20        // load accumulator (register)
+#define ZPM_STA     0x21        // store accumulator
 /* subroutine operations */
-#define ZPM_CALL    0x21        // call subroutine
-#define ZPM_ENTER   0x22        // subroutine prologue
-#define ZPM_LEAVE   0x23        // subroutine epilogue
-#define ZPM_RET     0x24        // return from subroutine
+#define ZPM_CALL    0x22        // call subroutine
+#define ZPM_ENTER   0x23        // subroutine prologue
+#define ZPM_LEAVE   0x24        // subroutine epilogue
+#define ZPM_RET     0x25        // return from subroutine
 /* thread operations */
-#define ZPM_THR     0x25        // launch new thread
-#define ZPM_LTB     0x26        // load base address for thread-local storage
+#define ZPM_THR     0x26        // launch new thread
+#define ZPM_LTB     0x27        // load base address for thread-local storage
 /* system operations */
-#define ZPM_LDR     0x27        // load special register
-#define ZPM_STR     0x28        // store special register
-#define ZPM_RST     0x29        // reset
-#define ZPM_HLT     0x2a        // halt
+#define ZPM_LDR     0x28        // load special register
+#define ZPM_STR     0x29        // store special register
+#define ZPM_RST     0x2a        // reset
+#define ZPM_HLT     0x2b        // halt
 /* I/O operations */
-#define ZPM_IN      0x2b        // read data from port
-#define ZPM_OUT     0x2c        // write data to port
-#define ZPM_NALU_OP 0x2d        // number of ALU operations
+#define ZPM_IN      0x2c        // read data from port
+#define ZPM_OUT     0x2d        // write data to port
+#define ZPM_NALU_OP 0x2e        // number of ALU operations
 
 /* VIRTUAL MACHINE */
 

@@ -361,9 +361,9 @@ struct membkt {
 #define MEMBUFTYPESHIFT  (MEMBUFSLOTSHIFT + MEMBUFSLOTBITS)
 #endif
 #if 0
-#define MEMBUFNFREEBITS   MEMBUFNBLKBITS
+#define MEMBUFNFREEBITS  MEMBUFNBLKBITS
 #define MEMBUFNFREEMASK  (MEMBUFNBLKMASK << MEMBUFNFREESHIFT)
-#define MEMBUFNFREESHIFT  MEMBUFNBLKBITS
+#define MEMBUFNFREESHIFT MEMBUFNBLKBITS
 #endif
 
 #define meminitbufnblk(buf, n)                                          \
@@ -395,6 +395,18 @@ struct membkt {
 #define memdelblk(ptr)          membufop(ptr, MEMBUFDEL, NULL, 0)
 #define memchkblk(ptr)          membufop(ptr, MEMBUFCHK, NULL, 0)
 #define memchkpad(ptr)          membufop(ptr, MEMGETPAD, NULL, 0)
+#if (MEMBLKHDR)
+#define memblkhdrsize()        (sizeof(struct memblkhdr))
+#define memputblkdesc(ptr, d)  (((MEMADR_T *)(ptr))[-2] = (d))
+#define memgetblkdesc(ptr)     (((MEMADR_T *)(ptr))[-2])
+#define memputblkpad(ptr, pad) (((MEMADR_T *)(ptr))[-1] = (pad))
+#define memgetblkpad(ptr)      (((MEMADR_T *)(ptr))[-1])
+
+struct memblkhdr {
+    MEMADR_T desc;
+    MEMADR_T pad;
+};
+#endif
 
 #if 0
 struct membufvals {
@@ -426,8 +438,8 @@ struct mem {
 #if (MEMHASHSUBTABS)
     struct memhashbkt  **hash;
     struct memhash      *hashbuf;
-#elif (MEMNEWHASH)
-    struct memhashlist  *hash;    // hash table
+#elif (!MEMBLKHDR)
+    struct memhash      *hash;    // hash table
     struct memhash      *hashbuf; // buffer for hash items
 #endif
     MEMWORD_T            flg;     // memory interface flags
@@ -449,32 +461,23 @@ struct mem {
 #endif
 };
 
-#if (MEMBLKHDR)
-#define memblkhdrsize()        (sizeof(struct memblkhdr))
-#define memputblkdesc(ptr, d)  (((MEMADR_T *)(ptr))[-2] = (d))
-#define memgetblkdesc(ptr)     (((MEMADR_T *)(ptr))[-2])
-#define memputblkpad(ptr, pad) (((MEMADR_T *)(ptr))[-1] = (pad))
-#define memgetblkpad(ptr)      (((MEMADR_T *)(ptr))[-1])
-
-struct memblkhdr {
-    MEMADR_T desc;
-    MEMADR_T pad;
-};
-#endif
-
 #define MEMNOBLK (MEMWORD(-1))
 
 #define membufmapsize()                                                 \
-    (rounduppow2(sizeof(struct membuf) + sizeof(struct membufmap), PAGESIZE))
-#define membufhdrsize(nblk)                                             \
-    (rounduppow2(sizeof(struct membuf) + (nblk) * sizeof(MEMBLKID_T)    \
+    (rounduppow2(sizeof(struct membuf)                                  \
                  + MEMBUFBITMAPWORDS * WORDSIZE,                        \
                  PAGESIZE))
+#define membufhdrsize(nblk)                                             \
+    (rounduppow2(sizeof(struct membuf)                                  \
+                 + (nblk) * sizeof(MEMBLKID_T),                         \
+                 PAGESIZE))
 
+#if 0
 struct membufmap {
     MEMWORD_T freemap[MEMBUFBITMAPWORDS];
     MEMWORD_T relmap[MEMBUFBITMAPWORDS];
 };
+#endif
 
 struct membuf {
     volatile struct memtls *tls;
@@ -491,9 +494,10 @@ struct membuf {
     MEMWORD_T               nfree;
     MEMWORD_T               stktop;
     MEMWORD_T               stklim;
+    MEMBLKID_T             *stk;
+    MEMWORD_T               relmap[MEMBUFBITMAPWORDS];
     MEMWORD_T              *freemap;
-    MEMWORD_T              *relmap;
-    MEMWORD_T               data[EMPTY] ALIGNED(CLSIZE);
+    MEMWORD_T               data[EMPTY];
 };
 
 #define memtlssize() rounduppow2(sizeof(struct memtls), 8 * PAGESIZE)
@@ -677,9 +681,8 @@ membufinitmap(struct membuf *buf, MEMWORD_T nblk)
 {
     MEMWORD_T  bits = ~MEMWORD(0);      // all 1-bits
     MEMWORD_T  n = sizeof(MEMWORD_T) * CHAR_BIT;
-    MEMWORD_T *ptr = &buf->data;
+    MEMWORD_T *ptr = buf->freemap;
 
-    buf->freemap = ptr;
     while (nblk >= n) {
         *ptr = bits;
         nblk -= n;
@@ -692,7 +695,6 @@ membufinitmap(struct membuf *buf, MEMWORD_T nblk)
         *ptr = bits;
         ptr++;
     }
-    buf->relmap = ptr;
 
     return;
 }
@@ -812,7 +814,7 @@ membuffreemap(struct membuf *buf)
 static __inline__ void
 membufinitstk(struct membuf *buf, MEMWORD_T nblk)
 {
-    MEMBLKID_T *stk = buf->freemap;
+    MEMBLKID_T *stk = buf->stk;
     MEMWORD_T   ndx;
     MEMBLKID_T  id;
 
@@ -838,7 +840,7 @@ membufpopblk(struct membuf *buf)
     MEMWORD_T id;
 
     nfree--;
-    id = buf->freemap[cur];
+    id = buf->stk[cur];
     cur++;
     buf->nfree = nfree;
     buf->stktop = cur;
@@ -858,7 +860,7 @@ membufpushblk(struct membuf *buf, MEMBLKID_T id)
 
     cur--;
     nfree++;
-    buf->freemap[cur] = id;
+    buf->stk[cur] = id;
     buf->stktop = cur;
     buf->nfree = nfree;
 #if (MEMTESTSTACK) && 0
