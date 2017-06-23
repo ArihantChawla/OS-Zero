@@ -25,13 +25,16 @@
 
 \chapter{Notes}
 
-\textbf{Brief}
+	\textbf{Brief}
+
 	Zero Pseudo Machine, ZPM, is a software-based virtual machine. The
 	machine is programmed in its own assembly dialect; the instruction set
 	is reminiscent of many current RISC-like implementations.
 \part{Pseudo Machine}
 
 \chapter{Architecture}
+
+	\textbf{Notes}
 
 	ZPM is an architecture with 32-bit machine words; room has been left in the
 	implementation for 64-bit suppport.
@@ -80,6 +83,8 @@
 
 	\textbf{Operands}
 
+	The table below lists operand types.
+
 \begin{itemize}
 	\item{\textbf{i} stands for immediate operand}
 	\item{\textbf{r} stands for register operand}
@@ -88,8 +93,8 @@
 
 	\textbf{Flags}
 
-	Certain instructions set bits in the machine status word (MSW). This is
-	documented here on per-instruction basis.
+	Certain instructions set bits in the machine status word register (MSW).
+	This is	documented here on per-instruction basis.
 
 \begin{itemize}
 	\item{\textbf{z} stands for zero flag (ZF)}
@@ -98,7 +103,7 @@
 	\item{\textbf{s} stands for sign flag (SF)}
 \end{itemize}
 
-	\textbf{TODO}: stack/call conventions for certain instructions
+	\textbf{TODO}: stack/call conventions for certain instructions such as THR
 
 \subsection{Instruction Table}
 
@@ -203,6 +208,24 @@
 	\textbf{outw} & r, i & N/A & write 16-bit word to input port & N/A \\
 	\hline
 	\textbf{outl} & r, i & N/A & write 32-bit longword to input port & N/A \\
+	\hline
+\end{tabular}
+
+\subsection{I/O Port Map}
+
+	\textbf{I/O Address Space}
+
+	The I/O address space maps 65,536 I/O ports to unsigned 16-bit address
+	space.
+	
+\begin{tabular}{| l | l | l | l | l |}
+	\hline
+	Port \# & Name & Brief \\
+	\textbf{0x0000} & STDIN & keyboard input \\
+	\hline
+	\textbf{0x0001} & STDOUT & console output \\
+	\hline
+	\textbf{0x0002} & STDERR & error output \\
 	\hline
 \end{tabular}
 
