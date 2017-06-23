@@ -109,61 +109,61 @@
 
 \begin{tabular}{| l | l | l | l | l |}
 	\hline
-	Mnemonic     & Operand \#1 & Operand \#2 & Brief & Flags \\
+	Mnemonic     & Source & Destination & Brief & Flags \\
 	\hline
-	\textbf{not} & r & N/A & op1 = ~op1; & z \\
+	\textbf{not} & r & N/A & src = ~src; & z \\
 	\hline
-	\textbf{and} & r, i & r & op2 = op2 \& op1; & z \\
+	\textbf{and} & r, i & r & dest = dest \& src; & z \\
 	\hline
-        \textbf{or}  & r, i & r & op2 = op2 | op1; & N/A \\
+        \textbf{or}  & r, i & r & dest = dest | src; & N/A \\
 	\hline
-	\textbf{xor} & r, i & r & op2 = op2 \^ op1; & z \\
+	\textbf{xor} & r, i & r & dest = dest \^ src; & z \\
 	\hline
-	\textbf{shl}  & r, i & r & op2 = op2 << op1; & o, c \\
+	\textbf{shl}  & r, i & r & dest = dest << src; & o, c \\
 	\hline
-	\textbf{shr} & r, i & r & op2 = op2 >> op1; (zero-fill) & z \\
+	\textbf{shr} & r, i & r & dest = dest >> src; (zero-fill) & z \\
 	\hline
-	\textbf{sar} & r, i & r & op2 = op2 >> op1; (sign-fill) & z \\
+	\textbf{sar} & r, i & r & dest = dest >> src; (sign-fill) & z \\
 	\hline
-	\textbf{rol}  & r, i & r & op2 = op2 ROL op1; & c \\
+	\textbf{rol}  & r, i & r & dest = dest ROL src; & c \\
 	\hline
-	\textbf{ror}  & r, i & r & op2 = op2 ROR op1; & c \\
+	\textbf{ror}  & r, i & r & dest = dest ROR src; & c \\
 	\hline
-	\textbf{inc}  & r, i & N/A & op1++; & o \\
+	\textbf{inc}  & r, i & N/A & src++; & o \\
 	\hline
-	\textbf{dec}  & r, i & N/A & op1--; & o, z \\
+	\textbf{dec}  & r, i & N/A & src--; & o, z \\
 	\hline
-	\textbf{add}  & r, i & r & op2 = op2 + op1; & o, z \\
+	\textbf{add}  & r, i & r & dest = dest + src; & o, z \\
 	\hline
-	\textbf{sub}  & r, i & r & op2 = op2 - op1; & s, z \\
+	\textbf{sub}  & r, i & r & dest = dest - src; & s, z \\
 	\hline
 	\textbf{cmp}  & r, i & r & compare two values and set flags & s, z \\
 	\hline
-	\textbf{mul}  & r, i & r & op2 = op2 * op1; & o, s, z \\
+	\textbf{mul}  & r, i & r & dest = dest * src; & o, s, z \\
 	\hline
-	\textbf{div}  & r, i & r & op2 = op2 / op1; & s, z \\
+	\textbf{div}  & r, i & r & dest = dest / src; & s, z \\
 	\hline
-	\textbf{jmp}  & r, i & branch to op1 & N/A \\
+	\textbf{jmp}  & r, i & branch to src & N/A \\
 	\hline
-	\textbf{bz}   & r, i & N/A & branch to op1 if (CF == 0) & N/A \\
+	\textbf{bz}   & r, i & N/A & branch to src if (CF == 0) & N/A \\
 	\hline
-	\textbf{bnz}  & r, i & N/A & branch to op1 if (CF != 0) & N/A \\
+	\textbf{bnz}  & r, i & N/A & branch to src if (CF != 0) & N/A \\
 	\hline
-	\textbf{blt}  & r, i & N/A & branch to op1 if (SF != 0) & N/A \\
+	\textbf{blt}  & r, i & N/A & branch to src if (SF != 0) & N/A \\
 	\hline
-	\textbf{ble}  & r, i & N/A & branch to op1 if (SF != 0) || (ZF == 0) & N/A \\
+	\textbf{ble}  & r, i & N/A & branch to src if (SF != 0) || (ZF == 0) & N/A \\
 	\hline
-	\textbf{bgt}  & r, i & N/A & branch to op1 if (SF != 0) \&\& (ZF != 0) & N/A \\
+	\textbf{bgt}  & r, i & N/A & branch to src if (SF != 0) \&\& (ZF != 0) & N/A \\
 	\hline
-	\textbf{bge}  & r, i & N/A & branch to op1 if (SF != 0) || (ZF == 0) & N/A \\
+	\textbf{bge}  & r, i & N/A & branch to src if (SF != 0) || (ZF == 0) & N/A \\
 	\hline
-	\textbf{bo}   & r, i & N/A & branch to op1 if (OF != 0) & N/A \\
+	\textbf{bo}   & r, i & N/A & branch to src if (OF != 0) & N/A \\
 	\hline
-	\textbf{bno}  & r, i & N/A & branch to op1 if (OF == 0) & N/A \\
+	\textbf{bno}  & r, i & N/A & branch to src if (OF == 0) & N/A \\
 	\hline
-	\textbf{bc}   & r, i & N/A & branch to op1 if (CF != 0) & N/A \\
+	\textbf{bc}   & r, i & N/A & branch to src if (CF != 0) & N/A \\
 	\hline
-	\textbf{bnc}  & r, i & N/A & branch to op1 if (CF == 0) & N/A \\
+	\textbf{bnc}  & r, i & N/A & branch to src if (CF == 0) & N/A \\
 	\hline
 	\textbf{pop}  & r & N/A & pop top of stack & N/A \\
 	\hline
@@ -220,7 +220,7 @@
 	
 \begin{tabular}{| l | l | l | l | l |}
 	\hline
-	Port \# & Name & Brief \\
+	Port \# & Name & Default \\
 	\textbf{0x0000} & STDIN & keyboard input \\
 	\hline
 	\textbf{0x0001} & STDOUT & console output \\
