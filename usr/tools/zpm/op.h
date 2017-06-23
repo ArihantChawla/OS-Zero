@@ -34,7 +34,7 @@ zpmnot(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 
         return ~(zpmureg)0;
     }
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -59,7 +59,7 @@ zpmand(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         return ~(zpmureg)0;
     }
     *dptr = dest;
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -84,7 +84,7 @@ zpmor(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         return ~(zpmureg)0;
     }
     *dptr = dest;
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -109,7 +109,7 @@ zpmxor(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         return ~(zpmureg)0;
     }
     *dptr = dest;
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -131,7 +131,7 @@ zpmshl(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         return ~(zpmureg)0;
     }
     *dptr = dest;
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -155,7 +155,7 @@ zpmshr(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         return ~(zpmureg)0;
     }
     *dptr = dest;
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -189,7 +189,7 @@ zpmsar(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         return ~(zpmureg)0;
     }
     *dptr = dest;
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -216,7 +216,7 @@ zpmrol(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         return ~(zpmureg)0;
     }
     *dptr = dest;
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -243,7 +243,7 @@ zpmror(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         return ~(zpmureg)0;
     }
     *dptr = dest;
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -264,7 +264,7 @@ zpminc(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         return ~(zpmureg)0;
     }
     *dptr = dest;
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -285,7 +285,7 @@ zpmdec(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         return ~(zpmureg)0;
     }
     *dptr = dest;
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -314,7 +314,7 @@ zpmadd(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         zpmsetof(vm);
     }
     *dptr = dest;
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -339,7 +339,7 @@ zpmsub(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         return ~(zpmureg)0;
     }
     *dptr = dest;
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -370,7 +370,7 @@ zpmcmp(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         zpmsetcf(vm);
     }
     *dptr = dest;
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -404,7 +404,7 @@ zpmbz(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     } else {
         pc += sizeof(struct zpmop);
     }
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -420,7 +420,7 @@ zpmbnz(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     } else {
         pc += sizeof(struct zpmop);
     }
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -436,7 +436,7 @@ zpmblt(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     } else {
         pc += sizeof(struct zpmop);
     }
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -453,7 +453,7 @@ zpmble(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     } else {
         ptr = &vm->mem[pc];
     }
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -469,7 +469,7 @@ zpmbgt(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     } else {
         pc += sizeof(struct zpmop);
     }
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -486,7 +486,7 @@ zpmbge(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     } else {
         ptr = &vm->mem[pc];
     }
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -502,7 +502,7 @@ zpmbo(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     } else {
         pc += sizeof(struct zpmop);
     }
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -518,7 +518,7 @@ zpmbno(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     } else {
         pc += sizeof(struct zpmop);
     }
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -534,7 +534,7 @@ zpmbc(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     } else {
         pc += sizeof(struct zpmop);
     }
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }
@@ -550,7 +550,7 @@ zpmbnc(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     } else {
         pc += sizeof(struct zpmop);
     }
-    vm->pc = pc;
+    vm->sysregs[ZPM_PC] = pc;
 
     return pc;
 }

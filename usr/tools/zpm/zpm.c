@@ -1,8 +1,7 @@
 #include <zpm/zpm.h>
 #include <zpm/op.h>
 
-#define opjmp(op) goto *jmptab[(&vm->mem[pc])->code]
-
+#define opjmp(op) goto *jmptab[((struct zpmop *)&vm->mem[pc])->code]
 
 #if defined(__GNUC__)
 

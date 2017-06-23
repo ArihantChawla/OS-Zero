@@ -110,7 +110,7 @@ typedef zpmulong zpmureg;
 #define ZPM_REGE    0x0e
 #define ZPM_REGF    0x0f
 #define ZPM_NGENREG 16
-/* special register IDs */
+/* system register IDs */
 #define ZPM_MSW     0x00        // machine status word
 #define ZPM_PC      0x01        // program counter i.e. instruction pointer
 #define ZPM_FP      0x02        // frame pointer
