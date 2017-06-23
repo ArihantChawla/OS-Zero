@@ -173,6 +173,10 @@ zpmloop(struct zpm *vm, zpmureg pc)
             pc = zpmpop(vm, op, pc);
             
             opjmp(pc);
+        dopopa:
+            pc = zpmpopa(vm, op, pc);
+            
+            opjmp(pc);
         dopush:
             pc = zpmpush(vm, op, pc);
             

@@ -418,6 +418,7 @@ memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
     adr += sizeof(struct membuf);
     buf->stk = adr;
     adr += nblk * sizeof(MEMBLKID_T);
+    adr = (MEMPTR_T)rounduppow2((uintptr_t)adr, (uintptr_t)PAGESIZE);
     buf->base = adr;
     buf->flg = flg;    // possible MEMHEAPBIT
     meminitbufslot(buf, slot);
@@ -477,9 +478,10 @@ memallocpagebuf(MEMWORD_T slot, MEMWORD_T nblk)
     }
     buf = (struct membuf *)adr;
 //    adr += membufmapsize();
-    adr += membufmapsize();
+    adr += sizeof(struct membuf);
     buf->freemap = adr;
     adr += MEMBUFBITMAPWORDS * WORDSIZE;
+    adr = (MEMPTR_T)rounduppow2((uintptr_t)adr, (uintptr_t)PAGESIZE);
     buf->base = adr;
     buf->flg = 0;
     meminitbufslot(buf, slot);
@@ -540,9 +542,10 @@ memallocbigbuf(MEMWORD_T slot, MEMWORD_T nblk)
     }
     buf = (struct membuf *)adr;
 //    adr += membufmapsize();
-    adr += membufmapsize();
+    adr += sizeof(struct membuf);
     buf->freemap = adr;
     adr += MEMBUFBITMAPWORDS * WORDSIZE;
+    adr = (MEMPTR_T)rounduppow2((uintptr_t)adr, (uintptr_t)PAGESIZE);
     buf->base = adr;
     buf->flg = 0;
     meminitbufslot(buf, slot);
@@ -792,10 +795,15 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
         do {
             lim = blk->ntab;
             src = blk->tab;
+            if (lim) {
+                cnt = &blk->ntab;
+            }
+#if 0
             if (lim != MEMHASHARRAYITEMS && !dest) {
                 cnt = &blk->ntab;
-                dest = &src[lim];
+//                dest = &src[lim];
             }
+#endif
             do {
                 n = min(lim, 16);
                 switch (n) {
@@ -825,6 +833,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
                         val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                         slot = (struct memhashitem *)val;
                         if (slot) {
+                            dest = slot;
                             
                             break;
                         }
@@ -849,6 +858,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
                         val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                         slot = (struct memhashitem *)val; 
                         if (slot) {
+                            dest = slot;
                             
                             break;
                         }
@@ -873,6 +883,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
                         val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                         slot = (struct memhashitem *)val;
                         if (slot) {
+                            dest = slot;
                             
                             break;
                         }
@@ -897,6 +908,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
                         val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                         slot = (struct memhashitem *)val;
                         if (slot) {
+                            dest = slot;
                             
                             break;
                         }

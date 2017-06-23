@@ -562,6 +562,12 @@ zpmpop(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 }
 
 __inline__ zpmureg
+zpmpopa(struct zpm *vm, uint8_t *ptr, zpmureg pc)
+{
+    ;
+}
+
+__inline__ zpmureg
 zpmpush(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
     ;
