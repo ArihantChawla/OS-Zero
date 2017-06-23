@@ -258,11 +258,11 @@
 	example,
 
 \begin{verbatim}
-	mov	8(%r0), val
+	lda	8(%r0), %r1
 \end{verbatim}
 
-	would store the value from address \textbf{r0 + 8} to the address of
-	the label \textbf{val}.
+	would load the value from address \textbf{r0 + 8} to the register
+	\textbf{r1}.
 
 	\textbf{Operands}
 
@@ -277,7 +277,7 @@
 	.define	FLAG1	0x01
 	.define	FLAG2	0x02
 
-	mov	$(FLAG1| FLAG2), %r1
+	lda	$(FLAG1| FLAG2), %r1
 \end{verbatim}
 
 	\textbf{Registers}
@@ -296,7 +296,7 @@
 	Direct addressing takes the syntax
 
 \begin{verbatim}
-	mov	val, %r0
+	lda	val, %r0
 \end{verbatim}
 
 	which moves the longword at \textbf{address val} into r0.
@@ -306,7 +306,7 @@
 	Indexed	addressing takes the syntax
 
 \begin{verbatim}
-	mov	4(%r0), %r1
+	lda	4(%r0), %r1
 \end{verbatim}
 
 	where 4 is an integral constant offset and r0 is a register name. In
@@ -318,14 +318,14 @@
 	Indirect addresses are indicated with a \textbf{'*'}, so
 
 \begin{verbatim}
-	mov	*%r0, %r1
+	lda	*%r0, %r1
 \end{verbatim}
 
 	would store the value from the \textbf{address in the register r0}
 	into register r1, whereas
 
 \begin{verbatim}
-	mov	*val, %r0
+	lda	*val, %r0
 \end{verbatim}
 
 	would move the value \textbf{pointed to by val} into r0.
@@ -333,7 +333,7 @@
 	Note that the first example above was functionally equivalent with
 
 \begin{verbatim}
-	mov	(%r0), %r1
+	lda	(%r0), %r1
 \end{verbatim}
 
 	\textbf{Immediate Addressing}
@@ -341,7 +341,7 @@
 	Immediate addressing takes the syntax
 
 \begin{verbatim}
-	mov	$str, %r0
+	lda	$str, %r0
 \end{verbatim}
 
 	which would store the \textbf{address of str} into r0.
@@ -495,8 +495,8 @@
         .import <bzero.asm>
 
         memzero:
-                mov        $65536, %r0       // address
-                mov        $4096, %r1        // length
+                lda        $65536, %r0       // address
+                lda        $4096, %r1        // length
                 call       bzero
                 hlt
 
