@@ -221,6 +221,7 @@
 \begin{tabular}{| l | l | l | l | l |}
 	\hline
 	Port \# & Name & Default \\
+	\hline
 	\textbf{0x0000} & STDIN & keyboard input \\
 	\hline
 	\textbf{0x0001} & STDOUT & console output \\
@@ -247,7 +248,7 @@
 	a ':', so like
 
 \begin{minted}{gas}
-	value:	.long 0xb4b5b6b7
+	val:	.long 0xb4b5b6b7
 \end{minted}
 
 	would declare a longword value at the address of \textbf{value}.
