@@ -1,11 +1,11 @@
 \documentclass[llpt, twoside, a4paper]{book}
 \usepackage[T1]{fontenc}
 \usepackage{parskip}
-%\usepackage{listings}
+\usepackage{minted}
 \usepackage{fancyvrb}
 \usepackage{hyperref}
-%\lstset{language=C, showspaces=false, breaklines=false}
-\hypersetup{backref, colorlinks=true, linkcolor=blue}
+%\lstset{language=assembly, showspaces=false, breaklines=false}
+%\hypersetup{backref, colorlinks=true, linkcolor=blue}
 
 \begin{document}
 
@@ -246,9 +246,9 @@
 	name may contain underscores, letters, and digits. Label names end with
 	a ':', so like
 
-\begin{verbatim}
+\begin{minted}{gas}
 	value:	.long 0xb4b5b6b7
-\end{verbatim}
+\end{minted}
 
 	would declare a longword value at the address of \textbf{value}.
 
@@ -257,9 +257,9 @@
 	The instruction operand order is source first, then destination. For
 	example,
 
-\begin{verbatim}
+\begin{minted}{gas}
 	lda	8(%r0), %r1
-\end{verbatim}
+\end{minted}
 
 	would load the value from address \textbf{r0 + 8} to the register
 	\textbf{r1}.
@@ -273,21 +273,21 @@
 	The assembler supports simple preprocessing (of constant-value
 	expressions), so it is possible to do things such as
 
-\begin{verbatim}
+\begin{minted}{gas}
 	.define	FLAG1	0x01
 	.define	FLAG2	0x02
 
 	lda	$(FLAG1| FLAG2), %r1
-\end{verbatim}
+\end{minted}
 
 	\textbf{Registers}
 
 	Register names are prefixed with '\%'; there are 16 registers r0..r15.
 	For example,
 
-\begin{verbatim}
+\begin{minted}{gas}
 	add	%r0, %r1
-\end{verbatim}
+\end{minted}
 
 	would add the longword in r0 to r1.
 
@@ -295,9 +295,9 @@
 
 	Direct addressing takes the syntax
 
-\begin{verbatim}
+\begin{minted}{gas}
 	lda	val, %r0
-\end{verbatim}
+\end{minted}
 
 	which moves the longword at \textbf{address val} into r0.
 
@@ -305,9 +305,9 @@
 
 	Indexed	addressing takes the syntax
 
-\begin{verbatim}
+\begin{minted}{gas}
 	lda	4(%r0), %r1
-\end{verbatim}
+\end{minted}
 
 	where 4 is an integral constant offset and r0 is a register name. In
 	short, this would store the value at the address \textbf{r0 + 4} into
@@ -317,32 +317,32 @@
 
 	Indirect addresses are indicated with a \textbf{'*'}, so
 
-\begin{verbatim}
+\begin{minted}{gas}
 	lda	*%r0, %r1
-\end{verbatim}
+\end{minted}
 
 	would store the value from the \textbf{address in the register r0}
 	into register r1, whereas
 
-\begin{verbatim}
+\begin{minted}{gas}
 	lda	*val, %r0
-\end{verbatim}
+\end{minted}
 
 	would move the value \textbf{pointed to by val} into r0.
 
 	Note that the first example above was functionally equivalent with
 
-\begin{verbatim}
+\begin{minted}{gas}
 	lda	(%r0), %r1
-\end{verbatim}
+\end{minted}
 
 	\textbf{Immediate Addressing}
 
 	Immediate addressing takes the syntax
 
-\begin{verbatim}
+\begin{minted}{gas}
 	lda	$str, %r0
-\end{verbatim}
+\end{minted}
 
 	which would store the \textbf{address of str} into r0.
 
@@ -354,9 +354,9 @@
 
 	The \textbf{.include} directive takes the syntax
 
-\begin{verbatim}
+\begin{minted}{gas}
 	.include <stdio.inc>
-\end{verbatim}
+\end{minted}
 
 	to insert \textbf{<stdio.inc>} into the translation stream verbatim.
 
@@ -364,15 +364,15 @@
 
 	The \textbf{.import} directive takes the syntax
 
-\begin{verbatim}
+\begin{minted}{gas}
 	.import <file.asm>
-\end{verbatim}
+\end{minted}
 
 	or
 
-\begin{verbatim}
+\begin{minted}{gas}
 	.import <file.obj>
-\end{verbatim}
+\end{minted}
 
 	to import foreign assembly or object files into the stream.
 	\textbf{Note} that only symbols declared with \textbf{.globl} will be
@@ -432,11 +432,11 @@
 
 	\textbf{<hook.def>}
 
-\begin{verbatim}
+\begin{minted}{gas}
         .define STDIN  0
         .define STDOUT 1
         .define STDERR 2
-\end{verbatim}
+\end{minted}
 
 \section{Input and Output}
 
@@ -459,7 +459,7 @@
 	the console. Note that the string is saved using the standard C
 	convention of NUL-character termination.
 
-\begin{verbatim}
+\begin{minted}{gas}
         msg:        .asciz	"hello\n"
 
         .align      4
@@ -478,7 +478,7 @@
                 bnz        loop
         done:
                 hlt
-\end{verbatim}
+\end{minted}
 
 \section{Threads}
 
@@ -491,7 +491,7 @@
 
 	The following piece of code shows simple utilisation of threads.
 
-\begin{verbatim}
+\begin{minted}{gas}
         .import <bzero.asm>
 
         memzero:
@@ -503,7 +503,7 @@
         _start:
                 thr        $memzero
                 hlt
-\end{verbatim}
+\end{minted}
 
 
 \section{Interrupts}

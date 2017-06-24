@@ -730,9 +730,9 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
     MEMADR_T                val;
     struct memhash         *blk;
     struct memhash         *prev;
+    struct memhash         *dest;
     struct memhashitem     *slot;
     struct memhashitem     *src;
-    struct memhashitem     *dest;
     MEMWORD_T              *cnt;
 //    volatile struct memtls *tls;
     MEMWORD_T               type;
@@ -791,10 +791,12 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
     desc |= id;
     slot = NULL;
     blk = (struct memhash *)upval;
+    val = 0;
     if (blk) {
         do {
             lim = blk->ntab;
             src = blk->tab;
+            dest = blk;
             if (lim) {
                 cnt = &blk->ntab;
             }
@@ -815,100 +817,84 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
                     case 16:
                         item = &src[15];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     case 15:
                         item = &src[14];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     case 14:
                         item = &src[13];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     case 13:
                         item = &src[12];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
-                        if (slot) {
-                            dest = slot;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
+                        if (val) {
+                            slot = (struct memhashitem *)val;
                             
                             break;
                         }
                     case 12:
                         item = &src[11];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     case 11:
                         item = &src[10];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     case 10:
                         item = &src[9];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     case 9:
                         item = &src[8];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val; 
-                        if (slot) {
-                            dest = slot;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
+                        if (val) {
+                            slot = (struct memhashitem *)val; 
                             
                             break;
                         }
                     case 8:
                         item = &src[7];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     case 7:
                         item = &src[6];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     case 6:
                         item = &src[5];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     case 5:
                         item = &src[4];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
-                        if (slot) {
-                            dest = slot;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
+                        if (val) {
+                            slot = (struct memhashitem *)val;
                             
                             break;
                         }
                     case 4:
                         item = &src[3];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     case 3:
                         item = &src[2];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     case 2:
                         item = &src[1];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
                     case 1:
                         item = &src[0];
                         mask = -(item->adr == page);
-                        val = (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
-                        slot = (struct memhashitem *)val;
-                        if (slot) {
-                            dest = slot;
+                        val |= (MEMADR_T)((MEMADR_T)mask & (MEMADR_T)item);
+                        if (val) {
+                            slot = (struct memhashitem *)val;
                             
                             break;
                         }
@@ -922,6 +908,10 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
             } while ((lim) && !slot);
             if (slot) {
                 desc = slot->val;
+                if (blk->ntab != MEMHASHARRAYITEMS) {
+                    /* destination table for MEMBUFADD */
+                    dest = src;
+                }
                 
                 break;
             } else {
@@ -942,9 +932,10 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
             return MEMBUFNOTFOUND;
         } else if (dest) {
             n = *cnt;
-            dest->adr = page;
+            slot = &dest->tab[n];
+            slot->adr = page;
             n++;
-            dest->val = desc;
+            slot->val = desc;
             *cnt = n;
 #if (MEMHASHSUBTABS)
             fmtxunlk(&g_mem.hash[key]->lk);
