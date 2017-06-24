@@ -103,12 +103,12 @@ typedef zpmulong zpmureg;
 #define ZPM_REG7    0x07
 #define ZPM_REG8    0x08
 #define ZPM_REG9    0x09
-#define ZPM_REGA    0x0a
-#define ZPM_REGB    0x0b
-#define ZPM_REGC    0x0c
-#define ZPM_REGD    0x0d
-#define ZPM_REGE    0x0e
-#define ZPM_REGF    0x0f
+#define ZPM_REG10   0x0a
+#define ZPM_REG11   0x0b
+#define ZPM_REG12   0x0c
+#define ZPM_REG13   0x0d
+#define ZPM_REG14   0x0e
+#define ZPM_REG15   0x0f
 #define ZPM_NGENREG 16
 /* system register IDs */
 #define ZPM_MSW     0x00        // machine status word
@@ -118,9 +118,10 @@ typedef zpmulong zpmureg;
 #define ZPM_PDB     0x04        // page director base address register
 #define ZPM_NSYSREG 16
 /* values for sysregs[ZPM_MSW] */
-#define ZPM_MSW_ZF  (1 << 0)
-#define ZPM_MSW_CF  (1 << 1)
-#define ZPM_MSW_OF  (1 << 2)
+#define ZPM_MSW_ZF  (1 << 0)    // zero-flag
+#define ZPM_MSW_CF  (1 << 1)    // carry-flag
+#define ZPM_MSW_OF  (1 << 2)    // overflow-flag
+#define ZPM_MSW_LF  (1 << 31)   // bus lock flag
 /* program segments */
 #define ZPM_TEXT    0x00        // code
 #define ZPM_RODATA  0x01        // read-only data (string literals etc.)
@@ -140,12 +141,11 @@ struct zpm {
 /* OPCODES */
 
 /* argument type flags */
-#define ZPM_REG_ARG (1 << 0)    // argument is a register
-#define ZPM_IMM_VAL (1 << 1)    // argument is an immediate value
-#define ZPM_IMM_ADR (1 << 2)    // argument is an immediate address
-#define ZPM_IMM_NDX (1 << 3)    // argument is an immediate index
-#define ZPM_REG_ADR (1 << 4)    // argument is an address in register
-#define ZPM_REG_NDX (1 << 5)    // argumetn is an index in register
+#define ZPM_MEM_BIT   (1 << 2)  // memory address argument (default is register)
+#define ZPM_IMM_ARG   0x01      // immediate argument value
+#define ZPM_ADR_ARG   0x02      // address argument
+#define ZPM_NDX_ARG   0x03      // index argument
+#define ZPM_ARGT_BITS 3
 struct zpmop {
     unsigned int code  : 8;
     unsigned int reg1  : 4;     // argument #1 register ID

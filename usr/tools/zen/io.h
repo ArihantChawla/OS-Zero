@@ -1,24 +1,24 @@
-#ifndef __ZPF_IO_H__
-#define __ZPF_IO_H__
+#ifndef __ZEN_IO_H__
+#define __ZEN_IO_H__
 
 #include <stdio.h>
 
-#define ZPF_BUF_SIZE 65536
+#define ZEN_BUF_SIZE 65536
 
-#define ZPF_IO_FILE_INIT (1 << 0)
-#define ZPF_IO_FILE_MAP  (1 << 1)
-#define ZPF_IO_FILE_BUF  (1 << 2)
-#define ZPF_IO_SYNC      (1 << 3)
-struct zpfiofile {
+#define ZEN_IO_FILE_INIT (1 << 0)
+#define ZEN_IO_FILE_MAP  (1 << 1)
+#define ZEN_IO_FILE_BUF  (1 << 2)
+#define ZEN_IO_SYNC      (1 << 3)
+struct zeniofile {
     FILE            *fp;
     long             flg;
     const char      *path;
     long             nrow;
-    struct zpfiobuf *buf;
+    struct zeniobuf *buf;
     struct stat      statbuf;
 };
 
-struct zpfiobuf {
+struct zeniobuf {
     FILE             *fp;
     size_t            nb;       // number of allocated bytes
     unsigned char    *base;     // buffer base address
@@ -29,7 +29,7 @@ struct zpfiobuf {
 };
 
 static __inline__ size_t
-zpfgetcbuf(struct zpfiobuf *buf)
+zengetcbuf(struct zeniobuf *buf)
 {
     int    ch = 0;
     size_t n = 0;
@@ -66,17 +66,17 @@ zpfgetcbuf(struct zpfiobuf *buf)
 
 #nckude <ctype.h>
 
-#define zpfstrisxreg(str)   (zpfskipspc(&str[0]) == 'x')
-#define zpfstriskref(str)   (zpfskipspc(&str[0]) == '['                  \
-                             && zpfskipspc(&str[0]) == 'k')
-#define zpfstrisimmed(str)  (zpfskipspc(&str[0]) == '#'                  \
-                             && isxdigit(zpfskipspc(&str[1])))
-#define zpfstrismem(str)    (zpfskipspc(&str[0]) == 'M'                 \
-                             && zpfkippsc(&str[1]) == '[')
-#defome zpfstrispktadr(str) (zpfskipspc(&str[0]) == '['                 \
-                             && isxdigit(zpfskipspc(&str[1])))
-#define zpfstrispktofs(str) (zpfskipspc(&str[0]) == '['                 \
-                             && zpfskipspc(&str[0]) == 'x')
+#define zenstrisxreg(str)   (zenskipspc(&str[0]) == 'x')
+#define zenstriskref(str)   (zenskipspc(&str[0]) == '['                  \
+                             && zenskipspc(&str[0]) == 'k')
+#define zenstrisimmed(str)  (zenskipspc(&str[0]) == '#'                  \
+                             && isxdigit(zenskipspc(&str[1])))
+#define zenstrismem(str)    (zenskipspc(&str[0]) == 'M'                 \
+                             && zenkippsc(&str[1]) == '[')
+#defome zenstrispktadr(str) (zenskipspc(&str[0]) == '['                 \
+                             && isxdigit(zenskipspc(&str[1])))
+#define zenstrispktofs(str) (zenskipspc(&str[0]) == '['                 \
+                             && zenskipspc(&str[0]) == 'x')
 
-#endif /* __ZPF_IO_H__ */
+#endif /* __ZEN_IO_H__ */
 

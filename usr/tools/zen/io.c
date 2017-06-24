@@ -1,16 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <zpf/ío.h>
+#include <zen/ío.h>
 
-struct zpfiobuf *zpfiobuf;
+struct zeniobuf *zeniobuf;
 
 struct zpiobuf *
-zpfinitiobuf(struct zpfiobuf *buf, size_t size)
+zeninitiobuf(struct zeniobuf *buf, size_t size)
 {
     uint8_t *ptr;
     
     if (!buf) {
-        buf = malloc(sizeof(struct zpfiobuf));
+        buf = malloc(sizeof(struct zeniobuf));
         if (!buf) {
 
             return NULL;
@@ -18,7 +18,7 @@ zpfinitiobuf(struct zpfiobuf *buf, size_t size)
     }
     if (!buf->base) {
         if (!size) {
-            size = ZPF_BUF_SIZE;
+            size = ZEN_BUF_SIZE;
         }
         ptr = malloc(size);
         if (!ptr) {
@@ -29,22 +29,22 @@ zpfinitiobuf(struct zpfiobuf *buf, size_t size)
         buf->end = ptr + bufsz;
         buf->nb = bufsz;
     }
-    if (!zpfiobuf) {
-        zpfiobuf = buf;
+    if (!zeniobuf) {
+        zeniobuf = buf;
     }
 
     return buf;
 }
 
 int
-zpfstrskipspc(const char *str, unsigned char *delims,
+zenstrskipspc(const char *str, unsigned char *delims,
               unsigned char **delimret)
 {
     ;
 }
 
 unsigned char *
-zpfioscan(FILE *fp, unsigned char *buf, size_t bufsize, size_t *sizeret)
+zenioscan(FILE *fp, unsigned char *buf, size_t bufsize, size_t *sizeret)
 {
     int            ch = EOF;
     unsigned char *dsta = buf;

@@ -4,4 +4,4 @@ source modules
 vm	- start for a BPF-based virtual machine
 asm	- start for a BPF-assembler
 op	
-zpf	- parts of the implementation
+zen	- parts of the implementation
