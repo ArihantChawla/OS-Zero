@@ -3,6 +3,7 @@
 
 #include <zero/param.h>
 
+#define ZPM_TEXT_ADR    PAGESIZE
 #define ZPM_MEM_SIZE    (1024 * 1024 * 1024)    // 1 gigabyte
 #define ZPM_FB_ADR      0xe0000000              // 3.5 gigabytes
 #define ZPM_FB_WIDTH    1280

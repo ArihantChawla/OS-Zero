@@ -1,251 +1,300 @@
+#include <stdlib.h>
 #include <zpm/zpm.h>
 #include <zpm/op.h>
 
-#define opjmp(op) goto *jmptab[((struct zpmop *)&vm->mem[pc])->code]
-
 #if defined(__GNUC__)
+#define opadr(x) &&x
+#define OPTAB_T  static void *
+#else
+#define opadr(x) &x
+typedef zpmureg  zpmopfunc(struct zpm *vm, uint8_t *ptr, zpmureg pc);
+#define OPTAB_T  zpmopfunc *
+#endif
 
-/* this version of zpmloop uses GCC computed gotos to dispatch VM operations */
+#define opjmp(op) goto *jmptab[((struct zpmop *)&vm->mem[pc])->code]
 
 int
 zpmloop(struct zpm *vm, zpmureg pc)
 {
-    static void *jmptab[] = {
-        &&donot,
-        &&doand,
-        &&door,
-        &&doxor,
-        &&doshl,
-        &&doshr,
-        &&dosar,
-        &&dorol,
-        &&doror,
-        &&doinc,
-        &&dodec,
-        &&doadd,
-        &&dosub,
-        &&docmp,
-        &&domul,
-        &&dodiv,
-        &&dojmp,
-        &&dobz,
-        &&dobnz,
-        &&doblt,
-        &&doble,
-        &&dobgt,
-        &&dobge,
-        &&dobo,
-        &&dobno,
-        &&dobc,
-        &&dobnc,
-        &&dopop,
-        &&dopopa,
-        &&dopush,
-        &&dopusha,
-        &&dolda,
-        &&dosta,
-        &&docall,
-        &&doenter,
-        &&doleave,
-        &&doret,
-        &&dothr,
-        &&doltb,
-        &&doldr,
-        &&dostr,
-        &&dorst,
-        &&dohlt,
-        &&doin,
-        &&doout
+    OPTAB_T jmptab[] = {
+        opadr(zpmopnot),
+        opadr(zpmopand),
+        opadr(zpmopor),
+        opadr(zpmopxor),
+        opadr(zpmopshl),
+        opadr(zpmopshr),
+        opadr(zpmopsar),
+        opadr(zpmoprol),
+        opadr(zpmopror),
+        opadr(zpmopinc),
+        opadr(zpmopdec),
+        opadr(zpmopadd),
+        opadr(zpmopsub),
+        opadr(zpmopcmp),
+        opadr(zpmopmul),
+        opadr(zpmopdiv),
+        opadr(zpmopjmp),
+        opadr(zpmopbz),
+        opadr(zpmopbnz),
+        opadr(zpmopblt),
+        opadr(zpmopble),
+        opadr(zpmopbgt),
+        opadr(zpmopbge),
+        opadr(zpmopbo),
+        opadr(zpmopbno),
+        opadr(zpmopbc),
+        opadr(zpmopbnc),
+        opadr(zpmoppop),
+        opadr(zpmoppopa),
+        opadr(zpmoppush),
+        opadr(zpmoppusha),
+        opadr(zpmoplda),
+        opadr(zpmopsta),
+        opadr(zpmopcall),
+        opadr(zpmopenter),
+        opadr(zpmopleave),
+        opadr(zpmopret),
+        opadr(zpmopthr),
+        opadr(zpmopltb),
+        opadr(zpmopldr),
+        opadr(zpmopstr),
+        opadr(zpmoprst),
+        opadr(zpmophlt),
+        opadr(zpmopin),
+        opadr(zpmopout)
     };
+
+#if !defined(__GNUC__)
+
+    while ((pc) && pc != ZPM_PC_INVAL) {
+        uint8_t   *text = &vm->mem[pc];
+        uint8_t    code = inst->code;
+        zpmopfunc *func = jmtab[code];
+        
+        pc = func(vm, text, pc);
+    }
+
+#else /* !defined(__GNUC__) */
+
     uint8_t *text = &vm->mem[pc];
     uint8_t *op = text;
 
     opjmp(pc);
-    while (pc != ~(zpmureg)0) {
-        donot:
+    while ((pc) && pc != ZPM_PC_INVAL) {
+        zpmopnot:
             pc = zpmnot(vm, op, pc);
 
             opjmp(pc);
-        doand:
+        zpmopand:
             pc = zpmand(vm, op, pc);
 
             opjmp(pc);
-        door:
+        zpmopor:
             pc = zpmor(vm, op, pc);
 
             opjmp(pc);
-        doxor:
+        zpmopxor:
             pc = zpmxor(vm, op, pc);
 
             opjmp(pc);
-        doshl:
+        zpmopshl:
             pc = zpmshl(vm, op, pc);
             
             opjmp(pc);
-        doshr:
+        zpmopshr:
             pc = zpmshr(vm, op, pc);
             
             opjmp(pc);
-        dosar:
+        zpmopsar:
             pc = zpmsar(vm, op, pc);
             
             opjmp(pc);
-        dorol:
+        zpmoprol:
             pc = zpmrol(vm, op, pc);
             
             opjmp(pc);
-        doror:
+        zpmopror:
             pc = zpmror(vm, op, pc);
             
             opjmp(pc);
-        doinc:
+        zpmopinc:
             pc = zpminc(vm, op, pc);
             
             opjmp(pc);
-        dodec:
+        zpmopdec:
             pc = zpmdec(vm, op, pc);
             
             opjmp(pc);
-        doadd:
+        zpmopadd:
             pc = zpmadd(vm, op, pc);
             
             opjmp(pc);
-        dosub:
+        zpmopsub:
             zpmsub(vm, op, pc);
             
             opjmp(pc);
-        docmp:
+        zpmopcmp:
             pc = zpmcmp(vm, op, pc);
             
             opjmp(pc);
-        domul:
+        zpmopmul:
             pc = zpmmul(vm, op, pc);
             
             opjmp(pc);
-        dodiv:
+        zpmopdiv:
             pc = zpmdiv(vm, op, pc);
             
             opjmp(pc);
-        dojmp:
+        zpmopjmp:
             pc = zpmjmp(vm, op, pc);
             
             opjmp(pc);
-        dobz:
+        zpmopbz:
             pc = zpmbz(vm, op, pc);
             
             opjmp(pc);
-        dobnz:
+        zpmopbnz:
             pc = zpmbnz(vm, op, pc);
             
             opjmp(pc);
-        doblt:
+        zpmopblt:
             pc = zpmblt(vm, op, pc);
             
             opjmp(pc);
-        doble:
+        zpmopble:
             pc = zpmble(vm, op, pc);
             
             opjmp(pc);
-        dobgt:
+        zpmopbgt:
             pc = zpmbgt(vm, op, pc);
             
             opjmp(pc);
-        dobge:
+        zpmopbge:
             pc = zpmbge(vm, op, pc);
             
             opjmp(pc);
-        dobo:
+        zpmopbo:
             pc = zpmbo(vm, op, pc);
             
             opjmp(pc);
-        dobno:
+        zpmopbno:
             pc = zpmbno(vm, op, pc);
             
             opjmp(pc);
-        dobc:
+        zpmopbc:
             pc = zpmbc(vm, op, pc);
             
             opjmp(pc);
-        dobnc:
+        zpmopbnc:
             pc = zpmbnc(vm, op, pc);
             
             opjmp(pc);
-        dopop:
+        zpmoppop:
             pc = zpmpop(vm, op, pc);
             
             opjmp(pc);
-        dopopa:
+        zpmoppopa:
             pc = zpmpopa(vm, op, pc);
             
             opjmp(pc);
-        dopush:
+        zpmoppush:
             pc = zpmpush(vm, op, pc);
             
             opjmp(pc);
-        dopusha:
+        zpmoppusha:
             pc = zpmpusha(vm, op, pc);
             
             opjmp(pc);
-        dolda:
+        zpmoplda:
             pc = zpmlda(vm, op, pc);
             
             opjmp(pc);
-        dosta:
+        zpmopsta:
             pc = zpmsta(vm, op, pc);
             
             opjmp(pc);
-        docall:
+        zpmopcall:
             pc = zpmcall(vm, op, pc);
             
             opjmp(pc);
-        doenter:
+        zpmopenter:
             pc = zpmenter(vm, op, pc);
             
             opjmp(pc);
-        doleave:
+        zpmopleave:
             pc = zpmleave(vm, op, pc);
             
             opjmp(pc);
-        doret:
+        zpmopret:
             pc = zpmret(vm, op, pc);
             
             opjmp(pc);
-        dothr:
+        zpmopthr:
             pc = zpmthr(vm, op, pc);
             
             opjmp(pc);
-        doltb:
+        zpmopltb:
             pc = zpmltb(vm, op, pc);
             
             opjmp(pc);
-        doldr:
+        zpmopldr:
             pc = zpmldr(vm, op, pc);
             
             opjmp(pc);
-        dostr:
+        zpmopstr:
             pc = zpmstr(vm, op, pc);
             
             opjmp(pc);
-        dorst:
+        zpmoprst:
             pc = zpmrst(vm, op, pc);
             
             opjmp(pc);
-        dohlt:
+        zpmophlt:
             pc = zpmhlt(vm, op, pc);
             
             opjmp(pc);
-        doin:
+        zpmopin:
             pc = zpmin(vm, op, pc);
             
             opjmp(pc);
-        doout:
+        zpmopout:
             pc = zpmout(vm, op, pc);
             
             opjmp(pc);
     }
 
+#endif
+    
+    if (pc == ZPM_PC_OK) {
+
+        return 0;
+    } else {
+
+        return 1;
+    }
+
     /* NOTREACHED */
 }
 
-#endif /* __GNUC__ */
+struct zpm *
+zpmrun(int argc, char *argv[])
+{
+
+    return NULL;
+}
+
+/* FIXME */
+int
+main(int argc, char *argv[])
+{
+    struct zpm *vm = zpmrun(argc, argv);
+    zpmureg     pc = ZPM_TEXT_ADR;
+    int         ret;
+
+    if (vm) {
+        ret = zpmloop(vm, pc);
+    }
+
+    exit(ret);
+}
 
