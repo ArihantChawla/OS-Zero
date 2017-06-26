@@ -12,3 +12,6 @@ vgcore.*
 *.swp
 # ctags files
 TAGS
+_minted-*
+callgrind.out.*
+cachegrind.out.*

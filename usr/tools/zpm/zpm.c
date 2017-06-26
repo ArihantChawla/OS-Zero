@@ -39,6 +39,7 @@ zpmloop(struct zpm *vm, zpmureg pc)
         &&dobc,
         &&dobnc,
         &&dopop,
+        &&dopopa,
         &&dopush,
         &&dopusha,
         &&dolda,

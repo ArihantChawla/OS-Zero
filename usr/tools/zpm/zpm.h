@@ -71,7 +71,7 @@ typedef zpmulong zpmureg;
 #define ZPM_RET     0x25        // return from subroutine
 /* thread operations */
 #define ZPM_THR     0x26        // launch new thread
-#define ZPM_LTB     0x27        // load base address for thread-local storage
+#define ZPM_LTB     0x27        // load base address + size of thread-local data
 /* system operations */
 #define ZPM_LDR     0x28        // load special register
 #define ZPM_STR     0x29        // store special register

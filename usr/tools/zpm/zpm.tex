@@ -53,15 +53,26 @@
 
 \begin{tabular}{ | l | l | l | }
 	\hline
-	Address         & Purpose          & Brief \\
+	Address                     & Purpose           & Brief \\
 	\hline
-	0               & interrupt vector & interrupt handler descriptors \\
-	4096            & keyboard buffer  & keyboard input queue \\
-	8192            & text segment     & application program code (read-execute) \\
-	8192 + TEXTSIZE & data segment     & program data (read-write) \\
-	DATA + DATASIZE & BSS segment      & uninitialised data (runtime-allocated and zeroed) \\
-	MEMSIZE - 3.5 G & dynamic segment  & free space for slab allocator \\
-	3.5 gigabytes   & graphics         & 32-bit ARGB-format draw buffer \\
+	0                           & interrupt vector  & interrupt handler descriptors \\
+	\hline
+	4096                        & keyboard buffer   & keyboard input queue \\
+	\hline
+	8192                        & text segment      & application program code (read-execute) \\
+	\hline
+	8192 + TEXTSIZE             & data segment      & program data (read-write) \\
+	\hline
+	DATA + DATASIZE             & BSS segment       & uninitialised data (runtime-allocated and zeroed) \\
+	\hline
+	MEMSIZE - NTHR * THRSTKSIZE & thread-local data & allocated on-demand \\
+	\hline
+	MEMSIZE - tid * THRSTKSIZE  & per-thread stacks & stacks for threads \\
+	\hline
+	MEMSIZE to 3.5 G            & dynamic segment   & free space for slab a
+locator \\
+\hline
+	3.5 gigabytes               & graphics          & draw buffer \\
 	\hline
 \end{tabular}
 

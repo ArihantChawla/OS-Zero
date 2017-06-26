@@ -558,25 +558,89 @@ zpmbnc(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 __inline__ zpmureg
 zpmpop(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
-    ;
+    struct zpmop *op = (struct zpmop *)ptr;
+    zpmureg       sp = vm->sysregs[ZPM_SP];
+    zpmreg       *src = &vm->mem[sp];
+    zpmreg       *dest = &vm->genregs[op->reg1];
+
+    pc+= sizeof(struct zpmop);
+    zpm->sysregs[sp] = ++sp;
+    *dest = *src;
+    vm->sysregs[ZPM_PC] = pc;
+
+    return pc;
 }
 
 __inline__ zpmureg
 zpmpopa(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
-    ;
+    struct zpmop *op = (str%uct zpmop *)ptr;
+    zpmureg       sp = vm->sysregs[ZPM_SP];
+    zpmureg       newsp = sp + ZPM_NGENREG;
+    zpmreg       *dest = &vm->genregs[ZPM_REG0];
+    zpmreg       *src = &vm->mem[sp];
+    zpmreg        ndx;
+
+    zpm->sysregs[sp] = newsp;
+    pc += sizeof(struct zpmop);
+    for (ndx = 0 ; ndx < (ZPM_NGENREG >> 3); ndx++) {
+        dest[0] = src[0];
+        dest[1] = src[1];
+        dest[2] = src[2];
+        dest[3] = src[3];
+        dest[4] = src[4];
+        dest[5] = src[5];
+        dest[6] = src[6];
+        dest[7] = src[7];
+        dest += 8;
+    }
+    vm->sysregs[ZPM_PC] = pc;
+
+    return pc;
 }
 
 __inline__ zpmureg
 zpmpush(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
-    ;
+    struct zpmop *op = (struct zpmop *)ptr;
+    zpmureg       sp = vm->sysregs[ZPM_SP];
+    zpmreg       *src = &vm->genregs[op->reg1];
+    zpmreg       *dest = &vm->mem[sp];
+
+    pc+= sizeof(struct zpmop);
+    zpm->sysregs[sp] = --sp;
+    *dest = *src;
+    vm->sysregs[ZPM_PC] = pc;
+
+    return pc;
 }
 
 __inline__ zpmureg
 zpmpusha(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
-    ;
+    struct zpmop *op = (struct zpmop *)ptr;
+    zpmureg       sp = vm->sysregs[ZPM_SP];
+    zpmureg       newsp = sp - ZPM_NGENREG;
+    zpmreg       *dest = &vm->mem[sp];
+    zpmreg       *src = &vm->genregs[ZPM_REG0];
+    zpmreg        ndx;
+
+    zpm->sysregs[sp] = newsp;
+    pc += sizeof(struct zpmop);
+    for (ndx = 0 ; ndx < (ZPM_NGENREG >> 3); ndx++) {
+        dest[0] = src[0];
+        dest[-1] = src[1];
+        dest[-2] = src[2];
+        dest[-3] = src[3];
+        dest[-4] = src[4];
+        dest[-5] = src[5];
+        dest[-6] = src[6];
+        dest[-7] = src[7];
+        dest -= 8;
+    }
+    vm->sysregs[ZPM_PC] = pc;
+
+    return pc;
 }
 
 __inline__ zpmureg

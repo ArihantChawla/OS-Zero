@@ -1,5 +1,5 @@
 Zen is a simple, virtual machine based programming environment for the Zero
-operating system. Zen is based more or less loosely on project such as BPF
+operating system. Zen is based more or less loosely on projects such as BPF
 (Berkeley Packet Filters) and its successor eBPF.
 
 In addition to filtering/firewalling network traffic packets, the plan is to
