@@ -1,0 +1,16 @@
+code modules
+------------
+
+kern/
+-----
+
+kern/proc/
+----------
+task.c		- task [ID] management
+proc.c		- process interface
+sched.c		- thread scheduler
+sig.c		- signal interface
+
+kern/mem/
+---------
+mem.c		- memory initialisation

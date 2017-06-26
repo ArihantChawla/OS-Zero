@@ -1,0 +1,14 @@
+rex	- simple regular expression parser
+skrypt	- ideas for a terminal scripting language
+vcode	- documentation and notes on VCODE
+x11	- xorg/x11 interface stuff
+zas	- zero assembler
+zcc	- ideas for a c compiler
+zdb	- ideas for a debugger
+zed	- ideas for an editor
+zen	- ideas for a scripting/programming language to use with Zero
+zfc	- TTF-to-C array font convertor
+zld	- ideas for a link-loader
+zpm	- ideas for a virtual architecture ("zero pseudo machine")
+zprime	- optimized Erastothenes sieve for finding primes
+zvc	- ideas for a virtual Cray-1
