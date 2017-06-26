@@ -29,6 +29,14 @@
         (dest) = *(dptr)))
 
 ZPMOP_T
+zpmnop(struct zpm *vm, uint8_t *ptr, zpmureg pc)
+{
+    pc++;
+
+    return pc;
+}
+
+ZPMOP_T
 zpmnot(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
     struct zpmop *op = (struct zpmop *)ptr;
@@ -747,6 +755,7 @@ zpmout(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         return pc;                                                      \
     }
 
+zpmdeclop(nop)
 zpmdeclop(not)
 zpmdeclop(and)
 zpmdeclop(or)

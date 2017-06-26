@@ -17,6 +17,7 @@ int
 zpmloop(struct zpm *vm, zpmureg pc)
 {
     OPTAB_T jmptab[] = {
+        opadr(zpmopnop),
         opadr(zpmopnot),
         opadr(zpmopand),
         opadr(zpmopor),

@@ -20,6 +20,7 @@ typedef zpmuquad zpmureg;
 typedef zpmlong  zpmreg;
 typedef zpmulong zpmureg;
 #endif
+typedef zpmureg  zpmadr;
 
 /* INSTRUCTION SET */
 
