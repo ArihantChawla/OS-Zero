@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <limits.h>
 #include <stdint.h>
+#include <zero/param.h>
 #include <zpm/zpm.h>
 #include <zpm/op.h>
 
@@ -12,7 +13,7 @@
 #define ZPM_PC_INVAL (~(zpmureg)ZPM_PC_OK)
 
 #if !defined(__GNUC__)
-#define ZPMOP_T __inline__ zpmureg
+#define ZPMOP_T FASTCALL __inline__ zpmureg
 #else
 #define ZPMOP_T zpmureg
 #endif

@@ -82,6 +82,10 @@ zpmloop(struct zpm *vm, zpmureg pc)
 
     opjmp(pc);
     while ((pc) && pc != ZPM_PC_INVAL) {
+        zpmopnop:
+            pc = zpmnop(vm, op, pc);
+
+            opjmp(pc);
         zpmopnot:
             pc = zpmnot(vm, op, pc);
 
