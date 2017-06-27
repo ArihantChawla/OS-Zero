@@ -9,13 +9,13 @@
 #include <zpm/zpm.h>
 #include <zpm/op.h>
 
-#define ZPM_PC_OK    0
-#define ZPM_PC_INVAL (~(zpmureg)ZPM_PC_OK)
+#define ZPM_PC_OK        0
+#define ZPM_PC_INVAL     (~(zpmureg)ZPM_PC_OK)
 
 #if !defined(__GNUC__)
-#define ZPMOP_T FASTCALL __inline__ zpmureg
+#define ZPMOP_T INLINE   zpmureg
 #else
-#define ZPMOP_T zpmureg
+#define ZPMOP_T FASTCALL zpmureg
 #endif
 
 #define zpmget1arggenreg(vm, op, dptr)                                  \
@@ -28,6 +28,14 @@
      : ((dptr) = &vm->genregs[(op)->reg2],                              \
         (src) = op->imm[0],                                             \
         (dest) = *(dptr)))
+
+ZPMOP_T
+zpmnop(struct zpm *vm, uint8_t *ptr, zpmureg pc)
+{
+    pc += sizeof(struct zpmop);
+
+    return pc;
+}
 
 ZPMOP_T
 zpmnot(struct zpm *vm, uint8_t *ptr, zpmureg pc)
@@ -825,21 +833,14 @@ zpmhlt(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     return ZPM_PC_INVAL;
 }
 
-ZPMOP_T
-zpmnop(struct zpm *vm, uint8_t *ptr, zpmureg pc)
-{
-    pc += sizeof(struct zpmop);
-
-    return pc;
-}
-
 #if defined(__GNUC__)
 
-#define zpmdeclop(name) zpm##name
+#define zpmdeclop(name) zpmop##name
 
 #else /* !defined(__GNUC__) */
 
 #define zpmdeclop(name)                                                 \
+    FASTCALL                                                            \
     ZPMOP_T                                                             \
     zpmop##name(struct zpm *vm, uint8_t *ptr, zpmureg pc)               \
     {                                                                   \
@@ -848,6 +849,7 @@ zpmnop(struct zpm *vm, uint8_t *ptr, zpmureg pc)
         return pc;                                                      \
     }
 
+zpmdeclop(nop)
 zpmdeclop(not)
 zpmdeclop(and)
 zpmdeclop(or)
@@ -897,7 +899,6 @@ zpmdeclop(rst)
 zpmdeclop(hlt)
 zpmdeclop(in)
 zpmdeclop(out)
-zpmdeclop(nop)
 
 #endif /* defined(__GNUC__) */
 

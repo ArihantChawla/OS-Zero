@@ -19,6 +19,7 @@ typedef zpmureg  zpmopfunc(struct zpm *vm, uint8_t *ptr, zpmureg pc);
 
 #define zpminitops(tab)                                                 \
     do {                                                                \
+        opset(ZPM_NO_UNIT, ZPM_NO_INST, opadr(nop), tab);               \
         opset(ZPM_LOGIC, ZPM_NOT, opadr(not), tab);                     \
         opset(ZPM_LOGIC, ZPM_AND, opadr(and), tab);                     \
         opset(ZPM_LOGIC, ZPM_OR, opadr(or), tab);                       \
@@ -67,7 +68,6 @@ typedef zpmureg  zpmopfunc(struct zpm *vm, uint8_t *ptr, zpmureg pc);
         opset(ZPM_SYS, ZPM_STR, opadr(str), tab);                       \
         opset(ZPM_SYS, ZPM_RST, opadr(rst), tab);                       \
         opset(ZPM_SYS, ZPM_HLT, opadr(hlt), tab);                       \
-        opset(ZPM_NO_UNIT, ZPM_NO_INST, opadr(nop), tab);               \
     } while (0)
 
 int
@@ -94,6 +94,10 @@ zpmloop(struct zpm *vm, zpmureg pc)
 
     opjmp(pc);
     while ((pc) && pc != ZPM_PC_INVAL) {
+        zpmopnop:
+            pc = zpmnop(vm, op, pc);
+
+            opjmp(pc);
         zpmopnot:
             pc = zpmnot(vm, op, pc);
 
@@ -285,10 +289,6 @@ zpmloop(struct zpm *vm, zpmureg pc)
         zpmopout:
             pc = zpmout(vm, op, pc);
             
-            opjmp(pc);
-        zpmopnop:
-            pc = zpmnop(vm, op, pc);
-
             opjmp(pc);
     }
 

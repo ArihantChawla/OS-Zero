@@ -26,15 +26,19 @@ typedef zpmureg  zpmadr;
 /* INSTRUCTION SET */
 
 /* ALU (arithmetic-logical unit) instructions */
+/* no operation */
+#define ZPM_NO_UNIT     0x00
+#define ZPM_NO_INST     0x00
+#define ZPM_NOP         zpmmkopid(ZPM_NO_UNIT, ZPM_NO_INST) // no operation
 /* bitwise operations */
 /* logic unit */
-#define ZPM_LOGIC       0x00
+#define ZPM_LOGIC       0x01
 #define ZPM_NOT         0x00 // 2's complement (reverse all bits)
 #define ZPM_AND         0x01 // logical bitwise AND
 #define ZPM_OR          0x02 // logical bitwise OR
 #define ZPM_XOR         0x03 // logical bitwise XOR (exclusive OR)
 /* shifter */
-#define ZPM_SHIFTER     0x01
+#define ZPM_SHIFTER     0x02
 #define ZPM_RIGHT_BIT   0x01
 #define ZPM_SHIFT_BIT   0x02
 #define ZPM_ROT_BIT     0x04
@@ -46,7 +50,7 @@ typedef zpmureg  zpmadr;
 #define ZPM_ROR         (ZPM_ROT_BIT | ZPM_RIGHT_BIT)
 /* arithmetic operations */
 /* arithmetic unit */
-#define ZPM_ARITH       0x02
+#define ZPM_ARITH       0x03
 #define ZPM_INC_BIT     0x01
 #define ZPM_MSW_BIT     0x01
 #define ZPM_DEC_BIT     0x02
@@ -64,19 +68,19 @@ typedef zpmureg  zpmadr;
 #define ZPM_DEC         (ZPM_SUB_BIT | ZPM_DEC_BIT)
 #define ZPM_CMP         (ZPM_SUB_BIT | ZPM_CMP_BIT | ZPM_MSW_BIT)
 /* multiplier */
-#define ZPM_MULTIPLIER  0x03
+#define ZPM_MULTIPLIER  0x04
 #define ZPM_MUL         0x00 // multiplication
 /* divider */
-#define ZPM_DIVIDER     0x04
+#define ZPM_DIVIDER     0x05
 #define ZPM_REM_BIT     0x01 // remainder-flag
-#define ZPM_DIV         0x00 // division
-#define ZPM_REM         ZPM_REM_BIT // remainder of division (modulus)
+#define ZPM_DIV         0x00 // division, result in ZPM_RET_LO
+#define ZPM_REM         ZPM_REM_BIT // remainder of division in ZPM_RET_HI
 /* load and store operations */
-#define ZPM_LOAD_STORE  0x05
+#define ZPM_LOAD_STORE  0x06
 #define ZPM_LDA         0x00 // load accumulator (register)
 #define ZPM_STA         0x01 // store accumulator
 /* stack operations */
-#define ZPM_STACK       0x06
+#define ZPM_STACK       0x07
 #define ZPM_GENREGS_BIT 0x10
 #define ZPM_POP_BIT     0x01
 #define ZPM_PSH         0x00 // pop from stack
@@ -84,11 +88,11 @@ typedef zpmureg  zpmadr;
 #define ZPM_POP         ZPM_POP_BIT // push on stack
 #define ZPM_POPA        (ZPM_POP_BIT | ZPM_GENREGS_BIT) // push all genregs
 /* I/O operations */
-#define ZPM_IO          0x07
+#define ZPM_IO          0x08
 #define ZPM_IN          0x00 // read data from port
 #define ZPM_OUT         0x01 // write data to port
 /* branch and subroutine operations */
-#define ZPM_BRANCH      0x08
+#define ZPM_BRANCH      0x09
 #define ZPM_JMP         0x00 // branch unconditionally
 #define ZPM_BZ          0x01 // branch if zero (ZF == 1)
 #define ZPM_BNZ         0x02 // branch if non-zero (ZF == 0)
@@ -106,18 +110,16 @@ typedef zpmureg  zpmadr;
 #define ZPM_LEAVE       0x0e // function epilogue
 #define ZPM_RET         0x0f // return from subroutine or thread
 /* system operations */
-#define ZPM_SYS         0x09
+#define ZPM_SYS         0x0a
+#define ZPM_WRM         0x00 // write data to memory-mapped devices
 #define ZPM_LDR         0x01 // load special register
 #define ZPM_STR         0x02 // store special register
 #define ZPM_RST         0x03 // reset
 #define ZPM_HLT         0x04 // halt
-/* no operation */
-#define ZPM_NO_UNIT     0x0f
-#define ZPM_NO_INST     0x0f
-#define ZPM_NOP         zpmmkopid(ZPM_NO_UNIT, ZPM_NO_INST) // no operation
 /* processor parameters */
-#define ZPM_NALU_OP     128 // number of ALU operations
-#define ZPM_NALU_RES    128
+#define ZPM_NALU_OP     0xff // max number of ALU operations
+#define ZPM_NALU_RES    256
+#define ZPM_FPU         0x0e
 #define ZPM_COPROC      0x0f // special unit ID to dispatch execution
 
 /* VIRTUAL MACHINE */
@@ -149,6 +151,13 @@ typedef zpmureg  zpmadr;
 #define ZPM_REG15       0x0f
 #define ZPM_NGENREG     16
 /* system register IDs */
+#if (__BYTE_ORDER == __LITTLE_ENDIAN)
+#define ZPM_RET_LO      0x00 // [dual-word] return value register, low word
+#define ZPM_RET_HI      0x01 // [dual-word] return value register, high word
+#else
+#define ZPM_RET_HI      0x00 // [dual-word] return value register, high word
+#define ZPM_RET_LO      0x01 // [dual-word] return value register, low word
+#endif
 #define ZPM_MSW         0x00 // machine status word
 #define ZPM_PC          0x01 // program counter i.e. instruction pointer
 #define ZPM_FP          0x02 // frame pointer
