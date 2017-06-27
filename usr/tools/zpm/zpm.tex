@@ -146,13 +146,33 @@ locator \\
 	\hline
 	\textbf{add}  & r, i & r & dest = dest + src; & o, z \\
 	\hline
+	\textbf{adc}  & r, i & r & dest = dest + src; & c \\
+	\hline
+	\textbf{adi}  & r, i & r & dest = dest + ~src; & o, z \\
+	\hline
 	\textbf{sub}  & r, i & r & dest = dest - src; & s, z \\
 	\hline
-	\textbf{cmp}  & r, i & r & compare two values and set flags & s, z \\
+	\textbf{sbc}  & r, i & r & dest = dest - src; & s, z \\
+	\hline
+	\textbf{cmp}  & r, i & r & compare two values and set flags & s, z, c \\
 	\hline
 	\textbf{mul}  & r, i & r & dest = dest * src; & o, s, z \\
 	\hline
 	\textbf{div}  & r, i & r & dest = dest / src; & s, z \\
+	\hline
+	\textbf{rem}  & r, i & r & dest = dest \% src; & s, z \\
+	\hline
+	\textbf{lda} & r, i, m & r & load 32-bit longword & N/A \\
+	\hline
+	\textbf{sta} & r & r, i, m & store 32-bit longword & N/A \\
+	\hline
+	\textbf{psh} & r, i & N/A & push value on stack & N/A \\
+	\hline
+	\textbf{psha} & N/A & N/A & push all register on stack & N/A \\
+	\hline
+	\textbf{pop}  & r & N/A & pop top of stack & N/A \\
+	\hline
+	\textbf{popa} & N/A & N/A & pop all registers from stack & N/A \\
 	\hline
 	\textbf{jmp}  & r, i & branch to src & N/A \\
 	\hline
@@ -176,29 +196,15 @@ locator \\
 	\hline
 	\textbf{bnc}  & r, i & N/A & branch to src if (CF == 0) & N/A \\
 	\hline
-	\textbf{pop}  & r & N/A & pop top of stack & N/A \\
-	\hline
-	\textbf{popa} & N/A & N/A & pop all registers from stack & N/A \\
-	\hline
-	\textbf{push} & r, i & N/A & push value on stack & N/A \\
-	\hline
-	\textbf{pusha} & N/A & N/A & push all register on stack & N/A \\
-	\hline
-	\textbf{lda} & r, i, m & r & load 32-bit longword & N/A \\
-	\hline
-	\textbf{sta} & r & r, i, m & store 32-bit longword & N/A \\
-	\hline
 	\textbf{call} & r, i & N/A & call subroutine; construct stack frame & N/A \\
+	\hline
+	\textbf{thr} & m & N/A & start new thread at address & N/A \\
 	\hline
 	\textbf{enter} & N/A & N/A & enter subroutine & N/A \\
 	\hline
 	\textbf{leave} & N/A & N/A & leave subroutine & N/A \\
 	\hline
-	\textbf{ret} & N/A & N/A & return from subroutine & N/A \\
-	\hline
-	\textbf{thr} & m & N/A & start new thread at address & N/A \\
-	\hline
-	\textbf{ltb} & r, i & N/A & load thread-local storage base address & N/A \\
+	\textbf{ret} & N/A & N/A & return from subroutine or thread & N/A \\
 	\hline
 	\textbf{ldr} & r, m & r & load special register & N/A \\
 	\hline

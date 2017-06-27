@@ -3,69 +3,80 @@
 #include <zpm/op.h>
 
 #if defined(__GNUC__)
-#define opadr(x) &&x
-#define OPTAB_T  static void *
+#define opadr(x) &&zpmop##x
+#define OPTAB_T  void *
 #else
-#define opadr(x) &x
+#define opadr(x) &zpm##x
 typedef zpmureg  zpmopfunc(struct zpm *vm, uint8_t *ptr, zpmureg pc);
 #define OPTAB_T  zpmopfunc *
 #endif
 
 #define opjmp(op) goto *jmptab[((struct zpmop *)&vm->mem[pc])->code]
+#define opset(unit, inst, func, tab)                                    \
+    do {                                                                \
+        ((OPTAB_T *)tab)[zpmmkopid(unit, inst)] = (func);               \
+    } while (0)
+
+#define zpminitops(tab)                                                 \
+    do {                                                                \
+        opset(ZPM_LOGIC, ZPM_NOT, opadr(not), tab);                     \
+        opset(ZPM_LOGIC, ZPM_AND, opadr(and), tab);                     \
+        opset(ZPM_LOGIC, ZPM_OR, opadr(or), tab);                       \
+        opset(ZPM_LOGIC, ZPM_XOR, opadr(xor), tab);                     \
+        opset(ZPM_SHIFTER, ZPM_SHL, opadr(shl), tab);                   \
+        opset(ZPM_SHIFTER, ZPM_SHR, opadr(shr), tab);                   \
+        opset(ZPM_SHIFTER, ZPM_SAR, opadr(sar), tab);                   \
+        opset(ZPM_SHIFTER, ZPM_ROL, opadr(rol), tab);                   \
+        opset(ZPM_SHIFTER, ZPM_ROR, opadr(ror), tab);                   \
+        opset(ZPM_ARITH, ZPM_INC, opadr(inc), tab);                     \
+        opset(ZPM_ARITH, ZPM_DEC, opadr(dec), tab);                     \
+        opset(ZPM_ARITH, ZPM_ADD, opadr(add), tab);                     \
+        opset(ZPM_ARITH, ZPM_ADC, opadr(adc), tab);                     \
+        opset(ZPM_ARITH, ZPM_ADI, opadr(adi), tab);                     \
+        opset(ZPM_ARITH, ZPM_SUB, opadr(sub), tab);                     \
+        opset(ZPM_ARITH, ZPM_SBC, opadr(sbc), tab);                     \
+        opset(ZPM_ARITH, ZPM_CMP, opadr(cmp), tab);                     \
+        opset(ZPM_MULTIPLIER, ZPM_MUL, opadr(mul), tab);                \
+        opset(ZPM_DIVIDER, ZPM_DIV, opadr(div), tab);                   \
+        opset(ZPM_DIVIDER, ZPM_REM, opadr(rem), tab);                   \
+        opset(ZPM_LOAD_STORE, ZPM_LDA, opadr(lda), tab);                \
+        opset(ZPM_LOAD_STORE, ZPM_STA, opadr(sta), tab);                \
+        opset(ZPM_STACK, ZPM_PSH, opadr(psh), tab);                     \
+        opset(ZPM_STACK, ZPM_PSHA, opadr(psha), tab);                   \
+        opset(ZPM_STACK, ZPM_POP, opadr(pop), tab);                     \
+        opset(ZPM_STACK, ZPM_POPA, opadr(popa), tab);                   \
+        opset(ZPM_IO, ZPM_IN, opadr(in), tab);                          \
+        opset(ZPM_IO, ZPM_OUT, opadr(out), tab);                        \
+        opset(ZPM_BRANCH, ZPM_JMP, opadr(jmp), tab);                    \
+        opset(ZPM_BRANCH, ZPM_BZ, opadr(bz), tab);                      \
+        opset(ZPM_BRANCH, ZPM_BNZ, opadr(bnz), tab);                    \
+        opset(ZPM_BRANCH, ZPM_BLT, opadr(blt), tab);                    \
+        opset(ZPM_BRANCH, ZPM_BLE, opadr(ble), tab);                    \
+        opset(ZPM_BRANCH, ZPM_BGT, opadr(bgt), tab);                    \
+        opset(ZPM_BRANCH, ZPM_BGE, opadr(bge), tab);                    \
+        opset(ZPM_BRANCH, ZPM_BO, opadr(bo), tab);                      \
+        opset(ZPM_BRANCH, ZPM_BNO, opadr(bno), tab);                    \
+        opset(ZPM_BRANCH, ZPM_BC, opadr(bc), tab);                      \
+        opset(ZPM_BRANCH, ZPM_BNC, opadr(bnc), tab);                    \
+        opset(ZPM_BRANCH, ZPM_CALL, opadr(call), tab);                  \
+        opset(ZPM_BRANCH, ZPM_THR, opadr(thr), tab);                    \
+        opset(ZPM_BRANCH, ZPM_ENTER, opadr(enter), tab);                \
+        opset(ZPM_BRANCH, ZPM_LEAVE, opadr(leave), tab);                \
+        opset(ZPM_BRANCH, ZPM_RET, opadr(ret), tab);                    \
+        opset(ZPM_SYS, ZPM_LDR, opadr(ldr), tab);                       \
+        opset(ZPM_SYS, ZPM_STR, opadr(str), tab);                       \
+        opset(ZPM_SYS, ZPM_RST, opadr(rst), tab);                       \
+        opset(ZPM_SYS, ZPM_HLT, opadr(hlt), tab);                       \
+        opset(ZPM_NO_UNIT, ZPM_NO_INST, opadr(nop), tab);               \
+    } while (0)
 
 int
 zpmloop(struct zpm *vm, zpmureg pc)
 {
-    OPTAB_T jmptab[ZPM_NALU_RES] = {
-        opadr(zpmopnot),
-        opadr(zpmopand),
-        opadr(zpmopor),
-        opadr(zpmopxor),
-        opadr(zpmopshl),
-        opadr(zpmopshr),
-        opadr(zpmopsar),
-        opadr(zpmoprol),
-        opadr(zpmopror),
-        opadr(zpmopinc),
-        opadr(zpmopdec),
-        opadr(zpmopadd),
-        opadr(zpmopsub),
-        opadr(zpmopcmp),
-        opadr(zpmopmul),
-        opadr(zpmopdiv),
-        opadr(zpmoprem),
-        opadr(zpmopjmp),
-        opadr(zpmopbz),
-        opadr(zpmopbnz),
-        opadr(zpmopblt),
-        opadr(zpmopble),
-        opadr(zpmopbgt),
-        opadr(zpmopbge),
-        opadr(zpmopbo),
-        opadr(zpmopbno),
-        opadr(zpmopbc),
-        opadr(zpmopbnc),
-        opadr(zpmoppop),
-        opadr(zpmoppopa),
-        opadr(zpmoppush),
-        opadr(zpmoppusha),
-        opadr(zpmoplda),
-        opadr(zpmopsta),
-        opadr(zpmopcall),
-        opadr(zpmopenter),
-        opadr(zpmopleave),
-        opadr(zpmopret),
-        opadr(zpmopthr),
-        opadr(zpmopltb),
-        opadr(zpmopldr),
-        opadr(zpmopstr),
-        opadr(zpmoprst),
-        opadr(zpmophlt),
-        opadr(zpmopin),
-        opadr(zpmopout)
-    };
-    jmptab[ZPM_NOP] = opadr(zpmopnop);
+    static OPTAB_T jmptab[ZPM_NALU_RES];
 
+    zpminitops(jmptab);
+    
 #if !defined(__GNUC__)
 
     while ((pc) && pc != ZPM_PC_INVAL) {
@@ -76,17 +87,13 @@ zpmloop(struct zpm *vm, zpmureg pc)
         pc = func(vm, text, pc);
     }
 
-#else /* !defined(__GNUC__) */
+#else /* defined(__GNUC__) */
 
     uint8_t *text = &vm->mem[pc];
     uint8_t *op = text;
 
     opjmp(pc);
     while ((pc) && pc != ZPM_PC_INVAL) {
-        zpmopnop:
-            pc = zpmnop(vm, op, pc);
-
-            opjmp(pc);
         zpmopnot:
             pc = zpmnot(vm, op, pc);
 
@@ -135,8 +142,20 @@ zpmloop(struct zpm *vm, zpmureg pc)
             pc = zpmadd(vm, op, pc);
             
             opjmp(pc);
+        zpmopadc:
+            pc = zpmadc(vm, op, pc);
+            
+            opjmp(pc);
+        zpmopadi:
+            pc = zpmadi(vm, op, pc);
+            
+            opjmp(pc);
         zpmopsub:
             zpmsub(vm, op, pc);
+            
+            opjmp(pc);
+        zpmopsbc:
+            zpmsbc(vm, op, pc);
             
             opjmp(pc);
         zpmopcmp:
@@ -153,6 +172,30 @@ zpmloop(struct zpm *vm, zpmureg pc)
             opjmp(pc);
         zpmoprem:
             pc = zpmrem(vm, op, pc);
+            
+            opjmp(pc);
+        zpmoplda:
+            pc = zpmlda(vm, op, pc);
+            
+            opjmp(pc);
+        zpmopsta:
+            pc = zpmsta(vm, op, pc);
+            
+            opjmp(pc);
+        zpmoppsh:
+            pc = zpmpsh(vm, op, pc);
+            
+            opjmp(pc);
+        zpmoppsha:
+            pc = zpmpsha(vm, op, pc);
+            
+            opjmp(pc);
+        zpmoppop:
+            pc = zpmpop(vm, op, pc);
+            
+            opjmp(pc);
+        zpmoppopa:
+            pc = zpmpopa(vm, op, pc);
             
             opjmp(pc);
         zpmopjmp:
@@ -199,32 +242,12 @@ zpmloop(struct zpm *vm, zpmureg pc)
             pc = zpmbnc(vm, op, pc);
             
             opjmp(pc);
-        zpmoppop:
-            pc = zpmpop(vm, op, pc);
-            
-            opjmp(pc);
-        zpmoppopa:
-            pc = zpmpopa(vm, op, pc);
-            
-            opjmp(pc);
-        zpmoppush:
-            pc = zpmpush(vm, op, pc);
-            
-            opjmp(pc);
-        zpmoppusha:
-            pc = zpmpusha(vm, op, pc);
-            
-            opjmp(pc);
-        zpmoplda:
-            pc = zpmlda(vm, op, pc);
-            
-            opjmp(pc);
-        zpmopsta:
-            pc = zpmsta(vm, op, pc);
-            
-            opjmp(pc);
         zpmopcall:
             pc = zpmcall(vm, op, pc);
+            
+            opjmp(pc);
+        zpmopthr:
+            pc = zpmthr(vm, op, pc);
             
             opjmp(pc);
         zpmopenter:
@@ -237,14 +260,6 @@ zpmloop(struct zpm *vm, zpmureg pc)
             opjmp(pc);
         zpmopret:
             pc = zpmret(vm, op, pc);
-            
-            opjmp(pc);
-        zpmopthr:
-            pc = zpmthr(vm, op, pc);
-            
-            opjmp(pc);
-        zpmopltb:
-            pc = zpmltb(vm, op, pc);
             
             opjmp(pc);
         zpmopldr:
@@ -270,6 +285,10 @@ zpmloop(struct zpm *vm, zpmureg pc)
         zpmopout:
             pc = zpmout(vm, op, pc);
             
+            opjmp(pc);
+        zpmopnop:
+            pc = zpmnop(vm, op, pc);
+
             opjmp(pc);
     }
 
