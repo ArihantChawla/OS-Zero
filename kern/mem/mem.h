@@ -61,9 +61,9 @@
     (&(hdr)->info & ((1 << MEMNBKTBIT) - 1))
 
 void meminit(size_t nbphys, size_t nbvirt);
-void meminitphys(struct mempool *pool, uintptr_t base, size_t nbyte);
-void meminitvirt(struct mempool *pool, size_t nbvirt);
-void memfree(struct mempool *pool, void *ptr);
+void meminitphys(struct kmempool *pool, uintptr_t base, size_t nbyte);
+void meminitvirt(struct kmempool *pool, size_t nbvirt);
+void memfree(struct kmempool *pool, void *ptr);
 
 #endif /* __KERN_MEM_MEM_H__ */
 

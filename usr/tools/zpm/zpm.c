@@ -76,7 +76,7 @@ zpmloop(struct zpm *vm, zpmureg pc)
     static OPTAB_T jmptab[ZPM_NALU_RES];
 
     zpminitops(jmptab);
-    
+
 #if !defined(__GNUC__)
 
     while ((pc) && pc != ZPM_PC_INVAL) {

@@ -15,7 +15,7 @@
 #define WCONTINUED           0x00000010
 #define WNOWAIT              0x00000020
 
-#if (USEBSD)
+#if defined(USEBSD)
 #define WCOREFLAG            0x00000080
 #define WAIT_ANY             (-1)
 #define WAIT_MYPGRP          0
@@ -41,7 +41,7 @@ union wait {
 #define WIFSTOPPED(w)        (_WSTATUS(w) == _WSTOPPED)
 #define WSTOPSIG(w)          (_WAITINT(w) >> 8)
 #define WTERMSIG(w)          (_WSTATUS(w))
-#if (FAVORBSD)
+#if defined(FAVORBSD)
 #define WCOREDUMP(w)         (_WSTATUS(w) & WCOREFLAG)
 #define W_EXITCODE(ret, sig) (((ret) << 8) | (sig))
 #define W_STOPCODE(sig)      (((sig) << 8) | _WSTOPPED)
@@ -86,7 +86,7 @@ union wait {
 
 extern pid_t wait(_WAITSTATUS statret);
 extern pid_t waitpid(pid_t pid, _WAITSTATUS statret, int opts);
-#if (USESVID) || (USEXOPEN)
+#if defined(USESVID) || defined(USEXOPEN)
 //#include <bits/siginfo.h>
 #define P_ALL  0
 #define P_PID  1
@@ -94,10 +94,10 @@ extern pid_t waitpid(pid_t pid, _WAITSTATUS statret, int opts);
 typedef long idtype_t;
 extern int   waitid(idtype_t idtype, id_t id, siginfo_t *info, int opts);
 #endif /* USESVID || USEXOPEN */
-#if (USEBSD) || (USEXOPENEXT)
+#if defined(USEBSD) || defined(USEXOPENEXT)
 extern pid_t wait3(_WAITSTATUS statret, int opts, struct rusage *rusage);
 #endif /* USEBSD || USEXOPENEXT */
-#if (USEBSD)
+#if defined(USEBSD)
 extern pid_t wait4(pid_t pid, _WAITSTATUS statret, int ops,
 	               struct rusage *rusage);
 #endif /* USEBSD */

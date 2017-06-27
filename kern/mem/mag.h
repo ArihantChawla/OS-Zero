@@ -24,19 +24,19 @@
 #else
 #define __STRUCT_MEMMAG_BMAP_SIZE 0
 #endif /* defined(MEMPARANOIA) */
-struct memmag {
-    uintptr_t      base;
-    volatile long  info;
-    struct memmag *prev;
-    struct memmag *next;
+struct kmemmag {
+    uintptr_t       base;
+    volatile long   info;
+    struct kmemmag *prev;
+    struct kmemmag *next;
 #if defined(MEMPARANOIA) && (MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZESHIFT + 3)) && 0
-    unsigned long  bmap;
+    unsigned long   bmap;
 #endif
-    volatile long  ndx;
-    volatile long  n;
-    void          *ptab[1UL << (MEMSLABSHIFT - MEMMINSHIFT)];
+    volatile long   ndx;
+    volatile long   n;
+    void           *ptab[1UL << (MEMSLABSHIFT - MEMMINSHIFT)];
 #if defined(MEMPARANOIA) &&  !(MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZESHIFT + 3)) && 0
-    uint8_t        bmap[__STRUCT_MEMMAG_BMAP_SIZE];
+    uint8_t         bmap[__STRUCT_MEMMAG_BMAP_SIZE];
 #endif /* defined(MEMPARANOIA) */
 };
 
@@ -44,7 +44,7 @@ struct memmag {
     
 #define memgetmag(ptr, pool)                                            \
     (((ptr)                                                             \
-      ? ((struct memmag *)(pool)->blktab + memgetmagnum(ptr, pool))     \
+      ? ((struct kmemmag *)(pool)->blktab + memgetmagnum(ptr, pool))    \
       : NULL))
 
 #endif

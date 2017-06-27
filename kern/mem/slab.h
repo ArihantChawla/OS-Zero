@@ -10,13 +10,13 @@
 
 #define __STRUCT_MEMSLAB_PAD                                            \
     (CLSIZE - 3 * PTRSIZE - WORDSIZE)
-struct memslab {
-    void           *adr;
-    m_ureg_t        info;
-    struct memslab *prev;
-    struct memslab *next;
+struct kmemslab {
+    void            *adr;
+    m_ureg_t         info;
+    struct kmemslab *prev;
+    struct kmemslab *next;
 #if (__STRUCT_MEMSLAB_PAD)
-    uint8_t         _pad[__STRUCT_MEMSLAB_PAD];
+    uint8_t          _pad[__STRUCT_MEMSLAB_PAD];
 #endif
 };
 
@@ -28,12 +28,12 @@ struct memslab {
     ((void *)((uint8_t *)(pool)->base                                   \
               + (memgethdrnum(hdr, pool) << MEMMINSHIFT)))
 #define memgetslab(ptr, pool)                                           \
-    ((struct memslab *)(pool)->hdrtab + memgetblknum(ptr, pool))
+    ((struct kmemslab *)(pool)->hdrtab + memgetblknum(ptr, pool))
 #define memgetmag(ptr, pool)                                            \
-    ((struct memmag *)(pool)->hdrtab + memgetblknum(ptr, pool))
+    ((struct kmemmag *)(pool)->hdrtab + memgetblknum(ptr, pool))
 
-void * slaballoc(struct mempool *pool, unsigned long nb, unsigned long flg);
-void   slabfree(struct mempool *pool, void *ptr);
+void * slaballoc(struct kmempool *pool, unsigned long nb, unsigned long flg);
+void   slabfree(struct kmempool *pool, void *ptr);
 
 #endif /* __KERN_MEM_SLAB_H__ */
 

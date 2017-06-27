@@ -29,14 +29,14 @@
 #define panic(pid, trap, err) abort()
 #endif
 
-extern struct mempool memphyspool;
-struct mempool        memvirtpool;
+extern struct kmempool kmemphyspool;
+struct kmempool        kmemvirtpool;
 
 void *
 memalloc(size_t nb, long flg)
 {
-    struct mempool  *physpool = &memphyspool;
-    struct mempool  *virtpool = &memvirtpool;
+    struct kmempool *physpool = &kmemphyspool;
+    struct kmempool *virtpool = &kmemvirtpool;
     void            *ptr = NULL;
     size_t           sz = max(MEMMINSIZE, nb);
     size_t           bsz;
@@ -50,8 +50,8 @@ memalloc(size_t nb, long flg)
     uint8_t         *u8ptr;
     unsigned long    ndx;
     unsigned long    n;
-    struct membkt   *bkt = &virtpool->tab[bktid];
-    struct memmag   *mag;
+    struct kmembkt  *bkt = &virtpool->tab[bktid];
+    struct kmemmag  *mag;
 
     vmflg = PAGEPRES | PAGEWRITE;
     if (MEMWIRE) {
@@ -164,16 +164,16 @@ memwtalloc(size_t nb, long flg, long spin)
 void
 kfree(void *ptr)
 {
-    struct mempool *physpool = &memphyspool;
-    struct mempool *virtpool = &memvirtpool;
-    struct memmag  *mag = memgetmag(ptr, virtpool);
-    unsigned long   bktid = (mag) ? memmaggetbkt(mag) : 0;
+    struct kmempool *physpool = &kmemphyspool;
+    struct kmempool *virtpool = &kmemvirtpool;
+    struct kmemmag  *mag = memgetmag(ptr, virtpool);
+    unsigned long    bktid = (mag) ? memmaggetbkt(mag) : 0;
 #if defined(MEMPARANOIA)
-    unsigned long   ndx;
-    unsigned long  *bmap;
+    unsigned long    ndx;
+    unsigned long   *bmap;
 #endif
-    struct membkt  *bkt = &virtpool->tab[bktid];
-    struct memmag  *head;
+    struct kmembkt  *bkt = &virtpool->tab[bktid];
+    struct kmemmag  *head;
 
     if (!ptr || !mag) {
 

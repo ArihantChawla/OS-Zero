@@ -6,12 +6,12 @@
 #include <zero/asm.h>
 #include <kern/mem/bkt.h>
 
-struct mempool {
-    struct membkt  tab[PTRBITS];
-    m_atomic_t     lk;
-    uintptr_t      base;
-    unsigned long  nblk;
-    void          *hdrtab;
+struct kmempool {
+    struct kmembkt  tab[PTRBITS];
+    m_atomic_t      lk;
+    uintptr_t       base;
+    unsigned long   nblk;
+    void           *hdrtab;
 };
 
 #endif /* __KERN_MEM_POOL_H__ */

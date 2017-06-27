@@ -35,9 +35,9 @@
 #if defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200809L)
 #define _ATFILE_SOURCE         1
 #endif
+#define _DEFAULT_SOURCE        1
 #define _SVID_SOURCE           1        // System V features
 #define _GNU_SOURCE            1        // enable GNU extensions
-#define _DEFAULT_SOURCE        1
 #define _BSD_SOURCE            1        // enable BSD features
 #define _FAVOR_BSD             0        // favor old BSD features
 #define _ZERO_SOURCE           1        // enable Zero features; version number
@@ -75,14 +75,14 @@
 #if (!_ATFILE_SOURCE)
 #undef _ATFILE_SOURCE
 #endif
+#if (!_DEFAULT_SOURCE)
+#undef _DEFAULT_SOURCE
+#endif
 #if (!_SVID_SOURCE)
 #undef _SVID_SOURCE
 #endif
 #if (!_GNU_SOURCE)
 #undef _GNU_SOURCE
-#endif
-#if (!_DEFAULT_SOURCE)
-#undef _DEFAULT_SOURCE
 #endif
 #if (!_BSD_SOURCE)
 #undef _BSD_SOURCE
@@ -114,52 +114,69 @@
 #if (!_SOLARIS_SOURCE)
 #undef _SOLARIS_SOURCE
 #endif
-
-/* POSIX- and X/Open-features */
-#define USEXOPEN               (defined(_XOPEN_SOURCE))
-#define USEXOPEN2K             (defined(_XOPEN_SOURCE)                  \
-                                && (_XOPEN_SOURCE >= 600))
-#define USEXOPEN2K8            (defined(_XOPEN_SOURCE)                  \
-                                && (_XOPEN_SOURCE >= 700))
-#define USEXOPENEXT            (defined(_XOPEN_SOURCE_EXTENDED))
-#define USEUNIX95              (defined(_XOPEN_SOURCE_EXTENDED))
-#define USEUNIX98              (defined(_XOPEN_SOURCE)                  \
-                                && (_XOPEN_SOURCE >= 500))
-#define USEPOSIX               (_POSIX_C_SOURCE >= 1                    \
-                                || defined(_POSIX_SOURCE)               \
-                                || defined(_XOPEN_SOURCE))
-#define USEPOSIX2              ((defined(_POSIX_SOURCE)                 \
-                                 && (_POSIX_SOURCE > 1))                \
-                                || defined(_XOPEN_SOURCE))
-#define USEPOSIX199309         (defined(_POSIX_C_SOURCE)                \
-                                && (_POSIX_C_SOURCE >= 199309L))
-/* thread extensions in POSIX.1-1995 */
-#define USEPOSIX199506         (defined(_POSIX_C_SOURCE)                \
-                                && (_POSIX_C_SOURCE >= 199506L))
-#define USEPOSIX200112         (defined(_POSIX_SOURCE)                  \
-                                && _POSIX_C_SOURCE >= 200112L)
-
-/* miscellaneous features */
-#define USEBSD                 (defined(_BSD_SOURCE))
-/* favor old school BSD interfaces */
-#define FAVORBSD               (defined(_BSD_SOURCE) && defined(_FAVOR_BSD))
-#define USESVID                (defined(_SVID_SOURCE))
-#define USEGNU                 (defined(_GNU_SOURCE))
-#define USEOLDBSD              FAVORBSD
-#if (USEBSD)
-#define _BSD                   44
+#if (!_BORLANDC_SOURCE)
+#undef _BORLANDC_SOURCE
+#endif
+#if (!_TURBOC_SOURCE)
+#undef _TURBOC_SOURCE
 #endif
 
-#define USEUNIX                (defined(_UNIX_SOURCE)                   \
-                                && (defined(__unix__)                   \
-                                    || defined(__unix)                  \
-                                    || (defined(__APPLE__)              \
-                                        && defined(__MACH__))))
+/* POSIX- and X/Open-features */
+#if defined(_XOPEN_SOURCE)
+#define USEXOPEN               1
+#define USEUNIX98              (_XOPEN_SOURCE >= 500)
+#define USEXOPEN2K             (_XOPEN_SOURCE >= 600)
+#define USEXOPEN2K8            (_XOPEN_SOURCE >= 700)
+#if defined(_XOPEN_SOURCE_EXTENDED)
+#define USEXOPENEXT            1
+#define USEUNIX95              1
+#endif
+#endif
+#if defined(_POSIX_SOURCE)
+#define USEPOSIX               (_POSIX_C_SOURCE >= 1)
+#define USEPOSIX2              (_POSIX_SOURCE > 1)
+#define USEPOSIX199309         (_POSIX_C_SOURCE >= 199309L)
+/* thread extensions in POSIX.1-1995 */
+#define USEPOSIX199506         (_POSIX_C_SOURCE >= 199506L)
+#define USEPOSIX200112         (_POSIX_C_SOURCE >= 200112L)
+#endif
 
-#define USESOLARIS             (defined(_SOLARIS_SOURCE)                \
-                                && defined(__sun) && defined(__SVR4))
-#define USEWIN32               (defined(_WIN32))
-#define USEWIN64               (defined(_WIN64))
+/* miscellaneous features */
+#if defined(_SVID_SOURCE)
+#define USESVID                1
+#endif
+#if defined(_GNU_SOURCE)
+#define USEGNU                 1
+#endif
+#if defined(_BSD_SOURCE)
+#define USEBSD                 1
+#endif
+/* favor old school BSD interfaces */
+#if defined(_FAVOR_BSD)
+#define FAVORBSD               1
+#define USEOLDBSD              1
+#elif defined(USEBSD)
+#define _BSD                   44
+#endif
+#if defined(_ZERO_SOURCE)
+#define USEZERO                1
+#endif
+
+#if defined(_UNIX_SOURCE) && (defined(__unix__)                         \
+                              || defined(__unix)                        \
+                              || (defined(__APPLE__)                    \
+                                  && defined(__MACH__)))
+#define USEUNIX                1
+#endif
+#if defined(_SOLARIS_SOURCE) && defined(__sun) && defined(__SVR4)
+#define USESOLARIS             1
+#endif
+#if defined(_WIN32)
+#define USEWIN32               1
+#endif
+#if defined(_WIN64)
+#define USEWIN64               1
+#endif
 
 /*
  * _POSIX_VERSION
@@ -202,4 +219,5 @@
 #define _POSIX_ASYNCHRONOUS_IO 0
 
 #endif /* __FEATURES_H__ */
+
 

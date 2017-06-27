@@ -27,7 +27,7 @@ struct itimerval {
     struct timeval it_value;
 };
 
-#if (_GNU_SOURCE)
+#if defined(USEGNU)
 #define TIMEVAL_TO_TIMESPEC(tv, ts)                                     \
     do {                                                                \
         (ts)->tv_sec = (tv)->tv_sec;                                    \
@@ -40,7 +40,7 @@ struct itimerval {
     } while (0)
 #endif
 
-#if (_BSD_SOURCE) && (FAVORBSD)
+#if defined(FAVORBSD)
 /* obsolete structure that should never be used */
 struct timezone {
     int tz_minuteswest;         // minutes west of GMT
@@ -53,12 +53,12 @@ typedef void            *__restrict timezone_ptr_t;
 
 #if !defined(FD_SETSIZE)
 
-#if (_ZERO_SOURCE)
+#if (USEZERO)
 #include <kern/conf.h>
 #endif
 #if defined(NPROCFD) && !defined(FD_SETSIZE)
 #define FD_SETSIZE NPROCFD
-#elif (_POSIX_SOURCE)
+#elif (defined(USEPOSIX))
 #define FD_SETSIZE _POSIX_FD_SETSIZE
 #elif (USEBSD) && !defined(NFDBITS)
 #include <sys/sysmacros.h>
@@ -93,7 +93,7 @@ typedef struct fd_set fd_set;
 
 extern int gettimeofday(struct timeval *__restrict tv,
                         timezone_ptr_t tz);
-#if (_BSD_SOURCE) && (FAVORBSD)
+#if (USEBSD) && (FAVORBSD)
 extern int settimeofday(const struct timeval *tv, const struct timezone *tz);
 extern int adjtime(const struct timeval *delta, struct timeval *olddelta);
 #endif
@@ -106,17 +106,17 @@ extern int setitimer(itimer_which_t, const struct itimerval *__restrict newval,
 extern int utimes(const char *file, const struct timeval tv[2]);
 extern int utimensat(int fd, const char *file, const struct timespec times[2],
                      int flg);
-#if (_BSD_SOURCE)
+#if (USEBSD)
 extern int lutimes(const char *file, const struct timeval tv[2]);
 extern int futimes(int fd, const struct timeval tv[2]);
 #endif
-#if (_GNU_SOURCE)
+#if defined(USEGNU)
 extern int futimesat(int fd, const char *file, const struct timeval tv[2]);
 #endif
 
 #endif /* !defined(__KERNEL__) */
 
-#if (_BSD_SOURCE)
+#if (USEBSD)
 #define    timerisset(tv) ((tv)->tv_sec || (tv)->tv_usec)
 #define    timerclear(tv) (!(tv)->tv_sec && !(tv)->tv_usec);
 #define    timercmp(tv1, tv2, _cmp)       \
@@ -141,7 +141,7 @@ extern int futimesat(int fd, const char *file, const struct timeval tv[2]);
             (res)->tv_usec += 1000000;                                  \
         }                                                               \
     } while (0)
-#endif /* _BSD_SOURCE */
+#endif /* USEBSD */
 
 //#include <time.h>
 //#include <sys/select.h>
