@@ -13,9 +13,9 @@
 #define ZPM_PC_INVAL     (~(zpmureg)ZPM_PC_OK)
 
 #if !defined(__GNUC__)
-#define ZPMOP_T INLINE   zpmureg
-#else
 #define ZPMOP_T FASTCALL zpmureg
+#else
+#define ZPMOP_T INLINE   zpmureg
 #endif
 
 #define zpmget1arggenreg(vm, op, dptr)                                  \

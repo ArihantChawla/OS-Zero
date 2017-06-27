@@ -82,7 +82,7 @@ zpmloop(struct zpm *vm, zpmureg pc)
     while ((pc) && pc != ZPM_PC_INVAL) {
         uint8_t   *text = &vm->mem[pc];
         uint8_t    code = inst->code;
-        zpmopfunc *func = jmtab[code];
+        zpmopfunc *func = jmptab[code];
         
         pc = func(vm, text, pc);
     }
