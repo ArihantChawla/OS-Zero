@@ -406,6 +406,12 @@ zpmdiv(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 }
 
 ZPMOP_T
+zpmrem(struct zpm *vm, uint8_t *ptr, zpmureg pc)
+{
+    ;
+}
+
+ZPMOP_T
 zpmjmp(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
     ;

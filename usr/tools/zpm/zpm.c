@@ -16,8 +16,7 @@ typedef zpmureg  zpmopfunc(struct zpm *vm, uint8_t *ptr, zpmureg pc);
 int
 zpmloop(struct zpm *vm, zpmureg pc)
 {
-    OPTAB_T jmptab[] = {
-        opadr(zpmopnop),
+    OPTAB_T jmptab[ZPM_NALU_RES] = {
         opadr(zpmopnot),
         opadr(zpmopand),
         opadr(zpmopor),
@@ -34,6 +33,7 @@ zpmloop(struct zpm *vm, zpmureg pc)
         opadr(zpmopcmp),
         opadr(zpmopmul),
         opadr(zpmopdiv),
+        opadr(zpmoprem),
         opadr(zpmopjmp),
         opadr(zpmopbz),
         opadr(zpmopbnz),
@@ -64,6 +64,7 @@ zpmloop(struct zpm *vm, zpmureg pc)
         opadr(zpmopin),
         opadr(zpmopout)
     };
+    jmptab[ZPM_NOP] = opadr(zpmopnop);
 
 #if !defined(__GNUC__)
 
@@ -148,6 +149,10 @@ zpmloop(struct zpm *vm, zpmureg pc)
             opjmp(pc);
         zpmopdiv:
             pc = zpmdiv(vm, op, pc);
+            
+            opjmp(pc);
+        zpmoprem:
+            pc = zpmrem(vm, op, pc);
             
             opjmp(pc);
         zpmopjmp:
