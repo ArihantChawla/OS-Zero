@@ -15,6 +15,7 @@
 //#include <kern/obj.h>
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/link.h>
+#include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/task.h>
 
 extern pde_t        kernpagedir[NPDE];
@@ -25,17 +26,18 @@ struct proc        *proczombietab[NTASK];
 long
 procinit(long id, long sched)
 {
-    struct cpu     *cpu;
-    struct proc    *proc;
-    struct task    *task;
-    long            prio;
-    long            val;
-    struct taskstk *stk;
-    void           *ptr;
-    uint8_t        *u8ptr;
+    volatile struct cpu *cpu;
+    struct proc         *proc;
+    struct task         *task;
+    long                 prio;
+    long                 val;
+    struct taskstk      *stk;
+    void                *ptr;
+    uint8_t             *u8ptr;
 
     if (id < TASKNPREDEF) {
-        cpu = &cputab[0];
+//        cpu = &cputab[0];
+        cpu = k_curcpu;
         proc = &proctab[id];
         task = &tasktab[id];
         prio = SCHEDSYSPRIOMIN;

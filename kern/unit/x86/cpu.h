@@ -280,15 +280,15 @@ void cpuprobe(volatile struct m_cpuinfo *cpuinfo,
 #if defined(__KERNEL__)
 
 #if (PTRBITS == 32)
-extern struct cpu  * k_curcpu  __asm__ ("%gs:0");
-extern long          k_curunit __asm__ ("%gs:4");
-extern struct task * k_curtask __asm__ ("%gs:8");
-extern long          k_curpid  __asm__ ("%gs:12");
+extern volatile struct cpu  * k_curcpu  __asm__ ("%gs:0");
+extern volatile long          k_curunit __asm__ ("%gs:4");
+extern volatile struct task * k_curtask __asm__ ("%gs:8");
+extern volatile long          k_curpid  __asm__ ("%gs:12");
 #elif (PTRBITS == 64)
-extern struct cpu  * k_curcpu  __asm__ ("%gs:0");
-extern long          k_curunit __asm__ ("%gs:8");
-extern struct task * k_curtask __asm__ ("%gs:16");
-extern long          k_curpid  __asm__ ("%gs:24");
+extern volatile struct cpu  * k_curcpu  __asm__ ("%gs:0");
+extern volatile long          k_curunit __asm__ ("%gs:8");
+extern volatile struct task * k_curtask __asm__ ("%gs:16");
+extern volatile long          k_curpid  __asm__ ("%gs:24");
 #endif
 
 #endif /* defined(__KERNEL__) */
@@ -304,7 +304,7 @@ struct cpu {
     struct cpu       *cpu;
     long              unit;
     struct task      *task;
-    long              id;
+    long              pid;
     struct proc      *proc;
     pde_t             pdir;
     long              flg;

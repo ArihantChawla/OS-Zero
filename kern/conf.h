@@ -3,6 +3,8 @@
 
 #include <zero/param.h>
 
+#define VMTKTLK       1
+
 //#define REENTRANTGDTINIT 1
 #define LONGMODE      0
 #define MEMBUFNOLK    0 // FIXME: implement lock-free data (stack?)

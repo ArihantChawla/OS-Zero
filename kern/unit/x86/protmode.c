@@ -40,8 +40,8 @@
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
 extern uint8_t                   kernsysstktab[NCPU * KERNSTKSIZE];
 extern uint8_t                   kernusrstktab[NCPU * KERNSTKSIZE];
+extern volatile struct cpu       cputab[NCPU];
 extern struct proc               proctab[NTASK];
-extern struct cpu                cputab[NCPU];
 #if (VBE)
 extern uint64_t                  kernidt[NINTR];
 extern long                      vbefontw;

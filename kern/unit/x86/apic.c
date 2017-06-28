@@ -16,15 +16,15 @@
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/x86/link.h>
 
-extern void         irqtmr(void);
-extern void         irqtmrcnt(void);
-extern void       (*irqerror)(void);
-extern void       (*irqspurious)(void);
-extern void       (*mpspurint)(void);
-extern uint64_t     kernidt[NINTR];
-extern void        *irqvec[];
-extern struct cpu   cputab[NCPU];
-extern struct cpu  *mpbootcpu;
+extern void                  irqtmr(void);
+extern void                  irqtmrcnt(void);
+extern void                (*irqerror)(void);
+extern void                (*irqspurious)(void);
+extern void                (*mpspurint)(void);
+extern uint64_t              kernidt[NINTR];
+extern void                 *irqvec[];
+extern volatile struct cpu   cputab[NCPU];
+extern volatile struct cpu  *mpbootcpu;
 static uint32_t     apictmrcnt;
 
 /* TODO: fix this kludge */
@@ -123,9 +123,9 @@ apicinittmr(void)
 void
 apicinit(void)
 {
-    struct cpu  *cpu = k_curcpu;
-    static long  first = 1;
-    uint32_t     tmrcnt;
+    volatile struct cpu *cpu = k_curcpu;
+    static long          first = 1;
+    uint32_t             tmrcnt;
 
     if (!mpapic) {
         mpapic = apicprobe();

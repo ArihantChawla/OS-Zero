@@ -29,8 +29,11 @@
 #endif
 #elif defined(__x86_64__) || defined(__amd64__)
 #include <zero/x86-64/asm.h>
-#elif defined(__i386__)
+#include <zero/x86/asm.h>
+#elif (defined(__i386__) || defined(__i486__)                           \
+       || defined(__i586__) || defined(__i686__))
 #include <zero/ia32/asm.h>
+#include <zero/x86/asm.h>
 #elif defined(__arm__)
 #include <zero/arm/asm.h>
 #elif defined(__ppc__)

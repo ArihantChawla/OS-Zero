@@ -47,14 +47,14 @@ extern void cpuinit(long unit);
 extern void seginit(long id);
 extern void idtset(void);
 
-extern pde_t       *kernpagedir[NPDE];
-extern struct cpu   cputab[NCPU];
-struct cpu         *mpbootcpu;
-long                mpmultiproc;
-long                mpncpu;
-long                mpioapicid;
-uint32_t *volatile  mpapic;
-uint32_t           *mpioapic;
+extern pde_t               *kernpagedir[NPDE];
+extern volatile struct cpu  cputab[NCPU];
+volatile struct cpu        *mpbootcpu;
+long                        mpmultiproc;
+long                        mpncpu;
+long                        mpioapicid;
+uint32_t *volatile          mpapic;
+uint32_t                   *mpioapic;
 
 static long
 mpchksum(uint8_t *ptr, unsigned long len)

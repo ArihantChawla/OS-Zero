@@ -1,14 +1,17 @@
 #ifndef __KERN_MEM_PAGE_H__
 #define __KERN_MEM_PAGE_H__
 
+#include <kern/conf.h>
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-#include <zero/mtx.h>
+#include <zero/asm.h>
+#include <zero/tktlk.h>
 #include <kern/types.h>
 #include <kern/perm.h>
 #include <kern/time.h>
 #include <kern/cpu.h>
+#include <kern/mem/vm.h>
 
 #define PAGENODEV (-1)
 #define PAGENOOFS (-1)
@@ -51,7 +54,7 @@ struct virtpage {
 #define __STRUCT_PHYSLRUQUEUE_PAD                                       \
     (roundup(__STRUCT_PHYSLRUQUEUE_SIZE, CLSIZE) - __STRUCT_PHYSLRUQUEUE_SIZE)
 struct physlruqueue {
-    m_atomic_t       lk;
+    VM_LK_T          lk;
     struct physpage *list;
     uint8_t          _pad[__STRUCT_PHYSLRUQUEUE_PAD];
 };
@@ -61,7 +64,7 @@ struct physlruqueue {
 #define __STRUCT_PHYSPAGE_PAD                                           \
     (roundup(__STRUCT_PHYSPAGE_SIZE, CLSIZE) - __STRUCT_PHYSPAGE_SIZE)
 struct physpage {
-    m_atomic_t       lk;        // mutual exclusion lock
+    VM_LK_T          lk;        // mutual exclusion lock
     m_ureg_t         nref;      // reference count
     m_ureg_t         pid;       // owner process ID
     m_ureg_t         adr;       // page address

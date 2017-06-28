@@ -1,6 +1,7 @@
 #ifndef __KERN_MEM_VM_H__
 #define __KERN_MEM_VM_H__
 
+#include <kern/conf.h>
 #include <stdint.h>
 #include <zero/param.h>
 //#include <zero/spinrw.h>
@@ -23,6 +24,19 @@ typedef uint64_t   vmpagebits;
      || defined(__i586__) || defined(__i686__)                          \
      || defined(__x86_64__) || defined(__amd64__))
 #include <kern/unit/x86/vm.h>
+#endif
+
+#if (VMTKTLK)
+#include <zero/tktlk.h>
+#define VM_LK_T      union zerotktlk
+#define vmspinlk(tp) tktlkspin(tp)
+#define vmgetlk(tp)  tktlk(tp)
+#define vmrellk(tp)  tktunlk(tp)
+#else
+#define VM_LK_T     zerofmtx
+#define vmgetlk(tp) fmtxlk(tp)
+#define vmrellk(tp) fmtxunlk(tp)
+#include <zero/mtx.h>
 #endif
 
 #define VM_PROT_NONE       0x00

@@ -17,10 +17,10 @@ volatile struct ioapic          *ioapic;
 void
 ioapicinit(void)
 {
-    struct cpu *cpu = k_curcpu;
-    long        ntrap;
+    volatile struct cpu *cpu = k_curcpu;
+    long                 ntrap;
 //    long id;
-    long        l;
+    long                 l;
 
     if (!mpmultiproc) {
 

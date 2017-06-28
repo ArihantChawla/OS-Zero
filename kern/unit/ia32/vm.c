@@ -1,6 +1,6 @@
 /*
- * X86 page tables are accessed as a flat 4-megabyte set of page table entries.
- * The table is mapped to the address PAGETAB declared in vm.h.
+ * IA-32 page tables are accessed as a flat 4-megabyte set of page table
+ * entries. The table is mapped to the address PAGETAB declared in vm.h.
  */
 
 #define PAGEDEV 0
@@ -44,7 +44,7 @@ struct physlruqueue  vmlrutab[PTRBITS];
 static struct dev    vmdevtab[NPAGEDEV];
 static m_atomic_t    vmdevlktab[NPAGEDEV];
 #endif
-m_atomic_t           vmphyslk;
+VM_LK_T              vmphyslk;
 struct physpage     *vmphysqueue;
 struct physpage     *vmshmqueue;
 struct vmpagestat    vmpagestat;
@@ -270,7 +270,7 @@ vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
     if (!(adr & ~(PAGEFLTADRMASK | PAGESYSFLAGS))) {
         page = pageallocphys();
         if (page) {
-            fmtxlk(&page->lk);
+            vmspinlk(&page->lk);
             page->nref++;
             if (flg & PAGEWIRED) {
                 vmpagestat.nwire++;
@@ -279,12 +279,12 @@ vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
                 page->nflt++;
                 if (!(adr & PAGEWIRED)) {
                     qid = pagecalcqid(page);
-                    fmtxlk(&vmlrutab[qid].lk);
+                    vmspinlk(&vmlrutab[qid].lk);
                     deqpush(page, &vmlrutab[qid].list);
-                    fmtxunlk(&vmlrutab[qid].lk);
+                    vmrellk(&vmlrutab[qid].lk);
                 }
             }
-            fmtxunlk(&page->lk);
+            vmrellk(&page->lk);
             *pte = adr | flg | PAGEPRES;
         }
 #if (PAGEDEV)
@@ -292,13 +292,13 @@ vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
         // pageout();
         page = vmpagein(page);
         if (page) {
-            fmtxlk(&page->lk);
+            vmspinlk(&page->lk);
             page->nflt++;
             qid = pagecalcqid(page);
-            fmtxlk(&vmlrutab[qid].lk);
+            vmspinlk(&vmlrutab[qid].lk);
             deqpush(page, &vmlrutab[qid].list);
-            fmtxunlk(&vmlrutab[qid].lk);
-            fmtxunlk(&page->lk);
+            vmrellk(&vmlrutab[qid].lk);
+            vmrellk(&page->lk);
         }
 #endif
     }
@@ -326,11 +326,11 @@ vmpagein(uint32_t adr)
     struct physpage *page = pagefind(adr);
     void            *data;
 
-    fmtxlk(&vmdevlktab[dev], MEMPID);
+    vmgetlk(&vmdevlktab[dev], MEMPID);
     vmseekdev(dev, blk * PAGESIZE);
     page->nflt++;
 //    data = pageread(dev, PAGESIZE);
-    fmtxunlk(&vmdevlktab[pagedev], MEMPID);
+    vmrellk(&vmdevlktab[pagedev], MEMPID);
 }
 
 void

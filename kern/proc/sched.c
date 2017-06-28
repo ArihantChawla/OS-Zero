@@ -22,10 +22,10 @@ void                     schedsetready(struct task *task);
 void                     schedsetstopped(struct task *task);
 void                     schedsetzombie(struct proc *proc);
 
-extern struct cpu        cputab[NCPU];
-extern struct proc      *proczombietab[NTASK];
-extern struct tasktabl0  taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
-extern struct divu16     fastu16divu16tab[SCHEDDIVU16TABSIZE];
+extern volatile struct cpu  cputab[NCPU];
+extern struct proc         *proczombietab[NTASK];
+extern struct tasktabl0     taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
+extern struct divu16        fastu16divu16tab[SCHEDDIVU16TABSIZE];
 
 /* lookup table to convert nice values to priority offsets */
 /* nice is between -20 and 19 inclusively */

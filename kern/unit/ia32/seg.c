@@ -12,20 +12,20 @@
 FASTCALL void gdtinit(struct m_farptr *farptr);
 
 #if (SMP)
-extern uint64_t        kerngdt[NCPU][NGDT];
+extern uint64_t            kerngdt[NCPU][NGDT];
 #else
-extern uint64_t        kerngdt[NGDT];
+extern uint64_t            kerngdt[NGDT];
 #endif
 //extern struct m_tss    tsstab[NTHR];
-extern struct cpu      cputab[NCPU];
-extern struct m_farptr gdtptrtab[NCPU];
+extern volatile struct cpu cputab[NCPU];
+extern struct m_farptr     gdtptrtab[NCPU];
 
 ASMLINK void
 seginit(long id)
 {
-    struct   cpu    *cpu = &cputab[id];
-    uint64_t        *gdt;
-    struct m_farptr *farptr = &gdtptrtab[id];
+    volatile struct cpu *cpu = &cputab[id];
+    struct m_farptr     *farptr = &gdtptrtab[id];
+    uint64_t            *gdt;
 
     /* set descriptors */
 #if (SMP)

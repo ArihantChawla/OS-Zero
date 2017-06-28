@@ -4,63 +4,87 @@
 /* REFERENCE: http://locklessinc.com/articles/locks/ */
 
 #include <stdint.h>
-#include <zero/cdefs.h>
+#include <endian.h>
 #include <zero/param.h>
+#include <zero/cdefs.h>
 #include <zero/asm.h>
+#if defined(__KERNEL__)
+#include <kern/sched.h>
+#define tktlkyield() schedyield()
+#else
+#define tktlkyield() thryield()
 #define PTHREAD 1
 #include <zero/thr.h>
+#endif
 
-#define TKTLKNSPIN 4096
+#if !defined(TKTLKSIZE)
+#define TKTLKSIZE  4
+#endif
+#define TKTLKNSPIN 16384
 
-#if (LONGSIZE == 4)
+#if (TKTLKSIZE == 4)
 
 union zerotktlk {
     volatile unsigned int uval;
+#if (__BYTE_ORDER == __LITTLE_ENDIAN)
     struct {
         unsigned short    val;
         unsigned short    nref;
     } s;
+#else
+    struct {
+        unsigned short    nref;
+        unsigned short    val;
+    } s;
+#endif
 };
 
-#elif (LONGSIZE == 8)
+#elif (TKTLKSIZE == 8)
 
 union zerotktlk {
     volatile unsigned long uval;
+#if (__BYTE_ORDER == __LITTLE_ENDIAN)
     struct {
         unsigned int       val;
         unsigned int       nref;
     } s;
+#else
+    struct {
+        unsigned int       nref;
+        unsigned int       val;
+    } s;
+#endif
 };
 
-#endif /* LONGSIZE */
+#endif /* TKTLKSIZE */
 
 typedef union zerotktlk zerotktlk;
 
-#if (LONGSIZE == 4)
+#if (TKTLKSIZE == 4)
 
 static INLINE void
 tktlkspin(union zerotktlk *tp)
 {
     volatile unsigned short val = m_fetchaddu16(&tp->s.nref, 1);
     long                    nspin = TKTLKNSPIN;
-
+    
     do {
         nspin--;
-    } while ((nspin) && tp->s.val != val) {
+    } while ((nspin) && tp->s.val != val);
     while (tp->s.val != val) {
-        thryield();
+        tktlkyield();
     }
-    
+        
     return;
 }
-
+    
 static INLINE void
 tktlk(union zerotktlk *tp)
 {
     volatile unsigned short val = m_fetchaddu16(&tp->s.nref, 1);
     
     while (tp->s.val != val) {
-        thryield();
+        tktlkyield();
     }
     
     return;
@@ -85,14 +109,14 @@ tkttrylk(union zerotktlk *tp)
     unsigned int            cmpnew = (next << 16) | val;
     long                    res = 0;
     
-    if (m_cmpswapu(&tp->uval, cmp, cmpnew) == cmp) {
+    if (m_cmpswapu32(&tp->uval, cmp, cmpnew)) {
         res++;
     }
     
     return res;
 }
 
-#elif (LONGSIZE == 8)
+#elif (TKTLKSIZE == 8)
 
 static INLINE void
 tktlkspin(union zerotktlk *tp)
@@ -104,7 +128,7 @@ tktlkspin(union zerotktlk *tp)
         nspin--;
     } while ((nspin) && tp->s.val != val);
     while (tp->s.val != val) {
-        thryield();
+        tktlkyield();
     }
 
     return;
@@ -114,8 +138,9 @@ static INLINE void
 tktlk(union zerotktlk *tp)
 {
     volatile unsigned long val = m_fetchaddu32(&tp->s.nref, 1);
+
     while (tp->s.val != val) {
-        thryield();
+        tktlkyield();
     }
 
     return;
@@ -140,14 +165,24 @@ tkttrylk(union zerotktlk *tp)
     unsigned long          cmpnew = (next << 32) | val;
     long                   res = 0;
 
-    if (m_cmpswapu(&tp->uval, cmp, cmpnew) == cmp) {
+    if (m_cmpswapu64(&tp->uval, cmp, cmpnew)) {
         res++;
     }
 
     return res;
 }
 
-#endif /* LONGSIZE */
+#endif /* TKTLKSIZE */
+
+static INLINE long
+tktmaylk(union zerotktlk *tp)
+{
+    union zerotktlk tu = *tp;
+
+    m_membar();
+
+    return (tu.s.val == tu.s.nref);
+}
 
 #endif /* __ZERO_TKTLK_H__ */
 

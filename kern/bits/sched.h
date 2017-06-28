@@ -102,7 +102,7 @@ struct schedqueueset {
     uint8_t       _pad[__STRUCT_SCHEDQUEUESET_PAD];
 };
 
-extern struct cpu            cputab[NCPU];
+extern volatile struct cpu   cputab[NCPU];
 extern long                  schedidlecoremap[SCHEDIDLECOREMAPNWORD];
 extern struct task          *schedreadytab0[SCHEDNQUEUE];
 extern struct task          *schedreadytab1[SCHEDNQUEUE];
@@ -117,14 +117,14 @@ extern long                 *schedsliceptr;
 static __inline__ void
 schedadjcpupct(struct task *task, long run)
 {
-    struct cpu *cpu = k_curcpu;
-    long        tick = cpu->ntick;
-    unsigned    last = task->lastrun;
-    long        diff = tick - last;
-    long        delta;
-    long        ntick;
-    long        val;
-    long        div;
+    volatile struct cpu *cpu = k_curcpu;
+    long                 tick = cpu->ntick;
+    unsigned             last = task->lastrun;
+    long                 diff = tick - last;
+    long                 delta;
+    long                 ntick;
+    long                 val;
+    long                 div;
 
     if (diff >= SCHEDHISTORYNTICK) {
         task->ntick = 0;
@@ -172,13 +172,13 @@ schedswapqueues(void)
     return;
 }
 
-static __inline__ struct cpu *
+static __inline__ volatile struct cpu *
 schedfindidlecore(long unit, long *retcore)
 {
-    struct cpu *cpu = &cputab[unit];
-    long        nunit = NCPU;
-    long        ndx = 0;
-    long        val = 0;
+    volatile struct cpu *cpu = &cputab[unit];
+    long                 nunit = NCPU;
+    long                 ndx = 0;
+    long                 val = 0;
 
     for (ndx = 0 ; ndx < nunit ; ndx++) {
         if (ndx != unit && bitset(schedidlecoremap, ndx)) {
