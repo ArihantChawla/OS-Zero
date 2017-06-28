@@ -60,7 +60,7 @@ m_cmpswap(volatile long *p, long want, long val)
                           : "r" (p), "r" (val), "r" (want)
                           : "cc", "memory");
 
-    return !res;
+    return res;
 }
 
 #endif /* __ZERO_ARM_ASM_H__ */
