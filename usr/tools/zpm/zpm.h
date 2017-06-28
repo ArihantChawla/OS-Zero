@@ -60,7 +60,7 @@ typedef zpmureg  zpmadr;
 #define ZPM_ADD         ZPM_ADD_BIT
 #define ZPM_ADF         (ZPM_ADD_BIT | ZPM_MSW_BIT)
 #define ZPM_ADI         (ZPM_ADD_INV_BIT) // a + ~b
-#define ZPM_SUB         (ZPM_ADD_INV_BIT | ZPM_INC_BIT)
+#define ZPM_SUB         (ZPM_ADD_INV_BIT | ZPM_INC_BIT) // a + ~b + 1
 #define ZPM_SBF         (ZPM_ADD_INV_BIT | ZPM_INC_BIT | ZPM_MSW_BIT)
 #define ZPM_DEC         (ZPM_SUB_BIT | ZPM_DEC_BIT)
 #define ZPM_CMP         ZPM_SBF
@@ -92,20 +92,20 @@ typedef zpmureg  zpmadr;
 /* flow control; branch and subroutine operations */
 #define ZPM_FLOW        0x07
 #define ZPM_JMP         0x00 // branch unconditionally
-#define ZPM_BZ          0x01 // branch if zero (ZF == 1)
-#define ZPM_BNZ         0x02 // branch if non-zero (ZF == 0)
-#define ZPM_BLT         0x03 // branch if less than
-#define ZPM_BLE         0x04 // branch if less than or equal
-#define ZPM_BGT         0x05 // branch if greater than
-#define ZPM_BGE         0x06 // branch if greater than or equal
-#define ZPM_BO          0x07 // branch if overflow set
-#define ZPM_BNO         0x08 // branch if overflow not set
-#define ZPM_BC          0x09 // branch if carry set
-#define ZPM_BNC         0x0a // branch if carry not set
+#define ZPM_BZ          0x01 // branch if zero (ZF)
+#define ZPM_BNZ         0x02 // branch if non-zero (!ZF)
+#define ZPM_BLT         0x03 // branch if less than (CF  && !ZF)
+#define ZPM_BLE         0x04 // branch if less than or equal (CF || ZF)
+#define ZPM_BGT         0x05 // branch if greater than (OF && !ZF)
+#define ZPM_BGE         0x06 // branch if greater than or equal (OF || ZF)
+#define ZPM_BO          0x07 // branch if overflow set (OF)
+#define ZPM_BNO         0x08 // branch if overflow not set (!OF)
+#define ZPM_BC          0x09 // branch if carry set (CF)
+#define ZPM_BNC         0x0a // branch if carry not set (!CF)
 #define ZPM_CALL        0x0b // trigger function call
-#define ZPM_THR         0x0c // launch new thread
-#define ZPM_ENTER       0x0d // function prologue
-#define ZPM_LEAVE       0x0e // function epilogue
+#define ZPM_ENTER       0x0c // function prologue
+#define ZPM_LEAVE       0x0d // function epilogue
+#define ZPM_THR         0x0e // launch new thread
 #define ZPM_RET         0x0f // return from subroutine or thread
 /* system operations */
 #define ZPM_SYS         0x08
