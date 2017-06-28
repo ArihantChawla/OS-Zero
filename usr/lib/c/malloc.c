@@ -50,16 +50,6 @@ _malloc(size_t size, size_t align, long flg)
     } else {
         memcalcpageslot(asz, slot);
     }
-    if (!g_memtls) {
-        meminittls();
-        if (!g_memtls) {
-#if defined(ENOMEM)
-            errno = ENOMEM;
-#endif
-
-            return NULL;
-        }
-    }
     ptr = memgetblk(slot, type, asz, aln);
     if (!ptr) {
 #if defined(ENOMEM)

@@ -33,7 +33,7 @@
 #define MEM_LK_SPIN   0x08      // spinlock
 #define MEM_LK_SPINWT 0x10      // spin-wait lock
 
-#define MEM_LK_TYPE   MEM_LK_PRIO // type of locks to use
+#define MEM_LK_TYPE   MEM_LK_FMTX // type of locks to use
 
 #include <limits.h>
 #include <stddef.h>
@@ -82,20 +82,6 @@ MEMPTR_T                 memgetblk(MEMWORD_T slot, MEMWORD_T type,
                                    MEMWORD_T size, MEMWORD_T align);
 MEMADR_T                 membufop(MEMPTR_T ptr, MEMWORD_T op,
                                   struct membuf *buf, MEMWORD_T id);
-#if (!MEMBLKHDR)
-#if (MEMMULTITAB)
-struct membuf          * memfindbuf(void *ptr, MEMWORD_T incr);
-#elif (MEMNEWHASH)
-MEMADR_T                 membufop(MEMPTR_T ptr, MEMWORD_T op,
-                                  struct membuf *buf,
-                                  MEMWORD_T id);
-#elif (MEMHASH)
-MEMADR_T                 memfindbuf(void *ptr, MEMWORD_T incr,
-                                    MEMADR_T *keyret);
-#else
-struct membuf          * memfindbuf(void *ptr, long rel);
-#endif
-#endif /* !MEMBLKHDR */
 void                     memrelblk(struct membuf *buf, MEMWORD_T id);
 #if (MEMTEST)
 void                     memprintbuf(struct membuf *buf, const char *func);
@@ -277,7 +263,7 @@ void                     memprintbufstk(struct membuf *buf, const char *msg);
 /* number of words in buf freemap */
 #define MEMBUFMAXBITS       MEMBUFMAXBLKS
 #define MEMBUFBITMAPWORDS                                               \
-    rounduppow2(MEMBUFMAXBITS / (WORDSIZE * CHAR_BIT), 8)
+    rounduppow2(MEMBUFMAXBITS / (WORDSIZE * CHAR_BIT), CLSIZE)
         
 #define MEMSMALLSLOT        10
 #define MEMMIDSLOT          15
@@ -464,11 +450,11 @@ struct mem {
 #define MEMNOBLK (MEMWORD(-1))
 
 #define membufmapsize()                                                 \
-    (rounduppow2(sizeof(struct membuf)                                  \
+    (rounduppow2(rounduppow2(sizeof(struct membuf), PAGESIZE)           \
                  + MEMBUFBITMAPWORDS * WORDSIZE,                        \
                  PAGESIZE))
 #define membufhdrsize(nblk)                                             \
-    (rounduppow2(sizeof(struct membuf)                                  \
+    (rounduppow2(rounduppow2(sizeof(struct membuf), PAGESIZE)           \
                  + (nblk) * sizeof(MEMBLKID_T),                         \
                  PAGESIZE))
 
@@ -693,7 +679,6 @@ membufinitmap(struct membuf *buf, MEMWORD_T nblk)
 //        bits >>= (WORDSIZE * CHAR_BIT - nblk);
         bits--;
         *ptr = bits;
-        ptr++;
     }
 
     return;
@@ -722,7 +707,7 @@ static __inline__ MEMWORD_T
 membufscanblk(struct membuf *buf, MEMWORD_T *nfreeret)
 {
     MEMWORD_T  nblk = memgetbufnblk(buf);
-    MEMWORD_T *map = &buf->data;
+    MEMWORD_T *map = buf->data;
     MEMWORD_T  ndx = 0;
     MEMWORD_T  word;
     MEMWORD_T  mask;

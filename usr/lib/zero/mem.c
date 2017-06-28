@@ -27,9 +27,6 @@
 
 static pthread_once_t               g_initonce = PTHREAD_ONCE_INIT;
 static pthread_key_t                g_thrkey;
-#if (!MEMDYNTLS)
-THREADLOCAL struct memtls           g_memtlsdata;
-#endif
 THREADLOCAL volatile struct memtls *g_memtls;
 struct mem                          g_mem;
 #if (MEMSTAT)
@@ -179,17 +176,13 @@ memgetprioval(void)
 volatile struct memtls *
 meminittls(void)
 {
-#if (MEMDYNTLS)
     struct memtls *tls;
     struct memtls *adr;
-#endif
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
     unsigned long  val;
 #endif
 
-    spinlk(&g_mem.initlk);
     pthread_once(&g_initonce, meminit);
-#if (MEMDYNTLS)
     tls = mapanon(0, memtlssize());
     if (tls != MAP_FAILED) {
         adr = (struct memtls *)memgentlsadr((MEMWORD_T *)tls);
@@ -200,17 +193,6 @@ meminittls(void)
         pthread_setspecific(g_thrkey, tls);
         g_memtls = adr;
     }
-#else /* !MEMDYNTLS */
-    pthread_setspecific(g_thrkey, NULL);
-#if (MEM_LK_TYPE == MEM_LK_PRIO)
-    val = memgetprioval();
-    priolkinit(&g_memtlsdata.priolkdata, val);
-#endif
-#if (!MEMDYNTLS)
-    g_memtls = &g_memtlsdata;
-#endif
-#endif
-    spinunlk(&g_mem.initlk);
 
     return g_memtls;
 }
@@ -331,7 +313,11 @@ meminit(void)
 #endif
     void              *ptr;
 
-//    fprintf(stderr, "MEMHASHARRAYITEMS == %d\n", MEMHASHARRAYITEMS);
+    fprintf(stderr, "MEMBUFMAXBLKS == %d\n", MEMBUFMAXBLKS);
+    fprintf(stderr, "MEMBUFBITMAPWORDS == %d\n", MEMBUFBITMAPWORDS);
+    fprintf(stderr, "MEMHASHARRAYITEMS == %d\n", MEMHASHARRAYITEMS);
+    fprintf(stderr, "sizeof(struct membuf) == %d\n", sizeof(struct membuf));
+    fprintf(stderr, "membufmapsize() == %d\n", membufmapsize());
 //    spinlk(&g_mem.initlk);
 #if (MEMSIGNAL)
     signal(SIGQUIT, memexit);
@@ -418,10 +404,9 @@ memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
 #endif
     }
     buf = (struct membuf *)adr;
-    adr += sizeof(struct membuf);
+    adr += rounduppow2(sizeof(struct membuf), PAGESIZE);
     buf->stk = adr;
-    adr += nblk * sizeof(MEMBLKID_T);
-    adr = (MEMPTR_T)rounduppow2((uintptr_t)adr, (uintptr_t)PAGESIZE);
+    adr = rounduppow2((uintptr_t)adr + nblk * sizeof(MEMBLKID_T), PAGESIZE);
     buf->base = adr;
     buf->flg = flg;    // possible MEMHEAPBIT
     meminitbufslot(buf, slot);
@@ -481,10 +466,9 @@ memallocpagebuf(MEMWORD_T slot, MEMWORD_T nblk)
     }
     buf = (struct membuf *)adr;
 //    adr += membufmapsize();
-    adr += sizeof(struct membuf);
+    adr += rounduppow2(sizeof(struct membuf), PAGESIZE);
     buf->freemap = adr;
-    adr += MEMBUFBITMAPWORDS * WORDSIZE;
-    adr = (MEMPTR_T)rounduppow2((uintptr_t)adr, (uintptr_t)PAGESIZE);
+    adr = rounduppow2((uintptr_t)adr + MEMBUFBITMAPWORDS * WORDSIZE, PAGESIZE);
     buf->base = adr;
     buf->flg = 0;
     meminitbufslot(buf, slot);
@@ -545,10 +529,9 @@ memallocbigbuf(MEMWORD_T slot, MEMWORD_T nblk)
     }
     buf = (struct membuf *)adr;
 //    adr += membufmapsize();
-    adr += sizeof(struct membuf);
+    adr += rounduppow2(sizeof(struct membuf), PAGESIZE);
     buf->freemap = adr;
-    adr += MEMBUFBITMAPWORDS * WORDSIZE;
-    adr = (MEMPTR_T)rounduppow2((uintptr_t)adr, (uintptr_t)PAGESIZE);
+    adr = rounduppow2((uintptr_t)adr + MEMBUFBITMAPWORDS * WORDSIZE, PAGESIZE);
     buf->base = adr;
     buf->flg = 0;
     meminitbufslot(buf, slot);
@@ -1457,6 +1440,23 @@ memgetblk(MEMWORD_T slot, MEMWORD_T type, MEMWORD_T size, MEMWORD_T align)
     struct membuf             *head;
     MEMADR_T                   upval;
     
+    if (!g_memtls) {
+        meminittls();
+        if (!g_memtls) {
+#if defined(ENOMEM)
+            errno = ENOMEM;
+#endif
+
+            return NULL;
+        }
+    }
+    if (!(g_mem.flg & MEMINITBIT)) {
+        spinlk(&g_mem.initlk);
+        if (!(g_mem.flg & MEMINITBIT)) {
+            meminit();
+        }
+        spinunlk(&g_mem.initlk);
+    }
     ptr = memgetblktls(type, slot, size, align);
 #if (MEMDEADBINS)
     if (!ptr) {
