@@ -3,7 +3,7 @@
 
 #include <zero/param.h>
 
-#define REENTRANTGDTINIT 1
+//#define REENTRANTGDTINIT 1
 #define LONGMODE      0
 #define MEMBUFNOLK    0 // FIXME: implement lock-free data (stack?)
 
@@ -23,35 +23,30 @@
 #define VMFLATPHYSTAB 1
 #define USERMODE      0
 #define PLASMA        1
-#define PLASMAFOREVER 1
-
-#if !defined(FASTINTR)
-#define FASTINTR      1
-#endif
+#define PLASMAFOREVER 0
 
 #define IOBUF         1
 #define NEWFONT       1
 #if !defined(BUFNMEG)
-#define BUFNMEG       128
+#define BUFNMEG       256
 #endif
 #define BUFNBYTE      (BUFNMEG * 1024 * 1024)
-#define BUFMINBYTES   (BUFNBYTE >> 3)
+#define BUFMINBYTES   (BUFNBYTE >> 2)
 
 #define kgethz()      HZ
 #define HZ            250       // scheduler timer frequency
 #define SMP           0         // enable multiprocessor support; FIXME:  broken
 #define SMT           0         // enable hardware multithreading ('hyper')
 #define FASTHZ        1000      // fast timer frequency (interactive tasks etc.)
-#define ZEROSCHED     1         // default scheduler
+#define ZEROSCHED     1         // default scheduler (based on FreeBSD ULE)
 #define ZEROINTSCHED  1         // scheduler with interactivity-scoring
-#define ZEROULE       0
 //#define NPROC       1024      // maximum number of running processes on system
 //#define NPROC       4096
 #define NTASK         4096      // maximum number of running tasks on system
-#define NPROCTASK     128
-#define TASKNDESC     16384     // maximum number of descriptors per process
-#define TASKSTKSIZE   1048576
-#define KERNSTKSIZE   PAGESIZE
+#define NPROCTASK     128       // maximum number of children per task
+#define NPROCFD       4096      // maximum number of descriptors per process
+#define TASKSTKSIZE   1048576   // task user mode stack size
+#define KERNSTKSIZE   PAGESIZE  // task kernel mode stack size
 #if (SMP)
 #define NCPU          8
 #else
@@ -62,7 +57,6 @@
 #else
 #define NCORE         1
 #endif
-#define NPROCFD       4096      // maximum number of descriptors per process
 
 /* NOTE: it's not recommended to edit anything below unless you develop Zero */
 

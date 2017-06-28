@@ -67,21 +67,13 @@ trapde:
 	pushl	$TRAPDE
 	_trapenter
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	xorl	%ecx, %ecx		// zero third argument
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPDE, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPDE
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -94,21 +86,13 @@ trapdb:
 	pushl	$TRAPDB
 	_trapenter
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	xorl	%ecx, %ecx		// zero third argument
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPDB, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPDB
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -121,21 +105,13 @@ trapnmi:
 	pushl	$TRAPNMI
 	_trapenter
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	xorl	%ecx, %ecx		// zero third argument
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPNMI, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPNMI
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -148,21 +124,13 @@ trapbp:
 	pushl	$TRAPBP
 	_trapenter
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	xorl	%ecx, %ecx		// zero third argument
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPBP, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPBP
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -175,21 +143,13 @@ trapof:
 	pushl	$TRAPOF
 	_trapenter
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	xorl	%ecx, %ecx		// zero third argument
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPOF, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPOF
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -202,21 +162,13 @@ trapbr:
 	pushl	$TRAPBR
 	_trapenter
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	xorl	%ecx, %ecx		// zero third argument
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPBR, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPBR
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -229,21 +181,13 @@ trapud:
 	pushl	$TRAPUD
 	_trapenter
 	movl	%esp, %ebp
-
 	movl	8(%esp), %eax	// old ESP
 	movl	(%eax), %ecx	// stored EIP
-#if (FASTINTR)
 	pushl	%eax
 	movl	$TRAPUD, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPUD
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -256,21 +200,13 @@ trapnm:
 	pushl	$TRAPNM
 	_trapenter
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	xorl	%ecx, %ecx		// zero third argument
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPNM, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPNM
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -282,21 +218,13 @@ trapdf:
 	pushl	$TRAPDF
 	_trapentererr
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	/* error code is in %ecx */
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPDF, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPDF
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -308,21 +236,13 @@ trapts:
 	pushl	$TRAPTS
 	_trapentererr
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	/* error code is in %ecx */
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPTS, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPTS
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -335,21 +255,13 @@ trapnp:
 	pushl	$TRAPNP
 	_trapentererr
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	/* error code is in %ecx */
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPNP, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPNP
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -362,21 +274,13 @@ trapss:
 	pushl	$TRAPSS
 	_trapentererr
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	/* error code is in %ecx */
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPSS, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPSS
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -389,22 +293,13 @@ trapgp:
 	pushl	$TRAPGP
 	_trapentererr
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	/* error code is in %ecx */
 	pushl	%ebx
 	movl	$TRAPGP, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPGP
-	pushl	$0x00000000
-	pushl	%eax
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 _gpfin:	
 	movl	%ebp, %esp
 	_trapleave
@@ -425,21 +320,12 @@ trappf:
 	pushl	$TRAPPF
 	_trapentererr
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	leal	40(%esp), %ebx		// stack frame argument on stack
 	/* error code is in %ecx */
 	pushl	%ebx
 	movl	%cr2, %edx		// fault address in edx
 	xorl	%gs:12, %eax		// FIXME: PID
-#else
-	movl	%cr2, %edx		// linear address
-	pushl	%ecx			// error code
-	pushl	%edx			// linear address
-	pushl	$0x00000000		// FIXME: push PID here
-#endif	
 	call	vmpagefault
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -452,21 +338,13 @@ trapmf:
 	pushl	$TRAPMF
 	_trapenter
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	xorl	%ecx, %ecx		// zero third argument
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPMF, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPMF
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -479,21 +357,13 @@ trapac:
 	pushl	$TRAPAC
 	_trapenter
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	xorl	%ecx, %ecx		// zero third argument
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPAC, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPAC
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -506,21 +376,13 @@ trapmc:
 	pushl	$TRAPMC
 	_trapenter
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	xorl	%ecx, %ecx		// zero third argument
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPMC, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPMC
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -533,21 +395,13 @@ trapxf:
 	pushl	$TRAPXF
 	_trapenter
 	movl	%esp, %ebp
-
-#if (FASTINTR)
 	movl	8(%esp), %ebx		// stack frame argument on stack
 	xorl	%ecx, %ecx		// zero third argument
 	pushl	%ebx			// push context/frame argument
 	movl	$TRAPXF, %edx
 	xorl	%eax, %eax
-#else
-	pushl	%ecx
-	pushl	$TRAPXF
-	pushl	$0x00000000
-#endif
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-
 	movl	%ebp, %esp
 	_trapleave
 	sti

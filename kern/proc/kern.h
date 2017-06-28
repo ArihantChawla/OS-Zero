@@ -9,7 +9,7 @@
 #define PROCEVD      2  // event daemon; manage events such as user input ones
 #define PROCBUFD     3  // buffer daemon; HID, audio, video, net, disk
 #define PROCPAGED    4  // page daemon; page replacement; aging, LRU-queue
-#define PROCIDLE     5  // idle process; zeroes memory etc.
+#define PROCIDLE     5  // idle process; (zeroes memory etc.?)
 #define TASKNPREDEF  6
 
 /*

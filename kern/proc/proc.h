@@ -63,7 +63,7 @@
 #include <kern/cpu.h>
 #include <kern/proc/kern.h>
 #include <kern/proc/task.h>
-#include <kern/unit/x86/vm.h>
+//#include <kern/unit/x86/vm.h>
 
 #define PROCNEW (-1L)
 
@@ -116,7 +116,7 @@ struct proc {
     long                 pgrp;          // process-group ID (leader)
     /* memory management */
     pde_t               *pagedir;       // page directory address
-#if (PTRSIZE == 4) && (VMFLATPHYSTAB)
+#if (VMFLATPHYSTAB)
     pte_t               *pagetab;
 #endif
     struct maghdr      **vmmagtab;      // PTRBITS queues of mags

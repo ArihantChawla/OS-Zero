@@ -141,7 +141,8 @@ kerngdt:
 #else
 kerngdt:
 	.space	(8 * NGDT)
-
+#endif /* SMP */
+	
 /* kernel TSS structures */
 kerntsstab:
 	.space	(NCPU * TSSLEN)
@@ -158,5 +159,3 @@ kernsysstktab:
 kernusrstktab:
 	.space	(NCPU * KERNSTKSIZE)
 
-#endif /* SMP */
-	

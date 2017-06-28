@@ -164,7 +164,7 @@ struct kmembuf {
 
 #if (SMP)
 #define mbincref(mb)      m_atominc(&(mbexthdr(mb))->nref)
-#define mbdecref(mb)      m_atomadd(&(mbexthdr(mb))->nref, -1)
+#define mbdecref(mb)      m_atomdec(&(mbexthdr(mb))->nref)
 #define mbgetref(mb, res) m_syncread(&(mbexthdr(mb))->nref, (res))
 #else
 #define mbincref(mb)      ((mbexthdr(mb))->nref++)

@@ -27,7 +27,7 @@
 
 #define HICORE (1024 * 1024)
 
-extern void pginit(void);
+void pginit(void);
 
 extern uint8_t       kernsysstktab[NCPU * KERNSTKSIZE];
 extern uint8_t       kernusrstktab[NCPU * KERNSTKSIZE];
@@ -256,11 +256,7 @@ vmfreephys(void *virt, uint32_t size)
     return;
 }
 
-#if (FASTINTR)
 FASTCALL
-#else
-ASMLINK
-#endif
 void
 vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
 {

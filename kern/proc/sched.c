@@ -100,13 +100,9 @@ schedyield(void)
     task = schedswitchtask(oldtask);
     if (task != oldtask) {
         m_taskjmp(&task->m_task);
-    } else {
-
-        return;
     }
 
-    /* NOTREACHED */
-    for ( ; ; ) { ; }
+    return;
 }
 
 #if (ZEROSCHED)

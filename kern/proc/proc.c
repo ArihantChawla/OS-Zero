@@ -100,8 +100,8 @@ procinit(long id, long sched)
                 
                 return -1;
             }
-            /* initialise page tables */
 #if (VMFLATPHYSTAB)
+            /* initialise page tables */
             ptr = kwalloc(PAGETABSIZE);
             if (ptr) {
                 kbzero(ptr, PAGETABSIZE);
@@ -114,11 +114,11 @@ procinit(long id, long sched)
             }
 #endif
             /* initialise descriptor table */
-            ptr = kmalloc(TASKNDESC * sizeof(struct desc));
+            ptr = kmalloc(NPROCFD * sizeof(struct desc));
             if (ptr) {
-                kbzero(ptr, TASKNDESC * sizeof(struct desc));
+                kbzero(ptr, NPROCFD * sizeof(struct desc));
                 proc->desctab = ptr;
-                proc->ndesctab = TASKNDESC;
+                proc->ndesctab = NPROCFD;
             } else {
                 if (id >= TASKNPREDEF) {
                     kfree(proc->pagetab);

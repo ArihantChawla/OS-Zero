@@ -11,6 +11,7 @@
 #include <zero/mtx.h>
 #include <kern/util.h>
 #include <kern/cpu.h>
+#include <kern/mem/vm.h>
 #include <kern/mem/mem.h>
 #include <kern/mem/slab.h>
 #include <kern/mem/mag.h>
@@ -20,7 +21,6 @@
 #include <kern/unit/x86/link.h>
 #include <kern/unit/x86/trap.h>
 #endif
-#include <kern/mem/mem.h>
 #if (MEMTEST)
 #include <stdio.h>
 #include <string.h>

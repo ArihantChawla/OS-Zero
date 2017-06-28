@@ -16,6 +16,7 @@
 #include <kern/malloc.h>
 #include <kern/cpu.h>
 #include <kern/mem/vm.h>
+#include <kern/proc/task.h>
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/x86/link.h>

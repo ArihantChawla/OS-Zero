@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+extern
+
 #define segsetdesc(p, adr, lim, flg)                                    \
     do {                                                                \
         uint64_t _adr = (uintptr_t)(adr);                               \

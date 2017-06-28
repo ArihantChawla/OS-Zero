@@ -24,9 +24,7 @@ prockill(volatile struct proc *proc)
     ;
 }
 
-#if (FASTINTR)
 FASTCALL
-#endif
 void
 sigfunc(unsigned long pid, int32_t trap, long err, void *frame)
 {

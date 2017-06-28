@@ -21,7 +21,7 @@
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/ia32/mp.h>
 
-extern void   mpentry(void);
+void          mpentry(void);
 void          mpinit(void);
 extern void * mpend;
 extern long   mpmultiproc;

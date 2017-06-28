@@ -304,7 +304,7 @@ struct cpu {
     struct cpu       *cpu;
     long              unit;
     struct task      *task;
-    long              pid;
+    long              id;
     struct proc      *proc;
     pde_t             pdir;
     long              flg;

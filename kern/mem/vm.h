@@ -19,12 +19,10 @@ typedef uint32_t   vmpagebits;
 typedef uint64_t   vmpagebits;
 #endif
 
-#if ((defined(__i386__) || defined(__i486__)                            \
-      || defined(__i586__) || defined(__i686__))                        \
-     && !(defined(__x86_64__) || defined(__amd64__)))
-#include <kern/unit/ia32/vm.h>
-#elif defined(__x86_64__) || defined(__amd64__)
-#include <kern/unit/x86-64/vm.h>
+#if (defined(__i386__) || defined(__i486__)                             \
+     || defined(__i586__) || defined(__i686__)                          \
+     || defined(__x86_64__) || defined(__amd64__))
+#include <kern/unit/x86/vm.h>
 #endif
 
 #define VM_PROT_NONE       0x00

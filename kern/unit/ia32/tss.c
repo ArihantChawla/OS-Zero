@@ -9,7 +9,7 @@
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/ia32/seg.h>
 
-extern uint8_t  kerntsstab[NCPU * TSSLEN];
+uint8_t         kerntsstab[NCPU * TSSLEN];
 extern uint8_t  kerniomap[8192];
 extern uint64_t kerngdt[NCPU][NGDT];
 /* FIXME: per-process kernel- and user-mode stacks */
