@@ -59,7 +59,7 @@ spinwtunlk(volatile long *sp)
 {
     m_membar();
     *sp = ZEROSPININITVAL;
-    m_relspin();
+    m_endspin();
 
     return;
 }

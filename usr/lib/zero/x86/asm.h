@@ -20,7 +20,7 @@ typedef volatile int64_t m_atomic64_t;
 #define m_memwrbar() __asm__ __volatile__ ("sfence\n" : : : "memory")
 /* delay exection */
 #define m_waitspin() __asm__ __volatile__ ("pause\n"  : : : "memory")
-#define m_relspin()
+#define m_endspin()
 /* wait for an interrupt */
 #define m_waitint()  __asm__ __volatile__ ("hlt\n"  : : : "memory")
 

@@ -17,15 +17,14 @@ typedef m_atomic_t zerospin;
 static __inline__ long
 spintrylk(m_atomic_t *sp)
 {
-    m_atomic_t res;
+    m_atomic_t res = 0;
 
     res = m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL);
     if (res == ZEROSPININITVAL) {
-
-        return 1;
+        res++;
     }
     
-    return 0;
+    return res;
 }
 
 /*
@@ -34,8 +33,6 @@ spintrylk(m_atomic_t *sp)
 static __inline__ void
 spinlk(m_atomic_t *sp)
 {
-    m_atomic_t res = ZEROSPINLKVAL;
-
     while (!m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL)) {
         m_waitspin();
     }
@@ -51,7 +48,7 @@ spinunlk(m_atomic_t *sp)
 {
     m_membar();
     *sp = ZEROSPININITVAL;
-    m_relspin();
+    m_endspin();
 
     return;
 }

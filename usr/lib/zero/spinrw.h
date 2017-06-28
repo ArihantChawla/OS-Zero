@@ -89,7 +89,7 @@ spinrwunlkwr(volatile long *sp)
 {
     assert(*sp == SPINRWWRBIT);
     *sp = ZEROSPININITVAL;
-    m_relspin();
+    m_endspin();
 
     return;
 }

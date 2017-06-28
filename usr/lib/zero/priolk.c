@@ -135,7 +135,7 @@ priolkrel(struct priolk *priolk)
     priolk->owner = NULL;
     m_membar();
     t_priolkptr->val = t_priolkptr->orig;
-    m_relspin();
+    m_endspin();
 
     return;
 }

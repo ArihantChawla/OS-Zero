@@ -76,11 +76,7 @@ fmtxlk(m_atomic_t *lp)
     do {
         res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
         if (!res) {
-#if (ZEROFMTXYIELD) && !defined(__KERNEL__)
-            thryield();
-#else
             m_waitspin();
-#endif
         }
     } while (!res);
 
@@ -96,9 +92,7 @@ fmtxunlk(m_atomic_t *lp)
 {
     m_membar();
     *lp = FMTXINITVAL;
-#if !((ZEROFMTXYIELD) && !defined(__KERNEL__))
-    m_relspin();
-#endif
+    m_endspin();
     
     return;
 }

@@ -8,7 +8,7 @@
 #elif defined(__ARM_ARCH_7__)
 /* TODO: are these ARMv7? */
 #define m_waitspin() __asm__ __volatile__ ("wfe\n")
-#define m_relspin()  __asm__ __volatile__ ("sev\n")
+#define m_endspin()  __asm__ __volatile__ ("sev\n")
 #define m_waitint()  __asm__ __volatile__ ("wfi\n")
 #else
 #define m_waitint()  __asm__ __volatile__ ("mov r0, #0\n"                \

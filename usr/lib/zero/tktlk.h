@@ -8,14 +8,8 @@
 #include <zero/param.h>
 #include <zero/cdefs.h>
 #include <zero/asm.h>
-#if defined(__KERNEL__)
-#include <kern/sched.h>
-#define tktlkyield() schedyield()
-#else
-#define tktlkyield() thryield()
 #define PTHREAD 1
 #include <zero/thr.h>
-#endif
 
 #if !defined(TKTLKSIZE)
 #define TKTLKSIZE  4
@@ -72,7 +66,7 @@ tktlkspin(union zerotktlk *tp)
         nspin--;
     } while ((nspin) && tp->s.val != val);
     while (tp->s.val != val) {
-        tktlkyield();
+        m_waitspin();
     }
         
     return;
@@ -84,7 +78,7 @@ tktlk(union zerotktlk *tp)
     volatile unsigned short val = m_fetchaddu16(&tp->s.nref, 1);
     
     while (tp->s.val != val) {
-        tktlkyield();
+        m_waitspin();
     }
     
     return;
@@ -95,6 +89,7 @@ tktunlk(union zerotktlk *tp)
 {
     m_membar();
     tp->s.val++;
+    m_endspin();
     
     return;
 }
@@ -128,7 +123,7 @@ tktlkspin(union zerotktlk *tp)
         nspin--;
     } while ((nspin) && tp->s.val != val);
     while (tp->s.val != val) {
-        tktlkyield();
+        m_waitspin();
     }
 
     return;
@@ -140,7 +135,7 @@ tktlk(union zerotktlk *tp)
     volatile unsigned long val = m_fetchaddu32(&tp->s.nref, 1);
 
     while (tp->s.val != val) {
-        tktlkyield();
+        m_waitspin();
     }
 
     return;
@@ -151,6 +146,7 @@ tktunlk(union zerotktlk *tp)
 {
     m_membar();
     tp->s.val++;
+    m_endspin();
 
     return;
 }
