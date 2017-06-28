@@ -53,18 +53,17 @@ typedef zpmureg  zpmadr;
 #define ZPM_MSW_BIT     0x01
 #define ZPM_DEC_BIT     0x02
 #define ZPM_ADD_BIT     0x02
-#define ZPM_CMP_BIT     0x02
 #define ZPM_SUB_BIT     0x04
 #define ZPM_ADD_INV_BIT 0x04
 #define ZPM_XFER        0x00
 #define ZPM_INC         ZPM_INC_BIT
 #define ZPM_ADD         ZPM_ADD_BIT
-#define ZPM_ADC         (ZPM_ADD_BIT | ZPM_MSW_BIT)
+#define ZPM_ADF         (ZPM_ADD_BIT | ZPM_MSW_BIT)
 #define ZPM_ADI         (ZPM_ADD_INV_BIT) // a + ~b
 #define ZPM_SUB         (ZPM_ADD_INV_BIT | ZPM_INC_BIT)
-#define ZPM_SBC         (ZPM_ADD_INV_BIT | ZPM_INC_BIT | ZPM_MSW_BIT)
+#define ZPM_SBF         (ZPM_ADD_INV_BIT | ZPM_INC_BIT | ZPM_MSW_BIT)
 #define ZPM_DEC         (ZPM_SUB_BIT | ZPM_DEC_BIT)
-#define ZPM_CMP         (ZPM_SUB_BIT | ZPM_CMP_BIT | ZPM_MSW_BIT)
+#define ZPM_CMP         ZPM_SBF
 /* multiplier */
 #define ZPM_MULTIPLIER  0x03
 #define ZPM_MUL         0x00 // multiplication
