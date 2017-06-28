@@ -48,22 +48,22 @@ typedef zpmureg  zpmopfunc(struct zpm *vm, uint8_t *ptr, zpmureg pc);
         opset(ZPM_STACK, ZPM_POPA, opadr(popa), tab);                   \
         opset(ZPM_IO, ZPM_IN, opadr(in), tab);                          \
         opset(ZPM_IO, ZPM_OUT, opadr(out), tab);                        \
-        opset(ZPM_BRANCH, ZPM_JMP, opadr(jmp), tab);                    \
-        opset(ZPM_BRANCH, ZPM_BZ, opadr(bz), tab);                      \
-        opset(ZPM_BRANCH, ZPM_BNZ, opadr(bnz), tab);                    \
-        opset(ZPM_BRANCH, ZPM_BLT, opadr(blt), tab);                    \
-        opset(ZPM_BRANCH, ZPM_BLE, opadr(ble), tab);                    \
-        opset(ZPM_BRANCH, ZPM_BGT, opadr(bgt), tab);                    \
-        opset(ZPM_BRANCH, ZPM_BGE, opadr(bge), tab);                    \
-        opset(ZPM_BRANCH, ZPM_BO, opadr(bo), tab);                      \
-        opset(ZPM_BRANCH, ZPM_BNO, opadr(bno), tab);                    \
-        opset(ZPM_BRANCH, ZPM_BC, opadr(bc), tab);                      \
-        opset(ZPM_BRANCH, ZPM_BNC, opadr(bnc), tab);                    \
-        opset(ZPM_BRANCH, ZPM_CALL, opadr(call), tab);                  \
-        opset(ZPM_BRANCH, ZPM_THR, opadr(thr), tab);                    \
-        opset(ZPM_BRANCH, ZPM_ENTER, opadr(enter), tab);                \
-        opset(ZPM_BRANCH, ZPM_LEAVE, opadr(leave), tab);                \
-        opset(ZPM_BRANCH, ZPM_RET, opadr(ret), tab);                    \
+        opset(ZPM_FLOW, ZPM_JMP, opadr(jmp), tab);                      \
+        opset(ZPM_FLOW, ZPM_BZ, opadr(bz), tab);                        \
+        opset(ZPM_FLOW, ZPM_BNZ, opadr(bnz), tab);                      \
+        opset(ZPM_FLOW, ZPM_BLT, opadr(blt), tab);                      \
+        opset(ZPM_FLOW, ZPM_BLE, opadr(ble), tab);                      \
+        opset(ZPM_FLOW, ZPM_BGT, opadr(bgt), tab);                      \
+        opset(ZPM_FLOW, ZPM_BGE, opadr(bge), tab);                      \
+        opset(ZPM_FLOW, ZPM_BO, opadr(bo), tab);                        \
+        opset(ZPM_FLOW, ZPM_BNO, opadr(bno), tab);                      \
+        opset(ZPM_FLOW, ZPM_BC, opadr(bc), tab);                        \
+        opset(ZPM_FLOW, ZPM_BNC, opadr(bnc), tab);                      \
+        opset(ZPM_FLOW, ZPM_CALL, opadr(call), tab);                    \
+        opset(ZPM_FLOW, ZPM_THR, opadr(thr), tab);                      \
+        opset(ZPM_FLOW, ZPM_ENTER, opadr(enter), tab);                  \
+        opset(ZPM_FLOW, ZPM_LEAVE, opadr(leave), tab);                  \
+        opset(ZPM_FLOW, ZPM_RET, opadr(ret), tab);                      \
         opset(ZPM_SYS, ZPM_LDR, opadr(ldr), tab);                       \
         opset(ZPM_SYS, ZPM_STR, opadr(str), tab);                       \
         opset(ZPM_SYS, ZPM_RST, opadr(rst), tab);                       \

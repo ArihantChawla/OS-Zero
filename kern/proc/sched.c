@@ -2,7 +2,7 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/types.h>
-#include <zero/fastidiv.h>
+#include <zero/fastudiv.h>
 #include <zero/mtx.h>
 #include <kern/malloc.h>
 #include <kern/cpu.h>
@@ -25,8 +25,7 @@ void                     schedsetzombie(struct proc *proc);
 extern struct cpu        cputab[NCPU];
 extern struct proc      *proczombietab[NTASK];
 extern struct tasktabl0  taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
-extern struct divu16     fastu16div16tab[rounduppow2(SCHEDHISTORYSIZE,
-                                                     PAGESIZE)];
+extern struct divu16     fastu16divu16tab[SCHEDDIVU16TABSIZE];
 
 /* lookup table to convert nice values to priority offsets */
 /* nice is between -20 and 19 inclusively */
@@ -86,7 +85,7 @@ schedinit(void)
 #endif
 #endif
     kprintf("SCHEDHISTORYSIZE == %ld\n", SCHEDHISTORYSIZE);
-    fastu16div16gentab(fastu16div16tab, SCHEDHISTORYSIZE);
+    fastu16divu16gentab(fastu16divu16tab, SCHEDDIVU16TABSIZE);
     schedinitset();
 
     return;

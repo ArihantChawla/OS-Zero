@@ -1,4 +1,5 @@
-\documentclass[llpt, twoside, a4paper]{book}
+%\documentclass[llpt, twoside, a4paper]{book}
+\documentclass[llpt, a4paper]{book}
 \usepackage[T1]{fontenc}
 \usepackage{parskip}
 \usepackage{minted}
@@ -30,19 +31,100 @@
 	Zero Pseudo Machine, ZPM, is a software-based virtual machine. The
 	machine is programmed in its own assembly dialect; the instruction set
 	is reminiscent of many current RISC-like implementations.
+
+	I'm planning to experiment with FPGA-based processor design in the
+	future.
+
 \part{Pseudo Machine}
 
 \chapter{Architecture}
 
 	\textbf{Notes}
 
-	ZPM is an architecture with 32-bit machine words; room has been left in the
-	implementation for 64-bit suppport.
+	ZPM is an architecture with 32-bit machine words; room has been left in
+	the implementation for 64-bit suppport.
 
 	ZPM words are little-endian (LSB) in byte-order.
 
 	There exists an instruction, \textbf{thr}, to start executing new
 	threads from desired code locations in memory.
+
+\section{Arithmetic-Logical Unit}
+
+	ZPM's aritmetic-logical unit (ALU) has been split into parts resembling
+	those of real microprocessors. Following is a quick look at the units
+	defined so far.
+
+\subsection{ALU Sub-Units}
+
+	\subsubsection{Logic Unit}
+
+	The logic unit implements typical bitwise logical operations present in
+	C and many if not most existing assembly dialects. The list of these
+	operations follows.
+
+\begin{tabular}{ | l | l | l | l | }
+	\hline
+	Mnemonic & C Operator    & Logical Function      & Brief \\
+	\hline
+	NOT	 & dest = ~src;  & negation              & reverses all bits \\
+	\hline
+	AND	 & dest \&= src; & conjunction           & true if both inputs are true \\
+	\hline
+	OR	 & dest |= src;  & disjunction           & true if either input or both are true \\
+	\hline
+	XOR	 & dest = ~src;  & exclusive Disjunction & true if exactly one input is true \\
+	\hline
+\end{tabular}
+  
+	\subsubsection{Shifter}
+
+	The shifter implements bit-shift and bit-rotate operations. These are
+	defined as follows.
+
+	Shift operations shift dest left or right by src-positions; logical
+	shift fills the now-empty bits with 0; arithmetic [right] shift fills
+	the leftmost bits with the sign bit (the highest one).
+
+	\textbf{NOTE}: the C language only guarantees zero-fill with left shift;
+	the sign-extension of right-shifting signed types in undefined.
+
+	C does not support rotate operations at language level. These routines
+	shift dest left or right by src bit-positions and fill the end opposite
+	to the direction of the rotate with the shifted-out bits.
+
+	\subsubsection{Arithmetic Unit}
+
+	\subsubsection{Multiplier Unit}
+
+	\subsubsection{Divider Unit}
+
+	\subsubsection{Load-Store Unit}
+
+	\subsubsection{Stack Unit}
+
+	\subsubsection{Input/Output Unit}
+
+	\subsubsection{Flow Unit}
+
+	\subsubsection{System Unit}
+
+\begin{tabular}{ | l | l | l | l | }
+	\hline
+	Mnemonic & C Operator                     & Operation \\
+	\hline
+	SHL	 & dest <<= src;                  & [logical] left shift \\
+	\hline
+	SHR	 & dest >>= src; unsigned types   & logical right shift \\
+	\hline
+	SAR	 & UNDEFINED                      & arithmetic right shift \\
+	\hline
+	ROL	 & UNDEFINED                      & rotate left \\
+	\hline
+	ROR	 & UNDEFINED                      & rotate right \\
+	\hline
+\end{tabular}
+  
 \newpage
 
 \section{Memory Organization}

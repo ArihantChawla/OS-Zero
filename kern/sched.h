@@ -3,7 +3,7 @@
 
 #include <kern/conf.h>
 #include <zero/trix.h>
-#include <zero/fastidiv.h>
+#include <zero/fastudiv.h>
 #if defined(__KERNEL__)
 #include <kern/proc/task.h>
 #endif

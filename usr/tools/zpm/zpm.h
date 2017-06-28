@@ -91,8 +91,8 @@ typedef zpmureg  zpmadr;
 #define ZPM_IO          0x08
 #define ZPM_IN          0x00 // read data from port
 #define ZPM_OUT         0x01 // write data to port
-/* branch and subroutine operations */
-#define ZPM_BRANCH      0x09
+/* flow control; branch and subroutine operations */
+#define ZPM_FLOW        0x09
 #define ZPM_JMP         0x00 // branch unconditionally
 #define ZPM_BZ          0x01 // branch if zero (ZF == 1)
 #define ZPM_BNZ         0x02 // branch if non-zero (ZF == 0)
@@ -117,8 +117,7 @@ typedef zpmureg  zpmadr;
 #define ZPM_RST         0x03 // reset
 #define ZPM_HLT         0x04 // halt
 /* processor parameters */
-#define ZPM_NALU_OP     0xff // max number of ALU operations
-#define ZPM_NALU_RES    256
+#define ZPM_NALU_RES    256 // max number of ALU operations
 #define ZPM_FPU         0x0e
 #define ZPM_COPROC      0x0f // special unit ID to dispatch execution
 

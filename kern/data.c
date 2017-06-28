@@ -1,7 +1,7 @@
 #include <zero/param.h>
-#include <zero/fastidiv.h>
+#include <zero/fastudiv.h>
 #include <kern/sched.h>
 
 /* lookup table for fast division with multiplication and shift */
-struct divu16 fastu16div16tab[rounduppow2(SCHEDHISTORYSIZE, PAGESIZE)];
+struct divu16 fastu16divu16tab[SCHEDDIVU16TABSIZE];
 
