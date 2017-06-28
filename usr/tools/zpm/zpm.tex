@@ -246,18 +246,31 @@ locator \\
 	\hline
 	\textbf{rem}  & r, i & r & dest = dest \% src; & s, z \\
 	\hline
+	\textbf{cpy} & r     & r & copy register & N/A \\
+	\hline
 	\textbf{lda} & r, i, m & r & load 32-bit longword & N/A \\
 	\hline
 	\textbf{sta} & r & r, i, m & store 32-bit longword & N/A \\
-	\hline
-	\textbf{psh} & r, i & N/A & push value on stack & N/A \\
-	\hline
-	\textbf{psha} & N/A & N/A & push all register on stack & N/A \\
 	\hline
 	\textbf{pop}  & r & N/A & pop top of stack & N/A \\
 	\hline
 	\textbf{popa} & N/A & N/A & pop all registers from stack & N/A \\
 	\hline
+	\textbf{psh} & r, i & N/A & push value on stack & N/A \\
+	\hline
+	\textbf{psha} & N/A & N/A & push all register on stack & N/A \\
+	\hline
+	\textbf{inb} & r, i & N/A & read 8-bit byte from input port & N/A \\
+	\hline
+	\textbf{inw} & r, i & N/A & read 16-bit word from input port & N/A \\
+	\hline
+	\textbf{inl} & r, i & N/A & read 32-bit longword from input port & N/A \\
+	\hline
+	\textbf{outb} & r, i & N/A & write 8-bit byte to input port & N/A \\
+	\hline
+	\textbf{outw} & r, i & N/A & write 16-bit word to input port & N/A \\
+	\hline
+	\textbf{outl} & r, i & N/A & write 32-bit longword to input port & N/A \\
 	\textbf{jmp}  & r, i & branch to src & N/A \\
 	\hline
 	\textbf{bz}   & r, i & N/A & branch to src if (CF == 0) & N/A \\
@@ -298,17 +311,6 @@ locator \\
 	\hline
 	\textbf{hlt} & m & N/A & halt machine & N/A \\
 	\hline
-	\textbf{inb} & r, i & N/A & read 8-bit byte from input port & N/A \\
-	\hline
-	\textbf{inw} & r, i & N/A & read 16-bit word from input port & N/A \\
-	\hline
-	\textbf{inl} & r, i & N/A & read 32-bit longword from input port & N/A \\
-	\hline
-	\textbf{outb} & r, i & N/A & write 8-bit byte to input port & N/A \\
-	\hline
-	\textbf{outw} & r, i & N/A & write 16-bit word to input port & N/A \\
-	\hline
-	\textbf{outl} & r, i & N/A & write 32-bit longword to input port & N/A \\
 	\hline
 \end{tabular}
 
