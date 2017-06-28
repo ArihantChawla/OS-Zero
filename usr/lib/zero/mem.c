@@ -21,6 +21,9 @@
 #if !defined(MEMUNMAP)
 #define MEMUNMAP 0
 #endif
+#if !defined(MEMBUFRELMAP)
+#define MEMBUFRELMAP 0
+#endif
 
 static pthread_once_t               g_initonce = PTHREAD_ONCE_INIT;
 static pthread_key_t                g_thrkey;

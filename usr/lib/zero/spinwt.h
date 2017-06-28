@@ -12,26 +12,24 @@
 
 /*
  * try to acquire spin-wait lock
- * - return non-zero on success, zero if already locked
+ * - return non-zero on success, zero otherwise
  */
 static __inline__ long
 spinwttrylk(volatile long *sp, long val, long niter)
 {
     volatile long res = 0;
 
-    if (niter) {
-        do {
-            res = m_cmpswap(sp, ZEROSPININITVAL, val);
-        } while ((--niter) && (res != ZEROSPINITVAL));
-    } else {
-        res = m_cmpswap(sp, ZEROSPININITVAL, val);
+    while ((niter) && !m_cmpswap(sp, ZEROSPININITVAL, val)) {
+        niter--;
+        m_waitspin();
     }
-    if (res == ZEROSPININITVAL) {
-
-        return 1;
+    if (!niter) {
+        res = m_cmpswap(sp, ZEROSPININITVAL, val);
+    } else {
+        res++;
     }
     
-    return 0;
+    return res;
 }
 
 /*
@@ -42,14 +40,11 @@ spinwtlk(volatile long *sp, long val, long niter)
 {
     volatile long res = val;
 
-    if (niter) {
-        do {
-            res = m_cmpswap(sp, ZEROSPININITVAL, val);
-        } while ((--niter) && (res));
-    } else {
-        res = m_cmpswap(sp, ZEROSPININITVAL, val);
+    while ((niter) && !m_cmpswap(sp, ZEROSPININITVAL, val)) {
+        niter--;
+        m_waitspin();
     }
-    if (res != ZEROSPININITVAL) {
+    if (!niter) {
         mtxlk(sp, val);
     }
 
@@ -64,6 +59,7 @@ spinwtunlk(volatile long *sp)
 {
     m_membar();
     *sp = ZEROSPININITVAL;
+    m_relspin();
 
     return;
 }

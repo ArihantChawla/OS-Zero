@@ -15,6 +15,8 @@
 /*
  * machine-specific asm.h headers should declare the following:
  * m_membar()   	- memory barrier for serialised access
+ * m_waitspin()         - pause, wait, or loop (in spin-wait loops)
+ * m_relspin()          - exit spin-loop (where relevant, empty elsewhere)
  * m_waitint()  	- pause until interrupt received
  * m_cmpswap()  	- atomic compare and swap operation
  * m_fetchadd()   	- atomic fetch and add

@@ -11,23 +11,26 @@ extern uint32_t asmgetpc(void);
 
 typedef volatile int32_t m_atomic_t;
 
-#define m_atominc(p)               m_atominc32(p)
-#define m_atomdec(p)               m_atomdec32(p)
-#define m_atomswap(p, val)         m_xchg32(p, val)
-#define m_fetchadd(p, val)         m_xadd32(p, val)
-#define m_cmpswap(p, want, val)    m_cmpxchg32(p, want, val)
-#define m_cmpswapu(p, want, val)   m_cmpxchgu32(p, want, val)
-#define m_cmpswapptr(p, want, val) m_cmpxchg32ptr(p, want, val)
-#define m_cmpswapdbl(p, want, val) m_cmpxchg64(p, want, val)
-#define m_setbit(p, ndx)           m_setbit32(p, ndx)
-#define m_clrbit(p, ndx)           m_clrbit32(p, ndx)
-#define m_flipbit(p, ndx)          m_flipbit32(p, ndx)
-#define m_cmpsetbit(p, ndx)        m_cmpsetbit32(p, ndx)
-#define m_cmpclrbit(p, ndx)        m_cmpclrbit32(p, ndx)
-#define m_scanlo1bit(l)            m_bsf32(l)
-#define m_scanhi1bit(l)            m_bsr32(l)
+#define m_atominc(p)                 m_atominc32(p)
+#define m_atomdec(p)                 m_atomdec32(p)
+#define m_atomswap(p, val)           m_xchg32(p, val)
+#define m_fetchadd(p, val)           m_xadd32(p, val)
+#define m_fetchswap(p, want, val)    m_cmpxchg32(p, want, val)
+#define m_fetchswapu(p, want, val)   m_cmpxchgu32(p, want, val)
+#define m_fetchswapptr(p, want, val) m_cmpxchg32ptr(p, want, val)
+#define m_cmpswap(p, want, val)      (m_cmpxchg32(p, want, val) == want)
+#define m_cmpswapu(p, want, val)     (m_cmpxchgu32(p, want, val) == want)
+#define m_cmpswapptr(p, want, val)   (m_cmpxchg32ptr(p, want, val) == want)
+#define m_cmpswapdbl(p, want, val)   m_cmpxchg64(p, want, val)
+#define m_setbit(p, ndx)             m_setbit32(p, ndx)
+#define m_clrbit(p, ndx)             m_clrbit32(p, ndx)
+#define m_flipbit(p, ndx)            m_flipbit32(p, ndx)
+#define m_cmpsetbit(p, ndx)          m_cmpsetbit32(p, ndx)
+#define m_cmpclrbit(p, ndx)          m_cmpclrbit32(p, ndx)
+#define m_scanlo1bit(l)              m_bsf32(l)
+#define m_scanhi1bit(l)              m_bsr32(l)
 
-#define __EIPFRAMEOFS              offsetof(struct m_stkframe, pc)
+#define __EIPFRAMEOFS                offsetof(struct m_stkframe, pc)
 
 static INLINE void
 m_getretadr(void **pp)
@@ -98,19 +101,19 @@ m_getretfrmadr(void **pp)
  * - if *p == want, let *p = val
  * return nonzero on success, zero on failure
  */
-static __inline__ long
-m_cmpxchg32ptr(m_atomic32_t *p,
+static __inline__ void *
+m_cmpxchg32ptr(m_atomic32_t **p,
                m_atomic32_t *want,
                volatile void *val)
 {
-    long res;
+    void *res;
     
     __asm__ __volatile__("lock cmpxchgl %1, %2\n"
                          : "=a" (res)
                          : "q" (val), "m" (*(p)), "0" (want)
                          : "memory");
     
-    return (res == *want);
+    return res;
 }
 
 #if defined(__GNUC__) && 0
@@ -141,7 +144,7 @@ m_cmpxchg64(m_atomic64_t long *p64,
 
     res = InterlockedCompareExchange64(p64, say, ask);
 
-    return (res == ask);
+    return res;
 }
 
 #else

@@ -36,8 +36,8 @@ spinlk(m_atomic_t *sp)
 {
     m_atomic_t res = ZEROSPINLKVAL;
 
-    while (res != ZEROSPININITVAL) {
-        res = m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL);
+    while (!m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL)) {
+        m_waitspin();
     }
 
     return;
@@ -51,6 +51,7 @@ spinunlk(m_atomic_t *sp)
 {
     m_membar();
     *sp = ZEROSPININITVAL;
+    m_relspin();
 
     return;
 }

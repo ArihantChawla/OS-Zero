@@ -40,11 +40,11 @@ spinrwlkrd(volatile long *sp)
 
     do {
         while (*sp & SPINRWWRBIT) {
-            thryield();
+            m_waitspin();
         }
         old = *sp & SPINRWCNTMASK;
         val = old + 1;
-        if (m_cmpswap(sp, old, val) == old) {
+        if (m_cmpswap(sp, old, val)) {
 
             return;
         }
@@ -76,7 +76,7 @@ spinrwlkwr(volatile long *sp)
 
         if (m_cmpswap(sp, old, val) == old) {
             while (*sp & SPINRWCNTMASK) {
-                thryield();
+                m_waitspin();
             }
         }
     } while (1);
@@ -89,6 +89,7 @@ spinrwunlkwr(volatile long *sp)
 {
     assert(*sp == SPINRWWRBIT);
     *sp = ZEROSPININITVAL;
+    m_relspin();
 
     return;
 }

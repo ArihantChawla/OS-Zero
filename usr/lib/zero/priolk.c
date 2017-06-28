@@ -2,37 +2,12 @@
 #include <stdio.h>
 #include <zero/cdefs.h>
 #include <zero/asm.h>
-#if !defined(PRIOLKNONBLOCK)
-#if defined(ZEROSPIN) && (ZEROSPIN)
-#include <zero/spin.h>
-#elif defined(ZEROFMTX) && (ZEROFMTX)
-#include <zero/mtx.h>
-#endif
-#endif
 #include <zero/priolk.h>
 
 /* <vendu> eliminated the giant mutex */
-#define PRIOLKNONBLOCK 1
 
-static THREADLOCAL volatile struct priolkdata *t_priolkptr;
-static volatile struct priolkdata             *g_priofree;
-#if !defined(PRIOLKNONBLOCK)
-#if (ZEROSPIN)
-static zerospin                                g_priolkspin = SPININITVAL;
-#elif (ZEROFMTX)
-static zerofmtx                                g_priolkmtx = FMTXINITVAL;
-#endif
-#endif
-
-#if !defined(PRIOLKNONBLOCK)
-#if (ZEROSPIN)
-#define priolkgetspin(lp) spinlk(lp)
-#define priolkrelspin(lp) spinunlk(lp)
-#elif (ZEROFMTX)
-#define priolkgetmtx(lp)  fmtxlk(lp)
-#define priolkrelmtx(lp)  fmtxunlk(lp)
-#endif
-#endif
+static THREADLOCAL struct priolkdata *t_priolkptr;
+static volatile struct priolkdata    *g_priofree;
 
 void
 priolkset(unsigned long prio)
@@ -42,103 +17,52 @@ priolkset(unsigned long prio)
     return;
 }
 
+/* initiase priority lock data for a thread */
 void
 priolkinit(struct priolkdata *data, unsigned long val)
 {
-    unsigned long               prio = 1UL << val;
-    volatile struct priolkdata *head;
-    volatile struct priolkdata *next;
+    struct priolkdata *ptr = data;
+    unsigned long      prio = 1UL << val;
+    m_atomic_t         res = 0;
+    struct priolkdata *head;
+    struct priolkdata *next;
 
-    if (data) {
-        data->next = NULL;
-    }
-#if !defined(PRIOLKNONBLOCK)
-#if (ZEROSPIN)
-    priolkgetspin(&g_priolkspin);
-#elif (ZEROFMTX)
-    priolkgetmtx(&g_priolkmtx);
-#endif
-#endif
-    if (g_priofree) {
-#if !defined(PRIOLKNONBLOCK)
-        t_priolkptr = g_priofree;
-        g_priofree = t_priolkptr->next;
-#else
-        do {
-            next = NULL;
-            head = g_priofree;
-            if (head) {
-                next = head->next;
+    if (!ptr) {
+        /* structure not supplied */
+        if (g_priofree) {
+            /* try to grab from free list */
+            do {
+                head = (struct priolkdata *)g_priofree;
+                if (head) {
+                    next = (struct priolkdata *)head->next;
+                    res = m_cmpswapptr((m_atomic_t **)&g_priofree,
+                                       (long *)head,
+                                       (long *)next);
+                }
+            } while (!res && (g_priofree));
+            if (res) {
+                /* success */
+                ptr = head;
             }
-            if (!next) {
-
-                break;
-            }
-        } while ((head)
-                 && !m_cmpswapptr((m_atomic_t *)g_priofree,
-                                  (long *)head,
-                                  (long *)next));
-        if (head) {
-            t_priolkptr = head;
-        } else {
-            t_priolkptr = data;
         }
+        if (!res) {
+            /* try to allocate */
+            ptr = PRIOLKALLOC(sizeof(struct priolkdata));
+#if defined(PRIOLKUSEMMAP)
+            if (ptr == PRIOLKALLOCFAILED) {
+                ptr = NULL;
+            }
 #endif
-    } else if (data) {
-        t_priolkptr = data;
-    } else {
-        t_priolkptr = PRIOLKALLOC(sizeof(struct priolkdata));
-        if (t_priolkptr == PRIOLKALLOCFAILED) {
-            fprintf(stderr, "PRIOLK: failed to allocate priority structure\n");
-
+        }
+        if (!ptr) {
+            fprintf(stderr, "PRIOLK: failed to initialise priority\n");
+            
             exit(1);
         }
     }
-    t_priolkptr->val = prio;
-    t_priolkptr->orig = prio;
-#if !defined(PRIOLKNONBLOCK)
-#if (ZEROSPIN)
-    priolkrelspin(&g_priolkspin);
-#elif (ZEROFMTX)
-    priolkrelmtx(&g_priolkmtx);
-#endif
-#endif
-
-    return;
-}
-
-void
-priolkfin(void)
-{
-#if defined(PRIOLKNONBLOCK)
-    volatile struct priolkdata *next;
-#endif
-    
-#if !defined(PRIOLKNONBLOCK)
-#if (ZEROSPIN)
-    priolkgetspin(&g_priolkspin);
-#elif (ZEROFMTX)
-    priolkgetmtx(&g_priolkmtx);
-#endif
-#endif
-#if defined(PRIOLKNONBLOCK)
-    do {
-        next = g_priofree;
-        t_priolkptr->next = next;
-    } while ((next) && !m_cmpswapptr((m_atomic_t *)g_priofree,
-                                     (long *)next,
-                                     (long *)t_priolkptr));
-#else
-    t_priolkptr->next = g_priofree;
-    g_priofree = t_priolkptr;
-#endif
-#if !defined(PRIOLKNONBLOCK)
-#if (ZEROSPIN)
-    priolkrelspin(&g_priolkspin);
-#elif (ZEROFMTX)
-    priolkrelmtx(&6_priolkmtx);
-#endif
-#endif
+    ptr->val = prio;
+    ptr->orig = prio;
+    t_priolkptr = ptr;
 
     return;
 }
@@ -146,26 +70,30 @@ priolkfin(void)
 void
 priolkget(struct priolk *priolk)
 {
-//    unsigned long               prio = t_priolkptr->val;
-    unsigned long prio;
-    unsigned long mask;
-    long          res;
+    unsigned long      prio = t_priolkptr->val;
+    struct priolkdata *owner;
+    unsigned long      mask;
+    long               res;
 
+    /* read priority atomically */
     m_membar();
-    prio = t_priolkptr->val;
     mask = prio - 1;
     while (priolk->waitbits & mask) {
+        /* unfinished higher-priority tasks */
         if (t_priolkptr->val != prio) {
+            /* priority changed, reread and update mask */
             prio = t_priolkptr->val;
             m_membar();
             mask = prio - 1;
         }
-        priolkwait();
+        m_waitspin();
     }
-    res = m_cmpswapptr((m_atomic_t *)&priolk->owner,
+    /* see if no higher-priority waiters and unlocked */
+    res = m_cmpswapptr((m_atomic_t **)&priolk->owner,
                        NULL,
                        (long *)t_priolkptr);
-    if (!res) {
+    if (res) {
+        /* success */
 
         return;
     }
@@ -173,25 +101,28 @@ priolkget(struct priolk *priolk)
     do {
         while (priolk->waitbits & mask) {
             if (t_priolkptr->val != prio) {
+                /* priority changed */
                 m_atomand(&priolk->waitbits, ~prio);
                 prio = t_priolkptr->val;
                 m_atomor(&priolk->waitbits, prio);
                 mask = prio - 1;
             }
-            priolkwait();
+            m_waitspin();
         }
-        res = m_cmpswapptr((m_atomic_t *)&priolk->owner,
-                           NULL,
-                           (long *)t_priolkptr);
-        if (!res) {
+        /* see if no higher-priority waiters and unlocked */
+        owner = m_fetchswapptr((m_atomic_t **)&priolk->owner,
+                               NULL,
+                               (long *)t_priolkptr);
+        if (!owner) {
+            /* success */
             m_atomand(&priolk->waitbits, ~prio);
 
             return;
         }
-        if (t_priolkptr->val > prio) {
-            t_priolkptr->val = prio;
+        if (owner->val > prio) {
+            owner->val = prio;
         }
-        priolkwait();
+        m_waitspin();
     } while (1);
 
     return;
@@ -204,7 +135,29 @@ priolkrel(struct priolk *priolk)
     priolk->owner = NULL;
     m_membar();
     t_priolkptr->val = t_priolkptr->orig;
+    m_relspin();
 
+    return;
+}
+
+void
+priolkfin(void)
+{
+    struct priolkdata *ptr = t_priolkptr;
+    struct priolkdata *head;
+    
+    do {
+        head = (struct priolkdata *)g_priofree;
+        ptr->next = head;
+        if (m_cmpswapptr((m_atomic_t **)&g_priofree,
+                         (long *)head,
+                         (long *)ptr)) {
+            t_priolkptr = NULL;
+            
+            break;
+        }
+    } while (1);
+            
     return;
 }
 

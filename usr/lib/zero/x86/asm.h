@@ -13,13 +13,16 @@ typedef volatile int32_t m_atomic32_t;
 typedef volatile int64_t m_atomic64_t;
 
 /* memory barrier */
-#define m_membar()     __asm__ __volatile__ ("mfence\n" : : : "memory")
+#define m_membar()   __asm__ __volatile__ ("mfence\n" : : : "memory")
 /* memory read barrier */
-#define m_memrdbar()   __asm__ __volatile__ ("lfence\n" : : : "memory")
+#define m_memrdbar() __asm__ __volatile__ ("lfence\n" : : : "memory")
 /* memory write barrier */
-#define m_memwrbar()   __asm__ __volatile__ ("sfence\n" : : : "memory")
+#define m_memwrbar() __asm__ __volatile__ ("sfence\n" : : : "memory")
+/* delay exection */
+#define m_waitspin() __asm__ __volatile__ ("pause\n"  : : : "memory")
+#define m_relspin()
 /* wait for an interrupt */
-#define m_waitint()    __asm__ __volatile__ ("pause\n"  : : : "memory")
+#define m_waitint()  __asm__ __volatile__ ("hlt\n"  : : : "memory")
 
 /* atomic fetch and add, 16-bit version */
 #define m_fetchadd16(p, val)       m_xadd16(p, val)
@@ -155,7 +158,7 @@ m_cmpxchg32(m_atomic32_t *p,
                          : "q" (val), "m" (*(p)), "0" (want)
                          : "memory");
     
-    return (res == want);
+    return res;
 }
 
 /*
@@ -175,7 +178,7 @@ m_cmpxchgu32(volatile uint32_t *p,
                           : "q" (val), "m" (*(p)), "0" (want)
                           : "memory");
     
-    return (res == want);
+    return res;
 }
 
 /* atomic set bit operation */
@@ -292,7 +295,7 @@ m_cmpxchg8(volatile char *p,
                           : "q" (val), "m" (*(p)), "0" (want)
                           : "memory");
 
-    return (res == want);
+    return res;
 }
 
 static __inline__ int32_t

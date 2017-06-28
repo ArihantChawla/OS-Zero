@@ -11,24 +11,27 @@ extern uint64_t asmgetpc(void);
 
 typedef volatile int64_t m_atomic_t;
 
-#define m_atominc(p)               m_atominc64(p)
-#define m_atomdec(p)               m_atomdec64(p)
-#define m_atomswap(p, val)         m_xchg64(p, val)
-#define m_fetchadd(p, val)         m_xadd64(p, val)
-#define m_fetchaddu(p, val)        m_xaddu64(p, val)
-#define m_cmpswap(p, want, val)    m_cmpxchg64(p, want, val)
-#define m_cmpswapu(p, want, val)   m_cmpxchgu64(p, want, val)
-#define m_cmpswapptr(p, want, val) m_cmpxchg64ptr(p, want, val)
-#define m_cmpswapdbl(p, want, val) m_cmpxchg128(p, want, val)
-#define m_setbit(p, ndx)           m_setbit64(p, ndx)
-#define m_clrbit(p, ndx)           m_clrbit64(p, ndx)
-#define m_flipbit(p, ndx)          m_flipbit64(p, ndx)
-#define m_cmpsetbit(p, ndx)        m_cmpsetbit64(p, ndx)
-#define m_cmpclrbit(p, ndx)        m_cmpclrbit64(p, ndx)
-#define m_scanlo1bit(l)            m_bsf64(l)
-#define m_scanhi1bit(l)            m_bsr64(l)
+#define m_atominc(p)                 m_atominc64(p)
+#define m_atomdec(p)                 m_atomdec64(p)
+#define m_atomswap(p, val)           m_xchg64(p, val)
+#define m_fetchadd(p, val)           m_xadd64(p, val)
+#define m_fetchaddu(p, val)          m_xaddu64(p, val)
+#define m_fetchswap(p, want, val)    m_cmpxchg64(p, want, val)
+#define m_fetchswapu(p, want, val)   m_cmpxchgu64(p, want, val)
+#define m_fetchswapptr(p, want, val) m_cmpxchg64ptr(p, want, val)
+#define m_cmpswap(p, want, val)      (m_cmpxchg64(p, want, val) == want)
+#define m_cmpswapu(p, want, val)     (m_cmpxchgu64(p, want, val) == want)
+#define m_cmpswapptr(p, want, val)   (m_cmpxchg64ptr(p, want, val) == want)
+#define m_cmpswapdbl(p, want, val)   m_cmpxchg128(p, want, val)
+#define m_setbit(p, ndx)             m_setbit64(p, ndx)
+#define m_clrbit(p, ndx)             m_clrbit64(p, ndx)
+#define m_flipbit(p, ndx)            m_flipbit64(p, ndx)
+#define m_cmpsetbit(p, ndx)          m_cmpsetbit64(p, ndx)
+#define m_cmpclrbit(p, ndx)          m_cmpclrbit64(p, ndx)
+#define m_scanlo1bit(l)              m_bsf64(l)
+#define m_scanhi1bit(l)              m_bsr64(l)
 
-#define __RIPFRAMEOFS              offsetof(struct m_stkframe, pc)
+#define __RIPFRAMEOFS                offsetof(struct m_stkframe, pc)
 
 static INLINE void
 m_getretadr(void **pp)
@@ -180,7 +183,7 @@ m_cmpxchg64(m_atomic64_t *p,
                           : "q" (val), "m" (*(p)), "0" (want)
                           : "memory");
     
-    return (res == want);
+    return res;
 }
 
 /*
@@ -200,7 +203,7 @@ m_cmpxchgu64(volatile uint64_t *p,
                           : "q" (val), "m" (*(p)), "0" (want)
                           : "memory");
     
-    return (res == want);
+    return res;
 }
 
 /*
@@ -208,19 +211,19 @@ m_cmpxchgu64(volatile uint64_t *p,
  * - if *p == want, let *p = val
  * - return nonzero on success, zero on failure
  */
-static __inline__ long
-m_cmpxchg64ptr(m_atomic64_t *p,
+static __inline__ void *
+m_cmpxchg64ptr(m_atomic64_t **p,
                m_atomic64_t *want,
                void *val)
 {
-    long *res;
+    void *res;
     
     __asm__ __volatile__("lock cmpxchgq %1, %2\n"
                          : "=a" (res)
                          : "q" (val), "m" (*(p)), "0" (want)
                          : "memory");
     
-    return (res == want);
+    return res;
 }
 
 #if defined(__GNUC__) && 0
