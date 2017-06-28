@@ -79,7 +79,6 @@ typedef zpmureg  zpmadr;
 #define ZPM_MEM_BIT     0x02 // memory transfer
 #define ZPM_STACK_BIT   0x04 // stack operation
 #define ZPM_GENREGS_BIT 0x08 // choose all general-purpose registers
-#define ZPM_DELAY       0x00
 #define ZPM_CPY         ZPM_LOAD_BIT // register to register copy
 #define ZPM_STA         ZPM_MEM_BIT // store accumulator
 #define ZPM_LDA         (ZPM_LOAD_BIT | ZPM_MEM_BIT) // load accumulator
@@ -89,9 +88,8 @@ typedef zpmureg  zpmadr;
 #define ZPM_POPA        (ZPM_LOAD_BIT | ZPM_STACK_BIT | ZPM_GENREGS_BIT)
 /* I/O operations - TODO: memory-mapped I/O (ZPM_MAP_BIT, ZPM_CPY_BIT) */
 #define ZPM_IO          0x06
-/* ZPM_LOAD_BIT - 0x01, ZPM_MEM_BIT - 0x02 */
 #define ZPM_OUT         0x00 // write data to port
-#define ZPM_IN          ZPM_LOAD_BIT // read data from port
+#define ZPM_IN          0x01 // read data from port
 /* flow control; branch and subroutine operations */
 #define ZPM_FLOW        0x07
 #define ZPM_JMP         0x00 // branch unconditionally
