@@ -29,14 +29,14 @@ typedef zpmureg  zpmadr;
 /* bitwise operations */
 /* logic unit */
 /* no operation */
-#define ZPM_LOGIC       0x00
+#define ZPM_LOGIC_UNIT  0x00
 #define ZPM_NOP         0x00
 #define ZPM_NOT         0x01 // 2's complement (reverse all bits)
 #define ZPM_AND         0x02 // logical bitwise AND
 #define ZPM_OR          0x03 // logical bitwise OR
 #define ZPM_XOR         0x04 // logical bitwise XOR (exclusive OR)
 /* shifter */
-#define ZPM_SHIFTER     0x01
+#define ZPM_SHIFT_UNIT  0x01
 #define ZPM_RIGHT_BIT   0x01
 #define ZPM_SHIFT_BIT   0x02
 #define ZPM_ROT_BIT     0x04
@@ -48,7 +48,7 @@ typedef zpmureg  zpmadr;
 #define ZPM_ROR         (ZPM_ROT_BIT | ZPM_RIGHT_BIT)
 /* arithmetic operations */
 /* arithmetic unit */
-#define ZPM_ARITH       0x02
+#define ZPM_ARITH_UNIT  0x02
 #define ZPM_INC_BIT     0x01
 #define ZPM_MSW_BIT     0x01
 #define ZPM_DEC_BIT     0x02
@@ -65,15 +65,15 @@ typedef zpmureg  zpmadr;
 #define ZPM_DEC         (ZPM_SUB_BIT | ZPM_DEC_BIT)
 #define ZPM_CMP         ZPM_SBF
 /* multiplier */
-#define ZPM_MULTIPLIER  0x03
+#define ZPM_MUL_UNIT    0x03
 #define ZPM_MUL         0x00 // multiplication
 /* divider */
-#define ZPM_DIVIDER     0x04
+#define ZPM_DIV_UNIT    0x04
 #define ZPM_REM_BIT     0x01 // remainder-flag
 #define ZPM_DIV         0x00 // division, result in ZPM_RET_LO
 #define ZPM_REM         ZPM_REM_BIT // remainder of division in ZPM_RET_HI
-/* load and store operations */
-#define ZPM_LOAD_STORE  0x05
+/* load-store and stack operations */
+#define ZPM_MEM_UNIT    0x05
 #define ZPM_LOAD_BIT    0x01 // read operation
 #define ZPM_MEM_BIT     0x02 // memory transfer
 #define ZPM_STACK_BIT   0x04 // stack operation
@@ -86,11 +86,11 @@ typedef zpmureg  zpmadr;
 #define ZPM_PSHA        (ZPM_STACK_BIT | ZPM_GENREGS_BIT)
 #define ZPM_POPA        (ZPM_LOAD_BIT | ZPM_STACK_BIT | ZPM_GENREGS_BIT)
 /* I/O operations - TODO: memory-mapped I/O (ZPM_MAP_BIT, ZPM_CPY_BIT) */
-#define ZPM_IO          0x06
+#define ZPM_IO_UNIT     0x06
 #define ZPM_OUT         0x00 // write data to port
 #define ZPM_IN          0x01 // read data from port
 /* flow control; branch and subroutine operations */
-#define ZPM_FLOW        0x07
+#define ZPM_FLOW_UNIT   0x07
 #define ZPM_JMP         0x00 // branch unconditionally
 #define ZPM_BZ          0x01 // branch if zero (ZF)
 #define ZPM_BNZ         0x02 // branch if non-zero (!ZF)
@@ -108,7 +108,7 @@ typedef zpmureg  zpmadr;
 #define ZPM_THR         0x0e // launch new thread
 #define ZPM_RET         0x0f // return from subroutine or thread
 /* system operations */
-#define ZPM_SYS         0x08
+#define ZPM_SYS_UNIT    0x08
 #define ZPM_RST         0x00 // reset
 #define ZPM_XFER        0x01 // system to general-purpose register
 #define ZPM_FETCH       0x02 // general-purpose to system register
@@ -120,8 +120,8 @@ typedef zpmureg  zpmadr;
 #define ZPM_IRET        0x08 // return from interrupt handler
 /* processor parameters */
 #define ZPM_NALU_RES    256 // max number of ALU operations
-#define ZPM_FPU         0x0e
-#define ZPM_COPROC      0x0f // special unit ID to dispatch execution
+#define ZPM_FPU_UNIT    0x0e
+#define ZPM_COPROC_UNIT 0x0f // special unit ID to dispatch execution
 
 /* VIRTUAL MACHINE */
 
