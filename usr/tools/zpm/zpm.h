@@ -119,8 +119,8 @@ typedef zpmureg  zpmadr;
 #define ZPM_HLT         0x07 // wait for interrupt
 #define ZPM_IRET        0x08 // return from interrupt handler
 /* processor parameters */
-#define ZPM_NALU_RES    256 // max number of ALU operations
-#define ZPM_FPU_UNIT    0x0e
+#define ZPM_NALU_MAX    256 // max number of ALU operations
+#define ZPM_FPU_UNIT    0x0e // floating-point coprocessor
 #define ZPM_COPROC_UNIT 0x0f // special unit ID to dispatch execution
 
 /* VIRTUAL MACHINE */

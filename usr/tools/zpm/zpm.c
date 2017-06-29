@@ -73,7 +73,7 @@ typedef zpmureg  zpmopfunc(struct zpm *vm, uint8_t *ptr, zpmureg pc);
 int
 zpmloop(struct zpm *vm, zpmureg pc)
 {
-    static OPTAB_T jmptab[ZPM_NALU_RES];
+    static OPTAB_T jmptab[ZPM_NALU_MAX];
 
     zpminitops(jmptab);
 
