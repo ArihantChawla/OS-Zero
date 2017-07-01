@@ -47,56 +47,47 @@
 #define V_COSH  0x27
 #define V_TANH  0x28
 
-struct viarg {
-    union {
-#if (V_WORDSIZE == 64)
-        int64_t  i64;
-        uint64_t u64;
-#endif
-        int32_t  i32;
-        uint32_t u32;
-        int32_t  i16;
-        uint32_t u16;
-        int32_t  i8;
-        uint32_t u8;
-    } val;
-    size_t       size;
-};
-
-struct vfarg {
-    union {
-        double d64;
-        float  f32;
-    } val;
-    size_t     size;
-};
-
+#define V_BOOLEAN_BIT   (1UL << 0)
+#define V_ADDRESS_BIT   (1UL << 1)
+#define V_FLOAT_BIT     (1UL << 2)
+#define V_COMPLEX_BIT   (1UL << 3)
+#define V_FIXED_BIT     (1UL << 4)
 struct varg {
     union {
-        struct viarg i;
-        struct vfarg f;
+        uintptr_t adr;
+        double    d64;
+        float     f32;
+#if (V_WORDSIZE == 64)
+        int64_t   i64;
+        uint64_t  u64;
+#endif
+        int32_t   i32;
+        uint32_t  u32;
+        int32_t   i16;
+        uint32_t  u16;
+        int32_t   i8;
+        uint32_t  u8;
     } val;
     unsigned long flg;
+    unsigned long reg;
+    size_t        size;
 };
 
-#define V_BOOLEAN_BIT   (1UL << 0)
-#define V_FLOAT_BIT     (1UL << 1)
-#define V_COMPLEX_BIT   (1UL << 2)
-#define V_VECTOR_BIT    (1UL << 25)
-#define V_VOLATILE_BIT  (1UL << 26)
-#define V_STATIC_BIT    (1UL << 27)
-#define V_REGISTER_BIT  (1UL << 28)
-#define V_AUTOMATIC_BIT (1UL << 29)
-#define V_CONST_BIT     (1UL << 30)
-#define V_LITERAL_BIT   (1UL << 31)
+#define V_LITERAL_BIT   (1UL << 0)
+#define V_CONST_BIT     (1UL << 1)
+#define V_AUTOMATIC_BIT (1UL << 2)
+#define V_REGISTER_BIT  (1UL << 3)
+#define V_STATIC_BIT    (1UL << 4)
+#define V_VOLATILE_BIT  (1UL << 5)
+#define V_VECTOR_BIT    (1UL << 6)
 struct viop {
     struct varg   arg1;
     struct varg   arg2;
     unsigned long flg;
 #if (V_WORDBITS == 64)
-    uint64_t      inst;
+    uint64_t      code;
 #else
-    uint32_t      inst;
+    uint32_t      code;
 #endif
     size_t        size;
 };
