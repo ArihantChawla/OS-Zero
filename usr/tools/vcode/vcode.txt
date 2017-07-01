@@ -41,9 +41,8 @@ arithmetic operations
 ---------------------
 {int | float] ++ {INT, FLOAT}	- increment top vector on stack by one
 {int | float] -- {INT, FLOAT}	- decrement top vector on stack by one
-{int | float] +- {INT, FLOAT}	- return sum of top two vectors on stack
 {int | float] + {INT, FLOAT}	- return sum of top two vectors on stack
-{int | float} - {INT, FLOAT}	- return difference of top two vectors
+{int | float] - {INT, FLOAT}	- return difference of top two vectors on stack
 {int | float} * {INT, FLOAT}	- return product of top two vectors
 {int | float} / {INT, FLOAT}	- return quotient of top two vectors
 {int}         % {INT, FLOAT}	- return remainder of top two vectors
