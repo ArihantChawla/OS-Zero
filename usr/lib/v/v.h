@@ -3,9 +3,9 @@
 #ifndef __VC_VC_H__
 #define __VC_VC_H__
 
+#include <stddef.h>
 #include <limits.h>
 #include <stdint.h>
-#include <zero/param.h>
 #include <zero/trix.h>
 
 #define V_NOP   0x00    // no operation done
@@ -82,7 +82,8 @@ struct varg {
 };
 
 struct vrmap {
-    unsigned long bits[max(V_REGISTERS / LONGSIZE * CHAR_BIT, 1)];
+    unsigned long bits[rounduppow(V_REGISTERS + sizeof(long) * CHAR_BIT - 1,
+                                  sizeof(long) * CHAR_BIT)];
 };
 
 /* C type qualifiers */
