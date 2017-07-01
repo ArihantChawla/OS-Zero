@@ -59,6 +59,7 @@
 #define V_FLOAT_BIT     (1UL << 2)      // floating-point
 #define V_COMPLEX_BIT   (1UL << 3)      // complex number
 #define V_FIXED_BIT     (1UL << 4)      // fixed point
+
 struct varg {
     union {
         uintptr_t adr;
@@ -91,9 +92,10 @@ struct vrmap {
 #define V_REGISTER_BIT  (1UL << 3)
 #define V_STATIC_BIT    (1UL << 4)
 #define V_VOLATILE_BIT  (1UL << 5)
-#define V_VECTOR_BIT    (1UL << 6)      // [SIMD] vector
+#define V_VECTOR_BIT    (1UL << 6)    // [SIMD] vector
 #define V_DEST_RMAP_BIT (1UL << 30)   // destination register bitmap present
 #define V_SRC_RMAP_BIT  (1UL << 31)   // source register bitmap present
+
 struct viop {
     struct varg   arg1;
     struct varg   arg2;
@@ -104,6 +106,7 @@ struct viop {
 #else
     uint32_t      code;
 #endif
+    unsigned long flg;
     size_t        size;
 };
 
