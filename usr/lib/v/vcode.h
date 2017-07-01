@@ -1,7 +1,5 @@
-/* zero libvc vcode interface library */
-
-#ifndef __VC_VC_H__
-#define __VC_VC_H__
+#ifndef __V_VCODE_H__
+#define __V_VCODE_H__
 
 #include <stddef.h>
 #include <limits.h>
@@ -111,5 +109,5 @@ struct viop {
     size_t        size;
 };
 
-#endif /* __VC_VC_H__ */
+#endif /* __V_VCODE_H__ */
 
