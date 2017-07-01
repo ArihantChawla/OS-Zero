@@ -85,7 +85,7 @@ logarithm and exponent operations
 trigonometric operations
 ------------------------
 
-{float}       SINE		- sine of the vector
+{float}       SIN		- sine of the vector
 {float}       COS		- cosine of the vector
 {float}       TAN		- tangent of the vector
 {float}       ASIN		- inverse sine of the vector
