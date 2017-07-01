@@ -3,7 +3,10 @@
 #ifndef __VC_VC_H__
 #define __VC_VC_H__
 
+#include <limits.h>
 #include <stdint.h>
+#include <zero/param.h>
+#include <zero/trix.h>
 
 #define V_NOP   0x00    // no operation done
 #define V_NOT   0x01    // bitwise negation; 2's complement
@@ -20,7 +23,11 @@
 #define V_MUL   0x0c    // arg2 *= arg1;
 #define V_DIV   0x0d    // arg2 /= arg1;
 #define V_MOD   0x0e    // arg2 %= arg1;
-#define V_LT    0x0f    // arg1 < arg2;
+#define V_REC   0x0f    // compute reciprocal for division
+#define V_MOV   0x10    // move between registers or register and memory
+#define V_PSH   0x11    // push item or items to stack
+#define V_POP   0x12    // pop item or items from stack
+#define V_LT    0x03    // arg1 < arg2;
 #define V_LTE   0x10    // arg1 <= arg2;
 #define V_GT    0x11    // arg1 > arg2;
 #define V_GTE   0x12    // arg1 >= arg2;
@@ -47,11 +54,11 @@
 #define V_COSH  0x27
 #define V_TANH  0x28
 
-#define V_BOOLEAN_BIT   (1UL << 0)
-#define V_ADDRESS_BIT   (1UL << 1)
-#define V_FLOAT_BIT     (1UL << 2)
-#define V_COMPLEX_BIT   (1UL << 3)
-#define V_FIXED_BIT     (1UL << 4)
+#define V_BOOLEAN_BIT   (1UL << 0)      // boolean
+#define V_ADDRESS_BIT   (1UL << 1)      // address (pointer value)
+#define V_FLOAT_BIT     (1UL << 2)      // floating-point
+#define V_COMPLEX_BIT   (1UL << 3)      // complex number
+#define V_FIXED_BIT     (1UL << 4)      // fixed point
 struct varg {
     union {
         uintptr_t adr;
@@ -73,16 +80,24 @@ struct varg {
     size_t        size;
 };
 
+struct vrmap {
+    unsigned long bits[max(V_REGISTERS / LONGSIZE * CHAR_BIT, 1)];
+};
+
+/* C type qualifiers */
 #define V_LITERAL_BIT   (1UL << 0)
 #define V_CONST_BIT     (1UL << 1)
 #define V_AUTOMATIC_BIT (1UL << 2)
 #define V_REGISTER_BIT  (1UL << 3)
 #define V_STATIC_BIT    (1UL << 4)
 #define V_VOLATILE_BIT  (1UL << 5)
-#define V_VECTOR_BIT    (1UL << 6)
+#define V_VECTOR_BIT    (1UL << 6)      // [SIMD] vector
+#define V_DEST_RMAP_BIT (1UL << 30)   // destination register bitmap present
+#define V_SRC_RMAP_BIT  (1UL << 31)   // source register bitmap present
 struct viop {
     struct varg   arg1;
     struct varg   arg2;
+    struct vrmap  rmap;
     unsigned long flg;
 #if (V_WORDBITS == 64)
     uint64_t      code;
