@@ -84,6 +84,8 @@ fmtxlk(m_atomic_t *lp)
             if (!res) {
                 m_waitspin();
             }
+        } else {
+            res = 0;
         }
     } while (!res);
 
