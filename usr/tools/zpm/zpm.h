@@ -91,6 +91,34 @@ typedef zpmureg  zpmadr;
 #define ZPM_IN          0x01 // read data from port
 /* flow control; branch and subroutine operations */
 #define ZPM_FLOW_UNIT   0x07
+#define ZPM_NOTZERO_BIT 0x01
+#define ZPM_LESS_BIT    0x02
+#define ZPM_GREATER_BIT 0x04
+#define ZPM_EQUAL_BIT   0x08
+#define ZPM_CARRY_BIT   0x01
+#define ZPM_ZERO_BIT    0x02
+#define ZPM_OVER_BIT    0x04
+//#define ZPM_NO_OVER_BIT 0x04
+#define ZPM_JMP         0x00
+#define ZPM_BC          ZPM_CARRY_BIT // 0x01
+#define ZPM_BZ          ZPM_ZERO_BIT // 0x02
+#define ZPM_BNC         (ZPM_CARRY_BIT | ZPM_LESS_BIT) // 0x03
+#define ZPM_CALL        0x04
+#define ZPM_BO          (ZPM_OVER_BIT | ZPM_NOTZERO_BIT) // 0x05
+#define ZPM_BNO         (ZPM_OVER_BIT | ZPM_ZERO_BIT) // 0x06
+#define ZPM_THR         0x07
+#define ZPM_RET         0x08
+#define ZPM_BNZ         (ZPM_NOTZERO_BIT | ZPM_EQUAL_BIT) // 0x09/
+#define ZPM_BLT         (ZPM_LESS_BIT | ZPM_EQUAL_BIT) // 0x0a
+// 0x02 | 0x08 | 0x01 == 0x0b
+#define ZPM_BLE         (ZPM_LESS_BIT | ZPM_EQUAL_BIT | ZPM_NOTZERO_BIT)
+// 0x04 | 0x08 = 0x0c
+#define ZPM_BGT         (ZPM_GREATER_BIT | ZPM_EQUAL_BIT)
+// 0x04 | 0x08 | 0x01 = 0x0d
+#define ZPM_BGE         (ZPM_GREATER_BIT | | ZPM_EQUAL_BIT | ZPM_NOTZERO_BIT)
+#define ZPM_ENTER       0x0e
+#define ZPM_LEAVE       0x0f
+/*
 #define ZPM_JMP         0x00 // branch unconditionally
 #define ZPM_BZ          0x01 // branch if zero (ZF)
 #define ZPM_BNZ         0x02 // branch if non-zero (!ZF)
@@ -107,6 +135,7 @@ typedef zpmureg  zpmadr;
 #define ZPM_LEAVE       0x0d // function epilogue
 #define ZPM_THR         0x0e // launch new thread
 #define ZPM_RET         0x0f // return from subroutine or thread
+*/
 /* system operations */
 #define ZPM_SYS_UNIT    0x08
 #define ZPM_RST         0x00 // reset
@@ -117,7 +146,7 @@ typedef zpmureg  zpmadr;
 #define ZPM_WAIT        0x05 // wait for wakeup event
 #define ZPM_WAKE        0x06 // broadcast wakeup event
 #define ZPM_HLT         0x07 // wait for interrupt
-#define ZPM_IRET        0x08 // return from interrupt handler
+#define ZPM_SRET        0x08 // return from system; interrupt handlers
 /* processor parameters */
 #define ZPM_NALU_MAX    256 // max number of ALU operations
 #define ZPM_FPU_UNIT    0x0e // floating-point coprocessor
