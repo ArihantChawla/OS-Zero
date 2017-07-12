@@ -85,7 +85,7 @@ fmtxlk(m_atomic_t *lp)
                 m_waitspin();
             }
         }
-    } while (res == FMTXINITVAL);
+    } while (!res);
 
     return;
 }
