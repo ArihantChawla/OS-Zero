@@ -50,6 +50,62 @@ typedef pthread_mutex_t zerofmtx;
 #define fmtxinit(lp) (*(lp) = FMTXINITVAL)
 #define fmtxfree(lp) /* no-op */
 
+#if (ZERONEWFMTX)
+
+/*
+ * try to acquire fast mutex lock
+ * - return non-zero on success, zero if already locked
+ */
+static INLINE long
+fmtxtrylk(m_atomic_t *lp)
+{
+    m_atomic_t res = *lp;
+
+    if (res == FMTXINITVAL) {
+        res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
+    }
+
+    return res;
+}
+
+/*
+ * acquire fast mutex lock
+ * - allow other threads to run when blocking
+ */
+static INLINE void
+fmtxlk(m_atomic_t *lp)
+{
+    m_atomic_t res;
+    
+    do {
+        res = *lp;
+        if (res == FMTXINITVAL) {
+            res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
+            if (!res) {
+                m_waitspin();
+            }
+        }
+    } while (res == FMTXINITVAL);
+
+    return;
+}
+
+/*
+ * unlock fast mutex
+ * - must use full memory barrier to guarantee proper write-ordering
+ */
+static INLINE void
+fmtxunlk(m_atomic_t *lp)
+{
+    m_membar();
+    *lp = FMTXINITVAL;
+    m_endspin();
+    
+    return;
+}
+
+#else
+
 /*
  * try to acquire fast mutex lock
  * - return non-zero on success, zero if already locked
@@ -96,6 +152,8 @@ fmtxunlk(m_atomic_t *lp)
     
     return;
 }
+
+#endif
 
 #define zerotrylkfmtx(mp) fmtxtrylk(mp)
 #define zerolkfmtx(mp)    fmtxlk(mp)
