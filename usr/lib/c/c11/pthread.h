@@ -58,9 +58,9 @@ typedef struct {
 
 /* ---- thread management ---- */
 
-#define thrd_create(thr, func, arg)                   \
-    (!pthread_create(thr, 0, (thrd_start_t)func, arg) \
-     ? thrd_success                                   \
+#define thrd_create(thr, func, arg)                                     \
+    (!pthread_create(thr, 0, (thrd_start_t)func, arg)                   \
+     ? thrd_success                                                     \
      : thrd_error)
 
 #define thrd_exit(val)                                                  \
@@ -193,36 +193,36 @@ mtx_timedlock(mtx_t *mtx, const xtime *xt)
     return thrd_error;
 }
 
-#define mtx_unlock(mtx)        \
-    (!pthread_mutex_unlck(mtx) \
-     ? thrd_success            \
+#define mtx_unlock(mtx)                                                 \
+    (!pthread_mutex_unlck(mtx)                                          \
+     ? thrd_success                                                     \
      : thrd_error)
 
 /* ---- condition variables ---- */
 
-#define cnd_init(cnd)           \
-    (!pthread_cond_init(cnd, 0) \
-     ? thrd_success             \
+#define cnd_init(cnd)                                                   \
+    (!pthread_cond_init(cnd, 0)                                         \
+     ? thrd_success                                                     \
      : thrd_error)
 
 #define cnd_destroy(cnd)                                                \
     pthread_cond_destroy(cnd)
 
-#define cnd_signal(cnd)        \
-    (!pthread_cond_signal(cnd) \
-     ? thrd_success            \
+#define cnd_signal(cnd)                                                 \
+    (!pthread_cond_signal(cnd)                                          \
+     ? thrd_success                                                     \
      : thrd_error)
 
-#define cnd_broadcast(cnd)        \
-    (!pthread_cond_broadcast(cnd) \
-     ? thrd_success               \
+#define cnd_broadcast(cnd)                                              \
+    (!pthread_cond_broadcast(cnd)                                       \
+     ? thrd_success                                                     \
      : thrd_error)
 
 /* TODO: chd_broadcast_at_thread_exit()? */
 
-#define cnd_wait(cnd, mtx)         \
-    (!pthread_cond_wait(cond, mtx) \
-     ? thrd_success                \
+#define cnd_wait(cnd, mtx)                                              \
+    (!pthread_cond_wait(cond, mtx)                                      \
+     ? thrd_success                                                     \
      : thrd_error)
 
 static __inline__ int
@@ -247,17 +247,17 @@ cnd_timedwait(cnd_t *cond, mtx_t *mtx, const xtime *xt)
 
 /* ---- thread-specific data ---- */
 
-#define tss_create(key, dtor)       \
-    (!pthread_key_create(key, dtor) \
-     ? thrd_success                 \
+#define tss_create(key, dtor)                                           \
+    (!pthread_key_create(key, dtor)                                     \
+     ? thrd_success                                                     \
      : thrd_error)
 
 #define tss_delete(key)                                                 \
     pthread_key_delete(key)
 
-#define tss_set(key)                \
-    (!pthread_setspecific(key, val) \
-     ? thrd_success                 \
+#define tss_set(key)                                                    \
+    (!pthread_setspecific(key, val)                                     \
+     ? thrd_success                                                     \
      : thrd_error)
 
 #define tss_get(key)                                                    \
