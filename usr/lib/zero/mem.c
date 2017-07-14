@@ -731,13 +731,21 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
 #if (!MEMHASHSUBTABS)
     memlkbit(&g_mem.hash[key].chain);
     upval = (MEMADR_T)g_mem.hash[key].chain;
+    upval &= ~MEMLKBIT;
 #else
-    fmtxlk(&g_mem.hash[key]->lk);
-    upval = (MEMADR_T)g_mem.hash[key]->tab[ofs];
-//    upval &= ~MEMLKBIT;
+    upval = 0;
+    if (g_mem.hash[key]) {
+        fmtxlk(&g_mem.hash[key]->lk);
+        upval = (MEMADR_T)g_mem.hash[key]->tab[ofs];
+    }
+#endif /* MEMHASHSUBTABS */
     if (!upval) {
         if (op != MEMBUFADD) {
+#if (!MEMHASHSUBTABS)
+            memrelbit(&g_mem.hash[key].chain);
+#else
             fmtxunlk(&g_mem.hash[key]->lk);
+#endif
             
             return MEMBUFNOTFOUND;
         } else {
@@ -762,13 +770,17 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
 #endif
 //                        fprintf(stderr, "REL: %lx\n", key);
             blk->chain = NULL;
+#if (!MEMHASHSUBTABS)
+            g_mem.hash[key].chain = blk;
+//            memrelbit(&g_mem.hash[key].chain);
+#else
             g_mem.hash[key]->tab[ofs] = blk;
             fmtxunlk(&g_mem.hash[key]->lk);
+#endif
             
             return desc;
         }
     }
-#endif /* MEMHASHSUBTABS */
     dest = NULL;
     prev = NULL;
 #if (!MEMHASHSUBTABS)

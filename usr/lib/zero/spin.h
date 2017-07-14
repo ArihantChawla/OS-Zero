@@ -10,6 +10,62 @@ typedef m_atomic_t zerospin;
 
 #define spininit(sp) (*(sp) = ZEROSPININITVAL)
 
+#if (ZERONEWSPIN)
+
+/*
+ * try to acquire spin-lock
+ * - return non-zero on success, zero if already locked
+ */
+static __inline__ long
+spintrylk(m_atomic_t *sp)
+{
+    m_atomic_t res = *sp;
+
+    if (res == ZEROSPININITVAL) {
+        res = m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL);
+    }
+    
+    return res;
+}
+
+/*
+ * lock spin-lock
+ */
+static __inline__ void
+spinlk(m_atomic_t *sp)
+{
+    m_atomic_t res;
+    
+    do {
+        res = *sp;
+        if (res == ZEROSPININITVAL) {
+            res = m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL);
+        } else {
+            res = 0;
+        }
+        if (!res) {
+            m_waitspin();
+        }
+    } while (!res);
+
+    return;
+}
+
+/*
+ * release spin-lock
+ */
+static __inline__ void
+spinunlk(m_atomic_t *sp)
+{
+    m_membar();
+    *sp = ZEROSPININITVAL;
+    m_endspin();
+
+    return;
+}
+
+#else
+
 /*
  * try to acquire spin-lock
  * - return non-zero on success, zero if already locked
@@ -52,6 +108,8 @@ spinunlk(m_atomic_t *sp)
 
     return;
 }
+
+#endif /* ZERONEWSPIN */
 
 #endif /* __ZERO_SPIN_H__ */
 

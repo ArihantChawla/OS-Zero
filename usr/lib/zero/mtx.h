@@ -1,7 +1,6 @@
 #ifndef __ZERO_MTX_H__
 #define __ZERO_MTX_H__
 
-#define ZEROFMTXYIELD 1
 #if !defined(ZEROMTX)
 #define ZEROMTX       0
 #endif
@@ -81,11 +80,11 @@ fmtxlk(m_atomic_t *lp)
         res = *lp;
         if (res == FMTXINITVAL) {
             res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
-            if (!res) {
-                m_waitspin();
-            }
         } else {
             res = 0;
+        }
+        if (!res) {
+            m_waitspin();
         }
     } while (!res);
 

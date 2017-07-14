@@ -324,7 +324,7 @@ m_flipbit64(m_atomic64_t *p, long ndx)
 static __inline__ long
 m_cmpsetbit64(m_atomic64_t *p, long ndx)
 {
-    long val;
+    long val = 0;
 
     if (IMMEDIATE(ndx)) {
         __asm__ __volatile__ ("xorq %1, %1\n"
