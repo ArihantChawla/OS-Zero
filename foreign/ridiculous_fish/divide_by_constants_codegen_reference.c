@@ -13,6 +13,17 @@
 #include <limits.h> //for CHAR_BIT
 #include <assert.h>
 
+#include <zero/param.h> // LONGSIZE, WORDSIZE, ...
+
+#define REG_BITS (WORDSIZE * CHAR_BIT)
+#if (LONGSIZE < WORDSIZE)
+typedef unsigned long long uval;
+typedef long long sval;
+#else
+typedef unsigned long uval;
+typedef long sval;
+#endif
+
 /* Types used in the computations below. These can be redefined to the types appropriate
    for the desired division type (i.e. uval can be defined as unsigned long long).
    
@@ -20,9 +31,11 @@
    not be smaller than the sval type.
    
 */
+#if 0
 #define REG_BITS 32
 typedef unsigned int uval;
 typedef signed int sval;
+#endif
 
 #if 0
 typedef uint32_t uval;

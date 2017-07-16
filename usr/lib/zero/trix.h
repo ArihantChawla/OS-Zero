@@ -891,7 +891,7 @@ bitcnt1u32a(uint32_t a) {
     /* each 8-bit chunk sums 8 bits */
     a = ((a >> 8) & 0x00FF00FF) + (a & 0x00FF00FF);
     /* each 16-bit chunk sums 16 bits */
-
+    
     return (a >> 16) + (a & 0x0000FFFF);
 }
 
@@ -901,7 +901,7 @@ bitcnt1u32(uint32_t a) {
     a = ((a >> 2) & 0x33333333) + (a & 0x33333333);
     a = ((a >> 4) & 0x07070707) + (a & 0x07070707);
     a = ((a >> 8) & 0x000f000f) + (a & 0x000f000f);
-
+    
     return (a >> 16) + (a & 0x0000001f);
 }
 
@@ -915,46 +915,129 @@ static __inline__ uint64_t
 bitcnt1u64(uint64_t a)
 {
     uint64_t val;
+    uint64_t m1 = UINT64_C(0x5555555555555555);
+    uint64_t m2 = UINT64_C(0x3333333333333333);
+    uint64_t m3 = UINT64_C(0x0f0f0f0f0f0f0f0f);
+    uint64_t m4 = UINT64_C(0x00ff00ff00ff00ff);
+    uint64_t m5 = UINT64_C(0x0000ffff0000ffff);
     
     val = a << 1;
-    val &= UINT64_C(0x5555555555555555);
-    a &= UINT64_C(0x5555555555555555);
+    val &= m1;
+    a &= m1;
     a += val;
     val = a << 2;
-    val &= UINT64_C(0x3333333333333333);
-    a &= UINT64_C(0x3333333333333333);
+    val &= m2;
+    a &= m2;
     a += val;
     val = a << 4;
-    val &= UINT64_C(0x0f0f0f0f0f0f0f0f);
-    a &= UINT64_C(0x0f0f0f0f0f0f0f0f);
+    val &= m3;
+    a &= m3;
     a += val;
     val = a << 8;
-    val &= UINT64_C(0x00ff00ff00ff00ff);
-    a &= UINT64_C(0x00ff00ff00ff00ff);
+    val &= m4;
+    a &= m4;
     a += val;
     val = a << 16;
-    val &= UINT64_C(0x0000ffff0000ffff);
-    a &= UINT64_C(0x0000ffff0000ffff);
+    val &= m5;
+    a &= m5;
     a += val;
     val = a << 32;
     a += val;
-  
-  return a;
+    a >>= 32;
+    
+    return a;
+}
+
+/*
+ * these bitcnt-routines are from http://bisqwit.iki.fi/source/misc/bitcounting/
+ */
+
+static __inline__ uint32_t
+bitcnt1u32mul(uint32_t a)
+{
+    /* dX == (~0) / X */
+    uint32_t d3 = 0x55555555;
+    uint32_t d5 = 0x33333333;
+    uint32_t d17 = 0x0f0f0f0f;
+    uint32_t d255 = 0x01010101;
+
+    a -= (a >> 1) & d3;
+    a = (a & d5) + ((a >> 2) & d5);
+    a = (a + (a >> 4)) & d17;
+    a = (a * d255) >> 24;
+
+    return a;
 }
 
 static __inline__ uint32_t
-mod15u32(uint32_t a) {
+bitcnt1u32nomul(uint32_t a)
+{
+    /* dX == (~0) / X */
+    uint32_t d3 = 0x55555555;
+    uint32_t d5 = 0x33333333;
+    uint32_t d17 = 0x0f0f0f0f;
+
+    a -= (a >> 1) & d3;
+    a = (a & d5) + ((a >> 2) & d5);
+    a = (a + (a >> 4)) & d17;
+    a += a >> 8;
+    a += a >> 16;
+    a &= 0x7f;
+
+    return a;
+}
+
+static __inline__ uint32_t
+bitcnt1u64mul(uint32_t a)
+{
+    /* dX == (~0) / X */
+    uint64_t d3 = 0x5555555555555555;
+    uint64_t d5 = 0x3333333333333333;
+    uint64_t d17 = 0x0f0f0f0f0f0f0f0f;
+    uint64_t d255 = 0x0101010101010101;
+
+    a -= (a >> 1) & d3;
+    a = (a & d5) + ((a >> 2) & d5);
+    a = (a + (a >> 4)) & d17;
+    a = (a * d255) >> 56;
+
+    return a;
+}
+
+static __inline__ uint32_t
+bitcnt1u64nomul(uint64_t a)
+{
+    /* dX == (~0) / X */
+    uint64_t d3 = 0x5555555555555555;
+    uint64_t d5 = 0x3333333333333333;
+    uint64_t d17 = 0x0f0f0f0f0f0f0f0f;
+
+    a -= (a >> 1) & d3;
+    a = (a & d5) + ((a >> 2) & d5);
+    a = (a + (a >> 4)) & d17;
+    a += a >> 8;
+    a += a >> 16;
+    a += a >> 32;
+    a &= 0x7f;
+
+    return a;
+}
+
+static __inline__ uint32_t
+mod15u32(uint32_t a)
+{
     a = (a >> 16) + (a & 0xffff); /* sum base 2**16 digits */
     a = (a >>  8) + (a & 0xff);   /* sum base 2**8 digits */
     a = (a >>  4) + (a & 0xf);    /* sum base 2**4 digits */
     if (a < 15) return a;
     if (a < (2 * 15)) return a - 15;
-
+    
     return a - (2 * 15);
 }
 
 static __inline__ uint32_t
-mod255u32(uint32_t a) {
+mod255u32(uint32_t a)
+{
     a = (a >> 16) + (a & 0xffff); /* sum base 2**16 digits */
     a = (a >>  8) + (a & 0xff);   /* sum base 2**8 digits */
     if (a < 255) return a;
@@ -964,7 +1047,8 @@ mod255u32(uint32_t a) {
 }
 
 static __inline__ uint32_t
-mod65535u32(uint32_t a) {
+mod65535u32(uint32_t a)
+{
     a = (a >> 16) + (a & 0xffff); /* sum base 2**16 digits */
     if (a < 65535) return a;
     if (a < (2 * 65535)) return a - 65535;
