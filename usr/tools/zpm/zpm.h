@@ -36,9 +36,9 @@ typedef zpmureg  zpmadr;
 #define ZPM_OR          0x02 // logical bitwise OR
 #define ZPM_XOR         0x03 // logical bitwise XOR (exclusive OR)
 // count leading zero bits
-#define ZPM_CLZ         ZPM_BITPOP_BIT
+#define ZPM_CLZ         ZPM_BITCNT_BIT
 // count trailing zero bits
-#define ZPM_CTZ         (ZPM_BITPOP_BIT | ZPM_TRAIL_BIT)
+#define ZPM_CTZ         (ZPM_BITCNT_BIT | ZPM_TRAIL_BIT)
 
 /* shifter */
 #define ZPM_SHIFT_UNIT  0x01
@@ -73,7 +73,11 @@ typedef zpmureg  zpmadr;
 
 /* multiplier */
 #define ZPM_MUL_UNIT    0x03
+#define ZPM_HIGH_BIT    0x01
+#define ZPM_WIDE_BIT    0x02
 #define ZPM_MUL         0x00 // multiplication
+#define ZPM_MULHI       (ZPM_HIGH_BIT) // return high-word of result
+#define ZPM_MULW        (ZPM_WIDE_BIT) // return both words of result in %r0:%r1
 
 /* divider */
 #define ZPM_DIV_UNIT    0x04
@@ -95,10 +99,20 @@ typedef zpmureg  zpmadr;
 #define ZPM_PSHA        (ZPM_STACK_BIT | ZPM_GENREGS_BIT)
 #define ZPM_POPA        (ZPM_LOAD_BIT | ZPM_STACK_BIT | ZPM_GENREGS_BIT)
 
-/* I/O operations - TODO: memory-mapped I/O (ZPM_MAP_BIT, ZPM_CPY_BIT) */
+/* I/O operations */
 #define ZPM_IO_UNIT     0x06
-#define ZPM_OUT         0x00 // write data to port
-#define ZPM_IN          0x01 // read data from port
+#define ZPM_OUT_BIT     0x01
+#define ZPM_16_BIT      0x02
+#define ZPM_32_BIT      0x04
+#define ZPM_64_BIT      0x08
+#define ZPM_IOR8        0x00
+#define ZPM_IOW8        (ZPM_IOW_BIT) // 0x01
+#define ZPM_IOR16       (ZPM_16_BIT) // 0x02
+#define ZPM_IOW16       (ZPM_16_BIT | ZPM_IOW_BIT) // 0x03
+#define ZPM_IOR32       (ZPM_32_BIT) // 0x04
+#define ZPM_IOW32       (ZPM_32_BIT | ZPM_IOW_BIT) // 0x05
+#define ZPM_IOR64       (ZPM_64_BIT) // 0x08
+#define ZPM_IOW64       (ZPM_64_BIT | ZPM_IOW_BIT) // 0x09
 
 /* flow control; branch and subroutine operations */
 #define ZPM_FLOW_UNIT   0x07
@@ -160,7 +174,7 @@ typedef zpmureg  zpmadr;
 /* hamming weight / bit-population */
 #define ZPM_BFTRAIL_BIT 0x01
 #define ZPM_BFCNT_BIT   0x02
-#define ZPM_BFPOP_BIT   0x08
+#define ZPM_BFBITS_BIT  0x08
 /* fill operations */
 #define ZPM_BFONES_BIT  0x01
 #define ZPM_BFWRITE_BIT 0x04
@@ -180,9 +194,9 @@ typedef zpmureg  zpmadr;
 #define ZPM_BFCLR       0x07
 #define ZPM_BFROL       (ZPM_BFROT_BIT) // 0x08
 #define ZPM_BFROR       (ZPM_BFROT_BIT | ZPM_BFRIGHT_BIT) // 0x09
-#define ZPM_BFCLZ       (ZPM_BFPOP_BIT | ZPM_BFCNT_BIT) // 0x0a
+#define ZPM_BFCLZ       (ZPM_BFBITS_BIT | ZPM_BFCNT_BIT) // 0x0a
 // 0x0b
-#define ZPM_BFCTZ       (ZPM_BFPOP_BIT | ZPM_BFCNT_BIT | ZPM_BFTRAIL_BIT)
+#define ZPM_BFCTZ       (ZPM_BFBITS_BIT | ZPM_BFCNT_BIT | ZPM_BFTRAIL_BIT)
 #define ZPM_BFCLR       (ZPM_BFFILL_BIT | ZPM_BFWRITE_BIT) // 0x0c
 // 0x0d
 #define ZPM_BFSET       (ZPM_BFFILL_BIT | ZPM_BFWRITE_BIT | ZPM_BFONES_BIT)
