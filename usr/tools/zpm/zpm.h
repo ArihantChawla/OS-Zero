@@ -30,11 +30,10 @@ typedef zpmureg  zpmadr;
 /* logic unit */
 /* no operation */
 #define ZPM_LOGIC_UNIT  0x00
-#define ZPM_NOP         0x00
-#define ZPM_NOT         0x01 // 2's complement (reverse all bits)
-#define ZPM_AND         0x02 // logical bitwise AND
-#define ZPM_OR          0x03 // logical bitwise OR
-#define ZPM_XOR         0x04 // logical bitwise XOR (exclusive OR)
+#define ZPM_NOT         0x00 // 2's complement (reverse all bits)
+#define ZPM_AND         0x01 // logical bitwise AND
+#define ZPM_OR          0x02 // logical bitwise OR
+#define ZPM_XOR         0x03 // logical bitwise XOR (exclusive OR)
 /* shifter */
 #define ZPM_SHIFT_UNIT  0x01
 #define ZPM_RIGHT_BIT   0x01
@@ -139,18 +138,37 @@ typedef zpmureg  zpmadr;
 /* system operations */
 #define ZPM_SYS_UNIT    0x08
 #define ZPM_RST         0x00 // reset
-#define ZPM_XFER        0x01 // system to general-purpose register
-#define ZPM_FETCH       0x02 // general-purpose to system register
-#define ZPM_STR         0x03 // store system register
-#define ZPM_LDR         0x04 // load system register
+#define ZPM_XSTA        0x01 // system to general-purpose register
+#define ZPM_XLDA        0x02 // general-purpose to system register
+#define ZPM_XSTR        0x03 // store system register
+#define ZPM_XLDR        0x04 // load system register
 #define ZPM_WAIT        0x05 // wait for wakeup event
 #define ZPM_WAKE        0x06 // broadcast wakeup event
 #define ZPM_HLT         0x07 // wait for interrupt
 #define ZPM_SRET        0x08 // return from system; interrupt handlers
+#define ZPM_CLI         0x09 // disable interrupts
+#define ZPM_STI         0x0a // enable interrupts
+/* inter-processor atomic operations (bus locked) */
+#define ZPM_ATOM_UNIT   0x09
+#define ZPM_BSET        0x00 // set bit (OR)
+#define ZPM_BCLR        0x01 // clear bit (XOR)
+#define ZPM_BCHG        0x02 // flip/toggle bit
+#define ZPM_CBSET       0x03 // compare and set bit
+#define ZPM_CBCLR       0x04 // compare and clear bit
+#define ZPM_CBCHG       0x05 // flip/toggle bit
+#define ZPM_BCAS        0x06 // compare and set bit
+#define ZPM_BCAC        0x07 // compare and clear bit
+#define ZPM_FINC        0x08 // fetch and increment
+#define ZPM_FDEC        0x09 // fetch and decrement
+#define ZPM_FADD        0x0a // fetch and add
+#define ZPM_FSUB        0x0b // fetch and subtract
+#define ZPM_CAS         0x0c // compare and swap
+#define ZPM_CAS2        0x0d // dual-word/pointer compare and swap
+/* LL/SC, CLZ, CTZ
 /* processor parameters */
-#define ZPM_NALU_MAX    256 // max number of ALU operations
 #define ZPM_FPU_UNIT    0x0e // floating-point coprocessor
 #define ZPM_COPROC_UNIT 0x0f // special unit ID to dispatch execution
+#define ZPM_NALU_MAX    256 // max number of ALU operations
 
 /* VIRTUAL MACHINE */
 
@@ -158,9 +176,13 @@ typedef zpmureg  zpmadr;
 #define zpmsetcf(vm)    ((vm)->sysregs[ZPM_MSW] |= ZPM_MSW_CF)
 #define zpmsetzf(vm)    ((vm)->sysregs[ZPM_MSW] |= ZPM_MSW_ZF)
 #define zpmsetof(vm)    ((vm)->sysregs[ZPM_MSW] |= ZPM_MSW_OF)
+#define zpmsetif(vm)    ((vm)->sysregs[ZPM_MSW] |= ZPM_MSW_IF)
 #define zpmcfset(vm)    ((vm)->sysregs[ZPM_MSW] & ZPM_MSW_CF)
 #define zpmzfset(vm)    ((vm)->sysregs[ZPM_MSW] & ZPM_MSW_ZF)
 #define zpmofset(vm)    ((vm)->sysregs[ZPM_MSW] & ZPM_MSW_OF)
+#define zpmifset(vm)    ((vm)->sysregs[ZPM_MSW] & ZPM_MSW_IF)
+
+#define ZPM_NGENREG     16 // number of registers in group (general, system)
 
 /* accumulator (general-purpose register) IDs */
 #define ZPM_REG0        0x00
@@ -179,7 +201,6 @@ typedef zpmureg  zpmadr;
 #define ZPM_REG13       0x0d
 #define ZPM_REG14       0x0e
 #define ZPM_REG15       0x0f
-#define ZPM_NGENREG     16
 /* system register IDs */
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #define ZPM_RET_LO      0x00 // [dual-word] return value register, low word
@@ -194,11 +215,12 @@ typedef zpmureg  zpmadr;
 #define ZPM_SP          0x03 // stack pointer
 #define ZPM_PDB         0x04 // page directory base address register
 #define ZPM_TLB         0x05 // thread-local storage base address register
-#define ZPM_NSYSREG     16
 /* values for sysregs[ZPM_MSW] */
 #define ZPM_MSW_CF      (1 << 0) // carry-flag
 #define ZPM_MSW_ZF      (1 << 1) // zero-flag
 #define ZPM_MSW_OF      (1 << 2) // overflow-flag
+#define ZPM_MWS_IF      (1 << 3) // interrupts pending
+#define ZPM_MSW_SF      (1 << 30) // system-mode
 #define ZPM_MSW_LF      (1 << 31) // bus lock flag
 /* program segments */
 #define ZPM_TEXT        0x00 // code
@@ -224,18 +246,28 @@ struct zpm {
 #endif
 
 /* argument type flags */
-#define ZPM_MEM_BIT      (1 << 2) // memory address argument (default register)
-#define ZPM_IMM_ARG      0x00 // immediate argument value
+#define ZPM_MEM_BIT      0x04 // memory address argument (default is register)
+#define ZPM_IMMED_ARG    0x00 // immediate argument value
 #define ZPM_ADR_ARG      0x01 // address argument
-#define ZPM_NDX_ARG      0x02 // index argument
+#define ZPM_INDEX_ARG    0x02 // index argument
 #define ZPM_ARGT_BITS    3
+
+/*
+ * special uses for imm8
+ * - shift or rotation count
+ * - flags
+ */
+#define ZPM_LOCK_BIT     0x80 // lock bus for operation
+
 struct zpmop {
-    uint8_t      code;          // unit/ZPM_COPROC in first 4 bits, inst in last
+    unsigned int unit  : 4;     // execution unit
+    unsigned int inst  : 4;     // per-unit instruction
     unsigned int reg1  : 4;     // argument #1 register ID
     unsigned int reg2  : 4;     // argument #2 register ID
-    unsigned int argt  : 6;     // argument types
-    unsigned int argsz : 2;     // argument size is ARG_MIN << argsz
-    uint8_t      imm8;          // immediate argument
+    unsigned int arg1t : 3;     // argument #1 type
+    unsigned int arg2t : 3;     // argument #2 type
+    unsigned int argsz : 2;     // argument size is 8 << argsz bits
+    uint8_t      imm8;          // immediate argument or flags
     zpmreg       imm[EMPTY];    // possible immediate argument
 };
 
