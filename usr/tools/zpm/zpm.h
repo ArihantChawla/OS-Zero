@@ -279,10 +279,32 @@ typedef zpmureg  zpmadr;
 #define ZPM_TCONFIG_BIT 0x01
 #define ZPM_TCTX_BIT    0x02
 #define ZPM_TSAVE_BIT   0x01
+#define ZPM_TPROF_BIT   0x04
+#define ZPM_TPINFO_BIT  0x01
+#define ZPM_TPSAVE_BIT  0x01
 #define ZPM_TINIT       0x00
-#define ZPM_TCONF       ZPM_TCONFIG_BIT
-#define ZPM_TCTX        ZPM_TCTX_BIT
-#define ZPM_TSAVE       (ZPM_TCTX_BIT | ZPM_TSAVE_BIT)
+#define ZPM_TCTL_BIT    0x08
+#define ZPM_TSYS_BIT    0x01
+#define ZPM_TSTOP_BIT   0x01
+#define ZPM_TID_BIT     0x02
+#define ZPM_TSIG_BIT    0x04
+#define ZPM_TKILL_BIT   0x01
+#define ZPM_TCONF       ZPM_TCONFIG_BIT // 0x01
+#define ZPM_TCTX        ZPM_TCTX_BIT // 0x02
+#define ZPM_TSAVE       (ZPM_TCTX_BIT | ZPM_TSAVE_BIT) // 0x03
+#define ZPM_TPROF       ZPM_TPROF_BIT // 0x04
+#define ZPM_TPREAD      (ZPM_TPROF_BIT | ZPM_TPINFO_BIT) // 0x05
+#define ZPM_TPSTOP      (ZPM_TPROF_BIT | ZPM_TPSTOP_BIT) // 0x06
+// 0x07
+#define ZPM_TPHOLD      (ZPM_TPROF_BIT | ZPM_TPSTOP_BIT | ZPM_TPSAVE_BIT) // 07
+#define ZPM_TYIELD      ZPM_TCTL_BIT // 0x08
+#define ZPM_TSYS        (ZPM_TCTL_BIT | ZPM_TSYS_BIT) // 0x09
+#define ZPM_TSETID      (ZPM_TCTL_BIT | ZPM_TID_BIT) // 0x0a
+#define ZPM_TSTOP       (ZPM_TCTL_BIT | ZPM_TID_BIT | ZPM_TSTOP_BIT) // 0x0b
+#define ZPM_TRAISE      (ZPM_TCTL_BIT | ZPM_TSIG_BIT) // 0x0c
+#define ZPM_TKILL       (ZPM_TCTL_BIT | ZPM_TSIG_BIT | ZPM_TKILL_BIT) // 0x0d
+#define ZPM_TEXIT       ZPM_TEXIT_MASK
+#define ZPM_TDIE        (ZPM_TEXIT_MASK | ZPM_TKILL_BIT) // exit parent process
 
 /* processor parameters */
 #define ZPM_COPROC_UNIT 0x0f // coprocessor; FPU, VEC, ...
