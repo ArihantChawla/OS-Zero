@@ -26,14 +26,20 @@ typedef zpmureg  zpmadr;
 /* INSTRUCTION SET */
 
 /* ALU (arithmetic-logical unit) instructions */
+
 /* bitwise operations */
-/* logic unit */
-/* no operation */
-#define ZPM_LOGIC_UNIT  0x00
+#define ZPM_BITS_UNIT   0x00
+#define ZPM_TRAIL_BIT   0x01
+#define ZPM_BITPOP_BIT  0x04
 #define ZPM_NOT         0x00 // 2's complement (reverse all bits)
 #define ZPM_AND         0x01 // logical bitwise AND
 #define ZPM_OR          0x02 // logical bitwise OR
 #define ZPM_XOR         0x03 // logical bitwise XOR (exclusive OR)
+// count leading zero bits
+#define ZPM_CLZ         ZPM_BITPOP_BIT
+// count trailing zero bits
+#define ZPM_CTZ         (ZPM_BITPOP_BIT | ZPM_TRAIL_BIT)
+
 /* shifter */
 #define ZPM_SHIFT_UNIT  0x01
 #define ZPM_RIGHT_BIT   0x01
@@ -45,6 +51,7 @@ typedef zpmureg  zpmadr;
 #define ZPM_SAR         (ZPM_SHIFT_BIT | ZPM_RIGHT_BIT | ZPM_SIGN_BIT)
 #define ZPM_ROL         ZPM_ROT_BIT
 #define ZPM_ROR         (ZPM_ROT_BIT | ZPM_RIGHT_BIT)
+
 /* arithmetic operations */
 /* arithmetic unit */
 #define ZPM_ARITH_UNIT  0x02
@@ -63,14 +70,17 @@ typedef zpmureg  zpmadr;
 #define ZPM_SBF         (ZPM_ADD_INV_BIT | ZPM_INC_BIT | ZPM_MSW_BIT)
 #define ZPM_DEC         (ZPM_SUB_BIT | ZPM_DEC_BIT)
 #define ZPM_CMP         ZPM_SBF
+
 /* multiplier */
 #define ZPM_MUL_UNIT    0x03
 #define ZPM_MUL         0x00 // multiplication
+
 /* divider */
 #define ZPM_DIV_UNIT    0x04
 #define ZPM_REM_BIT     0x01 // remainder-flag
 #define ZPM_DIV         0x00 // division, result in ZPM_RET_LO
 #define ZPM_REM         ZPM_REM_BIT // remainder of division in ZPM_RET_HI
+
 /* load-store and stack operations */
 #define ZPM_MEM_UNIT    0x05
 #define ZPM_LOAD_BIT    0x01 // read operation
@@ -84,87 +94,127 @@ typedef zpmureg  zpmadr;
 #define ZPM_POP         (ZPM_LOAD_BIT | ZPM_STACK_BIT)
 #define ZPM_PSHA        (ZPM_STACK_BIT | ZPM_GENREGS_BIT)
 #define ZPM_POPA        (ZPM_LOAD_BIT | ZPM_STACK_BIT | ZPM_GENREGS_BIT)
+
 /* I/O operations - TODO: memory-mapped I/O (ZPM_MAP_BIT, ZPM_CPY_BIT) */
 #define ZPM_IO_UNIT     0x06
 #define ZPM_OUT         0x00 // write data to port
 #define ZPM_IN          0x01 // read data from port
+
 /* flow control; branch and subroutine operations */
 #define ZPM_FLOW_UNIT   0x07
-#define ZPM_NOTZERO_BIT 0x01
-#define ZPM_LESS_BIT    0x02
-#define ZPM_GREATER_BIT 0x04
-#define ZPM_EQUAL_BIT   0x08
-#define ZPM_CARRY_BIT   0x01
-#define ZPM_ZERO_BIT    0x02
+#define ZPM_ZERO_BIT    0x01
+#define ZPM_NOTZERO_BIT 0x02
+#define ZPM_NOTOVER_BIT 0x02
 #define ZPM_OVER_BIT    0x04
-//#define ZPM_NO_OVER_BIT 0x04
+#define ZPM_NOCARRY_BIT 0x02
+#define ZPM_CARRY_BIT   0x04
+#define ZPM_EQUAL_BIT   0x01
+#define ZPM_UNEQUAL_BIT 0x02
+#define ZPM_LESS_BIT    0x08
+#define ZPM_GREATER_BIT 0x08
 #define ZPM_JMP         0x00
-#define ZPM_BC          ZPM_CARRY_BIT // 0x01
-#define ZPM_BZ          ZPM_ZERO_BIT // 0x02
-#define ZPM_BNC         (ZPM_CARRY_BIT | ZPM_LESS_BIT) // 0x03
-#define ZPM_CALL        0x04
-#define ZPM_BO          (ZPM_OVER_BIT | ZPM_NOTZERO_BIT) // 0x05
-#define ZPM_BNO         (ZPM_OVER_BIT | ZPM_ZERO_BIT) // 0x06
-#define ZPM_THR         0x07
-#define ZPM_RET         0x08
-#define ZPM_BNZ         (ZPM_NOTZERO_BIT | ZPM_EQUAL_BIT) // 0x09/
-#define ZPM_BLT         (ZPM_LESS_BIT | ZPM_EQUAL_BIT) // 0x0a
-// 0x02 | 0x08 | 0x01 == 0x0b
-#define ZPM_BLE         (ZPM_LESS_BIT | ZPM_EQUAL_BIT | ZPM_NOTZERO_BIT)
-// 0x04 | 0x08 = 0x0c
-#define ZPM_BGT         (ZPM_GREATER_BIT | ZPM_EQUAL_BIT)
-// 0x04 | 0x08 | 0x01 = 0x0d
-#define ZPM_BGE         (ZPM_GREATER_BIT | | ZPM_EQUAL_BIT | ZPM_NOTZERO_BIT)
-#define ZPM_ENTER       0x0e
-#define ZPM_LEAVE       0x0f
-/*
-#define ZPM_JMP         0x00 // branch unconditionally
-#define ZPM_BZ          0x01 // branch if zero (ZF)
-#define ZPM_BNZ         0x02 // branch if non-zero (!ZF)
-#define ZPM_BLT         0x03 // branch if less than (CF  && !ZF)
-#define ZPM_BLE         0x04 // branch if less than or equal (CF || ZF)
-#define ZPM_BGT         0x05 // branch if greater than (OF && !ZF)
-#define ZPM_BGE         0x06 // branch if greater than or equal (OF || ZF)
-#define ZPM_BO          0x07 // branch if overflow set (OF)
-#define ZPM_BNO         0x08 // branch if overflow not set (!OF)
-#define ZPM_BC          0x09 // branch if carry set (CF)
-#define ZPM_BNC         0x0a // branch if carry not set (!CF)
-#define ZPM_CALL        0x0b // trigger function call
-#define ZPM_ENTER       0x0c // function prologue
-#define ZPM_LEAVE       0x0d // function epilogue
-#define ZPM_THR         0x0e // launch new thread
-#define ZPM_RET         0x0f // return from subroutine or thread
-*/
-/* system operations */
-#define ZPM_SYS_UNIT    0x08
-#define ZPM_RST         0x00 // reset
-#define ZPM_XSTA        0x01 // system to general-purpose register
-#define ZPM_XLDA        0x02 // general-purpose to system register
-#define ZPM_XSTR        0x03 // store system register
-#define ZPM_XLDR        0x04 // load system register
-#define ZPM_WAIT        0x05 // wait for wakeup event
-#define ZPM_WAKE        0x06 // broadcast wakeup event
-#define ZPM_HLT         0x07 // wait for interrupt
-#define ZPM_SRET        0x08 // return from system; interrupt handlers
-#define ZPM_CLI         0x09 // disable interrupts
-#define ZPM_STI         0x0a // enable interrupts
+#define ZPM_BZ          ZPM_ZERO_BIT
+#define ZPM_BNZ         ZPM_NOTZERO_BIT
+#define ZPM_CALL        0x03
+#define ZPM_BO          (ZPM_OVER_BIT)
+#define ZPM_BNO         (ZPM_OVER_BIT | ZPM_ZERO_BIT) // 0x05
+#define ZPM_BC          (ZPM_CARRY_BIT | ZPM_NOTZERO_BIT) // 0x06
+#define ZPM_BNC         (ZPM_CARRY_BIT | ZPM_NOCARRY_BIT | ZPM_ZERO_BIT) // 0x07
+#define ZPM_BLT         (ZPM_LESS_BIT) // 0x08
+#define ZPM_BLE         (ZPM_LESS_BIT | ZPM_EQUAL_BIT) // 0x09
+#define ZPM_BGT         (ZPM_GREATER_BIT | ZPM_UNEQUAL_BIT) // 0x0a
+// 0x0b
+#define ZPM_BGE         (ZPM_GREATER_BIT | ZPM_UNEQUAL_BIT | ZPM_EQUAL_BIT)
+#define ZPM_THR         0x0c // launch new thread
+#define ZPM_RET         0x0d // return from subroutine
+#define ZPM_TRET        0x0e // return from thread
+#define ZPM_IRET        0x0f // return from interrupt handler
+
 /* inter-processor atomic operations (bus locked) */
-#define ZPM_ATOM_UNIT   0x09
+#define ZPM_ATOM_UNIT   0x08
 #define ZPM_BSET        0x00 // set bit (OR)
 #define ZPM_BCLR        0x01 // clear bit (XOR)
-#define ZPM_BCHG        0x02 // flip/toggle bit
-#define ZPM_CBSET       0x03 // compare and set bit
-#define ZPM_CBCLR       0x04 // compare and clear bit
-#define ZPM_CBCHG       0x05 // flip/toggle bit
-#define ZPM_BCAS        0x06 // compare and set bit
-#define ZPM_BCAC        0x07 // compare and clear bit
-#define ZPM_FINC        0x08 // fetch and increment
-#define ZPM_FDEC        0x09 // fetch and decrement
-#define ZPM_FADD        0x0a // fetch and add
-#define ZPM_FSUB        0x0b // fetch and subtract
-#define ZPM_CAS         0x0c // compare and swap
-#define ZPM_CAS2        0x0d // dual-word/pointer compare and swap
-/* LL/SC, CLZ, CTZ
+#define ZPM_BCHG        0x02 // flip/toggle bit (NOT)
+#define ZPM_BTAS        0x03 // test (fetch) and set bit
+#define ZPM_BTAC        0x04 // test (fetch) and clear bit
+#define ZPM_BCSET       0x05 // compare and set bit
+#define ZPM_BCCLR       0x06 // compare and clear bit
+#define ZPM_FINC        0x07 // fetch and increment
+#define ZPM_FDEC        0x08 // fetch and decrement
+#define ZPM_FADD        0x09 // fetch and add
+#define ZPM_FSUB        0x0a // fetch and subtract
+#define ZPM_CAS         0x0b // compare and swap
+#define ZPM_CAS2        0x0c // dual-word/pointer compare and swap
+/* NOTE: 0x0d, 0x0e, 0x0f reserved for stuff such as LL/SC */
+
+/* bitfield operations */
+/* NOTE: use width == 0, pos == 0 to indicate operations on whole registers */
+#define ZPM_BITF_UNIT   0x09
+/* shift and rotate operations */
+#define ZPM_BFRIGHT_BIT 0x01
+#define ZPM_BFSIGN_BIT  0x02
+#define ZPM_BFZERO_BIT  0x02
+#define ZPM_BFROR_BIT   0x04
+#define ZPM_BFSHIFT_BIT 0x04
+#define ZPM_BFROT_BIT   0x08
+/* hamming weight / bit-population */
+#define ZPM_BFTRAIL_BIT 0x01
+#define ZPM_BFCNT_BIT   0x02
+#define ZPM_BFPOP_BIT   0x08
+/* fill operations */
+#define ZPM_BFONES_BIT  0x01
+#define ZPM_BFWRITE_BIT 0x04
+#define ZPM_BFFILL_BIT  0x08
+#define ZPM_BFXFER_BIT  0x08
+/* move operations */
+#define ZPM_BFSAVE_BIT  0x01
+#define ZPM_BFXFER_MASK 0x0e
+/* instructions */
+#define ZPM_BFNOT       0x00
+#define ZPM_BFAND       0x01
+#define ZPM_BFOR        0x02
+#define ZPM_BFXOR       0x03
+#define ZPM_BFSHL       ZPM_BFSHIFT_BIT // 0x04
+#define ZPM_BFSAR       (ZPM_BFSHIFT_BIT | ZPM_BFRIGHT_BIT) // 0x05
+#define ZPM_BFSHR       (ZPM_BFSHIFT_BIT | ZPM_BFSIGN_BIT) // 0x06
+#define ZPM_BFCLR       0x07
+#define ZPM_BFROL       (ZPM_BFROT_BIT) // 0x08
+#define ZPM_BFROR       (ZPM_BFROT_BIT | ZPM_BFRIGHT_BIT) // 0x09
+#define ZPM_BFCLZ       (ZPM_BFPOP_BIT | ZPM_BFCNT_BIT) // 0x0a
+// 0x0b
+#define ZPM_BFCTZ       (ZPM_BFPOP_BIT | ZPM_BFCNT_BIT | ZPM_BFTRAIL_BIT)
+#define ZPM_BFCLR       (ZPM_BFFILL_BIT | ZPM_BFWRITE_BIT) // 0x0c
+// 0x0d
+#define ZPM_BFSET       (ZPM_BFFILL_BIT | ZPM_BFWRITE_BIT | ZPM_BFONES_BIT)
+#define ZPM_BFLOAD      (ZPM_BFXFER_MASK) // 0x0e
+#define ZPM_BFSAVE      (ZPM_BFXFER_MASK | ZPM_BSAVE_BIT) // 0x0f
+
+/* memory-management unit */
+#define ZPM_MEM_UNIT    0x0a
+#define ZPM_INVPG       0x00 // invalidate page entry in TLB
+#define ZPM_LKCL        0x01 // lock cacheline
+#define ZPM_RELCL       0x02 // release cacheline
+
+/* system operations */
+#define ZPM_SYS_UNIT    0x0b
+#define ZPM_BOOT        0x00 // execute bootstrap code
+#define ZPM_XLDR        0x01 // load system register from general-purpose one
+#define ZPM_XLD         0x02 // load system register from memory
+#define ZPM_XST         0x03 // store system register in memory
+#define ZPM_WEV         0x04 // wait for wakeup event
+#define ZPM_SEV         0x05 // broadcast wakeup event
+#define ZPM_HLT         0x06 // wait for interrupt
+#define ZPM_CLI         0x07 // disable interrupts
+#define ZPM_STI         0x08 // enable interrupts
+#define ZPM_MSG         0x09 // send [inter-processor] message such as interrupt
+#define ZPM_SCALL       0x0a // perform system call
+#define ZPM_SRET        0x0b // return from system call
+/* NOTE: 0x0c, 0x0d, 0x0e are currently reserved */
+#define ZPM_RST         0x0f // reset
+
+/* SIMD vector operations */
+#define ZPM_VEC_UNIT    0x0d
+
 /* processor parameters */
 #define ZPM_FPU_UNIT    0x0e // floating-point coprocessor
 #define ZPM_COPROC_UNIT 0x0f // special unit ID to dispatch execution
@@ -230,8 +280,8 @@ typedef zpmureg  zpmadr;
 #define ZPM_TLS         0x04 // thread-local storage
 #define ZPM_NSEG        0x08
 struct zpm {
-    zpmreg   genregs[ZPM_NGENREG];
-    zpmureg  sysregs[ZPM_NSYSREG];
+    zpmreg   genregs[ZPM_NREG];
+    zpmureg  sysregs[ZPM_NREG];
     zpmureg *segs[ZPM_NSEG];
     zpmureg  seglims[ZPM_NSEG];
     uint8_t *mem;
@@ -246,18 +296,19 @@ struct zpm {
 #endif
 
 /* argument type flags */
-#define ZPM_MEM_BIT      0x04 // memory address argument (default is register)
-#define ZPM_IMMED_ARG    0x00 // immediate argument value
-#define ZPM_ADR_ARG      0x01 // address argument
-#define ZPM_INDEX_ARG    0x02 // index argument
-#define ZPM_ARGT_BITS    3
+#define ZPM_INDIR_BIT   0x04 // indirect address
+#define ZPM_INDEX_BIT   0x02 // index for address
+#define ZPM_IMMED_BIT   0x01 // immediate argument
+#define ZPM_REG_ARG     0x00 // register
+#define ZPM_ARGT_BITS   3
 
 /*
  * special uses for imm8
  * - shift or rotation count
  * - flags
  */
-#define ZPM_LOCK_BIT     0x80 // lock bus for operation
+#define ZPM_CL_LOCK_BIT  0x40
+#define ZPM_BUS_LOCK_BIT 0x80 // lock bus for operation
 
 struct zpmop {
     unsigned int unit  : 4;     // execution unit
