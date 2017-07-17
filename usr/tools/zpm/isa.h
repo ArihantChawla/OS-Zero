@@ -111,7 +111,7 @@
 #define ZPM_LESS_BIT     0x08
 #define ZPM_GREATER_BITS 0x0a
 #define ZPM_RET_BITS     0x0c
-#define ZPM_TASK_BIT     0x01
+#define ZPM_TASKRET_BIT  0x01
 #define ZPM_TASK_BITS    0x0e
 #define ZPM_EXIT_BIT     0x01
 /* instructions */
@@ -128,7 +128,7 @@
 #define ZPM_BGT          ZPM_GREATER_BITS // 0x0a
 #define ZPM_BGE          (ZPM_GREATER_BITS | ZPM_ZERO_BIT) // 0x0b
 #define ZPM_RET          ZPM_RET_BITS
-#define ZPM_TRET         (ZPM_RET_BITS | ZPM_TASK_BIT)
+#define ZPM_TRET         (ZPM_RET_BITS | ZPM_TASKRET_BIT)
 /* optional operations; HAVE_FLOW_TASK */
 #define ZPM_TASK         ZPM_TASK_BITS // launch new process, thread, fiber
 #define ZPM_TEXIT        (ZPM_TASK_BITS | ZPM_EXIT_BIT) // exit task
@@ -166,7 +166,7 @@
  * SETRND - set round-mode
  * SETRNC - set truncate-mode (default)
  * DREC   - divide with reciprocal
- * DCREC  - compute [and cache] reciprocal
+ * CREC   - compute [and cache] reciprocal
  */
 
 /* divider */
@@ -184,7 +184,7 @@
 #define ZPM_SETRND       ZPM_ROUND_BIT // 0x02
 #define ZPM_SETRNC       (ZPM_ROUND_BIT | ZPM_TRUNC_BIT) // 0x03
 #define ZPM_DREC         ZPM_REC_BIT // 0x04 reciprocal division
-#define ZPM_DCREC        (ZPM_REC_BIT | ZPM_CREC_BIT) // 0x05
+#define ZPM_CREC         (ZPM_REC_BIT | ZPM_CREC_BIT) // 0x05
 
 /*
  * CPY - register to register
