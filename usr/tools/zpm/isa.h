@@ -199,21 +199,12 @@
 /* I/O operations */
 #define ZPM_IO_UNIT      0x07
 #define ZPM_IOWRITE_BIT  0x01
-#define ZPM_IO16_BIT     0x02
-#define ZPM_IO32_BIT     0x04
-#define ZPM_IO64_BITS    0x06
 /* optional */
-#define ZPM_IOPCHK_BIT   0x08
-#define ZPM_IOPSET_BITS  0x0a
+#define ZPM_IOPCHK_BIT   0x02
+#define ZPM_IOPSET_BIT   0x04
 /* instructions */
-#define ZPM_IOR8         0x00
-#define ZPM_IOW8         (ZPM_IOWRITE_BIT) // 0x01
-#define ZPM_IOR16        (ZPM_IO16_BIT) // 0x02
-#define ZPM_IOW16        (ZPM_IO16_BIT | ZPM_IOWRITE_BIT) // 0x03
-#define ZPM_IOR32        (ZPM_IO32_BIT) // 0x04
-#define ZPM_IOW32        (ZPM_IO32_BIT | ZPM_IOWRITE_BIT) // 0x05
-#define ZPM_IOR64        ZPM_IO64_BITS // 0x06
-#define ZPM_IOW64        (ZPM_IO64_BITS | ZPM_IOWRITE_BIT) // 0x07
+#define ZPM_IOR          0x00
+#define ZPM_IOW          (ZPM_IOWRITE_BIT) // 0x01
 /* optional instructions */
 #define ZPM_IORCHK       ZPM_IOPCHK_BIT
 #define ZPM_IORWCHK      (ZPM_IOPCHK_BIT | ZPM_IOWRITE_BIT)
