@@ -45,16 +45,15 @@
 #define ZPM_RET_LO      0x01 // [dual-word] return value register, low word
 #endif
 #define ZPM_MSW_REG     0x00 // machine status word
-#define ZPM_PC_REG      0x01 // program counter i.e. instruction pointer
-#define ZPM_FP_REG      0x02 // frame pointer
-#define ZPM_SP_REG      0x03 // stack pointer
-#define ZPM_SHC_REG     0x04 // shift count register for shift and rotate
+#define ZPM_FP_REG      0x01 // frame pointer
+#define ZPM_SP_REG      0x02 // stack pointer
+#define ZPM_PC_REG      0x03 // program counter i.e. instruction pointer
 #define ZPM_SYSREG_BIT  0x08 // denotes system-only access
 #define ZPM_IHT_REG     0x09 // interrupt handler table base address
 #define ZPM_PDB_REG     0x0a // page directory base address register
 #define ZPM_TID_REG     0x0b // task ID register
 #define ZPM_TLS_REG     0x0c // thread-local storage base address register
-#define ZPM_TASK_REG    0x0d // task-structure base address
+#define ZPM_TSR_REG     0x0d // task-structure/state base address
 /* values for sysregs[ZPM_MSW] */
 #define ZPM_MSW_ZF_BIT  (1 << 0) // zero-flag
 #define ZPM_MSW_OF_BIT  (1 << 1) // overflow-flag
