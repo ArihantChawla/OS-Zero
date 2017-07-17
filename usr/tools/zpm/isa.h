@@ -27,11 +27,11 @@
 #define ZPM_AND          0x01 // logical bitwise AND
 #define ZPM_OR           0x02 // logical bitwise OR
 #define ZPM_XOR          0x03 // logical bitwise XOR (exclusive OR)
-/* optional operations; HAVE_CNT_BITS */
+/* optional operations; HAVE_BITCNT_EXTRA */
 #define ZPM_CLZ          ZPM_BITCNT_BIT // 0x04 count leading zero bits
 #define ZPM_CTZ          (ZPM_BITCNT_BIT | ZPM_TRAIL_BIT) // 0x05 trailing zeroes
 #define ZPM_BPOP         (ZPM_BITCNT_BIT | ZPM_BITPOP_BIT) // 0x06 count 1-bits
-/* optional operations; HAVE_CNT_BITFLD */
+/* optional operations; HAVE_BFCNT_EXTRA */
 #define ZPM_BFCLZ        ZPM_BFEXTRA_BIT // 0x08
 #define ZPM_BFCTZ        (ZPM_BFEXTRA_BIT | ZPM_BFTRAIL_BIT) // 0x09
 #define ZPM_BFPOP        (ZPM_BFEXTRA_BIT | ZPM_BFPOP_BIT) // 0x0a
@@ -65,7 +65,7 @@
 #define ZPM_ROR          (ZPM_ROT_BIT | ZPM_RIGHT_BIT) // 0x05
 #define ZPM_RCL          (ZPM_ROT_BIT | ZPM_RCARRY_BIT) // 0x06
 #define ZPM_RCR          (ZPM_ROT_BIT | ZPM_RCARRY_BIT | ZPM_RIGHT_BIT) // 0x07
-/* optional operations; HAVE_SHIFT_BITFLD */
+/* optional operations; HAVE_SHBITFLD_EXTRA */
 #define ZPM_BFSHL        ZPM_FIELD_BIT // 0x08
 #define ZPM_BFSHR        (ZPM_FIELD_BIT | ZPM_RIGHT_BIT) // 0x09
 #define ZPM_BFSAR        (ZPM_FIELD_BIT | ZPM_SIGNEXT_BIT) // 0x0a
@@ -129,7 +129,7 @@
 #define ZPM_BGE          (ZPM_GREATER_BITS | ZPM_ZERO_BIT) // 0x0b
 #define ZPM_RET          ZPM_RET_BITS
 #define ZPM_TRET         (ZPM_RET_BITS | ZPM_TASKRET_BIT)
-/* optional operations; HAVE_FLOW_TASK */
+/* optional operations; HAVE_TASK_EXTRA */
 #define ZPM_TASK         ZPM_TASK_BITS // launch new process, thread, fiber
 #define ZPM_TEXIT        (ZPM_TASK_BITS | ZPM_EXIT_BIT) // exit task
 
@@ -149,7 +149,7 @@
 #define ZPM_WIDTH_BIT    0x02
 #define ZPM_HIGH_BIT     0x04
 /* optional */
-#define ZPM_ExTRA_BIT    0x08
+#define ZPM_MULExTRA_BIT 0x08
 #define ZPM_MUL          0x00
 #define ZPM_MULS         ZPM_MSIGN_BIT // 0x01
 #define ZPM_MULW         ZPM_MWIDTH_BIT // 0x02
@@ -158,7 +158,7 @@
 #define ZPM_MULSHI       (ZPM_MHIGH_BIT | ZPM_MSIGN_BIT) // 0x05
 // NOTE: 0x06, 0x07 are reserved
 /* optional instructions; HAVE_MUL_EXTRA */
-#define ZPM_MAC          ZPM_EXTRA_BIT // multiply-accumulate
+#define ZPM_MAC          ZPM_MULEXTRA_BIT // multiply-accumulate
 
 /*
  * DIV    - divide
@@ -230,7 +230,7 @@
 #define ZPM_XPOP         (ZPM_XREG_BIT | ZPM_POP_BIT) // 0x09
 #define ZPM_XPSHA        (ZPM_XREG_BIT | XPM_ALLREGS_BIT) // 0x0a
 #define ZPM_XPOPA        (ZPM_XREG_BIT | XPM_ALLREGS_BIT | ZPM_POP_BIT) // 0x0b
-/* optional operations; HAVE_SET_STK */
+/* optional operations; HAVE_STACK_EXTRA */
 #define ZPM_STK          ZPM_STK_BITS // 0x0c
 #define ZPM_SSTK         (ZPM_STK_BITS | ZPM_SYSSTK_BITS) // 0x0d
 #define ZPM_STKSZ        ZPM_STKSIZE_BITS // 0x0e
@@ -255,25 +255,26 @@
 #define ZPM_SYS_UNIT     0x09
 #define ZPM_RESET_BIT    0x01
 #define ZPM_TRAP_BIT     0x02
-#define ZPM_EVENT_BIT    0x04
-#define ZPM_SEND_BIT     0x01
+#define ZPM_INTR_BIT     0x04
 #define ZPM_BLOCK_BIT    0x01
-#define ZPM_INTR_BIT     0x08
-#define ZPM_SYS_BITS     0x0a
+#define ZPM_SYS_BITS     0x06
 #define ZPM_SYSRET_BIT   0x01
+#define ZPM_EVENT_BIT    0x08
+#define ZPM_SEND_BIT     0x01
 /* instructions */
 #define ZPM_BOOT         0x00 // execute bootstrap code from ROM
 #define ZPM_RST          ZPM_RESET_BIT // 0x01
 #define ZPM_TSET         ZPM_TRAP_BIT // 0x02
 #define ZPM_TCLR         (ZPM_TRAP_BIT | ZPM_RESET_BIT) // 0x03
-#define ZPM_WFE          ZPM_EVENT_BIT // 0x04
-#define ZPM_EV           (ZPM_EVENT_BIT | ZPM_SEND_BIT) // 0x05
-#define ZPM_WFI          (ZPM_EVENT_BIT | ZPM_TRAP_BIT) // 0x06
-#define ZPM_SMI          (ZPM_EVENT_BIT | ZPM_TRAP_BIT | ZPM_SEND_BIT) // 0x07
-#define ZPM_STI          ZPM_INTR_BIT // 0x08
-#define ZPM_CLI          (ZPM_INTR_BIT | ZPM_BLOCK_BIT) // 0x09
-#define ZPM_SCALL        (ZPM_SYS_BITS) // 0x0a
-#define ZPM_SRET         (ZPM_SYS_BITS | ZPM_SYSRET_BIT) // 0x0b
+#define ZPM_STI          ZPM_INTR_BIT // 0x04
+#define ZPM_CLI          (ZPM_INTR_BIT | ZPM_BLOCK_BIT) // 0x05
+#define ZPM_SCALL        ZPM_SYS_BITS // 0x06
+#define ZPM_SRET         (ZPM_SYS_BITS | ZPM_SYSRET_BIT) // 0x07
+/* optional instructions; HAVE_SYS_EXTRA */
+#define ZPM_WFE          ZPM_EVENT_BIT // 0x08
+#define ZPM_SEV          (ZPM_EVENT_BIT | ZPM_SEND_BIT) // 0x09
+#define ZPM_WFI          (ZPM_EVENT_BIT | ZPM_TRAP_BIT) // 0x0a
+#define ZPM_SMI          (ZPM_EVENT_BIT | ZPM_TRAP_BIT | ZPM_SEND_BIT) // 0x0b
 
 /* OPTIONAL UNITS */
 
@@ -314,6 +315,7 @@
 #define ZPM_PGSETATR_BIT 0x01
 #define ZPM_PGCLRATR_BIT 0x02
 #define ZPM_PGINV_BITS   0x03
+/* optional operations */
 /* cacheline operations */
 #define ZPM_CACHE_BIT    0x04
 #define ZPM_CACHELK_BIT  0x01
@@ -328,10 +330,12 @@
 #define ZPM_PGSETF       ZPM_PGSETATR_BIT // args: vmadr, flg
 #define ZPM_PGCLRF       ZPM_PGCLRATR_BIT // args: vmadr, flg
 #define ZPM_PGINV        ZPM_PGINV_BITS // args: vmadr
+/* optional operations; HAVE_CACHE_EXTRA */
 #define ZPM_CFTC         ZPM_CACHE_BIT // args: cladr (prefetch)
 #define ZPM_CLK          (ZPM_CACHE_BIT | ZPM_CACHELK_BIT) // args: cladr (lock)
 #define ZPM_CREL         (ZPM_CACHE_BIT | ZPM_CACHEREL_BIT) // args: cladr
 // NOTE: 0x07 is reserved
+/* optional operations; HAVE_TLS_EXTRA */
 #define ZPM_TPGINIT      ZPM_TLS_BIT // args: flg, if PRES then physadr
 #define ZPM_TLDR         (ZPM_TLS_BIT | ZPM_TLOAD_BIT) // args: ofs, reg
 #define ZPM_TSTR         (ZPM_TLS_BIT | ZPM_TSTORE_BIT) // args: reg, ofs
@@ -353,22 +357,22 @@
 #define ZPM_TEVENT_BIT   0x04
 #define ZPM_TSEND_BIT    0x01
 #define ZPM_TRECV_BIT    0x02
+#define ZPM_IRET         0x00 // return from interrupt handler
 #define ZPM_TCONF        ZPM_TCONFIG_BIT // 0x01
 #define ZPM_TCTX         ZPM_TCTX_BIT // 0x02
 #define ZPM_TSAVE        (ZPM_TCTX_BIT | ZPM_TSAVE_BIT) // 0x03
 #define ZPM_TPROF        ZPM_TPROF_BIT // 0x04
 #define ZPM_TPREAD       (ZPM_TPROF_BIT | ZPM_TPINFO_BIT) // 0x05
 #define ZPM_TPSTOP       (ZPM_TPROF_BIT | ZPM_TPSTOP_BIT) // 0x06
-// 0x07
-#define ZPM_TPHOLD       (ZPM_TPROF_BIT | ZPM_TPSTOP_BIT | ZPM_TPSAVE_BIT)
+#define ZPM_TPHOLD       (ZPM_TPROF_BIT | ZPM_TPSTOP_BIT | ZPM_TPSAVE_BIT) // 07
+/* optional instructions; HAVE_TCTL_EXTRA */
 #define ZPM_TYIELD       ZPM_TCTL_BIT // 0x08
 #define ZPM_TSRING       (ZPM_TCTL_BIT | ZPM_TSYS_BIT) // 0x09
-#define ZPM_TINTR        (ZPM_TCTL_BIT | ZPM_TINTR_BIT) // 0x0a
+#define ZPM_TSENDI       (ZPM_TCTL_BIT | ZPM_TINTR_BIT) // 0x0a
 #define ZPM_TSTOP        (ZPM_TCTL_BIT | ZPM_TID_BIT | ZPM_TSTOP_BIT) // 0x0b
 #define ZPM_TSIG         (ZPM_TCTL_BIT | ZPM_TEVENT_BIT) // 0x0c
-#define ZPM_TSEND        (ZPM_TCTL_BIT | ZPM_TEVENT_BIT | ZPM_TSEND_BIT) // 0x0d
-#define ZPM_TRECV        (ZPM_TCTL_BIT | ZPM_TEVENT_BIT | ZPM_TSEND_BIT) // 0x0e
-#define ZPM_IRET         0x0f // return from interrupt handler
+#define ZPM_TSEV         (ZPM_TCTL_BIT | ZPM_TEVENT_BIT | ZPM_TSEND_BIT) // 0x0d
+#define ZPM_TREV         (ZPM_TCTL_BIT | ZPM_TEVENT_BIT | ZPM_TSEND_BIT) // 0x0e
 
 /* inter-processor atomic operations (bus locked); HAVE_ATOM_UNIT */
 #define ZPM_ATOM_UNIT    0x0d
@@ -378,7 +382,7 @@
 #define ZPM_FADD_BIT     0x04
 #define ZPM_FSUB_BIT     0x01
 #define ZPM_FINC_BIT     0x02
-#define ZPM_FDEC_BITS    0x07
+#define ZPM_FDEC_BITS    (ZPM_FADD_BIT | 0x03)
 #define ZPM_FETCH_BIT    0x08
 #define ZPM_COMPARE_BIT  0x02
 #define ZPM_CSWAP_BIT    0x04
