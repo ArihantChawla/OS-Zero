@@ -111,27 +111,22 @@
 #define ZPM_LESS_BIT     0x08
 #define ZPM_GREATER_BITS 0x0a
 #define ZPM_RET_BITS     0x0c
-#define ZPM_TASKRET_BIT  0x01
-#define ZPM_TASK_BITS    0x0e
-#define ZPM_EXIT_BIT     0x01
+#define ZPM_INTRET_BIT   0x01 // return from interrupt handler
 /* instructions */
-#define ZPM_JMP          0x04
+#define ZPM_JMP          0x00
 #define ZPM_BZ           ZPM_ZERO_BIT // 0x01
 #define ZPM_BNZ          ZPM_NOTZERO_BIT // 0x02
-#define ZPM_CALL         ZPM_CALL_BITS
+#define ZPM_CALL         ZPM_CALL_BITS // 0x03
 #define ZPM_BO           (ZPM_OVERFLOW_BIT) // 0x04
 #define ZPM_BNO          (ZPM_OVERFLOW_BIT | ZPM_ZERO_BIT) // 0x05
-#define ZPM_BC           ZPM_CARRY_BITS
+#define ZPM_BC           ZPM_CARRY_BITS // 0x06
 #define ZPM_BNC          (ZPM_CARRY_BITS | ZPM_ZERO_BIT) // 0x07
 #define ZPM_BLT          ZPM_LESS_BIT // 0x08
 #define ZPM_BLE          (ZPM_LESS_BIT | ZPM_ZERO_BIT) // 0x09
 #define ZPM_BGT          ZPM_GREATER_BITS // 0x0a
 #define ZPM_BGE          (ZPM_GREATER_BITS | ZPM_ZERO_BIT) // 0x0b
-#define ZPM_RET          ZPM_RET_BITS
-#define ZPM_TRET         (ZPM_RET_BITS | ZPM_TASKRET_BIT)
-/* optional operations; HAVE_TASK_EXTRA */
-#define ZPM_TASK         ZPM_TASK_BITS // launch new process, thread, fiber
-#define ZPM_TEXIT        (ZPM_TASK_BITS | ZPM_EXIT_BIT) // exit task
+#define ZPM_RET          ZPM_RET_BITS // 0x0c
+#define ZPM_IRET         (ZPM_RET_BITS | ZPM_INTRET_BIT) // 0x0d
 
 /*
  * MUL    - multiply
@@ -209,6 +204,11 @@
 #define ZPM_XLDR         (ZPM_XCPY_BIT | ZPM_LOAD_BIT) // 0x09
 #define ZPM_XSTR         (ZPM_XCPY_BIT | ZPM_STORE_BIT) // 0x0a
 
+/*
+ * SREG - system register (msw, fp, sp)
+ * XREG - system-only registers
+ */
+
 /* stack operations */
 #define ZPM_STACK_UNIT   0x07
 #define ZPM_POP_BIT      0x01
@@ -232,7 +232,7 @@
 #define ZPM_XPOPA        (ZPM_XREG_BIT | XPM_ALLREGS_BIT | ZPM_POP_BIT) // 0x0b
 /* optional operations; HAVE_STACK_EXTRA */
 #define ZPM_STK          ZPM_STK_BITS // 0x0c
-#define ZPM_SSTK         (ZPM_STK_BITS | ZPM_SYSSTK_BITS) // 0x0d
+#define ZPM_SSTK         (ZPM_STK_BITS | ZPM_SYSSTK_BIT) // 0x0d
 #define ZPM_STKSZ        ZPM_STKSIZE_BITS // 0x0e
 #define ZPM_SSTKSZ       (ZPM_STKSIZE_BITS | ZPM_SYSSTK_BIT) // 0x0f
 
@@ -250,6 +250,13 @@
 #define ZPM_IORWCHK      (ZPM_IOPCHK_BIT | ZPM_IOWRITE_BIT)
 #define ZPM_IOPRSET      ZPM_IOPSET_BITS
 #define ZPM_IOPRWSET     (ZPM_IOPSET_BITS | ZPM_IOWRITE_BIT)
+
+/*
+ * TSET, TCLR  - set and clear breakpoints
+ * SCALL, SRET - invoke and return from system calls
+ * WFE, SEV    - wait for and send events
+ * WFI, SMI    - wait for and send [inter-processor] interrupts
+ */
 
 /* system operations */
 #define ZPM_SYS_UNIT     0x09
@@ -278,8 +285,9 @@
 
 /* OPTIONAL UNITS */
 
+/* bitfields are parts of registers */
+
 /* bitfield operations; HAVE_BITFLD_UNIT */
-// NOTE: use width == 0, pos == 0 to indicate operations on whole registers
 #define ZPM_BITFLD_UNIT  0x0a
 /* shift and rotate operations */
 #define ZPM_BFCPY_BIT    0x04
@@ -312,19 +320,19 @@
 #define ZPM_MEMDIRTY_BIT 0x400 // dirty page (has been written to)
 #define ZPM_MEMBUSY_BIT  0x800 // page is locked/busy (e.g. being configured)
 /* page operations */
-#define ZPM_PGSETATR_BIT 0x01
-#define ZPM_PGCLRATR_BIT 0x02
-#define ZPM_PGINV_BITS   0x03
+#define ZPM_PGSETATR_BIT 0x01 // set page attribute-bits
+#define ZPM_PGCLRATR_BIT 0x02 // clear page attribute-bits
+#define ZPM_PGINV_BITS   0x03 // invalidate page TLB-entry
 /* optional operations */
 /* cacheline operations */
 #define ZPM_CACHE_BIT    0x04
-#define ZPM_CACHELK_BIT  0x01
-#define ZPM_CACHEREL_BIT 0x02
+#define ZPM_CACHELK_BIT  0x01 // lock cacheline
+#define ZPM_CACHEREL_BIT 0x02 // release/unlock cacheline
 /* thread-local operations */
 #define ZPM_TLS_BIT      0x08
-#define ZPM_TLOAD_BIT    0x01
-#define ZPM_TSTORE_BIT   0x02
-#define ZPM_TUMAP_BITS   0x03
+#define ZPM_TLOAD_BIT    0x01 // thread-local memory to register
+#define ZPM_TSTORE_BIT   0x02 // register to thread-local memory
+#define ZPM_TUMAP_BITS   0x03 // unmap thread-local page
 /* instructions */
 #define ZPM_PGINIT       0x00 // args: vmadr, flg
 #define ZPM_PGSETF       ZPM_PGSETATR_BIT // args: vmadr, flg
@@ -339,7 +347,17 @@
 #define ZPM_TPGINIT      ZPM_TLS_BIT // args: flg, if PRES then physadr
 #define ZPM_TLDR         (ZPM_TLS_BIT | ZPM_TLOAD_BIT) // args: ofs, reg
 #define ZPM_TSTR         (ZPM_TLS_BIT | ZPM_TSTORE_BIT) // args: reg, ofs
-#define ZPM_TUMAP        (ZPM_TLS_BIT | ZPM_TUMAP_BITS) // args: vmadr
+#define ZPM_TPGUMAP      (ZPM_TLS_BIT | ZPM_TUMAP_BITS) // args: vmadr
+
+/*
+ * TCONF        - set task attributes
+ * TLOAD, TSAVE - load and save task context
+ * TP*          - task profiling
+ * TYIELD       - release processor
+ * TSWTCH       - switch to task
+ * TSTOP        - stop task
+ * TKILL        - kill task
+ * TSIG         - send signal to task
 
 /* task management; multitasking; HAVE_TASK_UNIT */
 #define ZPM_TASK_UNIT    0x0c
@@ -349,17 +367,20 @@
 #define ZPM_TPROF_BIT    0x04
 #define ZPM_TPINFO_BIT   0x01
 #define ZPM_TPSAVE_BIT   0x01
-#define ZPM_TINIT        0x00
+#define ZPM_TPSTOP_BIT   0x02
 #define ZPM_TCTL_BIT     0x08
-#define ZPM_TSYS_BIT     0x01
-#define ZPM_TINTR_BIT    0x02
-#define ZPM_TID_BIT      0x04
+#define ZPM_TSWITCH_BIT  0x01
+#define ZPM_TSTOP_BIT    0x01
+#define ZPM_TKILL_BIT    0x01
+#define ZPM_STOP_BIT     0x02
+#define ZPM_TSIG_BIT     0x04
 #define ZPM_TEVENT_BIT   0x04
 #define ZPM_TSEND_BIT    0x01
 #define ZPM_TRECV_BIT    0x02
-#define ZPM_IRET         0x00 // return from interrupt handler
+/* instructions */
+#define ZPM_TINIT        0x00
 #define ZPM_TCONF        ZPM_TCONFIG_BIT // 0x01
-#define ZPM_TCTX         ZPM_TCTX_BIT // 0x02
+#define ZPM_TLOAD        ZPM_TCTX_BIT // 0x02
 #define ZPM_TSAVE        (ZPM_TCTX_BIT | ZPM_TSAVE_BIT) // 0x03
 #define ZPM_TPROF        ZPM_TPROF_BIT // 0x04
 #define ZPM_TPREAD       (ZPM_TPROF_BIT | ZPM_TPINFO_BIT) // 0x05
@@ -367,12 +388,13 @@
 #define ZPM_TPHOLD       (ZPM_TPROF_BIT | ZPM_TPSTOP_BIT | ZPM_TPSAVE_BIT) // 07
 /* optional instructions; HAVE_TCTL_EXTRA */
 #define ZPM_TYIELD       ZPM_TCTL_BIT // 0x08
-#define ZPM_TSRING       (ZPM_TCTL_BIT | ZPM_TSYS_BIT) // 0x09
-#define ZPM_TSENDI       (ZPM_TCTL_BIT | ZPM_TINTR_BIT) // 0x0a
-#define ZPM_TSTOP        (ZPM_TCTL_BIT | ZPM_TID_BIT | ZPM_TSTOP_BIT) // 0x0b
-#define ZPM_TSIG         (ZPM_TCTL_BIT | ZPM_TEVENT_BIT) // 0x0c
+#define ZPM_TSWTCH       (ZPM_TCTL_BIT | ZPM_TSWITCH_BIT) // 0x09
+#define ZPM_TSTOP        (ZPM_TCTL_BIT | ZPM_TSTOP_BIT) // 0x0a
+#define ZPM_TKILL        (ZPM_TCTL_BIT | ZPM_TSTOP_BIT | ZPM_TKILL_BIT) // 0x0b
+#define ZPM_TSIG         (ZPM_TCTL_BIT | ZPM_TSIG_BIT) // 0x0c
 #define ZPM_TSEV         (ZPM_TCTL_BIT | ZPM_TEVENT_BIT | ZPM_TSEND_BIT) // 0x0d
-#define ZPM_TREV         (ZPM_TCTL_BIT | ZPM_TEVENT_BIT | ZPM_TSEND_BIT) // 0x0e
+#define ZPM_TREV         (ZPM_TCTL_BIT | ZPM_TEVENT_BIT | ZPM_TRECV_BIT) // 0x0e
+#define ZPM_TRET         0x0f // return from task; exit if toplevel
 
 /* inter-processor atomic operations (bus locked); HAVE_ATOM_UNIT */
 #define ZPM_ATOM_UNIT    0x0d
