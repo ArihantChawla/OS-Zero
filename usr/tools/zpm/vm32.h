@@ -49,16 +49,16 @@
 #define ZPM_SP_REG      0x02 // stack pointer
 #define ZPM_PC_REG      0x03 // program counter i.e. instruction pointer
 #define ZPM_SYSREG_BIT  0x08 // denotes system-only access
-#define ZPM_IHT_REG     0x09 // interrupt handler table base address
-#define ZPM_PDB_REG     0x0a // page directory base address register
-#define ZPM_TID_REG     0x0b // task ID register
-#define ZPM_TLS_REG     0x0c // thread-local storage base address register
-#define ZPM_TSR_REG     0x0d // task-structure/state base address
+#define ZPM_IHT_REG     0x08 // interrupt handler table base address
+#define ZPM_PDB_REG     0x09 // page directory base address register
+#define ZPM_TID_REG     0x0a // task ID register
+#define ZPM_TLS_REG     0x0b // thread-local storage base address register
+#define ZPM_TSR_REG     0x0c // task-structure/state base address
 /* values for sysregs[ZPM_MSW] */
 #define ZPM_MSW_ZF_BIT  (1 << 0) // zero-flag
 #define ZPM_MSW_OF_BIT  (1 << 1) // overflow-flag
 #define ZPM_MSW_CF_BIT  (1 << 2) // carry-flag
-#define ZPM_MWS_IF_BIT  (1 << 3) // interrupts pending
+#define ZPM_MWS_IF_BIT  (1 << 29) // interrupts pending
 #define ZPM_MSW_SF_BIT  (1 << 30) // system-mode
 #define ZPM_MSW_LF_BIT  (1 << 31) // bus lock flag
 /* program segments */
@@ -66,8 +66,7 @@
 #define ZPM_RODATA      0x01 // read-only data (string literals etc.)
 #define ZPM_DATA        0x02 // read-write (initialised) data
 #define ZPM_BSS         0x03 // uninitialised (zeroed) runtime-allocated data
-#define ZPM_TLS         0x04 // thread-local storage
-#define ZPM_NSEG        0x08
+#define ZPM_NSEG        0x04
 struct zpm {
     zpmreg   genregs[ZPM_NREG];
     zpmureg  sysregs[ZPM_NREG];

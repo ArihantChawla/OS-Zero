@@ -17,6 +17,9 @@
 
 /* bitwise operations */
 #define ZPM_BITS_UNIT    0x00
+#define ZPM_AND_BIT      0x01
+#define ZPM_OR_BIT       0x02
+#define ZPM_XOR_BITS     0x03
 /* optional */
 #define ZPM_BITCNT_BIT   0x04
 #define ZPM_TRAIL_BIT    0x01
@@ -24,9 +27,9 @@
 #define ZPM_BFEXTRA_BIT  0x08
 /* instructions */
 #define ZPM_NOT          0x00 // 2's complement (reverse all bits)
-#define ZPM_AND          0x01 // logical bitwise AND
-#define ZPM_OR           0x02 // logical bitwise OR
-#define ZPM_XOR          0x03 // logical bitwise XOR (exclusive OR)
+#define ZPM_AND          ZPM_AND_BIT // logical bitwise AND
+#define ZPM_OR           ZPM_OR_BIT // logical bitwise OR
+#define ZPM_XOR          ZPM_XOR_BITS // logical bitwise XOR (exclusive OR)
 /* optional operations; HAVE_BITCNT_EXTRA */
 #define ZPM_CLZ          ZPM_BITCNT_BIT // 0x04 count leading zero bits
 #define ZPM_CTZ          (ZPM_BITCNT_BIT | ZPM_TRAIL_BIT) // 0x05 trailing zeroes
@@ -35,6 +38,7 @@
 #define ZPM_BFCLZ        ZPM_BFEXTRA_BIT // 0x08
 #define ZPM_BFCTZ        (ZPM_BFEXTRA_BIT | ZPM_BFTRAIL_BIT) // 0x09
 #define ZPM_BFPOP        (ZPM_BFEXTRA_BIT | ZPM_BFPOP_BIT) // 0x0a
+// NOTE: 0x0b is reserved
 
 /*
  * SHL - shift left
@@ -80,7 +84,7 @@
  * ADD - add
  * ADF - add, sets MSW-flags
  * ADI - add inverse (b += ~a)
- * SUB - subtract
+ * SUB - subtract (b += ~a + 1
  */
 
 /* arithmetic operations */
@@ -97,26 +101,28 @@
 #define ZPM_DEC          ZPM_DEC_BIT // 0x01
 #define ZPM_ADD          ZPM_ADD_BIT // 0x02
 #define ZPM_ADF          (ZPM_ADD_BIT | ZPM_MSW_BIT) // 0x03
-#define ZPM_ADI          (ZPM_ADDINV_BIT) // // 0x04 a + ~b
-#define ZPM_SUB          ZPM_SUB_BITS // 0x05 a + ~b + 1
-#define ZPM_CMP          ZPM_CMP_BITS
+#define ZPM_ADI          (ZPM_ADDINV_BIT) // // 0x04
+#define ZPM_SUB          ZPM_SUB_BITS // 0x05
+#define ZPM_CMP          ZPM_CMP_BITS // 0x06
 
 /* flow control; branch and subroutine operations */
 #define ZPM_FLOW_UNIT    0x03
+#define ZPM_CALL_BIT     0x01
+#define ZPM_BZERO_BIT    0x02
+#define ZPM_NOTZERO_BIT  0x01
 #define ZPM_ZERO_BIT     0x01
-#define ZPM_NOTZERO_BIT  0x02
-#define ZPM_CALL_BITS    0x03
 #define ZPM_OVERFLOW_BIT 0x04
 #define ZPM_CARRY_BITS   0x06
 #define ZPM_LESS_BIT     0x08
 #define ZPM_GREATER_BITS 0x0a
 #define ZPM_RET_BITS     0x0c
 #define ZPM_INTRET_BIT   0x01 // return from interrupt handler
+#define ZPM_FCOND_BITS   0x0e // conditional jump or call
 /* instructions */
 #define ZPM_JMP          0x00
-#define ZPM_BZ           ZPM_ZERO_BIT // 0x01
-#define ZPM_BNZ          ZPM_NOTZERO_BIT // 0x02
-#define ZPM_CALL         ZPM_CALL_BITS // 0x03
+#define ZPM_CALL         ZPM_CALL_BIT // 0x01
+#define ZPM_BZ           ZPM_BZERO_BIT // 0x02
+#define ZPM_BNZ          ZPM_NOTZERO_BIT // 0x03
 #define ZPM_BO           (ZPM_OVERFLOW_BIT) // 0x04
 #define ZPM_BNO          (ZPM_OVERFLOW_BIT | ZPM_ZERO_BIT) // 0x05
 #define ZPM_BC           ZPM_CARRY_BITS // 0x06
@@ -127,6 +133,8 @@
 #define ZPM_BGE          (ZPM_GREATER_BITS | ZPM_ZERO_BIT) // 0x0b
 #define ZPM_RET          ZPM_RET_BITS // 0x0c
 #define ZPM_IRET         (ZPM_RET_BITS | ZPM_INTRET_BIT) // 0x0d
+#define ZPM_CJMP         ZPM_FCOND_BITS // 0x0e
+#define ZPM_CCALL        (ZPM_FCOND_BITS | ZPM_CALL_BIT)
 
 /*
  * MUL    - multiply
@@ -135,25 +143,31 @@
  * MULSW  - signed, return two words
  * MULHI  - return high result word
  * MULSHI - signed, return high result word
+ * VMUL   - SIMD-multiply
  * MAC    - multiply and add to accumulator (register)
  */
 
 /* multiplier */
 #define ZPM_MUL_UNIT     0x04
-#define ZPM_SIGN_BIT     0x01
-#define ZPM_WIDTH_BIT    0x02
-#define ZPM_HIGH_BIT     0x04
+#define ZPM_MSIGN_BIT    0x01
+#define ZPM_MHIGH_BIT    0x02
+#define ZPM_MWIDTH_BIT   0x04
 /* optional */
-#define ZPM_MULExTRA_BIT 0x08
+#define ZPM_MULEXTRA_BIT 0x08
+/* instructions */
 #define ZPM_MUL          0x00
 #define ZPM_MULS         ZPM_MSIGN_BIT // 0x01
-#define ZPM_MULW         ZPM_MWIDTH_BIT // 0x02
-#define ZPM_MULSW        (ZPM_MWIDTH_BIT | ZPM_MSIGN_BIT) // 0x03
-#define ZPM_MULHI        ZPM_MHIGH_BIT // 0x04
-#define ZPM_MULSHI       (ZPM_MHIGH_BIT | ZPM_MSIGN_BIT) // 0x05
+#define ZPM_MULHI        ZPM_MHIGH_BIT // 0x02
+#define ZPM_MULSHI       (ZPM_MHIGH_BIT | ZPM_MSIGN_BIT) // 0x03
+#define ZPM_MULW         ZPM_MWIDTH_BIT // 0x04
+#define ZPM_MULSW        (ZPM_MWIDTH_BIT | ZPM_MSIGN_BIT) // 0x05
 // NOTE: 0x06, 0x07 are reserved
 /* optional instructions; HAVE_MUL_EXTRA */
-#define ZPM_MAC          ZPM_MULEXTRA_BIT // multiply-accumulate
+#define ZPM_MAC          ZPM_MULEXTRA_BIT // 0x08 multiply-add
+#define ZPM_MACS         (ZPM_MULEXTRA_BIT | ZPM_MSIGN_BIT) // 0x09
+#define ZPM_MACW         (ZPM_MULEXTRA_BIT | ZPM_MWIDTH_BIT) // 0x0a
+// 0x0b
+#define ZPM_MACSW        (ZPM_MULEXTRA_BIT | ZPM_MWIDTH_BIT | ZPM_MSIGN_BIT)
 
 /*
  * DIV    - divide
@@ -168,18 +182,18 @@
 #define ZPM_DIV_UNIT     0x05
 #define ZPM_REM_BIT      0x01 // remainder-flag
 /* optional */
-#define ZPM_ROUND_BIT    0x02
-#define ZPM_TRUNC_BIT    0x01
-#define ZPM_REC_BIT      0x04 // reciprocal division
+#define ZPM_DREC_BIT     0x02 // reciprocal division
 #define ZPM_CREC_BIT     0x01 // calculate reciprocal
+#define ZPM_ROUND_BIT    0x04
+#define ZPM_TRUNC_BIT    0x01
 /* instructions */
 #define ZPM_DIV          0x00 // division, result in ZPM_RET_LO
 #define ZPM_REM          ZPM_REM_BIT // 0x01 remainder of division in ZPM_RET_HI
 /* optional operations; HAVE_DIV_EXTRA */
-#define ZPM_SETRND       ZPM_ROUND_BIT // 0x02
-#define ZPM_SETRNC       (ZPM_ROUND_BIT | ZPM_TRUNC_BIT) // 0x03
-#define ZPM_DREC         ZPM_REC_BIT // 0x04 reciprocal division
-#define ZPM_CREC         (ZPM_REC_BIT | ZPM_CREC_BIT) // 0x05
+#define ZPM_DREC         ZPM_DREC_BIT // 0x02 reciprocal division
+#define ZPM_CREC         (ZPM_DREC_BIT | ZPM_CREC_BIT) // 0x03
+#define ZPM_SETRND       ZPM_ROUND_BIT // 0x04
+#define ZPM_SETRNC       (ZPM_ROUND_BIT | ZPM_TRUNC_BIT) // 0x05
 
 /*
  * CPY - register to register
@@ -193,6 +207,7 @@
 #define ZPM_STORE_BIT    0x02 // write operation
 #define ZPM_SCPY_BIT     0x04
 #define ZPM_XCPY_BIT     0x08
+#define ZPM_XFCOND_BITS  0x0c
 /* instructions */
 #define ZPM_CPY          0x00
 #define ZPM_LDR          (ZPM_LOAD_BIT) // 0x01
@@ -203,6 +218,9 @@
 #define ZPM_XCPY         ZPM_XCPY_BIT // 0x08
 #define ZPM_XLDR         (ZPM_XCPY_BIT | ZPM_LOAD_BIT) // 0x09
 #define ZPM_XSTR         (ZPM_XCPY_BIT | ZPM_STORE_BIT) // 0x0a
+#define ZPM_CCPY         ZPM_COND_BITS // 0x0c
+#define ZPM_CLDR         (ZPM_XFCOND_BITS | ZPM_LOAD_BIT) // 0x0d
+#define ZPM_CSTR         (ZPM_XFCOND_BITS | ZPM_STORE_BIT) // 0x0e
 
 /*
  * SREG - system register (msw, fp, sp)
@@ -423,6 +441,44 @@
 #define ZPM_BCSET        (ZPM_FETCH_BIT | ZPM_COMPARE_BIT | ZPM_SET_BIT) // 0b
 #define ZPM_CAS          (ZPM_FETCH_BIT | ZPM_SWAP_BIT) // 0x0c
 #define ZPM_CAS2         (ZPM_FETCH_BIT | ZPM_SWAP_BIT | ZPM_CSWAP2_BIT) // 0x0d
+
+/* SIMD operations */
+#define ZPM_VEC_UNIT     0x0e
+/* instructions */
+#define ZPM_VNOT         0x00
+#define ZPM_VAND         0x01
+#define ZPM_VOR          0x02
+#define ZPM_VXOR         0x03
+#define ZPM_VSHL         0x04
+#define ZPM_VSHR         0x05
+#define ZPM_VSAR         0x06
+#define ZPM_VINC         0x07
+#define ZPM_VDEC         0x08
+#define ZPM_VADD         0x09
+#define ZPM_VADF         0x0a
+#define ZPM_VSUB         0x0b
+#define ZPM_VADDU        0x0c
+#define ZPM_VSUBU        0x0d
+#define ZPM_VADDS        0x0e
+#define ZPM_VSUBS        0x0f
+#define ZPM_VMUL         0x20
+#define ZPM_VMULS        0x21
+#define ZPM_VMULHI       0x22
+#define ZPM_VMULSHI      0x23
+#define ZPM_VMULW        0x24
+#define ZPM_VMULSW       0x25
+#define ZPM_VDIV         0x26
+#define ZPM_VREM         0x27
+#define ZPM_VDREC        0x28
+#define ZPM_VCREC        0x29
+#define ZPM_VSKIPZ       0x30
+#define ZPM_VSKIPNZ      0x31
+#define ZPM_VSKIPO       0x32
+#define ZPM_VSKIPNO      0x33
+#define ZPM_VSKIPC       0x34
+#define ZPM_VSKIPNC      0x35
+#define ZPM_VUNPK        0xfe
+#define ZPM_VPK          0xff
 
 /* processor parameters */
 #define ZPM_COPROC_UNIT  0x0f // coprocessor; FPU, VEC, ...
