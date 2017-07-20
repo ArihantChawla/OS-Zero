@@ -497,19 +497,24 @@
 #define ZPM_VSKIPNO      0x33
 #define ZPM_VSKIPC       0x34
 #define ZPM_VSKIPNC      0x35
+#define ZPM_VSKIPLT      0x36
+#define ZPM_VSKIPLE      0x37
+#define ZPM_VSKIPGT      0x38
+#define ZPM_VSKIPGE      0x39
 /* shifter operations */
 #define ZPM_SHIFT_BIT    0x40 // count in low 4 bits
 #define ZPM_ROT_BIT      0x80 // count in low 4 bits
 #define ZPM_RIGHT_BIT    0x20
 #define ZPM_ARITH_BIT    0x10
 #define ZPM_CARRY_BIT    0x10
+#define ZPM_NOCARRY_BIT  0x20
 #define ZPM_VSHL         (ZPM_SHIFT_BIT) // 0x40
-#define ZPM_VSHR         (ZPM_SHIFT_BIT | ZPM_RIGHT_BIT) // 0x42
+#define ZPM_VSHR         (ZPM_SHIFT_BIT | ZPM_RIGHT_BIT) // 0x60
 #define ZPM_VSAR         (ZPM_SHIFT_BIT | ZPM_RIGHT_BIT | ZPM_ARITH_BIT) // 0x70
 #define ZPM_VROL         (ZPM_ROT_BIT) // 0x80
 #define ZPM_VROR         (ZPM_ROT_BIT | ZPM_RIGHT_BIT) // 0x90
-#define ZPM_RCL          (ZPM_ROT_BIT | ZPM_CARRY_BIT) // 0xa0
-#define ZPM_RCR          (ZPM_ROT_BIT | ZPM_RIGHT_BIT | ZPM_CARRY_BIT // 0xb0
+#define ZPM_VRCL         (ZPM_ROT_BIT | ZPM_NOCARRY_BIT) // 0xa0
+#define ZPM_VRCR         (ZPM_ROT_BIT | ZPM_RIGHT_BIT | ZPM_CARRY_BIT) // 0xb0
 /* miscellaneous operations */
 #define ZPM_VUNPK        0xfe
 #define ZPM_VPK          0xff
