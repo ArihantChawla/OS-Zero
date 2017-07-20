@@ -94,16 +94,29 @@
 #define ZPM_ADD_BIT      0x02
 #define ZPM_MSW_BIT      0x01
 #define ZPM_ADDINV_BIT   0x04
-#define ZPM_SUB_BITS     0x05
-#define ZPM_CMP_BITS     0x06
+#define ZPM_CMP_BITS     0x05
+#define ZPM_SUB_BITS     0x06
+#define ZPM_VINC         ZPM_VEC_BIT // 0x08
+#define ZPM_SATU_BIT     0x01
+#define ZPM_SATS_BIT     0x02
+#define ZPM_VSUB_BITS    0x0d
 /* instructions */
 #define ZPM_INC          0x00
 #define ZPM_DEC          ZPM_DEC_BIT // 0x01
 #define ZPM_ADD          ZPM_ADD_BIT // 0x02
 #define ZPM_ADF          (ZPM_ADD_BIT | ZPM_MSW_BIT) // 0x03
 #define ZPM_ADI          (ZPM_ADDINV_BIT) // // 0x04
-#define ZPM_SUB          ZPM_SUB_BITS // 0x05
-#define ZPM_CMP          ZPM_CMP_BITS // 0x06
+#define ZPM_CMP          ZPM_CMP_BITS // 0x05
+#define ZPM_SUB          ZPM_SUB_BITS // 0x06
+#define ZPM_SBB          (ZPM_SUB_BITS | ZPM_MSW_BIT) // 0x07
+/* optional [vector] instructions; HAVE_ARITH_VEC */
+#define ZPM_VDEC         (ZPM_VEC_BIT | ZPM_DEC_BIT) // 0x09
+#define ZPM_VADD         (ZPM_VEC_BIT | ZPM_ADD_BIT) // 0x0a
+#define ZPM_VADDUS       (ZPM_VEC_BIT | ZPM_ADD_BIT | ZPM_SATU_BIT) // 0x0b
+#define ZPM_VADDSS       (ZPM_VEC_BIT | ZPM_ADD_BIT | ZPM_SATS_BIT) // 0x0c
+#define ZPM_VSUB         (ZPM_VSUB_BITS) // 0x0d
+#define ZPM_VSUBUS       0x0e
+#define ZPM_VSUBSS       0x0f
 
 /* flow control; branch and subroutine operations */
 #define ZPM_FLOW_UNIT    0x03
@@ -134,7 +147,7 @@
 #define ZPM_RET          ZPM_RET_BITS // 0x0c
 #define ZPM_IRET         (ZPM_RET_BITS | ZPM_INTRET_BIT) // 0x0d
 #define ZPM_CJMP         ZPM_FCOND_BITS // 0x0e
-#define ZPM_CCALL        (ZPM_FCOND_BITS | ZPM_CALL_BIT)
+#define ZPM_CCALL        (ZPM_FCOND_BITS | ZPM_CALL_BIT) // 0x0f
 
 /*
  * MUL    - multiply
@@ -442,41 +455,62 @@
 #define ZPM_CAS          (ZPM_FETCH_BIT | ZPM_SWAP_BIT) // 0x0c
 #define ZPM_CAS2         (ZPM_FETCH_BIT | ZPM_SWAP_BIT | ZPM_CSWAP2_BIT) // 0x0d
 
-/* SIMD operations */
-#define ZPM_VEC_UNIT     0x0e
-/* instructions */
+/* extension operations; instructions identified by the imm8-field in opcodes */
+#define ZPM_EXT_UNIT     0x0e
+
+/* extension instructions; support vectors with 8- and 16-bit vector items */
+/*
+ * - vector size: 32 << arg1sz
+ * - item size: 8 << arg2sz
+ */
+/* logical operations */
 #define ZPM_VNOT         0x00
 #define ZPM_VAND         0x01
 #define ZPM_VOR          0x02
-#define ZPM_VXOR         0x03
-#define ZPM_VSHL         0x04
-#define ZPM_VSHR         0x05
-#define ZPM_VSAR         0x06
-#define ZPM_VINC         0x07
-#define ZPM_VDEC         0x08
-#define ZPM_VADD         0x09
-#define ZPM_VADF         0x0a
-#define ZPM_VSUB         0x0b
-#define ZPM_VADDU        0x0c
-#define ZPM_VSUBU        0x0d
-#define ZPM_VADDS        0x0e
-#define ZPM_VSUBS        0x0f
-#define ZPM_VMUL         0x20
-#define ZPM_VMULS        0x21
-#define ZPM_VMULHI       0x22
-#define ZPM_VMULSHI      0x23
-#define ZPM_VMULW        0x24
-#define ZPM_VMULSW       0x25
-#define ZPM_VDIV         0x26
-#define ZPM_VREM         0x27
-#define ZPM_VDREC        0x28
-#define ZPM_VCREC        0x29
+#define ZPM_VXOR
+/* multiplier and divider operations */
+/* multiplier operations */
+#define ZPM_VMUL_BIT     0x20
+#define ZPM_VSIGNED_BIT  0x01
+#define ZPM_VMULHI_BIT   0x02
+#define ZPM_VMULW_BIT    0x04
+#define ZPM_VMUL         (ZPM_VMUL_BIT) // 0x20
+#define ZPM_VMULS        (ZPM_VMUL_BIT | ZPM_VSIGNED_BIT) // 0x21
+#define ZPM_VMULHI       (ZPM_VMUL_BIT | ZPM_VMULHI_BIT) // 0x22
+#define ZPM_VMULSHI      (ZPM_VMUL_BIT | ZPM_VMULHI_BIT | ZPM_VSIGNED_BIT) // 23
+#define ZPM_VMULW        (ZPM_VMUL_BIT | ZPM_VMULW_BIT) // 0x24
+#define ZPM_VMULSW       (ZPM_VMUL_BIT | ZPM_VSIGNED_BIT) // 0x25
+/* divider operations */
+#define ZPM_VDIV_BIT     0x08
+#define ZPM_VREM_BIT     0x01
+#define ZPM_VREC_BIT     0x02
+#define ZPM_VCREC_BIT    0x01
+#define ZPM_VDIV         (0x20 | ZPM_VDIV_BIT) // 0x28
+#define ZPM_VREM         (0x20 | ZPM_VDIV_BIT | ZPM_VREM_BIT) // 0x29
+#define ZPM_VDREC        (0x20 | ZPM_VDIV_BIT | ZPM_VREC_BIT) // 0x2a
+// 0x2b
+#define ZPM_VCREC        (0x23 | ZPM_DIV_BIT | ZPM_VREC_BIT | ZPM_VCREC_BIT)
+/* skip ["branch"] operations */
 #define ZPM_VSKIPZ       0x30
 #define ZPM_VSKIPNZ      0x31
 #define ZPM_VSKIPO       0x32
 #define ZPM_VSKIPNO      0x33
 #define ZPM_VSKIPC       0x34
 #define ZPM_VSKIPNC      0x35
+/* shifter operations */
+#define ZPM_SHIFT_BIT    0x40 // count in low 4 bits
+#define ZPM_ROT_BIT      0x80 // count in low 4 bits
+#define ZPM_RIGHT_BIT    0x20
+#define ZPM_ARITH_BIT    0x10
+#define ZPM_CARRY_BIT    0x10
+#define ZPM_VSHL         (ZPM_SHIFT_BIT) // 0x40
+#define ZPM_VSHR         (ZPM_SHIFT_BIT | ZPM_RIGHT_BIT) // 0x42
+#define ZPM_VSAR         (ZPM_SHIFT_BIT | ZPM_RIGHT_BIT | ZPM_ARITH_BIT) // 0x70
+#define ZPM_VROL         (ZPM_ROT_BIT) // 0x80
+#define ZPM_VROR         (ZPM_ROT_BIT | ZPM_RIGHT_BIT) // 0x90
+#define ZPM_RCL          (ZPM_ROT_BIT | ZPM_CARRY_BIT) // 0xa0
+#define ZPM_RCR          (ZPM_ROT_BIT | ZPM_RIGHT_BIT | ZPM_CARRY_BIT // 0xb0
+/* miscellaneous operations */
 #define ZPM_VUNPK        0xfe
 #define ZPM_VPK          0xff
 
