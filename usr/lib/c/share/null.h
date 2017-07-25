@@ -6,20 +6,14 @@
 #include <zero/param.h>
 #include <stdint.h>
 
+#if !defined(NULL)
 #if (PTRSIZE == 8)
-#if !defined(NULL)
 #define NULL ((void *)UINT64_C(0))
-#endif
 #elif (PTRSIZE == 4)
-#if !defined(NULL)
 #define NULL ((void *)UINT32_C(0))
-#endif
 #elif defined(_MSC_VER) && defined(_WIN64)
-#if !defined(NULL)
 #define NULL ((void *)0ULL)
-#endif
 #else
-#if !defined(NULL)
 #define NULL ((void *)0UL))
 #endif
 #endif

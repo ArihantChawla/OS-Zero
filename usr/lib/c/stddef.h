@@ -2,7 +2,7 @@
 #define __STDDEF_H__
 
 #include <features.h>
-#include <stdint.h>
+//#include <stdint.h>
 #include <share/stddef.h>
 
 #if (_ISOC11_SOURCE)

@@ -1357,10 +1357,10 @@ memgetblkglob(MEMWORD_T type, MEMWORD_T slot, MEMWORD_T size, MEMWORD_T align)
         bkt = &g_mem.bigbin[slot];
     }
 //    memprintbufstk(buf, "MEMGETBLKGLOB\n");
+    nfree = 0;
 #if (MEMBKTLOCK)
     memlkbkt(bkt);
     buf = bkt->list;
-    nfree = 0;
 #else
     memlkbit(&bkt->list);
     upval = (MEMADR_T)bkt->list;

@@ -2,6 +2,9 @@
 #define __STDIO_H__
 
 #include <features.h>
+#if !defined(NULL)
+#include <share/null.h>
+#endif
 #if !defined(__size_t_defined)
 #include <share/size.h>
 #endif

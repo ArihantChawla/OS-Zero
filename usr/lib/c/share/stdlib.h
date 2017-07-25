@@ -13,6 +13,9 @@ typedef long long          ptrdiff_t;
 #else
 typedef long               ptrdiff_t;
 #endif
+#if !defined(NULL)
+#include <share/null.h>
+#endif
 #define __ptrdiff_t_defined 1
 #if !defined(__size_t_defined)
 #include <share/size.h>
