@@ -1,0 +1,28 @@
+Roadmap for libzero
+-------------------
+
+Tested Modules
+--------------
+
+Following is a list of modules that have been tested and should work, if not
+totally correctly, at least "well enough..."
+
+Module		Notes
+------		-----
+asm		per-platform assembly routines
+cdefs		macros to mask out differences between compilers
+daemon		routine to daemonize a process on unix
+fastudiv	replace 16-bit integer division by faster ops on 32-bit words
+hash		reusable hash tables + a nice bunch of hash functions
+ip4		internet protocol v4 checksum routines
+mtx		different mutexes (binary semaphores)
+nopack, pack	pack-attribute management for some compilers
+priolk		locklessinc priority locks
+prof		microsecond and clock cycle counters
+randmt32	32-bit mersenne twister pseudo-random number generator
+randmt64	64-bit mersenne twister pseudo-random number generator
+spin		spinlocks
+tktlk		locklessinc ticket locks
+trix		different bit-magic and such optimisatoin tricks (most tested)
+unix		some system routines for unix-likes
+
