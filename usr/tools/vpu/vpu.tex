@@ -10,7 +10,7 @@
 
 \begin{document}
 
-\title{\LARGE{Zero Pseudo Machine} \\*
+\title{\LARGE{Valhalla Processor Unit} \\*
        \large{Volume One, Programmer's Guide, revision 0.0.1}}
 \author{Tuomo Petteri Venäläinen}
 \date{\today}
@@ -28,7 +28,7 @@
 
 	\textbf{Brief}
 
-	Zero Pseudo Machine, ZPM, is a software-based virtual machine. The
+	Valhalla Processor Unit, VPU, is a software-based virtual machine. The
 	machine is programmed in its own assembly dialect; the instruction set
 	is reminiscent of many current RISC-like implementations.
 
@@ -41,17 +41,17 @@
 
 	\textbf{Notes}
 
-	ZPM is an architecture with 32-bit machine words; room has been left in
+	VPU is an architecture with 32-bit machine words; room has been left in
 	the implementation for 64-bit suppport.
 
-	ZPM words are little-endian (LSB) in byte-order.
+	VPU words are little-endian (LSB) in byte-order.
 
 	There exists an instruction, \textbf{thr}, to start executing new
 	threads from desired code locations in memory.
 
 \section{Arithmetic-Logical Unit}
 
-	ZPM's aritmetic-logical unit (ALU) has been split into parts resembling
+	VPU's aritmetic-logical unit (ALU) has been split into parts resembling
 	those of real microprocessors. Following is a quick look at the units
 	defined so far.
 
@@ -167,7 +167,7 @@ locator \\
 
 \chapter{Instruction Set}
 
-	The ZPM instruction set was designed to resemble the C language closely,
+	The VPU instruction set was designed to resemble the C language closely,
 	as well as to support a RISC-oriented set of typical machine operations.
 
 \section{Instruction Reference}
