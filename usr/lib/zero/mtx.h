@@ -2,9 +2,8 @@
 #define __ZERO_MTX_H__
 
 #if !defined(ZEROMTX)
-#define ZEROMTX       0
+#define ZEROMTX     1
 #endif
-#define ZEROFMTX      1
 
 #include <stddef.h>
 #include <stdint.h>

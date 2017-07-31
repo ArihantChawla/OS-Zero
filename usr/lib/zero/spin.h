@@ -3,6 +3,10 @@
 
 #include <zero/asm.h>
 
+#if !defined(ZERONEWSPIN)
+#define ZERONEWSPIN 1
+#endif
+
 typedef m_atomic_t zerospin;
 
 #define ZEROSPININITVAL 0L

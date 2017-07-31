@@ -127,8 +127,8 @@ kbzero(void *adr, size_t len)
 void
 kmemset(void *adr, int byte, size_t len)
 {
+    long *ptr = adr;
     long *next;
-    long *ptr;
     long  val = 0;
     long  incr = 8;
     long  nleft = 0;

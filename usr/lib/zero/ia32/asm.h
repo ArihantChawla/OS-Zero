@@ -21,7 +21,7 @@ typedef volatile int32_t m_atomic_t;
 #define m_cmpswap(p, want, val)      (m_cmpxchg32(p, want, val) == want)
 #define m_cmpswapu(p, want, val)     (m_cmpxchgu32(p, want, val) == want)
 #define m_cmpswapptr(p, want, val)   (m_cmpxchg32ptr(p, want, val) == want)
-#define m_cmpswapdbl(p, want, val)   m_cmpxchg64(p, want, val)
+#define m_cmpswapdbl(p, want, val)   (m_cmpxchg64(p, val) == *want)
 #define m_setbit(p, ndx)             m_setbit32(p, ndx)
 #define m_clrbit(p, ndx)             m_clrbit32(p, ndx)
 #define m_flipbit(p, ndx)            m_flipbit32(p, ndx)
@@ -156,7 +156,6 @@ m_cmpxchg64(m_atomic64_t long *p64,
  */
 static __inline__ long
 m_cmpxchg64(m_atomic64_t *p32,
-            m_atomic64_t *want,
             m_atomic64_t *val)
 {
     uint32_t eax = p32[0];

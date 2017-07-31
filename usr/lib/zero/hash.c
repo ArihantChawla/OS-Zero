@@ -5,22 +5,21 @@
 //#define _min(a, b) ((b) ^ (((a) ^ (b)) & -((a) < (b))))
 
 /* NOTE: THIS ONE IS BORKED :) */
-unsigned int
+INLINE unsigned int
 _divu131071(unsigned int uval)
 {
-    unsigned int mul = 0x80004001;
-    unsigned int res = uval;
-    unsigned int cnt = 16;
+    unsigned long long mul = 0x80004001;
+    unsigned long long res = uval;
     
     res *= mul;
-    res >>= cnt;
+    res >>= 16;
     
-    return res;
+    return (unsigned int)res;
 }
-//#define _modu131071(u) ((u) - (_divu131071(u) * 131071))
+#define _modu131071(u) ((u) - (_divu131071(u) * 131071))
 
 /* hashpwj from the dragon book as supplied on the internet */
-#define PRIME 131071    /* was 211 in the implementation I saw */
+//#define PRIME 131071    /* was 211 in the implementation I saw */
 
 unsigned int
 hashpjw(char *str)
@@ -41,7 +40,8 @@ hashpjw(char *str)
         h ^= g;
     }
 
-    return h % PRIME;
+//    return h % PRIME;
+    return _modu131071(h);
 }
 
 #define MULT 31
@@ -62,7 +62,8 @@ pphash(char *str)
         ucp++;
     }
 
-    return h % PRIME;
+//    return h % PRIME;
+    return _modu131071(h);
 }
 
 #define SEED 0xf0e1d2
