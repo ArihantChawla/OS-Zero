@@ -64,17 +64,21 @@ bitshift
 
 arithmetic
 ----------
-- INC, DEC, ADD, ADC, SUB, SBC, MUL, DIV, REM
-
-stack
------
-- PUSH, POP, PUSHA, POPA
+- INC, DEC, ADD, ADC, SUB, SBB, MUL, DIV, REM
 
 flow control
 ------------
 - JMP, CALL, ENTER, LEAVE
 - BZ, BNZ, BO, BNO, BC, BNC
 - BLT, BLE, BEQ, BGT, BGE
+
+xfer
+----
+- LDR, STR, LDX, STX
+
+stack
+-----
+- PSH, POP, PSHX, POPX, PSHA, POPA
 
 I/O
 ---
