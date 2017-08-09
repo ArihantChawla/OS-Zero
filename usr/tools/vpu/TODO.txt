@@ -1,0 +1,82 @@
+Valhalla Processor TODO-List
+----------------------------
+
+Valhalla Zero Processor (V0)
+----------------------------
+
+Valhalla Zero shall be a RISC-like processor inspired by the C programming
+language. Oftentimes, you hear C called a "portable assembly"; the processor's
+instruction set will have a clear mapping for all basic C operations.
+
+Development Tools
+-----------------
+
+- virtual machine
+  - software simulator of the hardware
+    - features undoable or unfeasible on real hardware
+      - memory guards/red-zones to catch buffer under- and overruns
+      - bounds checking of memory accesses
+- assembler
+  - retarget zas, an AT&T syntax assembler, to emit Valhalla machine/byte-code
+- c compiler
+  - retarget lcc, tinycc, or clang/llvm
+    - provide interpreter, JIT-compiler, native compiler for [a subset of] c
+- graphical debugger
+- memory profiler - memprof
+  - cache utilization
+  - virtual memory
+  - physical memory
+  - memory footprint visualization
+- code profiler; cprof
+  - microsecond and clock-cycle profiling of code blocks
+
+V0 Architecture
+---------------
+
+Machine Organization
+--------------------
+
+- 16 general-purpose integer registeres
+- special registers
+  - MSW - machine status word
+    - MSW_ZF - zero-flag
+    - MSW_CF - carry/borrow-flag
+    - MSW_OF - overflow-flag
+    - MSW_IF - interrupt-flag
+  - PC - program counter (aka instruction pointer)
+  - FP - [stack] frame pointer
+  - SP - stack pointer
+- I/O interface based on ports (like x86)
+- graphics framebuffer
+  - 2D acceleration of basic shapes
+    - point, line, triangle, rectangle, circle, ellipse, arc, polygon
+
+Instruction Set
+---------------
+
+logic
+-----
+- NOT, AND, OR, XOR
+
+bitshift
+--------
+- SHL, SHR, SAR
+
+arithmetic
+----------
+- INC, DEC, ADD, ADC, SUB, SBC, MUL, DIV, REM
+
+stack
+-----
+- PUSH, POP, PUSHA, POPA
+
+flow control
+------------
+- JMP, CALL, ENTER, LEAVE
+- BZ, BNZ, BO, BNO, BC, BNC
+- BLT, BLE, BEQ, BGT, BGE
+
+I/O
+---
+- IOP, IN, OUT
+

@@ -63,8 +63,8 @@
 /* instructions */
 #define VPU_SHL          0x00
 #define VPU_SHR          VPU_RIGHT_BIT // 0x01
-#define VPU_SAR          VPU_SIGNEXT_BIT // 0x02
-// NOTE: 0x03 is reserved
+// NOTE: 0x02 is reserved
+#define VPU_SAR          (VPU_SIGNEXT_BIT | VPU_RIGHT_BIT) // 0x03
 #define VPU_ROL          VPU_ROT_BIT // 0x04
 #define VPU_ROR          (VPU_ROT_BIT | VPU_RIGHT_BIT) // 0x05
 #define VPU_RCL          (VPU_ROT_BIT | VPU_RCARRY_BIT) // 0x06
@@ -72,7 +72,7 @@
 /* optional operations; HAVE_SHBITFLD_EXTRA */
 #define VPU_BFSHL        VPU_FIELD_BIT // 0x08
 #define VPU_BFSHR        (VPU_FIELD_BIT | VPU_RIGHT_BIT) // 0x09
-#define VPU_BFSAR        (VPU_FIELD_BIT | VPU_SIGNEXT_BIT) // 0x0a
+#define VPU_BFSAR        (VPU_FIELD_BIT | VPU_SIGNEXT_BIT | VPU_RIGHT_BIT) // 0b
 #define VPU_BFROL        VPU_FROT_BITS // 0x0c
 #define VPU_BFROR        (VPU_FROT_BITS | VPU_RIGHT_BIT) // 0d
 #define VPU_BFRCL        (VPU_FROT_BITS | VPU_RCARRY_BIT) // 0x0e

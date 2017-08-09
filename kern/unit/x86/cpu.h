@@ -232,20 +232,26 @@ union m_cpuidvendor {
 
 #define cpuidgetvendor(ptr)                                             \
     do {                                                                \
-        __asm__("movl %0, %%eax" : : "i" (M_CPUIDVENDOR));              \
-        __asm__("cpuid" : : : "eax", "ebx", "ecx", "edx");              \
-        __asm__("movl %%ebx, %0" : "=m" ((ptr)->wtab[0]));              \
-        __asm__("movl %%edx, %0" : "=m" ((ptr)->wtab[1]));              \
-        __asm__("movl %%ecx, %0" : "=m" ((ptr)->wtab[2]));              \
-        __asm__("xorl %eax, %eax");                                     \
-        __asm__("movl %%eax, %0" : "=m" ((ptr)->wtab[3]));              \
+        __asm__ __volatile__ ("xorl %%eax, %%eax\n"                     \
+                              "cpuid\n"                                 \
+                              "movl %%ebx, %0\n"                        \
+                              "movl %%edx, %1\n"                        \
+                              "movl %%ecx, %2\n"                        \
+                              "xorl %%eax, %%eax\n"                     \
+                              "movl %%eax, %3\n"                        \
+                              : "=m" ((ptr)->wtab[0]),                  \
+                                "=m" ((ptr)->wtab[1]),                  \
+                                "=m" ((ptr)->wtab[2]),                  \
+                                "=m" ((ptr)->wtab[3])                   \
+                              :                                         \
+                              : "eax", "ebx", "ecx", "edx");            \
     } while (0)
 
 /* control registers. need to run in system mode (ring 0). */
 
 #define cpugetmodes(ptr)                                                \
-    __asm__("movl %cr4, %eax");                                         \
-    __asm__("movl %%eax, %0": "=m" ((ptr)->cr4));
+    __asm__ __volatile__ ("movl %%cr4, %%eax\n"                         \
+                          "movl %%eax, %0\n": "=m" ((ptr)->cr4))
 
 #define cpuhastsc(ptr)                                                  \
     (!((ptr)->cr4 & CPU_CR4_TSD))

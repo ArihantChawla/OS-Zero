@@ -90,6 +90,21 @@ struct vpu {
 #define VPU_REG_ARG     0x00 // register
 #define VPU_ARGT_BITS   3
 
+/* addressing modes */
+#define VPU_INDEX_ADR   0x00 // ndx(%reg), ndx in opcode imm-field
+#define VPU_DIRECT_ADR  0x01 // address word follows opcode
+#define VPU_PIC_ADR     0x02 // PC-relative; position-independent code
+
+struct vpuop {
+    unsigned int unit : 4;
+    unsigned int reg1 : 4;
+    unsigned int reg2 : 4;
+    unsigned int adr1 : 2;
+    unsigned int adr2 : 2;
+    unsigned int code : 8;
+    int          imm8 : 8;
+};
+
 /*
  * special uses for imm8
  * - shift or rotation count
@@ -98,6 +113,7 @@ struct vpu {
 #define VPU_CL_LOCK_BIT  0x40
 #define VPU_BUS_LOCK_BIT 0x80 // lock bus for operation
 
+#if 0
 struct vpuop {
     unsigned int unit  : 4;     // execution unit
     unsigned int inst  : 4;     // per-unit instruction
@@ -109,6 +125,7 @@ struct vpuop {
     uint8_t      imm8;          // immediate argument or flags
     vpureg       imm[EMPTY];    // possible immediate argument
 };
+#endif
 
 /* predefined I/O ports */
 #define VPU_STDIN_PORT  0       // keyboard input

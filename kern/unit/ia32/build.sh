@@ -7,7 +7,7 @@ CC=gcc
 AS=gcc
 LD=ld
 
-CFLAGS="-fPIC -m32 -Xlinker -m -Xlinker elf_i386 -mno-red-zone -DZERONEWFMTX=1"
+CFLAGS="-m32 -Xlinker -mno-red-zone -DZERONEWFMTX=1"
 CCWARNFLAGS="-Wall -Wundef -Wextra -Wpointer-arith -Wuninitialized"
 #CCWARNFLAGS="-D_FORTIFY_SOURCE=2 -Wall -Wundef -Wextra -Wpointer-arith -Wuninitialized -Winit-self -Wmissing-include-dirs -Wparentheses -Wswitch-default -Wswitch-bool -Wunused-parameter -Wstrict-aliasing -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn -Wsuggest-attribute=format -Wtrampolines -Wfloat-equal -Wshadow -Wstack-usage=16384 -Wunsafe-loop-optimizations -Wbad-function-cast -Wc99-c11-compat -Wcast-align -Wwrite-strings -Wdate-time -Wjump-misses-init -Wlogical-op -Waggregate-return -Wstrict-prototypes -Wnormalized -Wopenmp-simd -Wpacked -Wredundant-decls -Wnested-externs -Winline -Wvector-operation-performance -Wvla -Wstack-protector -Woverlength-strings -Wno-designated-init -Wdeclaration-after-statement -Wformat-security -Wmissing-format-attribute"
 
