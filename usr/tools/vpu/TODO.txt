@@ -64,7 +64,7 @@ bitshift
 
 arithmetic
 ----------
-- INC, DEC, ADD, ADC, SUB, SBB, MUL, DIV, REM
+- INC, DEC, ADD, ADC, SUB, SBB, CMP, MUL, DIV, REM
 
 flow control
 ------------
