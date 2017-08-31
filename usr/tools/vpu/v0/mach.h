@@ -58,7 +58,9 @@
 /* sub-unit instructions */
 
 /* NOP is declared as all 0-bits */
-#define v0isnop(op) ((uint32_t)*op == UINT32_C(~0))
+#define V0_NOP     UINT32_C(~0)
+#define v0instisnop(op)                                                 \
+    (*(uint32_t *)op == V0_NOP)
 
 /* arg1 -> register or val-field immediate argument */
 

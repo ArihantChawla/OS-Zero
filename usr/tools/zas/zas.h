@@ -69,13 +69,8 @@ struct zasop {
     uint8_t     code;
     uint8_t     narg;
     uint8_t     len;
-#if (WPMVEC)
-    uint32_t    flg;
-#endif
     struct zasop *next;
-#if (ZVM) && (ZVMMULTITAB)
     struct zasop *tab;
-#endif
 };
 
 struct zaslabel {

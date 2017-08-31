@@ -1,3 +1,5 @@
+#if 0
+
 /* zero assembler [virtual] machine interface */
 
 #include <zas/conf.h>
@@ -62,12 +64,12 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
     struct zastoken  *retval = NULL;
     struct zassymrec *sym;
     uint8_t           narg = token->data.inst.narg;
-//    uint8_t           len = token->data.inst.op == OPNOP ? 1 : 4;
+//    uint8_t           len = token->data.inst.op == ZASNOP ? 1 : 4;
     uint8_t           len = 4;
 
     while (adr < opadr) {
 #if (WPM)
-        physmem[adr] = OPNOP;
+        physmem[adr] = ZASNOP;
 #endif
         adr++;
     }
@@ -88,18 +90,18 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                 case ZASTOKENVAREG:
                     vop->arg1t = ARGVAREG;
                     vop->reg1 = token1->data.reg & 0xff;
-                    
+
                     break;
                 case ZASTOKENVLREG:
                     vop->arg1t = ARGVLREG;
                     vop->reg1 = token1->data.reg & 0xff;
-                    
+
                     break;
                 case ZASTOKENIMMED:
                     vop->arg1t = ARGIMMED;
                     vop->args[0] = token1->val;
                     len += sizeof(zasword_t);
-                    
+
                     break;
                 case ZASTOKENADR:
                     vop->arg1t = ARGIMMED;
@@ -108,14 +110,14 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                     sym->adr = (uintptr_t)&op->args[0];
                     zasqueuesym(sym);
                     len += sizeof(uintptr_t);
-                    
+
                     break;
                 default:
                     fprintf(stderr, "invalid argument 1 of type %lx\n", token1->type);
                     printtoken(token1);
-                    
+
                     exit(1);
-                    
+
                     break;
             }
             token2 = token1->next;
@@ -130,12 +132,12 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                 case ZASTOKENVAREG:
                     vop->arg2t = ARGVAREG;
                     vop->reg2 = token2->data.reg & 0xff;
-                    
+
                     break;
                 case ZASTOKENVLREG:
                     vop->arg2t = ARGVLREG;
                     vop->reg2 = token2->data.reg & 0xff;
-                    
+
                     break;
                 default:
                     fprintf(stderr, "invalid argument 2 of type %lx\n", token2->type);
@@ -157,7 +159,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
         op = (struct zpuop *)&zvm.physmem[adr];
 #endif
         op->inst = token->data.inst.op;
-        if (op->inst == OPNOP) {
+        if (op->inst == ZASNOP) {
             retval = token->next;
             adr++;
         } else
@@ -176,12 +178,12 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             op->arg1t = ARGIMMED;
                             op->args[0] = token1->data.value.val;
                             len += sizeof(zasword_t);
-                            
+
                             break;
                         case ZASTOKENREG:
                             op->arg1t = ARGREG;
                             op->reg1 = token1->data.reg;
-                            
+
                             break;
                         case ZASTOKENSYM:
                             op->arg1t = ARGADR;
@@ -190,7 +192,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             sym->adr = (uintptr_t)&op->args[0];
                             zasqueuesym(sym);
                             len += sizeof(uintptr_t);
-                            
+
                             break;
                         case ZASTOKENINDIR:
                             token1 = token1->next;
@@ -199,16 +201,16 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                                 op->reg1 = token1->data.reg;
                             } else {
                                 fprintf(stderr, "indirect addressing requires a register\n");
-                                
+
                                 exit(1);
                             }
-                            
+
                             break;
                         case ZASTOKENIMMED:
                             op->arg1t = ARGIMMED;
                             op->args[0] = token1->val;
                             len += sizeof(zasword_t);
-                            
+
                             break;
                         case ZASTOKENADR:
                             op->arg1t = ARGIMMED;
@@ -224,14 +226,14 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             op->reg1 = token1->data.ndx.reg;
                             op->args[0] = token1->data.ndx.val;
                             len += sizeof(zasword_t);
-                            
+
                             break;
                         default:
                             fprintf(stderr, "invalid argument 1 of type %lx\n", token1->type);
                             printtoken(token1);
-                            
+
                             exit(1);
-                            
+
                             break;
                     }
                     token2 = token1->next;
@@ -246,12 +248,12 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                         case ZASTOKENVAREG:
                             op->arg2t = ARGVAREG;
                             op->reg2 = token2->data.reg & 0xff;
-                            
+
                             break;
                         case ZASTOKENVLREG:
                             op->arg2t = ARGVLREG;
                             op->reg2 = token2->data.reg & 0xff;
-                            
+
                             break;
 #endif
                         case ZASTOKENVALUE:
@@ -262,12 +264,12 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                                 op->args[1] = token2->data.value.val;
                             }
                             len += sizeof(zasword_t);
-                            
+
                             break;
                         case ZASTOKENREG:
                             op->arg2t = ARGREG;
                             op->reg2 = token2->data.reg;
-                            
+
                             break;
                         case ZASTOKENSYM:
                             op->arg2t = ARGADR;
@@ -280,7 +282,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             }
                             zasqueuesym(sym);
                             len += sizeof(uintptr_t);
-                            
+
                             break;
                         case ZASTOKENINDIR:
                             token2 = token2->next;
@@ -289,10 +291,10 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                                 op->reg2 = token2->data.reg;
                             } else {
                                 fprintf(stderr, "indirect addressing requires a register\n");
-                                
+
                                 exit(1);
                             }
-                            
+
                             break;
                         case ZASTOKENIMMED:
                             op->arg2t = ARGIMMED;
@@ -302,7 +304,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                                 op->args[1] = token2->val;
                             }
                             len += sizeof(zasword_t);
-                            
+
                             break;
                         case ZASTOKENADR:
                             op->arg2t = ARGIMMED;
@@ -315,7 +317,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             }
                             zasqueuesym(sym);
                             len += sizeof(uintptr_t);
-                            
+
                             break;
                         case ZASTOKENINDEX:
                             op->arg2t = ARGREG;
@@ -326,14 +328,14 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                                 op->args[1] = token2->data.ndx.val;
                             }
                             len += sizeof(zasword_t);
-                            
+
                             break;
                         default:
                             fprintf(stderr, "invalid argument 2 of type %lx\n", token2->type);
                             printtoken(token2);
-                            
+
                             exit(1);
-                            
+
                             break;
                     }
                     retval = token2->next;
@@ -346,4 +348,6 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
 
     return retval;
 }
+
+#endif
 

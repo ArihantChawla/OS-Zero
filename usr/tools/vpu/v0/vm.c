@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zero/fastudiv.h>
-#include <v0/vm32.h>
 #include <v0/mach.h>
+#include <v0/vm32.h>
 #include <v0/op.h>
 
 extern void vminitio(struct v0 *vm);
@@ -18,8 +18,10 @@ typedef v0reg    v0opfunc(struct v0 *vm, uint8_t *ptr, v0ureg pc);
 #endif
 
 #if defined(V0_DEBUG_TABS)
-static struct v0opinfo v0opinfotab[V0_NINST_MAX];
+static struct    v0opinfo v0opinfotab[V0_NINST_MAX];
 #endif
+
+struct v0       *v0vm;
 
 void
 v0printop(struct v0op *op)
@@ -45,6 +47,9 @@ v0printop(struct v0op *op)
 
 #define opjmp(op)                                                       \
     do {                                                                \
+        while (v0instisnop(op)) {                                       \
+            op++;                                                       \
+        }                                                               \
         if (pc <= vm->seglims[V0_TEXT_SEG]) {                           \
             goto *jmptab[((struct v0op *)&vm->mem[pc])->code];          \
         } else {                                                        \
@@ -109,7 +114,7 @@ v0printop(struct v0op *op)
 struct v0 *
 v0init(struct v0 *vm, v0ureg text)
 {
-    void *mem = malloc(V0_MEM_SIZE);
+    void *mem = calloc(1, V0_MEM_SIZE);
     void *ptr;
     long  newvm = 0;
 
@@ -146,6 +151,7 @@ v0init(struct v0 *vm, v0ureg text)
         vminitio(vm);
         vm->sysregs[V0_PC_REG] = text;
     }
+    v0vm = vm;
 
     return vm;
 }

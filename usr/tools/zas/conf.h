@@ -3,19 +3,22 @@
 #ifndef __ZAS_CONF_H__
 #define __ZAS_CONF_H__
 
-#if !defined(ZASZEROHASH) && !ZASZEROHASH
-#define ZASZEROHASH 1
+#define V0          1
+
+#if defined(V0)
+#include <v0/mach.h>
+#include <v0/vm32.h>
+#define ZAS32BIT    1
+#define ZASNOP      V0_NOP
+#define ZASREGINDEX 0x40000000U
+#define ZASREGINDIR 0x80000000U
+typedef struct v0op   zasop_t;
+typedef union v0oparg zasarg_t;
+#define zasadrtoptr(adr) (&v0vm->mem[adr])
 #endif
 
-/* virtual machine selection */
-#ifndef ZVM
-#define ZVM 1
-#endif
-#ifndef WPM
-#define WPM 0
-#endif
-#ifndef ZEN
-#define ZEN 0
+#if !defined(ZASZEROHASH) && !ZASZEROHASH
+#define ZASZEROHASH 1
 #endif
 
 #if 0

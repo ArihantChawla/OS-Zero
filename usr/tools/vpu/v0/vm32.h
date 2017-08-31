@@ -14,6 +14,7 @@ struct v0;
 
 typedef int32_t  v0reg;
 typedef uint32_t v0ureg;
+typedef v0ureg   v0memadr;
 typedef v0reg    v0iofunc_t(struct v0 *vm, uint16_t port, uint16_t reg);
 
 struct v0iofuncs {
@@ -97,7 +98,7 @@ struct v0 {
     v0ureg            segs[V0_NSEG];
     v0ureg            seglims[V0_NSEG];
     long              flg;
-    int8_t           *mem;
+    uint8_t          *mem;
     struct v0iofuncs *iovec;
     struct divuf16   *divu16tab;
 };
@@ -110,6 +111,7 @@ struct v0 {
  */
 union v0oparg {
     uint32_t adr;  // memory address
+    uint32_t ndx;  // memory address
     uint32_t rmap; // register bitmap for PSHM, POPM - see V0_REG_BIT()
     uint32_t u32;  // unsigned 32-bit integer
     int32_t  i32;  // signed 32-bit integer
@@ -140,6 +142,8 @@ union v0oparg {
  * - shift or rotation count
  * - flags
  */
+#define V0_IMM_VAL_MAX 0xfff
+#define V0_IMM_VAL_MIN (-0x7ff - 1)
 #define V0_TRAP_BIT    (1 << 13) // breakpoint
 #define V0_SIGNED_BIT  (1 << 12) // signed operation
 
