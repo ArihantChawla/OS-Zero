@@ -510,11 +510,11 @@
 #define VPU_VSIGNEXT_BIT 0x02
 #define VPU_VCARRY_BIT   0x02
 #define VPU_VSHL         VPU_VSHIFT_BIT // 0x40
-#define VPU_VSHL         (VPU_VSHIFT_BIT | VPU_VRIGHT_BIT) // 0x41
+#define VPU_VSHR         (VPU_VSHIFT_BIT | VPU_VRIGHT_BIT) // 0x41
 #define VPU_VSAR         (VPU_VSHIFT_BIT | VPU_VSIGNEXT_BIT) // 0x42
 #define VPU_VROL         VPU_VROT_BITS // 0x50
 #define VPU_VROR         (VPU_VROT_BITS | VPU_VRIGHT_BIT) // 0x51
-#define VPU_RCL          (VPU_VROT_BITS | VPU_VCARRY_BIT) // 0x52
+#define VPU_VRCL         (VPU_VROT_BITS | VPU_VCARRY_BIT) // 0x52
 #define VPU_VRCR         (VPU_VROT_BITS | VPU_VCARRY_BIT | VPU_VRIGHT_BIT) // 53
 /* miscellaneous operations */
 #define VPU_VUNPK        0xfe

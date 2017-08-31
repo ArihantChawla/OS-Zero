@@ -1,0 +1,17 @@
+V0 Architecture Notes
+---------------------
+
+V0 is a simple processor architecture initially designed for an educational
+programming game. The following lists some key features.
+
+V0 Features
+-----------
+
+- 16 general purpose registers named R0 through R15
+- MSW (machine status word) register
+- FP (frame pointer) register
+- SP (stack pointer) register
+- PC (program counter) register; some architectures call it instruction pointer
+- memory size defined in <v0/conf.h>; 256 megabytes default value
+- RISC-like load-store instruction set designed to support the C language
+

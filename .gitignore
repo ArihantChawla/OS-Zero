@@ -5,7 +5,6 @@
 *.toc
 *.out
 *.BAK
-*.log
 core.*
 vgcore.*
 # VIM swap files

@@ -36,7 +36,7 @@ static INLINE void
 m_getretadr(void **pp)
 {
     void *_ptr;
-    
+
     __asm__ __volatile__ ("movl %c1(%%ebp), %0\n"
                           : "=r" (_ptr)
                           : "i" (__EIPFRAMEOFS));
@@ -107,12 +107,12 @@ m_cmpxchg32ptr(m_atomic32_t **p,
                volatile void *val)
 {
     void *res;
-    
+
     __asm__ __volatile__("lock cmpxchgl %1, %2\n"
                          : "=a" (res)
                          : "q" (val), "m" (*(p)), "0" (want)
                          : "memory");
-    
+
     return res;
 }
 
@@ -161,7 +161,7 @@ m_cmpxchg64(m_atomic64_t *p32,
     uint32_t eax = p32[0];
     uint32_t ecx = p32[1];
     char     res;
-    
+
     __asm__ __volatile__ ("lock cmpxchg8b %1\n"
                           "setz %b0\n"
                           : "=q" (res)

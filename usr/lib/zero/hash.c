@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <zero/param.h>
+#include <zero/cdefs.h>
 
 //#define _min(a, b) ((b) ^ (((a) ^ (b)) & -((a) < (b))))
 
@@ -10,10 +11,10 @@ _divu131071(unsigned int uval)
 {
     unsigned long long mul = 0x80004001;
     unsigned long long res = uval;
-    
+
     res *= mul;
     res >>= 16;
-    
+
     return (unsigned int)res;
 }
 #define _modu131071(u) ((u) - (_divu131071(u) * 131071))
@@ -28,7 +29,6 @@ hashpjw(char *str)
     unsigned int   u;
     unsigned int   g;
     unsigned int   h = 0;
-    
 
     for (ucp = (unsigned char *)str ; (*ucp) ; ucp++) {
         u = *ucp;
@@ -143,7 +143,7 @@ tmhash64(uint64_t u)
     u = (u ^ (u >> 27)) * UINT64_C(0x94d049bb133111eb);
     u = u ^ (u >> 31);
 
-    return u;    
+    return u;
 }
 
 /* this one is Austin Appleby's MurmurHash3 */
@@ -156,7 +156,7 @@ MurmurHash3Mixer(uint64_t u)
     u ^= (u >> 33);
     u *= UINT64_C(0xc4ceb9fe1a85ec53);
     u ^= (u >> 33);
-    
+
     return u;
 }
 
@@ -191,10 +191,10 @@ FNV1A_Hash_WHIZ(const char *str, size_t wsz)
     uint32_t        ret;
     uint32_t        hash32 = 2166136261;
     const char     *ptr = str;
- 
+
     for( ;
-         wsz >= sizeof(uint32_t);
-         wsz -= sizeof(uint32_t), ptr += sizeof(uint32_t)) {
+        wsz >= sizeof(uint32_t);
+        wsz -= sizeof(uint32_t), ptr += sizeof(uint32_t)) {
         hash32 = (hash32 ^ *(uint32_t *)ptr) * prime;
     }
     if (wsz & sizeof(uint16_t)) {
@@ -207,7 +207,7 @@ FNV1A_Hash_WHIZ(const char *str, size_t wsz)
     ret = hash32;
     hash32 >>= 16;
     ret ^= hash32;
- 
+
     return ret;
 }
 
@@ -230,7 +230,7 @@ int
 mprimod(int k, int p, int s)
 {
     int i = (k & p) + (k >> s);
-    
+
     return (i >= p) ? i - p : i;
 }
 

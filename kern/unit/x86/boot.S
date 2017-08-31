@@ -16,7 +16,7 @@ _MBCHKSUM	= MBCHKSUM
 .globl	kerngdt, kernpagedir, kerniomap, kernpagetab4, kerntsstab
 .globl	kernsysstktab, kernusrstktab
 .extern	kmain
-	
+
 .text	32
 
 /* kernel entry */
@@ -69,7 +69,7 @@ _protmode:
 	call	kmain			// call kmain()
 
 /* check for presence of CPUID by trying to flip bit 21 in %eflags */
-_chkcpuid:	
+_chkcpuid:
 	pushfl
 	popl	%eax
 	movl	%eax, %ecx
@@ -95,7 +95,7 @@ _nolongmode:
 	ret
 
 .data
-	
+
 .align	NBPG
 
 #if !(LOCORE)
@@ -107,17 +107,17 @@ kernpagedir:
 	.space	NBPG
 
 #if defined(__x86_64__) || defined(__amd64__)
-	
+
 /* 64-bit memory management */
 
 /* page-map level-4 table */
-kernpagetab4:	
+kernpagetab4:
 	.space	NBPG
 /* page directory pointer table */
-kernpagetab3:	
+kernpagetab3:
 	.space	NBPG
 /* page directory table */
-kernpagetab2:	
+kernpagetab2:
 	.space	NBPG
 /* page table */
 kernpagetab1:
@@ -128,7 +128,7 @@ kernpagetab1:
 
 /* per-CPU GDTs; kernel segment descriptor tables */
 .align	4096
-	
+
 #if (SMP)
 
 kerngdt:
@@ -142,11 +142,11 @@ kerngdt:
 kerngdt:
 	.space	(8 * NGDT)
 #endif /* SMP */
-	
+
 /* kernel TSS structures */
 kerntsstab:
 	.space	(NCPU * TSSLEN)
-	
+
 	.align	NBPG
 
 /* kernel I/O protection bitmap */

@@ -10,10 +10,13 @@ zed - Zero Editor
 - c-mode
   - automatic indentation
     - basicofs - 4
-    - caseofs  - 4
-    - parloc   - row, column
-    - curofs   - X
+    - elem     - sym, row, col
     - use space-only for indentation
+    - C-i l - indent line
+    - C-i c - indent comment
+    - C-i b - indent block
+    - C-i f - indent function
+    - C-i r - indent region
   - ISO 8859-1 character set as per the C standards
   - syntax highlights
     - comments in grey
@@ -26,19 +29,21 @@ zed - Zero Editor
       - types (including aggregates) in blue
   - scope aware auto-completion of identifiers (using ctags?)
   - possibly some sort of source code navigation
+  - in-comment markup documentation; use per-line timestamps to check status
 
 - buttons always visible
   - save, paste, copy, cut, close, find, indent, navigate
 
 Emacs-like commands
 -------------------
+TAB                     indent
 C-a			go to beginning of line
 C-e			go to end of line
 M-<			go to beginning of file
 M->			go to end of file
+M-i                     indent to tab stop
 C-x C-c			exit
 C-x C-s			save
-C-x i or TAB		insert
 C-x C-f			open file
 C-x b			switch between files/buffers
 M-x text-mode		switch to text mode

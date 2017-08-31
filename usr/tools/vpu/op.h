@@ -8,27 +8,17 @@
 #include <limits.h>
 #include <stdint.h>
 #include <zero/param.h>
+#include <zero/cdefs.h>
 #include <vpu/vpu.h>
 #include <vpu/op.h>
 
 #define VPU_PC_OK        0
 #define VPU_PC_INVAL     (~(vpuureg)VPU_PC_OK)
 #if !defined(__GNUC__)
-#define VPUOP_T FASTCALL vpuureg
+#define VPUOP_T FASTCALL INLINE vpuureg
 #else
-#define VPUOP_T INLINE   vpuureg
+#define VPUOP_T INLINE          vpuureg
 #endif
-
-#define vpuget1arggenreg(vm, op, dptr)                                  \
-    ((dptr) = &vm->genregs[(op)->reg1], *(dptr))
-#define vpuget2argsgenreg(vm, op, dptr, src, dest)                      \
-    (!((op)->argt & VPU_IMM_ARG)                                        \
-     ? ((dptr) = &vm->genregs[(op)->reg2],                              \
-        (src) = vm->genregs[(op)->reg1],                                \
-        (dest) = *(dptr))                                               \
-     : ((dptr) = &vm->genregs[(op)->reg2],                              \
-        (src) = op->imm[0],                                             \
-        (dest) = *(dptr)))
 
 VPUOP_T
 vpunop(struct vpu *vm, uint8_t *ptr, vpuureg pc)
@@ -43,7 +33,7 @@ vpunot(struct vpu *vm, uint8_t *ptr, vpuureg pc)
 {
     struct vpuop *op = (struct vpuop *)ptr;
     vpureg       *dptr;
-    vpureg        src = vpuget1arggenreg(vm, op, dptr);
+    vpureg        src = vm->genregs[
     vpureg        dest;
 
     dest = ~src;
@@ -53,7 +43,7 @@ vpunot(struct vpu *vm, uint8_t *ptr, vpuureg pc)
 
         return VPU_PC_INVAL;
     }
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -65,7 +55,7 @@ vpuand(struct vpu *vm, uint8_t *ptr, vpuureg pc)
     vpureg       *dptr;
     vpureg        src;
     vpureg        dest;
-    
+
     vpuget2argsgenreg(vm, op, dptr, src, dest);
     if (op->argt & VPU_IMM_ARG) {
         pc += sizeof(struct vpuop) + sizeof(vpureg);
@@ -74,12 +64,12 @@ vpuand(struct vpu *vm, uint8_t *ptr, vpuureg pc)
     }
     dest &= src;
     if (pc > vm->seglims[VPU_TEXT]) {
-        
+
         return VPU_PC_INVAL;
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
-    
+    vm->sysregs[VPU_PC_REG] = pc;
+
     return pc;
 }
 
@@ -90,7 +80,7 @@ vpuor(struct vpu *vm, uint8_t *ptr, vpuureg pc)
     vpureg       *dptr;
     vpureg        src;
     vpureg        dest;
-    
+
     vpuget2argsgenreg(vm, op, dptr, src, dest);
     if (op->argt & VPU_IMM_ARG) {
         pc += sizeof(struct vpuop) + sizeof(vpureg);
@@ -103,7 +93,7 @@ vpuor(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         return VPU_PC_INVAL;
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -128,7 +118,7 @@ vpuxor(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         return VPU_PC_INVAL;
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -150,7 +140,7 @@ vpushl(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         return VPU_PC_INVAL;
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -174,7 +164,7 @@ vpushr(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         return VPU_PC_INVAL;
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -208,7 +198,7 @@ vpusar(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         return VPU_PC_INVAL;
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -235,7 +225,7 @@ vpurol(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         return VPU_PC_INVAL;
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -262,7 +252,7 @@ vpuror(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         return VPU_PC_INVAL;
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -283,7 +273,7 @@ vpuinc(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         return VPU_PC_INVAL;
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -304,7 +294,7 @@ vpudec(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         return VPU_PC_INVAL;
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -333,7 +323,7 @@ vpuadd(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         vpusetof(vm);
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -363,7 +353,7 @@ vpuadc(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         vpusetof(vm);
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 #endif
 
     return pc;
@@ -394,7 +384,7 @@ vpuadi(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         vpusetof(vm);
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 #endif
 
     return pc;
@@ -420,13 +410,13 @@ vpusub(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         return VPU_PC_INVAL;
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
 
 VPUOP_T
-vpusbc(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+vpusbb(struct vpu *vm, uint8_t *ptr, vpuureg pc)
 {
     struct vpuop *op = (struct vpuop *)ptr;
     vpureg       *dptr;
@@ -445,7 +435,7 @@ vpusbc(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         return VPU_PC_INVAL;
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -476,7 +466,7 @@ vpucmp(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         vpusetcf(vm);
     }
     *dptr = dest;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -500,19 +490,31 @@ vpurem(struct vpu *vm, uint8_t *ptr, vpuureg pc)
 }
 
 VPUOP_T
-vpulda(struct vpu *vm, uint8_t *ptr, vpuureg pc)
-{
-    ;
-}
-
-VPUOP_T
-vpusta(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+vpucrm(struct vpu *vm, uint8_t *ptr, vpuureg pc)
 {
     ;
 }
 
 VPUOP_T
 vpujmp(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+{
+    ;
+}
+
+VPUOP_T
+vpujmp(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+{
+    ;
+}
+
+VPUOP_T
+vpucall(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+{
+    ;
+}
+
+VPUOP_T
+vpuret(struct vpu *vm, uint8_t *ptr, vpuureg pc)
 {
     ;
 }
@@ -528,7 +530,7 @@ vpubz(struct vpu *vm, uint8_t *ptr, vpuureg pc)
     } else {
         pc += sizeof(struct vpuop);
     }
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -544,7 +546,71 @@ vpubnz(struct vpu *vm, uint8_t *ptr, vpuureg pc)
     } else {
         pc += sizeof(struct vpuop);
     }
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
+
+    return pc;
+}
+
+VPUOP_T
+vpubc(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+{
+    struct vpuop *op = (struct vpuop *)ptr;
+    vpureg        dest = vm->genregs[op->reg1];
+
+    if (vpucfset(vm)) {
+        pc = dest;
+    } else {
+        pc += sizeof(struct vpuop);
+    }
+    vm->sysregs[VPU_PC_REG] = pc;
+
+    return pc;
+}
+
+VPUOP_T
+vpubnc(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+{
+    struct vpuop *op = (struct vpuop *)ptr;
+    vpureg        dest = vm->genregs[op->reg1];
+
+    if (!vpucfset(vm)) {
+        pc = dest;
+    } else {
+        pc += sizeof(struct vpuop);
+    }
+    vm->sysregs[VPU_PC_REG] = pc;
+
+    return pc;
+}
+
+VPUOP_T
+vpubo(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+{
+    struct vpuop *op = (struct vpuop *)ptr;
+    vpureg        dest = vm->genregs[op->reg1];
+
+    if (vpuofset(vm)) {
+        pc = dest;
+    } else {
+        pc += sizeof(struct vpuop);
+    }
+    vm->sysregs[VPU_PC_REG] = pc;
+
+    return pc;
+}
+
+VPUOP_T
+vpubno(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+{
+    struct vpuop *op = (struct vpuop *)ptr;
+    vpureg        dest = vm->genregs[op->reg1];
+
+    if (!vpuofset(vm)) {
+        pc = dest;
+    } else {
+        pc += sizeof(struct vpuop);
+    }
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -560,7 +626,7 @@ vpublt(struct vpu *vm, uint8_t *ptr, vpuureg pc)
     } else {
         pc += sizeof(struct vpuop);
     }
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -577,7 +643,7 @@ vpuble(struct vpu *vm, uint8_t *ptr, vpuureg pc)
     } else {
         ptr = &vm->mem[pc];
     }
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -593,7 +659,7 @@ vpubgt(struct vpu *vm, uint8_t *ptr, vpuureg pc)
     } else {
         pc += sizeof(struct vpuop);
     }
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -610,127 +676,84 @@ vpubge(struct vpu *vm, uint8_t *ptr, vpuureg pc)
     } else {
         ptr = &vm->mem[pc];
     }
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
 
 VPUOP_T
-vpubo(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+vpuldr(struct vpu *vm, uint8_t *ptr, vpuureg pc)
 {
-    struct vpuop *op = (struct vpuop *)ptr;
-    vpureg        dest = vm->genregs[op->reg1];
-
-    if (vpuofset(vm)) {
-        pc = dest;
-    } else {
-        pc += sizeof(struct vpuop);
-    }
-    vm->sysregs[VPU_PC] = pc;
-
-    return pc;
+    return VPU_PC_INVAL;
 }
 
 VPUOP_T
-vpubno(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+vpustr(struct vpu *vm, uint8_t *ptr, vpuureg pc)
 {
-    struct vpuop *op = (struct vpuop *)ptr;
-    vpureg        dest = vm->genregs[op->reg1];
-
-    if (!vpuofset(vm)) {
-        pc = dest;
-    } else {
-        pc += sizeof(struct vpuop);
-    }
-    vm->sysregs[VPU_PC] = pc;
-
-    return pc;
+    return VPU_PC_INVAL;
 }
 
 VPUOP_T
-vpubc(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+vpuldx(struct vpu *vm, uint8_t *ptr, vpuureg pc)
 {
-    struct vpuop *op = (struct vpuop *)ptr;
-    vpureg        dest = vm->genregs[op->reg1];
-
-    if (vpucfset(vm)) {
-        pc = dest;
-    } else {
-        pc += sizeof(struct vpuop);
-    }
-    vm->sysregs[VPU_PC] = pc;
-
-    return pc;
+    return VPU_PC_INVAL;
 }
 
 VPUOP_T
-vpubnc(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+vpustx(struct vpu *vm, uint8_t *ptr, vpuureg pc)
 {
-    struct vpuop *op = (struct vpuop *)ptr;
-    vpureg        dest = vm->genregs[op->reg1];
-
-    if (!vpucfset(vm)) {
-        pc = dest;
-    } else {
-        pc += sizeof(struct vpuop);
-    }
-    vm->sysregs[VPU_PC] = pc;
-
-    return pc;
-}
-
-VPUOP_T
-vpucall(struct vpu *vm, uint8_t *ptr, vpuureg pc)
-{
-    ;
-}
-
-VPUOP_T
-vputhr(struct vpu *vm, uint8_t *ptr, vpuureg pc)
-{
-    ;
-}
-
-VPUOP_T
-vpuenter(struct vpu *vm, uint8_t *ptr, vpuureg pc)
-{
-    ;
-}
-
-VPUOP_T
-vpuleave(struct vpu *vm, uint8_t *ptr, vpuureg pc)
-{
-    ;
-}
-
-VPUOP_T
-vpuret(struct vpu *vm, uint8_t *ptr, vpuureg pc)
-{
-    /* return from subroutine or thread if return address is 0 */
-    ;
+    return VPU_PC_INVAL;
 }
 
 VPUOP_T
 vpupsh(struct vpu *vm, uint8_t *ptr, vpuureg pc)
 {
     struct vpuop *op = (struct vpuop *)ptr;
-    vpuureg       sp = vm->sysregs[VPU_SP];
+    vpuureg       sp = vm->sysregs[VPU_SP_REG];
     vpureg       *src = (vpureg *)&vm->genregs[op->reg1];
     vpureg       *dest = (vpureg *)&vm->mem[sp];
 
     pc+= sizeof(struct vpuop);
     vm->sysregs[sp] = --sp;
     *dest = *src;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
+}
+
+VPUOP_T
+vpupop(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+{
+    struct vpuop *op = (struct vpuop *)ptr;
+    vpuureg       sp = vm->sysregs[VPU_SP];
+    vpureg       *src = (vpureg *)&vm->mem[sp];
+    vpureg       *dest = (vpureg *)&vm->genregs[op->reg1];
+
+    pc+= sizeof(struct vpuop);
+    vm->sysregs[sp] = ++sp;
+    *dest = *src;
+    vm->sysregs[VPU_PC_REG] = pc;
+
+    return pc;
+}
+
+VPUOP_T
+vpupshx(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+{
+    return VPU_PC_INVAL;
+}
+
+VPUOP_T
+vpupopx(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+{
+    return VPU_PC_INVAL;
 }
 
 VPUOP_T
 vpupsha(struct vpu *vm, uint8_t *ptr, vpuureg pc)
 {
     struct vpuop *op = (struct vpuop *)ptr;
-    vpuureg       sp = vm->sysregs[VPU_SP];
+    vpuureg       sp = vm->sysregs[VPU_SP_REG];
     vpuureg       newsp = sp - VPU_NGENREG;
     vpureg       *dest = (vpureg *)&vm->mem[sp];
     vpureg       *src = (vpureg *)&vm->genregs[VPU_REG0];
@@ -749,23 +772,7 @@ vpupsha(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         dest[-7] = src[7];
         dest -= 8;
     }
-    vm->sysregs[VPU_PC] = pc;
-
-    return pc;
-}
-
-VPUOP_T
-vpupop(struct vpu *vm, uint8_t *ptr, vpuureg pc)
-{
-    struct vpuop *op = (struct vpuop *)ptr;
-    vpuureg       sp = vm->sysregs[VPU_SP];
-    vpureg       *src = (vpureg *)&vm->mem[sp];
-    vpureg       *dest = (vpureg *)&vm->genregs[op->reg1];
-
-    pc+= sizeof(struct vpuop);
-    vm->sysregs[sp] = ++sp;
-    *dest = *src;
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
 }
@@ -793,9 +800,21 @@ vpupopa(struct vpu *vm, uint8_t *ptr, vpuureg pc)
         dest[7] = src[7];
         dest += 8;
     }
-    vm->sysregs[VPU_PC] = pc;
+    vm->sysregs[VPU_PC_REG] = pc;
 
     return pc;
+}
+
+VPUOP_T
+vpupshm(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+{
+    return VPU_PC_INVAL;
+}
+
+VPUOP_T
+vpupopm(struct vpu *vm, uint8_t *ptr, vpuureg pc)
+{
+    return VPU_PC_INVAL;
 }
 
 VPUOP_T
@@ -806,18 +825,6 @@ vpuin(struct vpu *vm, uint8_t *ptr, vpuureg pc)
 
 VPUOP_T
 vpuout(struct vpu *vm, uint8_t *ptr, vpuureg pc)
-{
-    return VPU_PC_INVAL;
-}
-
-VPUOP_T
-vpuldr(struct vpu *vm, uint8_t *ptr, vpuureg pc)
-{
-    return VPU_PC_INVAL;
-}
-
-VPUOP_T
-vpustr(struct vpu *vm, uint8_t *ptr, vpuureg pc)
 {
     return VPU_PC_INVAL;
 }

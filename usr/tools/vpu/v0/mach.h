@@ -1,8 +1,13 @@
+#ifndef __VPU_V0_MACH_H__
+#define __VPU_V0_MACH_H__
+
+#define V0_NINST_MAX 256
+
 /* Valhalla 0 (V0) processor machine interface */
 
 /* register IDs */
-/* 16 general purpose registers R0..R15 */
 #define V0_REG_BIT(r) (1U << V0_##r) // bitmap indices for PSHM, POPM
+/* 16 general purpose registers R0..R15 */
 #define V0_R0      0x00
 #define V0_R1      0x01
 #define V0_R2      0x02
@@ -27,28 +32,37 @@
 #define V0_ROREG   0x18 // read-only/hardwired registers
 #define V0_FR0     0x19 // feature register #0; flags indicating processor setup
 
-/* bits for FR0 */
+/* bits for FR0 feature register */
 #define V0_FR0_MMU (1U << 0) // memory management unit present
 #define V0_FR0_FPU (1U << 1) // floating-point processor present
 #define V0_FR0_GPU (1U << 2) // graphics processor present
 #define V0_FR0_DSP (1U << 3) // digital signal processor present
-#define V0_FR0_FXP (1U << 4) // fixed-point processor present
+#define V0_FR0_FPM (1U << 4) // fixed-point processor present
 
 /* processor sub-units */
-#define V0_LOGIC   0x00
-#define V0_SHIFT   0x01
-#define V0_ARITH   0x02
-#define V0_FLOW    0x03
-#define V0_XFER    0x04
-#define V0_STACK   0x05
-#define V0_IO      0x06
-#define V0_COPROC  0x0f
+#define V0_BITS    0x00 // bitwise operations such as logical functions
+#define V0_SHIFT   0x10 // shift operations (later on, probably rotates as well)
+#define V0_ARITH   0x20 // basic arithmetics
+#define V0_FLOW    0x30 // flow control; jumps, function calls, branches
+#define V0_XFER    0x40 // data transfers between registers and memory
+#define V0_STACK   0x50 // stack operations
+#define V0_IO      0x60 // I/O operations
+#define V0_COUNIT  0x80 // co-unit flag-bit
+#define V0_MMU     0x80 // memory management unit
+#define V0_FPU     0x90 // floating-point unit
+#define V0_GPU     0xa0 // graphics processor
+#define V0_DSP     0xb0 // digital signal processor
+#define V0_FPM     0xc0 // fixed-point mathematics
+#define V0_COPROC  0xf0 // miscellaneous co-processors (separate op-words)
 
 /* sub-unit instructions */
 
+/* NOP is declared as all 0-bits */
+#define v0isnop(op) ((uint32_t)*op == UINT32_C(~0))
+
 /* arg1 -> register or val-field immediate argument */
 
-/* V0_LOGIC */
+/* V0_BITS */
 #define V0_NOT     0x00 // reg1 = ~reg1;
 #define V0_AND     0x01 // reg2 &= arg1;
 #define V0_OR      0x02 // reg2 |= arg1;
@@ -64,67 +78,48 @@
 #define V0_DEC     0x01 // reg1--;
 #define V0_ADD     0x02 // reg2 += arg1;
 #define V0_ADC     0x03 // reg2 += arg1; // sets carry-bit
-#define V0_SUB     0x04 // reg2 -= arg1;
+#define V0_SUB     0x04 // reg2 -= arg1; // reg2 += (~arg1) + 1
 #define V0_SBB     0x05 // reg2 -= arg1; // sets carry-bit to borrow
 #define V0_CMP     0x06 // set bits for reg2 - arg1
 #define V0_MUL     0x07 // reg2 *= arg1;
 #define V0_DIV     0x08 // reg2 /= arg1;
 #define V0_REM     0x09 // reg2 %= arg1;
+//#define V0_CRM     0x0a // calculate reciprocal multiplier for division
 
 /* V0_FLOW */
 #define V0_JMP     0x00  // jmp to given address
-#define V0_CALL    0x01  // call function
-#define V0_BZ      0x02  // branch if MSW_ZF is set
-#define V0_BNZ     0x03  // branch if MSW_ZF is zero
-#define V0_BC      0x04  // branch if MSW_CF is set
-#define V0_BNC     0x05  // branch if MSW_CF is zero
-#define V0_BO      0x06  // branch if MSW_OF is set
-#define V0_BNO     0x07  //  branch if MSW_OF is zero
-#define V0_BEQ     V0_BZ
-#define V0_BLT     0x08  // TODO: flag combinations for BLT and below
-#define V0_BLE     0x09
-#define V0_BGT     0x0a
-#define V0_BGE     0x0b
+#define V0_CALL    0x01  // call subroutine
+#define V0_RET     0x02  // return from subroutine
+#define V0_BZ      0x03  // branch if MSW_ZF is set
+#define V0_BNZ     0x04  // branch if MSW_ZF is zero
+#define V0_BC      0x05  // branch if MSW_CF is set
+#define V0_BNC     0x06  // branch if MSW_CF is zero
+#define V0_BO      0x07  // branch if MSW_OF is set
+#define V0_BNO     0x08  // branch if MSW_OF is zero
+#define V0_BEQ     V0_BZ // branch if equal
+/* TODO: flag combinations for BLT and below */
+#define V0_BLT     0x09  // branch if less than
+#define V0_BLE     0x0a  // branch if less than or equal
+#define V0_BGT     0x0b  // branch if greater than
+#define V0_BGE     0x0c  // branch if greater than or equal
 
 /* V0_XFER */
 #define V0_LDR     0x00  // load register from memory
 #define V0_STR     0x01  // store register into memory
-#define V0_LDX     0x02  // load special-register from memory
-#define V0_STX     0x03  // store special-register into memory
+//#define V0_LDX     0x02  // load special-register from memory
+//#define V0_STX     0x03  // store special-register into memory
 
 /* V0_STACK */
 #define V0_PSH     0x00  // push from register
 #define V0_POP     0x01  // pop into register
-#define V0_PSHX    0x02  // push from special register
-#define V0_POPX    0x03  // pop into special register
 #define V0_PSHA    0x04  // push all general-purpose registers
 #define V0_POPA    0x05  // pop all general-purpose reigsters
 #define V0_PSHM    0x06  // push set of registers [bitmap follows opcode]
 #define V0_POPM    0x07  // pop set of registers [bitmap follows opcode]
 
-/* 32-bit argument parcel */
-union v0oparg {
-    uint32_t u32;
-    int32_t  i32;
-    uint16_t u16;
-    int16_t  i16;
-    uint8_t  u8;
-    int8_t   i8;
-};
+/* V0_IO */
+#define V0_IOR     0x00  // read data from I/O port
+#define V0_IOW     0x01  // write data to I/O port
 
-#define V0_DIRECT  0x00 // address value after opcode; TODO: scale with argsz?
-#define V0_IMMED   0x01 // address in val-field
-#define V0_INDIR   0x02 // register address + val-field offset
-#define V0_PCREL   0x03 // PC-relative offset in val-field
-
-/* 32-bit instruction/operation parcel */
-struct v0op {
-    unsigned int unit  : 4;  // processor sub-unit
-    unsigned int inst  : 4;  // sub-unit instruction
-    unsigned int reg1  : 4;  // argument register #1
-    unsigned int reg2  : 4;  // argument register #2
-    signed int   val   : 12; // immediate argument such as offset
-    unsigned int argsz : 2;  // argument size is 8 << argsz
-    unsigned int adr   : 2;  // addressing mode for load or store
-};
+#endif /* __VPU_V0_MACH_H__ */
 

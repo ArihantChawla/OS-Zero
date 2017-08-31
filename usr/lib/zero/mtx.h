@@ -74,7 +74,7 @@ static INLINE void
 fmtxlk(m_atomic_t *lp)
 {
     m_atomic_t res;
-    
+
     do {
         res = *lp;
         if (res == FMTXINITVAL) {
@@ -100,7 +100,7 @@ fmtxunlk(m_atomic_t *lp)
     m_membar();
     *lp = FMTXINITVAL;
     m_endspin();
-    
+
     return;
 }
 
@@ -128,7 +128,7 @@ static INLINE void
 fmtxlk(m_atomic_t *lp)
 {
     m_atomic_t res;
-    
+
     do {
         res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
         if (!res) {
@@ -149,7 +149,7 @@ fmtxunlk(m_atomic_t *lp)
     m_membar();
     *lp = FMTXINITVAL;
     m_endspin();
-    
+
     return;
 }
 

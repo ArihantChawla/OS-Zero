@@ -17,7 +17,7 @@
 #define vpuofset(vm)    ((vm)->sysregs[VPU_MSW] & VPU_MSW_OF)
 #define vpuifset(vm)    ((vm)->sysregs[VPU_MSW] & VPU_MSW_IF)
 
-#define VPU_NGENREG     16 // number of registers in group (general, system)
+#define V0_NINST_MAX    256
 
 /* accumulator (general-purpose register) IDs */
 #define VPU_R0_REG      0x00
@@ -36,6 +36,7 @@
 #define VPU_R13_REG     0x0d
 #define VPU_R14_REG     0x0e
 #define VPU_R15_REG     0x0f
+#define VPU_NGENREG     16 // number of registers in group (general, system)
 /* system register IDs */
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #define VPU_RET_LO      0x00 // [dual-word] return value register, low word
@@ -54,6 +55,7 @@
 #define VPU_TID_REG     0x0a // task ID register
 #define VPU_TLS_REG     0x0b // thread-local storage base address register
 #define VPU_TSR_REG     0x0c // task-structure/state base address
+#define VPU_NSYSREG     16
 /* values for sysregs[VPU_MSW] */
 #define VPU_MSW_ZF_BIT  (1 << 0) // zero-flag
 #define VPU_MSW_OF_BIT  (1 << 1) // overflow-flag
@@ -68,8 +70,8 @@
 #define VPU_BSS         0x03 // uninitialised (zeroed) runtime-allocated data
 #define VPU_NSEG        0x04
 struct vpu {
-    vpureg   genregs[VPU_NREG];
-    vpuureg  sysregs[VPU_NREG];
+    vpureg   genregs[VPU_NGENREG];
+    vpuureg  sysregs[VPU_NSYSREG];
     vpuureg  segs[VPU_NSEG];
     vpuureg  seglims[VPU_NSEG];
     uint8_t *mem;

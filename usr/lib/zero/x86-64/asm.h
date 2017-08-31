@@ -37,7 +37,7 @@ static INLINE void
 m_getretadr(void **pp)
 {
     void *_ptr;
-    
+
     __asm__ __volatile__ ("movq %c1(%%rbp), %0\n"
                           : "=r" (_ptr)
                           : "i" (__RIPFRAMEOFS));
@@ -128,7 +128,7 @@ m_xchg64(m_atomic64_t *p,
                           : "=a" (val)
                           : "m" (*(p))
                           : "cc", "memory");
-    
+
     return val;
 }
 
@@ -177,12 +177,12 @@ m_cmpxchg64(m_atomic64_t *p,
            long val)
 {
     long res;
-    
+
     __asm__ __volatile__ ("lock cmpxchgq %1, %2\n"
                           : "=a" (res)
                           : "q" (val), "m" (*(p)), "0" (want)
                           : "memory");
-    
+
     return res;
 }
 
@@ -197,12 +197,12 @@ m_cmpxchgu64(volatile uint64_t *p,
              uint64_t val)
 {
     uint64_t res;
-    
+
     __asm__ __volatile__ ("lock cmpxchgq %1, %2\n"
                           : "=a" (res)
                           : "q" (val), "m" (*(p)), "0" (want)
                           : "memory");
-    
+
     return res;
 }
 
@@ -217,12 +217,12 @@ m_cmpxchg64ptr(m_atomic64_t **p,
                void *val)
 {
     void *res;
-    
+
     __asm__ __volatile__("lock cmpxchgq %1, %2\n"
                          : "=a" (res)
                          : "q" (val), "m" (*(p)), "0" (want)
                          : "memory");
-    
+
     return res;
 }
 
@@ -274,7 +274,7 @@ m_cmpxchg128(m_atomic64_t *p64,
     uint64_t rbx = val[0];
     uint64_t rcx = val[1];
     long     res = 0;
-    
+
     __asm__ __volatile__ ("lock cmpxchg16b %1\n"
                           "setz %b0\n"
                           : "=q" (res), "+m" (*p64), "+a" (rax), "+d" (rdx)
@@ -290,9 +290,11 @@ m_cmpxchg128(m_atomic64_t *p64,
 static INLINE void
 m_setbit64(m_atomic64_t *p, long ndx)
 {
-    __asm__ __volatile__ ("lock btsq %1, %0\n"
+    int64_t mask = ~(INT64_C(1) << ndx);
+
+    __asm__ __volatile__ ("lock andq %1, %0\n"
                           : "=m" (*(p))
-                          : "Ir" (ndx)
+                          : "Ir" (mask)
                           : "memory");
 
     return;
@@ -302,9 +304,11 @@ m_setbit64(m_atomic64_t *p, long ndx)
 static INLINE void
 m_clrbit64(m_atomic64_t *p, long ndx)
 {
-    __asm__ __volatile__ ("lock btrq %1, %0\n"
+    int64_t bit = INT64_C(1) << ndx;
+
+    __asm__ __volatile__ ("lock orq %1, %0\n"
                           : "=m" (*(p))
-                          : "Ir" (ndx));
+                          : "Ir" (bit));
 
     return;
 }
@@ -327,8 +331,7 @@ m_cmpsetbit64(m_atomic64_t *p, long ndx)
     long val = 0;
 
     if (IMMEDIATE(ndx)) {
-        __asm__ __volatile__ ("xorq %1, %1\n"
-                              "lock btsq %2, %0\n"
+        __asm__ __volatile__ ("lock btsq %2, %0\n"
                               "jnc 1f\n"
                               "incq %1\n"
                               "1:\n"
@@ -336,8 +339,7 @@ m_cmpsetbit64(m_atomic64_t *p, long ndx)
                               : "i" (ndx)
                               : "cc", "memory");
     } else {
-        __asm__ __volatile__ ("xorq %1, %1\n"
-                              "lock btsq %2, %0\n"
+        __asm__ __volatile__ ("lock btsq %2, %0\n"
                               "jnc 1f\n"
                               "incq %1\n"
                               "1:\n"
@@ -353,11 +355,10 @@ m_cmpsetbit64(m_atomic64_t *p, long ndx)
 static __inline__ long
 m_cmpclrbit64(m_atomic64_t *p, long ndx)
 {
-    long val;
+    long val = 0;
 
     if (IMMEDIATE(ndx)) {
-        __asm__ __volatile__ ("xorq %1, %1\n"
-                              "lock btrq %2, %0\n"
+        __asm__ __volatile__ ("lock btrq %2, %0\n"
                               "jnc 1f\n"
                               "incq %1\n"
                               "1:\n"
@@ -365,8 +366,7 @@ m_cmpclrbit64(m_atomic64_t *p, long ndx)
                               : "i" (ndx)
                               : "cc", "memory");
     } else {
-        __asm__ __volatile__ ("xorq %1, %1\n"
-                              "lock btrq %2, %0\n"
+        __asm__ __volatile__ ("lock btrq %2, %0\n"
                               "jnc 1f\n"
                               "incq %1\n"
                               "1:\n"

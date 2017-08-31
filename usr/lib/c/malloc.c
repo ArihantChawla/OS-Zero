@@ -138,13 +138,13 @@ _realloc(void *ptr,
 
     if (!ptr) {
         retptr = _malloc(size, MEMMINALIGN, 0);
-        
+
         return retptr;
     } else if (!size) {
         if (ptr) {
             free(ptr);
         }
-        
+
         return NULL;
     } else {
         pad = memchkpad(ptr);
@@ -157,7 +157,7 @@ _realloc(void *ptr,
             sz = membufblksize(buf, type, slot);
             sz -= pad;
             if (size <= sz) {
-                
+
                 return ptr;
             }
             sz = min(sz, size);
@@ -221,13 +221,13 @@ _realloc(void *ptr,
 
     if (!ptr) {
         retptr = _malloc(size, MEMMINALIGN, 0);
-        
+
         return retptr;
     } else if (!size) {
         if (ptr) {
             free(ptr);
         }
-        
+
         return NULL;
     } else {
         desc = memchkblk(ptr);
@@ -257,7 +257,7 @@ _realloc(void *ptr,
             sz -= delta;
 #endif
             if (size <= sz) {
-                
+
                 return ptr;
             }
             sz = min(sz, size);
@@ -376,7 +376,7 @@ posix_memalign(void **ret, size_t align, size_t size)
         ptr = _malloc(size, align, 0);
         if (!ptr) {
             *ret = NULL;
-            
+
             return ENOMEM;
         }
     }
@@ -482,7 +482,7 @@ valloc(size_t size)
 #if (MEMDEBUG)
     crash(ptr);
 #endif
-    
+
     return ptr;
 }
 #endif
@@ -587,7 +587,7 @@ cfree(void *ptr)
     if (ptr) {
         _free(ptr);
     }
-    
+
     return;
 }
 
