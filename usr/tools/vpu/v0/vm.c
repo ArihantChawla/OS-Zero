@@ -93,6 +93,8 @@ v0printop(struct v0op *op)
 	opset(V0_ARITH, V0_REM, opadr(rem), tab);                       \
 	opset(V0_FLOW, V0_JMP, opadr(jmp), tab);                        \
 	opset(V0_FLOW, V0_CALL, opadr(call), tab);                      \
+	opset(V0_FLOW, V0_ENTER, opadr(enter), tab);                    \
+	opset(V0_FLOW, V0_LEAVE, opadr(leave), tab);                    \
 	opset(V0_FLOW, V0_RET, opadr(ret), tab);                        \
 	opset(V0_FLOW, V0_BZ, opadr(bz), tab);                          \
 	opset(V0_FLOW, V0_BNZ, opadr(bnz), tab);                        \
@@ -110,6 +112,8 @@ v0printop(struct v0op *op)
 	opset(V0_STACK, V0_POP, opadr(pop), tab);                       \
 	opset(V0_STACK, V0_PSHA, opadr(psha), tab);                     \
 	opset(V0_STACK, V0_POPA, opadr(popa), tab);                     \
+	opset(V0_STACK, V0_PSHC, opadr(pshc), tab);                     \
+	opset(V0_STACK, V0_POPC, opadr(popc), tab);                     \
 	opset(V0_STACK, V0_PSHM, opadr(pshm), tab);                     \
 	opset(V0_STACK, V0_POPM, opadr(popm), tab);                     \
 	opset(V0_IO, V0_IOR, opadr(ior), tab);                          \
@@ -274,6 +278,14 @@ v0loop(struct v0 *vm)
             op = v0call(vm, op);
 
             opjmp(op);
+        v0openter:
+            op = v0enter(vm, op);
+
+            opjmp(op);
+        v0opleave:
+            op = v0leave(vm, op);
+
+            opjmp(op);
         v0opret:
             op = v0ret(vm, op);
 
@@ -340,6 +352,14 @@ v0loop(struct v0 *vm)
             opjmp(op);
         v0oppopa:
             op = v0popa(vm, op);
+
+            opjmp(op);
+        v0oppshc:
+            op = v0pshc(vm, op);
+
+            opjmp(op);
+        v0oppopc:
+            op = v0popc(vm, op);
 
             opjmp(op);
         v0oppshm:

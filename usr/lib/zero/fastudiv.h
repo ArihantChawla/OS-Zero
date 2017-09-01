@@ -19,7 +19,7 @@
 #define FASTU32DIVSHIFTMASK 0x1f
 #define FASTU32DIVADDBIT    0x20
 #define FASTU32DIVSHIFTBIT  0x40
-    
+
 struct divu16 {
     uint16_t magic;
     uint16_t info;
@@ -58,11 +58,9 @@ void fastu16divu16gentab(struct divu16 *duptr, uint32_t lim16);
 
 /* get the high 16 bits of val1 * val2 */
 static INLINE uint_fast16_t
-_mulhiuf16(uint_fast16_t val1, uint_fast16_t val2)
+_mulhiuf16(uint32_t val1, uint32_t val2)
 {
-    uint_fast32_t v1 = val1;
-    uint_fast32_t v2 = val2;
-    uint_fast32_t res = val1 * val2;
+    uint32_t res = val1 * val2;
 
     res >>= 16;
 
@@ -89,14 +87,12 @@ _mulhiuf32(uint_fast32_t val1, uint_fast32_t val2)
 
 /* get the high 16 bits of val1 * val2 */
 static INLINE uint16_t
-_mulhiu16(uint16_t val1, uint16_t val2)
+_mulhiu16(uint32_t val1, uint32_t val2)
 {
-    uint32_t v1 = val1;
-    uint32_t v2 = val2;
     uint32_t res = val1 * val2;
-    
+
     res >>= 16;
-    
+
     return (uint16_t)res;
 }
 
@@ -125,7 +121,7 @@ fastuf16divuf16(uint_fast16_t num, uint_fast16_t divuf16,
     magic = ulptr->magic;
     if (!(info & FASTU32DIVSHIFTBIT)) {
         uint32_t quot = _mulhiuf16(magic, num);
-        
+
         if (info & FASTU32DIVADDBIT) {
             /* calculate ((num - quot) >> 1) + quot */
             num -= quot;
@@ -139,7 +135,7 @@ fastuf16divuf16(uint_fast16_t num, uint_fast16_t divuf16,
         info &= FASTU32DIVSHIFTMASK;
     }
     res >>= info;
-        
+
     return res;
 }
 
@@ -170,7 +166,7 @@ fastuf16divuf32(uint_fast16_t num, uint_fast16_t divuf16,
     magic = ulptr->magic;
     if (!(info & FASTU32DIVSHIFTBIT)) {
         uint32_t quot = _mulhiuf16(magic, num);
-        
+
         if (info & FASTU32DIVADDBIT) {
             /* calculate ((num - quot) >> 1) + quot */
             num -= quot;
@@ -184,7 +180,7 @@ fastuf16divuf32(uint_fast16_t num, uint_fast16_t divuf16,
         info &= FASTU32DIVSHIFTMASK;
     }
     res >>= info;
-        
+
     return res;
 }
 
@@ -213,7 +209,7 @@ fastu16divu16(uint16_t num, uint16_t divu16,
     magic = ulptr->magic;
     if (!(info & FASTU32DIVSHIFTBIT)) {
         uint32_t quot = _mulhiu16(magic, num);
-        
+
         if (info & FASTU32DIVADDBIT) {
             /* calculate ((num - quot) >> 1) + quot */
             num -= quot;
@@ -227,7 +223,7 @@ fastu16divu16(uint16_t num, uint16_t divu16,
         info &= FASTU32DIVSHIFTMASK;
     }
     res >>= info;
-        
+
     return res;
 }
 

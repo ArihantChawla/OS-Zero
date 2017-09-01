@@ -15,7 +15,7 @@ struct v0;
 typedef int32_t  v0reg;
 typedef uint32_t v0ureg;
 typedef v0ureg   v0memadr;
-typedef v0reg    v0iofunc_t(struct v0 *vm, uint16_t port, uint16_t reg);
+typedef void     v0iofunc_t(struct v0 *vm, uint16_t port, uint8_t reg);
 
 struct v0iofuncs {
     v0iofunc_t *rdfunc;
@@ -53,6 +53,7 @@ struct v0iofuncs {
 #define V0_R14_REG     0x0e
 #define V0_R15_REG     0x0f
 #define V0_NGENREG     16 // number of registers in group (general, system)
+#define V0_NSAVEREG    8  // caller saves r0..r7
 /* system register IDs */
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #define V0_RET_LO      0x00 // [dual-word] return value register, low word
@@ -65,6 +66,7 @@ struct v0iofuncs {
 #define V0_FP_REG      0x01 // frame pointer
 #define V0_SP_REG      0x02 // stack pointer
 #define V0_PC_REG      0x03 // program counter i.e. instruction pointer
+#define V0_LN_REG      0x04 // link-register; return address
 #define V0_SYSREG_BIT  0x08 // denotes system-only access
 #if 0
 #define V0_IHT_REG     0x08 // interrupt handler table base address
