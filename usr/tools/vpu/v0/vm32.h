@@ -96,9 +96,9 @@ struct v0 {
     v0reg             genregs[V0_NGENREG];
     v0ureg            sysregs[V0_NSYSREG];
     v0ureg            segs[V0_NSEG];
-    v0ureg            seglims[V0_NSEG];
+    void             *seglims[V0_NSEG];
     long              flg;
-    uint8_t          *mem;
+    char             *mem;
     struct v0iofuncs *iovec;
     struct divuf16   *divu16tab;
 };
@@ -133,8 +133,8 @@ union v0oparg {
 
 /* addressing modes */
 #define V0_REG_ADR     0x00 // (%reg), address in register
-#define V0_NDX_ADR     0x01 // ndx(%reg), ndx in opcode val-field
-#define V0_DIR_ADR     0x02 // address word follows opcode or is in val-field
+#define V0_DIR_ADR     0x01 // address word follows opcode or is in val-field
+#define V0_NDX_ADR     0x02 // ndx(%reg), ndx in opcode val-field
 #define V0_PIC_ADR     0x03 // PC-relative; position-independent code
 
 /*
@@ -177,15 +177,16 @@ struct v0op {
 #define V0_DIV_BY_ZERO   0x05
 #define V0_INV_MEM_READ  0x06
 #define V0_INV_MEM_WRITE 0x07
-#define V0_INV_IO_READ   0x08
-#define V0_INV_IO_WRITE  0x09
+#define V0_INV_MEM_ADR   0x08
+#define V0_INV_IO_READ   0x09
+#define V0_INV_IO_WRITE  0x0a
 
 /* debugging */
 
 struct v0opinfo {
-    unsigned char *unit;
-    unsigned char *op;
-    unsigned char *func;
+    char *unit;
+    char *op;
+    char *func;
 };
 
 #endif /* __V0_VM32_H__ */

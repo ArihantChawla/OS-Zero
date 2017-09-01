@@ -1,6 +1,8 @@
 #ifndef __VPU_V0_MACH_H__
 #define __VPU_V0_MACH_H__
 
+#include <stdint.h>
+
 #define V0_NINST_MAX 256
 
 /* Valhalla 0 (V0) processor machine interface */
@@ -58,7 +60,7 @@
 /* sub-unit instructions */
 
 /* NOP is declared as all 0-bits */
-#define V0_NOP     UINT32_C(~0)
+#define V0_NOP     (UINT32_C(~0))
 #define v0instisnop(op)                                                 \
     (*(uint32_t *)op == V0_NOP)
 
