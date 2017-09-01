@@ -496,8 +496,7 @@ v0jmp(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-/* FIXME: implement v0call, v0ret */
-
+/* call subroutine */
 /*
  * stack frame after call
  * ----------------------
@@ -547,7 +546,11 @@ v0call(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-/* create subroutine stack-frame */
+/* create subroutine stack-frame;
+ * - push caller-save registers
+ * - push frame pointer
+ * - allocate room for local variables on stack
+ */
 /*
  * stack after enter
  * -----------------
@@ -609,7 +612,9 @@ v0leave(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-/* pop old link-register value from stack, then adjust stack pointer */
+/* return from subroutine;
+ * pop old link-register value from stack, then adjust stack pointer
+ */
 static V0OP_T
 v0ret(struct v0 *vm, void *ptr)
 {
