@@ -599,7 +599,7 @@ v0leave(struct v0 *vm, void *ptr)
     v0ureg       sp;
     v0reg       *sptr;
 
-    v0addspeedcnt(8);
+    v0addspeedcnt(4);
     sp = fp;
     sptr = (v0reg *)&vm->mem[fp];
     sp += sizeof(v0reg);
@@ -1301,64 +1301,6 @@ v0iow(struct v0 *vm, void *ptr)
 
     return opadr;
 }
-
-#if defined(__GNUC__) && 0
-
-#define v0declop(name) v0op##name
-
-v0declop(not)
-v0declop(and)
-v0declop(or)
-v0declop(xor)
-v0declop(shl)
-v0declop(shr)
-v0declop(sar)
-v0declop(rol)
-v0declop(ror)
-v0declop(inc)
-v0declop(dec)
-v0declop(add)
-v0declop(adc)
-v0declop(sub)
-v0declop(sbb)
-v0declop(cmp)
-v0declop(mul)
-v0declop(div)
-v0declop(rem)
-//v0declop(crm)
-v0declop(jmp)
-v0declop(call)
-v0declop(ret)
-v0declop(lda)
-v0declop(sta)
-v0declop(ror)
-v0declop(jmp)
-v0declop(bz)
-v0declop(bnz)
-v0declop(bc)
-v0declop(bnc)
-v0declop(bo)
-v0declop(bno)
-v0declop(blt)
-v0declop(ble)
-v0declop(bgt)
-v0declop(bge)
-v0declop(ldr)
-v0declop(str)
-v0declop(psh)
-v0declop(pop)
-v0declop(psha)
-v0declop(popa)
-v0declop(pshm)
-v0declop(popm)
-v0declop(ldr)
-v0declop(str)
-v0declop(rst)
-v0declop(hlt)
-v0declop(in)
-v0declop(out)
-
-#endif /* defined(__GNUC__) */
 
 #endif /* __V0_OP_H__ */
 
