@@ -870,13 +870,14 @@ v0psh(struct v0 *vm, void *ptr)
     v0reg       *src = v0getsrcadr(vm, op);
     v0reg       *dest = (v0reg *)&vm->mem[sp];
 
+    sp--;
     pc += sizeof(struct v0op);
     v0addspeedcnt(2);
     if (op->adr == V0_DIR_ADR) {
         pc += sizeof(union v0oparg);
         v0addspeedcnt(2);
     }
-    vm->sysregs[sp] = sp--;
+    vm->sysregs[sp] = sp;
     *dest = *src;
     vm->sysregs[V0_PC_REG] = pc;
     opadr = &vm->mem[pc];
@@ -894,9 +895,10 @@ v0pop(struct v0 *vm, void *ptr)
     v0reg       *src = (v0reg *)&vm->mem[sp];
     v0reg       *dest = (v0reg *)&vm->genregs[op->reg1];
 
+    sp++;
     pc += sizeof(struct v0op);
     v0addspeedcnt(2);
-    vm->sysregs[sp] = sp++;
+    vm->sysregs[sp] = sp;
     *dest = *src;
     vm->sysregs[V0_PC_REG] = pc;
     opadr = &vm->mem[pc];
@@ -1089,7 +1091,6 @@ v0ior(struct v0 *vm, void *ptr)
     uint16_t     port = op->val;
     uint16_t     reg = op->reg1;
     v0iofunc_t  *func = vm->iovec[port].rdfunc;
-    v0reg        val = 0;
 
     v0addspeedcnt(8);
     if (func) {

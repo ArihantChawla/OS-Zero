@@ -27,7 +27,7 @@ struct v0       *v0vm;
 void
 v0printop(struct v0op *op)
 {
-    long val = op->code;
+    int val = op->code;
 
     fprintf(stderr, "code\t%x - unit == %x, inst == %x\n",
             val, v0getunit(val), v0getinst(val));
@@ -49,10 +49,12 @@ v0printop(struct v0op *op)
 #if defined(__GNUC__)
 #define opjmp(op)                                                       \
     do {                                                                \
+        struct v0op *_etext = vm->seglims[V0_TEXT_SEG];                 \
+                                                                        \
         while (v0instisnop(op)) {                                       \
             op++;                                                       \
         }                                                               \
-        if (op <= vm->seglims[V0_TEXT_SEG]) {                           \
+        if (op <= _etext) {                                             \
             goto *jmptab[(op)->code];                                   \
         } else {                                                        \
             v0doxcpt(V0_TEXT_FAULT);                                    \
@@ -179,7 +181,7 @@ v0loop(struct v0 *vm)
 {
     static OPTAB_T  jmptab[V0_NINST_MAX];
     v0reg           pc = vm->sysregs[V0_PC_REG];
-    struct v0op    *op = &vm->mem[pc];
+    struct v0op    *op = (struct v0op *)&vm->mem[pc];
 
     v0initops(jmptab);
 
