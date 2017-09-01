@@ -7,33 +7,6 @@
 
 /* Valhalla 0 (V0) processor machine interface */
 
-/* register IDs */
-#define V0_REG_BIT(r) (1U << V0_##r) // bitmap indices for PSHM, POPM
-/* 16 general purpose registers R0..R15 */
-#define V0_R0      0x00
-#define V0_R1      0x01
-#define V0_R2      0x02
-#define V0_R3      0x03
-#define V0_R4      0x04
-#define V0_R5      0x05
-#define V0_R6      0x06
-#define V0_R7      0x07
-#define V0_R8      0x08
-#define V0_R9      0x09
-#define V0_R10     0x0a
-#define V0_R11     0x0b
-#define V0_R12     0x0c
-#define V0_R13     0x0d
-#define V0_R14     0x0e
-#define V0_R15     0x0f
-#define V0_XREG    0x10 // special/system registers
-#define V0_MSW     0x10 // machine status word
-#define V0_PC      0x11 // program counter (instruction pointer)
-#define V0_FP      0x12 // [stack] frame pointer
-#define V0_SP      0x13 // stack pointer
-#define V0_ROREG   0x18 // read-only/hardwired registers
-#define V0_FR0     0x19 // feature register #0; flags indicating processor setup
-
 /* bits for FR0 feature register */
 #define V0_FR0_MMU (1U << 0) // memory management unit present
 #define V0_FR0_FPU (1U << 1) // floating-point processor present
@@ -119,11 +92,15 @@
 #define V0_PSH     0x00  // push from register
 #define V0_POP     0x01  // pop into register
 #define V0_PSHA    0x04  // push all general-purpose registers
-#define V0_POPA    0x05  // pop all general-purpose reigsters
-#define V0_PSHC    0x06  // push all general-purpose registers
-#define V0_POPC    0x07  // pop all general-purpose reigsters
+#define V0_POPA    0x05  // pop all general-purpose registers
+#define V0_PSHC    0x06  // push all caller-save registers [R0..R7]
+#define V0_POPC    0x07  // pop all caller-save registers [R8..R15]
+#define V0_PSHU    0x06  // push all callee-save registers [R0..R7]
+#define V0_POPU    0x07  // pop all callee-save registers [R8..R15]
+#if 0
 #define V0_PSHM    0x08  // push set of registers [bitmap follows opcode]
 #define V0_POPM    0x09  // pop set of registers [bitmap follows opcode]
+#endif
 
 /* V0_IO */
 #define V0_IOR     0x00  // read data from I/O port

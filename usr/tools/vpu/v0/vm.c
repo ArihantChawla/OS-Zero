@@ -114,8 +114,8 @@ v0printop(struct v0op *op)
 	opset(V0_STACK, V0_POPA, opadr(popa), tab);                     \
 	opset(V0_STACK, V0_PSHC, opadr(pshc), tab);                     \
 	opset(V0_STACK, V0_POPC, opadr(popc), tab);                     \
-	opset(V0_STACK, V0_PSHM, opadr(pshm), tab);                     \
-	opset(V0_STACK, V0_POPM, opadr(popm), tab);                     \
+	opset(V0_STACK, V0_PSHU, opadr(pshu), tab);                     \
+	opset(V0_STACK, V0_POPU, opadr(popu), tab);                     \
 	opset(V0_IO, V0_IOR, opadr(ior), tab);                          \
 	opset(V0_IO, V0_IOW, opadr(iow), tab);                          \
     } while (0)
@@ -362,12 +362,12 @@ v0loop(struct v0 *vm)
             op = v0popc(vm, op);
 
             opjmp(op);
-        v0oppshm:
-            op = v0pshm(vm, op);
+        v0oppshu:
+            op = v0pshu(vm, op);
 
             opjmp(op);
-        v0oppopm:
-            op = v0popm(vm, op);
+        v0oppopu:
+            op = v0popu(vm, op);
 
             opjmp(op);
         v0opior:

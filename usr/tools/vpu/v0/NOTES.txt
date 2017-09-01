@@ -27,8 +27,8 @@ _ _edata..XX        - BSS-segment; unitialized globals, allocated at runtime
 - _stack..V0MEMSIZE - stack-segment; specific instruction, grows down
 - _fbadr..XX        - linear graphics framebuffer (mapped at 3 gigabytes)
 
-Stack Frames
-------------
+Subroutines
+-----------
 
 V0 uses traditional stack frames to implement subroutines. The relevant
 instructions are
@@ -39,4 +39,7 @@ instructions are
 - ret; return from subroutine
 
 I will document the stack frames in more detail soon.
+
+Stack Frame
+-----------
 

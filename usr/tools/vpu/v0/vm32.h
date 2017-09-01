@@ -67,6 +67,8 @@ struct v0iofuncs {
 #define V0_SP_REG      0x02 // stack pointer
 #define V0_PC_REG      0x03 // program counter i.e. instruction pointer
 #define V0_LN_REG      0x04 // link-register; return address
+#define V0_AC_REG      0x05 // argument count; used with RET
+#define V0_VC_REG      0x05 // argument count; used with ENTER
 #define V0_SYSREG_BIT  0x08 // denotes system-only access
 #if 0
 #define V0_IHT_REG     0x08 // interrupt handler table base address
@@ -114,7 +116,7 @@ struct v0 {
 union v0oparg {
     uint32_t adr;  // memory address
     uint32_t ndx;  // memory address
-    uint32_t rmap; // register bitmap for PSHM, POPM - see V0_REG_BIT()
+    //    uint32_t rmap; // register bitmap for PSHM, POPM - see V0_REG_BIT()
     uint32_t u32;  // unsigned 32-bit integer
     int32_t  i32;  // signed 32-bit integer
     uint16_t u16;  // unsigned 16-bit integer
