@@ -568,10 +568,7 @@ v0enter(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
-    struct v0op *op = ptr;
-    v0ureg       fp = vm->sysregs[V0_FP_REG];
     v0ureg       sp = vm->sysregs[V0_SP_REG];
-    v0ureg       ln = vm->sysregs[V0_LN_REG];
     v0ureg       ac = vm->sysregs[V0_AC_REG];
     v0ureg       vc = vm->sysregs[V0_VC_REG];
     v0reg        nvar;
@@ -612,7 +609,7 @@ v0enter(struct v0 *vm, void *ptr)
 static V0OP_T
 v0leave(struct v0 *vm, void *ptr)
 {
-    v0ureg       pc;
+    v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
     v0ureg       fp = vm->sysregs[V0_FP_REG];
     v0ureg       sp;
@@ -644,9 +641,7 @@ v0leave(struct v0 *vm, void *ptr)
 static V0OP_T
 v0ret(struct v0 *vm, void *ptr)
 {
-    v0ureg       pc;
     void        *opadr;
-    struct v0op *op = ptr;
     v0ureg       fp = vm->sysregs[V0_FP_REG];
     v0ureg       sp = vm->sysregs[V0_SP_REG];
     v0ureg      *sptr = (v0ureg *)&vm->mem[fp];
@@ -871,7 +866,7 @@ v0ldr(struct v0 *vm, void *ptr)
     void        *opadr;
     struct v0op *op = ptr;
     v0reg        adr = v0getadr(vm, op, reg1);
-    v0reg        src;
+    v0reg        src = 0;
     v0ureg       usrc;
     v0reg        parm = op->parm;
     v0reg       *dptr = &vm->genregs[op->reg2];
