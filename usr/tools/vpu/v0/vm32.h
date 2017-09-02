@@ -115,8 +115,7 @@ struct v0 {
  */
 union v0oparg {
     uint32_t adr;  // memory address
-    uint32_t ndx;  // memory address
-    //    uint32_t rmap; // register bitmap for PSHM, POPM - see V0_REG_BIT()
+    uint32_t ndx;  // offset
     uint32_t u32;  // unsigned 32-bit integer
     int32_t  i32;  // signed 32-bit integer
     uint16_t u16;  // unsigned 16-bit integer
@@ -148,8 +147,8 @@ union v0oparg {
  */
 #define V0_IMM_VAL_MAX 0xfff
 #define V0_IMM_VAL_MIN (-0x7ff - 1)
-#define V0_TRAP_BIT    (1 << 13) // breakpoint
-#define V0_SIGNED_BIT  (1 << 12) // signed operation
+#define V0_SIGNED_BIT  (1 << 11) // signed operation
+#define V0_TRAP_BIT    (1 << 10) // breakpoint
 
 struct v0op {
     unsigned int  code : 8;

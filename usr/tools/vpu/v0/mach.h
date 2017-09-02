@@ -66,8 +66,8 @@
 /* V0_FLOW */
 #define V0_JMP     0x00  // jmp to given address
 #define V0_CALL    0x01  // call subroutine
-#define V0_ENTER   0x02  // create stack frame
-#define V0_LEAVE   0x03
+#define V0_ENTER   0x02  // create stack frame for subroutine
+#define V0_LEAVE   0x03  // destroy stack frame before RET from subroutine
 #define V0_RET     0x04  // return from subroutine
 #define V0_BZ      0x05  // branch if MSW_ZF is set
 #define V0_BNZ     0x06  // branch if MSW_ZF is zero
@@ -83,24 +83,19 @@
 #define V0_BGE     0x0e  // branch if greater than or equal
 
 /* V0_XFER */
-#define V0_LDR     0x00  // load register from memory
-#define V0_STR     0x01  // store register into memory
-//#define V0_LDX     0x02  // load special-register from memory
-//#define V0_STX     0x03  // store special-register into memory
+#define V0_LDR     0x00  // load register
+#define V0_STR     0x01  // store into memory
 
 /* V0_STACK */
 #define V0_PSH     0x00  // push from register
 #define V0_POP     0x01  // pop into register
 #define V0_PSHA    0x04  // push all general-purpose registers
 #define V0_POPA    0x05  // pop all general-purpose registers
+/* the following are to ease the life of compiler creators */
 #define V0_PSHC    0x06  // push all caller-save registers [R0..R7]
-#define V0_POPC    0x07  // pop all caller-save registers [R8..R15]
-#define V0_PSHU    0x06  // push all callee-save registers [R0..R7]
+#define V0_POPC    0x07  // pop all caller-save registers [R0..R7]
+#define V0_PSHU    0x06  // push all callee-save registers [R8..R15]
 #define V0_POPU    0x07  // pop all callee-save registers [R8..R15]
-#if 0
-#define V0_PSHM    0x08  // push set of registers [bitmap follows opcode]
-#define V0_POPM    0x09  // pop set of registers [bitmap follows opcode]
-#endif
 
 /* V0_IO */
 #define V0_IOR     0x00  // read data from I/O port
