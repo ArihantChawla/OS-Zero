@@ -568,23 +568,26 @@ v0enter(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
+    v0ureg       fp = vm->sysregs[V0_SP_REG];
     v0ureg       sp = vm->sysregs[V0_SP_REG];
     v0ureg       ac = vm->sysregs[V0_AC_REG];
     v0ureg       vc = vm->sysregs[V0_VC_REG];
     v0reg        nvar;
-    v0ureg      *dptr = (v0ureg *)&vm->mem[sp];
+    v0ureg      *dptr;
 
-    v0addspeedcnt(16);
     sp -= sizeof(v0reg);
+    v0addspeedcnt(16);
+    dptr = (v0ureg *)&vm->mem[sp];
+    vm->sysregs[V0_FP_REG] = sp;
+    *dptr = fp;
+    pc += sizeof(struct v0op);
     dptr--;
     nvar = vc;
-    pc += sizeof(struct v0op);
-    vm->sysregs[V0_FP_REG] = sp;
-    *dptr = sp;
+    *dptr = ac;
     nvar += 2;
+    dptr--;
     sp -= nvar * sizeof(v0reg);
-    dptr[-1] = ac;
-    dptr[-2] = vc;
+    *dptr = vc;
     opadr = &vm->mem[pc];
     vm->sysregs[V0_SP_REG] = sp;
     vm->sysregs[V0_PC_REG] = pc;
