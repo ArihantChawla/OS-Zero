@@ -61,7 +61,7 @@ v0printop(struct v0op *op)
         }                                                               \
     } while (0)
 #endif /* defined(__GNUC__) */
-#define _v0setop(unit, op, func, tab)                                      \
+#define _v0setop(unit, op, func, tab)                                   \
     do {                                                                \
         long _code = v0mkopid(unit, op);                                \
                                                                         \
@@ -170,8 +170,8 @@ v0init(struct v0 *vm)
         fastuf16divuf16gentab(ptr, 0xffff);
         vm->divu16tab = ptr;
         v0initio(vm);
-        vm->sysregs[V0_FP_REG] = 0x00000000;
-        vm->sysregs[V0_SP_REG] = V0_MEM_SIZE;
+        vm->regs.sys[V0_FP_REG] = 0x00000000;
+        vm->regs.sys[V0_SP_REG] = V0_MEM_SIZE;
     }
     v0vm = vm;
 
@@ -182,7 +182,7 @@ int
 v0loop(struct v0 *vm)
 {
     static _V0OPTAB_T  jmptab[V0_NINST_MAX];
-    v0reg              pc = vm->sysregs[V0_PC_REG];
+    v0reg              pc = vm->regs.sys[V0_PC_REG];
     struct v0op       *op = (struct v0op *)&vm->mem[pc];
 
     v0initops(jmptab);
@@ -412,8 +412,8 @@ main(int argc, char *argv[])
 
     if (vm) {
         v0getopt(vm, argc, argv);
-        if (!vm->sysregs[V0_PC_REG]) {
-            vm->sysregs[V0_PC_REG] = V0_TEXT_ADR;
+        if (!vm->regs.sys[V0_PC_REG]) {
+            vm->regs.sys[V0_PC_REG] = V0_TEXT_ADR;
         }
         ret = v0loop(vm);
     }

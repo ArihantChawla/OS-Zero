@@ -22,15 +22,15 @@ struct v0iofuncs {
     v0iofunc_t *wrfunc;
 };
 
-#define v0clrmsw(vm)   ((vm)->sysregs[V0_MSW_REG] = 0)
-#define v0setcf(vm)    ((vm)->sysregs[V0_MSW_REG] |= V0_MSW_CF_BIT)
-#define v0setzf(vm)    ((vm)->sysregs[V0_MSW_REG] |= V0_MSW_ZF_BIT)
-#define v0setof(vm)    ((vm)->sysregs[V0_MSW_REG] |= V0_MSW_OF_BIT)
-#define v0setif(vm)    ((vm)->sysregs[V0_MSW_REG] |= V0_MSW_IF_BIT)
-#define v0cfset(vm)    ((vm)->sysregs[V0_MSW_REG] & V0_MSW_CF_BIT)
-#define v0zfset(vm)    ((vm)->sysregs[V0_MSW_REG] & V0_MSW_ZF_BIT)
-#define v0ofset(vm)    ((vm)->sysregs[V0_MSW_REG] & V0_MSW_OF_BIT)
-#define v0ifset(vm)    ((vm)->sysregs[V0_MSW_REG] & V0_MSW_IF_BIT)
+#define v0clrmsw(vm)   ((vm)->regs.sys[V0_MSW_REG] = 0)
+#define v0setcf(vm)    ((vm)->regs.sys[V0_MSW_REG] |= V0_MSW_CF_BIT)
+#define v0setzf(vm)    ((vm)->regs.sys[V0_MSW_REG] |= V0_MSW_ZF_BIT)
+#define v0setof(vm)    ((vm)->regs.sys[V0_MSW_REG] |= V0_MSW_OF_BIT)
+#define v0setif(vm)    ((vm)->regs.sys[V0_MSW_REG] |= V0_MSW_IF_BIT)
+#define v0cfset(vm)    ((vm)->regs.sys[V0_MSW_REG] & V0_MSW_CF_BIT)
+#define v0zfset(vm)    ((vm)->regs.sys[V0_MSW_REG] & V0_MSW_ZF_BIT)
+#define v0ofset(vm)    ((vm)->regs.sys[V0_MSW_REG] & V0_MSW_OF_BIT)
+#define v0ifset(vm)    ((vm)->regs.sys[V0_MSW_REG] & V0_MSW_IF_BIT)
 
 #define V0_NINST_MAX   256
 #define V0_NIOPORT_MAX 4096 // must fit in val-field of struct v0op
@@ -79,7 +79,7 @@ struct v0iofuncs {
 #define V0_TSR_REG     0x0c // task-structure/state base address
 #endif
 #define V0_NSYSREG     16
-/* values for sysregs[V0_MSW] */
+/* values for regs.sys[V0_MSW] */
 #define V0_MSW_ZF_BIT  (1 << 0) // zero-flag
 #define V0_MSW_OF_BIT  (1 << 1) // overflow-flag
 #define V0_MSW_CF_BIT  (1 << 2) // carry-flag
@@ -97,9 +97,14 @@ struct v0iofuncs {
 #define V0_TRACE       0x01
 #define V0_BACKTRACE   0x02
 #define V0_PROFILE     0x04
+
+struct v0regs {
+    v0reg gen[V0_NGENREG];
+    v0ureg sys[V0_NSYSREG];
+};
+
 struct v0 {
-    v0reg             genregs[V0_NGENREG];
-    v0ureg            sysregs[V0_NSYSREG];
+    struct v0regs     regs;
     v0ureg            segs[V0_NSEG];
     void             *seglims[V0_NSEG];
     long              flg;
