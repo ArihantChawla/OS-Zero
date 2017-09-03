@@ -146,11 +146,6 @@ union v0oparg {
 #define V0_NDX_ADR     0x02 // ndx(%reg), ndx in opcode val-field
 #define V0_PIC_ADR     0x03 // PC-relative; position-independent code
 
-/*
- * special uses for val
- * - shift or rotation count
- * - flags
- */
 #define V0_IMM_VAL_MAX 0xfff
 #define V0_IMM_VAL_MIN (-0x7ff - 1)
 #define V0_SIGNED_BIT  (1 << 11) // signed operation

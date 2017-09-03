@@ -49,7 +49,7 @@ v0printop(struct v0op *op)
     do {                                                                \
         struct v0op *_etext = vm->seglims[V0_TEXT_SEG];                 \
                                                                         \
-        while (v0instisnop(op)) {                                       \
+        while (v0opisnop(op)) {                                         \
             op++;                                                       \
         }                                                               \
         if (op <= _etext) {                                             \

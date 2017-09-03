@@ -34,8 +34,10 @@
 
 /* NOP is declared as all 0-bits */
 #define V0_NOP     (UINT32_C(~0))
-#define v0instisnop(op)                                                 \
+#define v0opisnop(op)                                                   \
     (*(uint32_t *)op == V0_NOP)
+#define v0opissigned(op)                                                \
+    ((op)->val & V0_SIGNED_BIT)
 
 /* arg1 -> register or val-field immediate argument */
 
