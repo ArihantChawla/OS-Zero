@@ -3,8 +3,7 @@
 
 /* VIRTUAL MACHINE */
 
-#define V0_TEXT_ADR 1024
-
+#include <v0/conf.h>
 #include <stdint.h>
 #include <endian.h>
 #include <zero/cdefs.h>
@@ -15,6 +14,7 @@ struct v0;
 typedef int32_t  v0reg;
 typedef uint32_t v0ureg;
 typedef v0ureg   v0memadr;
+typedef uint8_t  v0memflg;
 typedef void     v0iofunc_t(struct v0 *vm, uint16_t port, uint8_t reg);
 
 struct v0iofuncs {
@@ -31,6 +31,9 @@ struct v0iofuncs {
 #define v0zfset(vm)    ((vm)->regs.sys[V0_MSW_REG] & V0_MSW_ZF_BIT)
 #define v0ofset(vm)    ((vm)->regs.sys[V0_MSW_REG] & V0_MSW_OF_BIT)
 #define v0ifset(vm)    ((vm)->regs.sys[V0_MSW_REG] & V0_MSW_IF_BIT)
+
+#define V0_PAGE_SIZE   4096
+#define V0_TEXT_ADR    V0_PAGE_SIZE
 
 #define V0_NINST_MAX   256
 #define V0_NIOPORT_MAX 4096 // must fit in val-field of struct v0op
@@ -103,11 +106,18 @@ struct v0regs {
     v0ureg sys[V0_NSYSREG];
 };
 
+struct v0seg {
+    v0ureg   id;
+    v0memadr base;
+    v0memadr lim;
+    v0ureg   perm;
+};
+
 struct v0 {
     struct v0regs     regs;
-    v0ureg            segs[V0_NSEG];
-    void             *seglims[V0_NSEG];
+    struct v0seg      segs[V0_NSEG];
     long              flg;
+    v0memflg         *membits;
     char             *mem;
     struct v0iofuncs *iovec;
     struct divuf16   *divu16tab;
@@ -169,6 +179,12 @@ struct v0op {
     union v0oparg arg[EMPTY];
 };
 
+/* memory parameters */
+#define V0_MEM_EXEC    0x01
+#define V0_MEM_WRITE   0x02
+#define V0_MEM_READ    0x04
+#define V0_MEM_PRESENT 0x08
+
 /* predefined I/O ports */
 #define V0_STDIN_PORT  0       // keyboard input
 #define V0_STDOUT_PORT 1       // console or framebuffer output
@@ -180,16 +196,18 @@ struct v0op {
 /* framebuffer graphics interface */
 #define V0_FB_BASE     (3UL * 1024 * 1024 * 1024)      // base address
 
-/* exceptions */
+/* traps (exceptions and interrupts) */
 
-#define V0_INV_OPCODE    0x01
-#define V0_TEXT_FAULT    0x02
-#define V0_STACK_FAULT   0x03
-#define V0_SEG_FAULT     0x04
-#define V0_DIV_BY_ZERO   0x05
-#define V0_INV_MEM_READ  0x06
-#define V0_INV_MEM_WRITE 0x07
-#define V0_INV_MEM_ADR   0x08
+#define V0_TMR_INTR      0x00 // timer interrupt
+#define V0_PAGE_FAULT    0x01 // reserved for later use
+#define V0_INV_OPCODE    0x01 // invalid operation
+#define V0_DIV_BY_ZERO   0x02 // division by zero
+#define V0_TEXT_FAULT    0x02 // invalid address for instruction
+#define V0_STACK_FAULT   0x03 // stack segment limits exceeded
+#define V0_SEG_FAULT     0x04 // general memory protection error
+#define V0_INV_MEM_READ  0x06 // memory read error
+#define V0_INV_MEM_WRITE 0x07 // memory write error
+#define V0_INV_MEM_ADR   0x08 // invalid
 #define V0_INV_IO_READ   0x09
 #define V0_INV_IO_WRITE  0x0a
 

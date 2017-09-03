@@ -2,9 +2,10 @@
 #define __V0_CONF_H__
 
 #define V0_DEBUG_TABS
+#define V0_PRINT_XCPT
 
-#define _MEGABYTE     (1024U * 1024U)
-#define V0_MEM_SIZE   (256 * _MEGABYTE)
+#define _MEGABYTE   (1024U * 1024U)
+#define V0_MEM_SIZE (256 * _MEGABYTE)
 
 #endif /* __V0_CONF_H__ */
 

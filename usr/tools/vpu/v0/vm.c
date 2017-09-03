@@ -31,6 +31,8 @@ v0printop(struct v0op *op)
             val, v0getunit(val), v0getinst(val));
 }
 
+#define v0opisvalid(vm, pc) ((vm)->membits[(pc) / V0_PAGE_SIZE] & V0_MEM_EXEC)
+
 #if defined(V0_DEBUG_TABS)
 #define opaddtab(proc, inst, handler)                                   \
     do {                                                                \
@@ -45,19 +47,20 @@ v0printop(struct v0op *op)
 #endif
 
 #if defined(__GNUC__)
-#define opjmp(op)                                                       \
+#define opjmp(vm, pc)                                                   \
     do {                                                                \
-        struct v0op *_etext = vm->seglims[V0_TEXT_SEG];                 \
+        struct v0op *_op = v0adrtoptr(vm, pc);                          \
                                                                         \
-        while (v0opisnop(op)) {                                         \
-            op++;                                                       \
+        while (v0opisvalid(vm, pc) && v0opisnop(_op)) {                 \
+            pc += sizeof(struct v0op);                                  \
+            (_op)++;                                                    \
         }                                                               \
-        if (op <= _etext) {                                             \
-            goto *jmptab[(op)->code];                                   \
+        if (v0opisvalid(vm, pc)) {                                      \
+            goto *jmptab[(_op)->code];                                  \
         } else {                                                        \
             v0doxcpt(V0_TEXT_FAULT);                                    \
                                                                         \
-            return EXIT_FAILURE;                                        \
+            return V0_TEXT_FAULT;                                       \
         }                                                               \
     } while (0)
 #endif /* defined(__GNUC__) */
@@ -116,6 +119,20 @@ v0printop(struct v0op *op)
     } while (0)
 
 void
+v0initseg(struct v0 *vm, v0memadr base, size_t npage, v0memflg flg)
+{
+    v0memflg *bits = vm->membits;
+    size_t    ndx = base / V0_PAGE_SIZE;
+
+    /* text, rodata, data, bss, stk */
+    for (ndx = 0 ; ndx < npage ; ndx++) {
+        bits[ndx] = flg;
+    }
+
+    return;
+}
+
+void
 v0initio(struct v0 *vm)
 {
     struct v0iofuncs *vec = vm->iovec;
@@ -132,9 +149,10 @@ v0initio(struct v0 *vm)
 struct v0 *
 v0init(struct v0 *vm)
 {
-    void *mem = calloc(1, V0_MEM_SIZE);
-    void *ptr;
-    long  newvm = 0;
+    void   *mem = calloc(1, V0_MEM_SIZE);
+    void   *ptr;
+    long    newvm = 0;
+    size_t  vmnpg = V0_MEM_SIZE / V0_PAGE_SIZE;
 
     if (!mem) {
 
@@ -166,6 +184,19 @@ v0init(struct v0 *vm)
         }
         fastuf16divuf16gentab(ptr, 0xffff);
         vm->divu16tab = ptr;
+        ptr = calloc(vmnpg, sizeof(v0memflg));
+        if (!ptr) {
+            free(mem);
+            free(vm->iovec);
+            free(vm->divu16tab);
+            if (newvm) {
+                free(vm);
+            }
+        }
+        vmnpg--;
+        vm->membits = ptr;
+        v0initseg(vm, V0_PAGE_SIZE, vmnpg,
+                  V0_MEM_PRESENT | V0_MEM_READ | V0_MEM_WRITE | V0_MEM_EXEC);
         v0initio(vm);
         vm->regs.sys[V0_FP_REG] = 0x00000000;
         vm->regs.sys[V0_SP_REG] = V0_MEM_SIZE;
@@ -179,7 +210,7 @@ int
 v0loop(struct v0 *vm)
 {
     static _V0OPTAB_T  jmptab[V0_NINST_MAX];
-    v0reg              pc = vm->regs.sys[V0_PC_REG];
+    v0ureg             pc = vm->regs.sys[V0_PC_REG];
     struct v0op       *op = (struct v0op *)&vm->mem[pc];
 
     v0initops(jmptab);
@@ -188,194 +219,189 @@ v0loop(struct v0 *vm)
 
     do {
         v0opnop:
-            op = v0nop(vm, op);
+            pc = v0nop(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opnot:
-            op = v0not(vm, op);
+            pc = v0not(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opand:
-            op = v0and(vm, op);
+            pc = v0and(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opor:
-            op = v0or(vm, op);
+            pc = v0or(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opxor:
-            op = v0xor(vm, op);
+            pc = v0xor(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opshl:
-            op = v0shl(vm, op);
+            pc = v0shl(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opshr:
-            op = v0shr(vm, op);
+            pc = v0shr(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opsar:
-            op = v0sar(vm, op);
+            pc = v0sar(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opinc:
-            op = v0inc(vm, op);
+            pc = v0inc(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opdec:
-            op = v0dec(vm, op);
+            pc = v0dec(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opadd:
-            op = v0add(vm, op);
+            pc = v0add(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opadc:
-            op = v0adc(vm, op);
+            pc = v0adc(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opsub:
-            op = v0sub(vm, op);
+            pc = v0sub(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opsbb:
             v0sbb(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opcmp:
-            op = v0cmp(vm, op);
+            pc = v0cmp(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opmul:
-            op = v0mul(vm, op);
+            pc = v0mul(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opdiv:
-            op = v0div(vm, op);
+            pc = v0div(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0oprem:
-            op = v0rem(vm, op);
+            pc = v0rem(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
 #if 0
         v0opcrm:
-            op = v0crm(vm, op);
+            pc = v0crm(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
 #endif
         v0opjmp:
-            op = v0jmp(vm, op);
+            pc = v0jmp(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opcpl:
-            op = v0cpl(vm, op);
+            pc = v0cpl(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opcall:
-            op = v0call(vm, op);
+            pc = v0call(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0openter:
-            op = v0enter(vm, op);
+            pc = v0enter(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opleave:
-            op = v0leave(vm, op);
+            pc = v0leave(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opret:
-            op = v0ret(vm, op);
+            pc = v0ret(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opbz:
-            op = v0bz(vm, op);
+            pc = v0bz(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opbnz:
-            op = v0bnz(vm, op);
+            pc = v0bnz(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opbc:
-            op = v0bc(vm, op);
+            pc = v0bc(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opbnc:
-            op = v0bnc(vm, op);
+            pc = v0bnc(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opbo:
-            op = v0bo(vm, op);
+            pc = v0bo(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opbno:
-            op = v0bno(vm, op);
+            pc = v0bno(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opblt:
-            op = v0blt(vm, op);
+            pc = v0blt(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opble:
-            op = v0ble(vm, op);
+            pc = v0ble(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opbgt:
-            op = v0bgt(vm, op);
+            pc = v0bgt(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opbge:
-            op = v0bge(vm, op);
+            pc = v0bge(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opldr:
-            op = v0ldr(vm, op);
+            pc = v0ldr(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opstr:
-            op = v0str(vm, op);
+            pc = v0str(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0oppsh:
-            op = v0psh(vm, op);
+            pc = v0psh(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0oppop:
-            op = v0pop(vm, op);
+            pc = v0pop(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0oppsha:
-            op = v0psha(vm, op);
+            pc = v0psha(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0oppopa:
-            op = v0popa(vm, op);
+            pc = v0popa(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opior:
-            op = v0ior(vm, op);
+            pc = v0ior(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
         v0opiow:
-            op = v0iow(vm, op);
+            pc = v0iow(vm, op);
 
-            opjmp(op);
+            opjmp(vm, pc);
     } while (1);
 
 #else /* !defined(__GNUC__) */
 
-    while (op) {
-        static struct v0op *etext = vm->seglims[V0_TEXT_SEG];
-        uint8_t             code = op->code;
-        v0opfunc           *func = jmptab[code];
+    while (v0opisvalid(vm, op)) {
+        struct v0op *op = v0adrtoptr(vm, pc);
+        uint8_t      code = op->code;
+        v0opfunc    *func = jmptab[code];
 
-        op = func(vm, op);
-        if (op > etext) {
-            v0doxcpt(V0_TEXT_FAULT);
-
-            return EXIT_FAILURE;
-        }
+        pc = func(vm, pc);
     }
 
 #endif
