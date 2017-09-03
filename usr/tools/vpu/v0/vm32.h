@@ -146,10 +146,17 @@ union v0oparg {
 #define V0_NDX_ADR     0x02 // ndx(%reg), ndx in opcode val-field
 #define V0_PIC_ADR     0x03 // PC-relative; position-independent code
 
-#define V0_IMM_VAL_MAX 0xfff
-#define V0_IMM_VAL_MIN (-0x7ff - 1)
-#define V0_SIGNED_BIT  (1 << 11) // signed operation
-#define V0_TRAP_BIT    (1 << 10) // breakpoint
+#define V0_IMM_VAL_MAX 0x3ff
+#define V0_IMM_VAL_MIN (-0x1ff - 1)
+#define V0_SIGNED_BIT  0x01 // signed operation
+#define V0_TRAP_BIT    0x02 // breakpoint
+
+/* NOP is declared as all 0-bits */
+#define V0_NOP     (UINT32_C(~0))
+#define v0opisnop(op)                                                   \
+    (*(uint32_t *)op == V0_NOP)
+#define v0opissigned(op)                                                \
+    ((op)->flg & V0_SIGNED_BIT)
 
 struct v0op {
     unsigned int  code : 8;
@@ -157,7 +164,8 @@ struct v0op {
     unsigned int  reg2 : 4;
     unsigned int  adr  : 2;
     unsigned int  parm : 2;
-    int           val  : 12;
+    unsigned int  flg  : 2;
+    int           val  : 10;
     union v0oparg arg[EMPTY];
 };
 
