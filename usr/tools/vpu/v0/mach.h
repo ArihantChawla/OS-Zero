@@ -65,22 +65,23 @@
 
 /* V0_FLOW */
 #define V0_JMP     0x00  // jmp to given address
-#define V0_CALL    0x01  // call subroutine
-#define V0_ENTER   0x02  // create stack frame for subroutine
-#define V0_LEAVE   0x03  // destroy stack frame before RET from subroutine
-#define V0_RET     0x04  // return from subroutine
-#define V0_BZ      0x05  // branch if MSW_ZF is set
-#define V0_BNZ     0x06  // branch if MSW_ZF is zero
-#define V0_BC      0x07  // branch if MSW_CF is set
-#define V0_BNC     0x08  // branch if MSW_CF is zero
-#define V0_BO      0x09  // branch if MSW_OF is set
-#define V0_BNO     0x0a  // branch if MSW_OF is zero
+#define V0_CPL     0x01  // call prologue
+#define V0_CALL    0x02  // call subroutine
+#define V0_ENTER   0x03  // create stack frame for subroutine
+#define V0_LEAVE   0x04  // destroy stack frame before RET from subroutine
+#define V0_RET     0x05  // return from subroutine
+#define V0_BZ      0x06  // branch if MSW_ZF is set
+#define V0_BNZ     0x07  // branch if MSW_ZF is zero
+#define V0_BC      0x08  // branch if MSW_CF is set
+#define V0_BNC     0x09  // branch if MSW_CF is zero
+#define V0_BO      0x0a  // branch if MSW_OF is set
+#define V0_BNO     0x0b  // branch if MSW_OF is zero
 #define V0_BEQ     V0_BZ // branch if equal
 /* TODO: flag combinations for BLT and below */
-#define V0_BLT     0x0b  // branch if less than
-#define V0_BLE     0x0c  // branch if less than or equal
-#define V0_BGT     0x0d  // branch if greater than
-#define V0_BGE     0x0e  // branch if greater than or equal
+#define V0_BLT     0x0c  // branch if less than
+#define V0_BLE     0x0d  // branch if less than or equal
+#define V0_BGT     0x0e  // branch if greater than
+#define V0_BGE     0x0f  // branch if greater than or equal
 
 /* V0_XFER */
 #define V0_LDR     0x00  // load register
@@ -91,11 +92,6 @@
 #define V0_POP     0x01  // pop from stack into register
 #define V0_PSHA    0x04  // push all general-purpose registers
 #define V0_POPA    0x05  // pop all general-purpose registers
-/* the following are to ease the life of compiler creators */
-#define V0_PSHC    0x06  // push all caller-save registers [R0..R7]
-#define V0_POPC    0x07  // pop all caller-save registers [R0..R7]
-#define V0_PSHU    0x06  // push all callee-save registers [R8..R15]
-#define V0_POPU    0x07  // pop all callee-save registers [R8..R15]
 
 /* V0_IO */
 #define V0_IOR     0x00  // read data from I/O port
