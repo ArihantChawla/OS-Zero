@@ -30,8 +30,15 @@ _ _edata..XX        - BSS-segment; unitialized globals, allocated at runtime
 Subroutines
 -----------
 
-V0 uses traditional stack frames to implement subroutines. The relevant
-instructions are
+V0 uses traditional stack frames to implement subroutines. Let's take a quick
+look at the related machine instructions.
+
+call
+----
+- call expects up to 6 arguments in registers R0::R5 and the rest of the
+  arguments on the stack pushed in right to left order
+
+- push caller-save registers R0..R7
 
 - call; call subroutine
 - enter; create stack frame for subroutine
@@ -42,4 +49,11 @@ I will document the stack frames in more detail soon.
 
 Stack Frame
 -----------
+
+arguments
+caller-save registers
+return address
+old frame pointer               <- frame pointer
+local variables
+callee-save registers
 

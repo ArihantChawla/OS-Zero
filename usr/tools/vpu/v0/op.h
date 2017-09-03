@@ -15,6 +15,7 @@
 #include <v0/mach.h>
 
 #define V0_OP_INVAL             NULL
+#define V0_ADR_INVAL            0x00000000
 #if !defined(__GNUC__)
 #define _V0OP_T FASTCALL INLINE void *
 #else
@@ -39,23 +40,41 @@ static long long               v0speedcnt;
         exit(xcpt);                                                     \
     } while (0)
 
-/* immediate source operand */
+/* register or immediate source operand */
 #define v0getsrc(vm, op)                                                \
-    (((op)->adr == V0_DIR_ADR)                                          \
-     ? ((op)->arg[0].i32 & (1 << ((op)->parm * CHAR_BIT)))              \
-     : ((vm)->genregs[(op)->reg1]))
+    (((op)->adr == V0_REG_ADR)                                          \
+     ? ((vm)->genregs[(op)->reg1])                                      \
+     : (((op)->adr == V0_DIR_ADR)                                       \
+        ? ((op)->arg[0].i32 & (1 << ((op)->parm * CHAR_BIT)))           \
+        : V0_ADR_INVAL))
 
 /* count for shl, ahr, sar */
 #define v0getcnt(vm, op)                                                \
     (((op)->adr == V0_DIR_ADR)                                          \
      ? ((op)->val)                                                      \
-     : ((vm)->genregs[(op)->reg1]))
+     : (((op)->adr == V0_REG_ADR)                                       \
+        ? ((vm)->genregs[(op)->reg1])                                   \
+        : V0_ADR_INVAL))
+
+/* argument count for cpl */
+#define v0getfrmcnt(vm, op)                                             \
+    ((op)->val)
+
+/* argument table address for cpl; NOTE: NO indexed/indirect addresses */
+#define v0getfrmargadr(vm, op)                                          \
+    (((op)-> adr == V0_REG_ADR)                                         \
+     ? ((vm)->genregs[(op)->reg2])                                      \
+     : (((op)->adr == V0_DIR_ADR)                                       \
+        ? ((vm)->mem[(op)->arg[0].adr])                                 \
+        : V0_ADR_INVAL))
 
 /* operand address for psh */
 #define v0getsrcadr(vm, op)                                             \
-    (((op)->adr == V0_DIR_ADR)                                          \
-     ? ((v0reg *)&(vm)->mem[(op)->arg[0].adr])                          \
-     : (&vm->genregs[op->reg1]))
+    (((op)->adr == V0_REG_ADR)                                          \
+     ? ((vm)->genregs[op->reg1])                                        \
+     : (((op)->adr == V0_DIR_ADR)                                       \
+        ? ((vm)->mem[(op)->arg[0].adr])                                 \
+        : V0_ADR_INVAL))
 
 /*
  * V0_REG_ADR -> *reg
@@ -69,7 +88,7 @@ static long long               v0speedcnt;
         ? ((vm)->genregs[(op)->reg] + ((op)->val << (op)->parm))        \
         : (((op)->adr == V0_DIR_ADR)                                    \
            ? ((op)->arg[0].adr)                                         \
-           : 0x00000000)))
+           : V0_ADR_INVAL)))
 
 /*
  * V0_REG_ADR -> *reg
@@ -77,7 +96,7 @@ static long long               v0speedcnt;
  * V0_DIR_ADR -> *(op->arg.adr)
  * V0_PIC_ADR -> pc[op->val << op->parm]
  */
-#define v0getbranch(vm, op, reg)                                        \
+#define v0getjmpadr(vm, op, reg)                                        \
     (((op)->adr == V0_REG_ADR)                                          \
      ? ((vm)->genregs[(op)->reg])                                       \
      : (((op)->adr == V0_NDX_ADR)                                       \
@@ -487,7 +506,7 @@ v0jmp(struct v0 *vm, void *ptr)
     v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
     struct v0op *op = ptr;
-    v0reg        dest = v0getbranch(vm, op, reg1);
+    v0reg        dest = v0getjmpadr(vm, op, reg1);
 
     pc = dest;
     v0addspeedcnt(8);
@@ -497,8 +516,109 @@ v0jmp(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-/* call subroutine */
-/*
+/* cpl(cnt, tab) - Call ProLogue
+ * ---
+ * - push caller-save registers
+ * - load up to 6 arguments into registers r0..r5
+ * - store rest of arguments to stack
+ * - load argument count into register r6 aka ac
+ * - load local variable count into r7 aka vc
+ */
+/* stack after cpl
+ * ---------------
+ * ...
+ * r7
+ * r6
+ * r5
+ * r4
+ * r3
+ * r2
+ * r1
+ * r0
+ * argN
+ * ...
+ * arg0 <- sp
+ */
+
+static _V0OP_T
+v0cpl(struct v0 *vm, void *ptr)
+{
+    v0ureg       pc = vm->sysregs[V0_PC_REG];
+    void        *opadr;
+    struct v0op *op = ptr;
+    v0ureg       cnt = v0getfrmcnt(vm, op);
+    v0ureg       tab = v0getfrmargadr(vm, op);
+    v0ureg       sp = vm->sysregs[V0_SP_REG];
+    v0reg       *fptr = (v0reg *)&vm->mem[tab];
+    v0reg       *sptr = (v0reg *)&vm->mem[sp];
+    v0reg       *rptr = &vm->genregs[V0_R0_REG];
+    v0ureg       ac = fptr[0];
+    v0ureg       vc = fptr[1];
+    v0ureg       ndx;
+
+    v0addspeedcnt(16);
+    sptr -= V0_NSAVEREG;
+    sp -= V0_NSAVEREG * sizeof(v0reg);
+    fptr += 8;
+    /* save caller-save registers r0..r7 on stack */
+    sptr[V0_R0_REG] = rptr[V0_R0_REG];
+    sptr[V0_R1_REG] = rptr[V0_R1_REG];
+    sptr[V0_R2_REG] = rptr[V0_R2_REG];
+    sptr[V0_R3_REG] = rptr[V0_R3_REG];
+    sptr[V0_R4_REG] = rptr[V0_R4_REG];
+    sptr[V0_R5_REG] = rptr[V0_R5_REG];
+    sptr[V0_R6_REG] = rptr[V0_R6_REG];
+    sptr[V0_R7_REG] = rptr[V0_R7_REG];
+    if (ac) {
+        /* store rest of arguments to stack in reverse order */
+        cnt = ac;
+        sptr -= ac;
+        ndx = 0;
+        sp -= ac * sizeof(v0reg);
+        v0addspeedcnt(32);
+        while (cnt--) {
+            sptr[ndx] = fptr[ndx];
+            ndx++;
+        }
+    }
+    fptr -= 6;
+    opadr = &vm->mem[pc];
+    pc += sizeof(struct v0op);
+    /* load registers r0..r5 from argument table */
+    switch (cnt) {
+        default:
+            rptr[V0_R5_REG] = fptr[5];
+        case 5:
+            rptr[V0_R4_REG] = fptr[4];
+        case 4:
+            rptr[V0_R3_REG] = fptr[3];
+        case 3:
+            rptr[V0_R2_REG] = fptr[2];
+        case 2:
+            rptr[V0_R1_REG] = fptr[1];
+        case 1:
+            rptr[V0_R0_REG] = fptr[0];
+        case 0:
+
+            break;
+    }
+    vm->sysregs[sp] = sp;
+    vm->genregs[V0_AC_REG] = ac;
+    vm->genregs[V0_VC_REG] = vc;
+    vm->sysregs[V0_PC_REG] = pc;
+
+    return opadr;
+}
+
+/* call
+ * ----
+ *
+ * prologue; TODO: mkf (construct stack frame)
+ * --------
+ * call
+ * ----
+ * - push LN (link register / return address)
+ *
  * stack frame after call
  * ----------------------
  * r7
@@ -509,6 +629,9 @@ v0jmp(struct v0 *vm, void *ptr)
  * r2
  * r1
  * r0
+ * argN
+ * ...
+ * arg0
  * ln <- sp
  */
 static _V0OP_T
@@ -519,26 +642,18 @@ v0call(struct v0 *vm, void *ptr)
     struct v0op *op = ptr;
     v0ureg       sp = vm->sysregs[V0_SP_REG];
     v0ureg       ln = vm->sysregs[V0_LN_REG];
-    v0ureg       dest = v0getadr(vm, op, reg1);
-    v0reg       *sptr = &vm->genregs[V0_R0_REG];
-    v0reg       *dptr = (v0reg *)&vm->mem[sp];
+    v0ureg       dest = v0getjmpadr(vm, op, reg1);
+    v0reg       *sptr;
 
-    v0addspeedcnt(32);
-    dptr = (v0reg *)&vm->mem[sp];
-    sp -= (V0_NSAVEREG + 1) * sizeof(v0reg);
+    sp -= sizeof(v0reg);
     pc += sizeof(struct v0op);
-    if (op->adr == V0_DIR_ADR && !op->val) {
-        pc += sizeof(union v0oparg);
+    sptr = (v0reg *)&vm->mem[sp];
+    if (op->adr == V0_REG_ADR) {
+        v0addspeedcnt(4);
+    } else {
+        v0addspeedcnt(8);
     }
-    dptr[0] = ln;
-    dptr[1] = sptr[0];
-    dptr[2] = sptr[1];
-    dptr[3] = sptr[2];
-    dptr[4] = sptr[3];
-    dptr[5] = sptr[4];
-    dptr[6] = sptr[5];
-    dptr[7] = sptr[6];
-    dptr[8] = sptr[7];
+    *sptr = ln;
     vm->sysregs[V0_SP_REG] = sp;
     opadr = &vm->mem[dest];
     vm->sysregs[V0_LN_REG] = pc;
@@ -548,8 +663,8 @@ v0call(struct v0 *vm, void *ptr)
 }
 
 /* create subroutine stack-frame;
- * - push callee-save registers
  * - push frame pointer
+ * - push callee-save registers
  * - allocate room for local variables on stack
  */
 /*
@@ -557,8 +672,6 @@ v0call(struct v0 *vm, void *ptr)
  * -----------------
  * ln
  * oldfp <- fp
- * ac
- * vc
  * var0
  * ...
  * varN <- sp
@@ -566,28 +679,32 @@ v0call(struct v0 *vm, void *ptr)
 static _V0OP_T
 v0enter(struct v0 *vm, void *ptr)
 {
-    v0ureg       pc = vm->sysregs[V0_PC_REG];
-    void        *opadr;
-    v0ureg       fp = vm->sysregs[V0_SP_REG];
-    v0ureg       sp = vm->sysregs[V0_SP_REG];
-    v0ureg       ac = vm->sysregs[V0_AC_REG];
-    v0ureg       vc = vm->sysregs[V0_VC_REG];
-    v0reg        nvar;
-    v0ureg      *dptr;
+    v0ureg  pc = vm->sysregs[V0_PC_REG];
+    void   *opadr;
+    v0ureg  fp = vm->sysregs[V0_SP_REG];
+    v0ureg  sp = vm->sysregs[V0_SP_REG];
+    v0ureg  vc = vm->sysregs[V0_VC_REG];
+    v0reg  *sptr;
+    v0reg  *rptr = &vm->genregs[V0_R0_REG];
 
+    /* set stack frame up */
     sp -= sizeof(v0reg);
-    v0addspeedcnt(16);
-    dptr = (v0ureg *)&vm->mem[sp];
+    v0addspeedcnt(32);
+    sptr = (v0reg *)&vm->mem[sp];
     vm->sysregs[V0_FP_REG] = sp;
-    *dptr = fp;
+    *sptr = fp;
     pc += sizeof(struct v0op);
-    dptr--;
-    nvar = vc;
-    *dptr = ac;
-    nvar += 2;
-    dptr--;
-    sp -= nvar * sizeof(v0reg);
-    *dptr = vc;
+    sptr -= V0_NSAVEREG;
+    sp -= V0_NSAVEREG * sizeof(v0reg);
+    rptr[V0_R8_REG] = sptr[V0_R8_REG];
+    rptr[V0_R9_REG] = sptr[V0_R9_REG];
+    rptr[V0_R10_REG] = sptr[V0_R10_REG];
+    rptr[V0_R11_REG] = sptr[V0_R11_REG];
+    rptr[V0_R12_REG] = sptr[V0_R12_REG];
+    rptr[V0_R13_REG] = sptr[V0_R13_REG];
+    rptr[V0_R14_REG] = sptr[V0_R14_REG];
+    rptr[V0_R15_REG] = sptr[V0_R15_REG];
+    sp -= vc * sizeof(v0reg);
     opadr = &vm->mem[pc];
     vm->sysregs[V0_SP_REG] = sp;
     vm->sysregs[V0_PC_REG] = pc;
@@ -600,38 +717,27 @@ v0enter(struct v0 *vm, void *ptr)
  * stack after leave
  * -----------------
  * - deallocate local variables
- * - pop callee local variable count (VC)
- * - pop callee argument count (AC)
  * - pop caller frame pointer
- * fp <- fp
- * ln
- * ac
- * vc
+ * ln <- sp
+ * oldfp
  * local variables
  */
 static _V0OP_T
 v0leave(struct v0 *vm, void *ptr)
 {
-    v0ureg       pc = vm->sysregs[V0_PC_REG];
-    void        *opadr;
-    v0ureg       fp = vm->sysregs[V0_FP_REG];
-    v0ureg       sp;
-    v0ureg       ac = vm->sysregs[V0_AC_REG];
-    v0ureg       vc = vm->sysregs[V0_VC_REG];
-    v0reg       *sptr = (v0reg *)&vm->mem[fp];
+    v0ureg  pc = vm->sysregs[V0_PC_REG];
+    void   *opadr;
+    v0ureg  fp = vm->sysregs[V0_FP_REG];
+    v0ureg  sp;
+    v0reg  *fptr = (v0reg *)&vm->mem[fp];
 
     sp = fp;
-    v0addspeedcnt(16);
     pc += sizeof(struct v0op);
-    fp = *sptr;
-    sptr = (v0reg *)&vm->mem[fp];
-    ac = sptr[-2];
-    vc = sptr[-3];
+    v0addspeedcnt(8);
+    fp = *fptr;
     opadr = &vm->mem[pc];
     vm->sysregs[V0_SP_REG] = sp;
     vm->sysregs[V0_FP_REG] = fp;
-    vm->sysregs[V0_AC_REG] = ac;
-    vm->sysregs[V0_VC_REG] = vc;
     vm->sysregs[V0_PC_REG] = pc;
 
     return opadr;
@@ -644,15 +750,14 @@ v0leave(struct v0 *vm, void *ptr)
 static _V0OP_T
 v0ret(struct v0 *vm, void *ptr)
 {
-    void        *opadr;
-    v0ureg       fp = vm->sysregs[V0_FP_REG];
-    v0ureg       sp = vm->sysregs[V0_SP_REG];
-    v0ureg      *sptr = (v0ureg *)&vm->mem[fp];
-    v0ureg       ln;
+    void   *opadr;
+    v0ureg  sp = vm->sysregs[V0_SP_REG];
+    v0reg  *sptr = (v0reg *)&vm->mem[sp];
+    v0ureg  ln;
 
-    v0addspeedcnt(4);
-    sp = fp;
-    ln = sptr[-1];
+    v0addspeedcnt(16);
+    sp -= sizeof(v0reg);
+    ln = *sptr;
     vm->sysregs[V0_SP_REG] = sp;
     opadr = &vm->mem[ln];
     vm->sysregs[V0_PC_REG] = ln;
@@ -666,7 +771,7 @@ v0bz(struct v0 *vm, void *ptr)
     v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
     struct v0op *op = ptr;
-    v0reg        dest = v0getbranch(vm, op, reg1);
+    v0reg        dest = v0getjmpadr(vm, op, reg1);
 
     if (v0zfset(vm)) {
         pc = dest;
@@ -686,7 +791,7 @@ v0bnz(struct v0 *vm, void *ptr)
     v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
     struct v0op *op = ptr;
-    v0reg        dest = v0getbranch(vm, op, reg1);
+    v0reg        dest = v0getjmpadr(vm, op, reg1);
 
     if (!v0zfset(vm)) {
         pc = dest;
@@ -706,7 +811,7 @@ v0bc(struct v0 *vm, void *ptr)
     v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
     struct v0op *op = ptr;
-    v0reg        dest = v0getbranch(vm, op, reg1);
+    v0reg        dest = v0getjmpadr(vm, op, reg1);
 
     if (v0cfset(vm)) {
         pc = dest;
@@ -726,7 +831,7 @@ v0bnc(struct v0 *vm, void *ptr)
     v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
     struct v0op *op = ptr;
-    v0reg        dest = v0getbranch(vm, op, reg1);
+    v0reg        dest = v0getjmpadr(vm, op, reg1);
 
     if (!v0cfset(vm)) {
         pc = dest;
@@ -746,7 +851,7 @@ v0bo(struct v0 *vm, void *ptr)
     v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
     struct v0op *op = ptr;
-    v0reg        dest = v0getbranch(vm, op, reg1);
+    v0reg        dest = v0getjmpadr(vm, op, reg1);
 
     if (v0ofset(vm)) {
         pc = dest;
@@ -766,7 +871,7 @@ v0bno(struct v0 *vm, void *ptr)
     v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
     struct v0op *op = ptr;
-    v0reg        dest = v0getbranch(vm, op, reg1);
+    v0reg        dest = v0getjmpadr(vm, op, reg1);
 
     if (!v0ofset(vm)) {
         pc = dest;
@@ -786,7 +891,7 @@ v0blt(struct v0 *vm, void *ptr)
     v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
     struct v0op *op = ptr;
-    v0reg        dest = v0getbranch(vm, op, reg1);
+    v0reg        dest = v0getjmpadr(vm, op, reg1);
 
     if (!v0ofset(vm)) {
         pc = dest;
@@ -806,7 +911,7 @@ v0ble(struct v0 *vm, void *ptr)
     v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
     struct v0op *op = ptr;
-    v0reg        dest = v0getbranch(vm, op, reg1);
+    v0reg        dest = v0getjmpadr(vm, op, reg1);
 
     pc += sizeof(struct v0op);
     if (!v0ofset(vm) || v0zfset(vm)) {
@@ -827,7 +932,7 @@ v0bgt(struct v0 *vm, void *ptr)
     v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
     struct v0op *op = ptr;
-    v0reg        dest = v0getbranch(vm, op, reg1);
+    v0reg        dest = v0getjmpadr(vm, op, reg1);
 
     if (v0ofset(vm)) {
         pc = dest;
@@ -847,7 +952,7 @@ v0bge(struct v0 *vm, void *ptr)
     v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
     struct v0op *op = ptr;
-    v0reg        dest = v0getbranch(vm, op, reg1);
+    v0reg        dest = v0getjmpadr(vm, op, reg1);
 
     pc += sizeof(struct v0op);
     if (v0ofset(vm) || v0zfset(vm)) {
@@ -1026,21 +1131,20 @@ v0psh(struct v0 *vm, void *ptr)
     v0ureg       pc = vm->sysregs[V0_PC_REG];
     void        *opadr;
     struct v0op *op = ptr;
+    v0reg        src = v0getsrcadr(vm, op);
     v0ureg       sp = vm->sysregs[V0_SP_REG];
-    v0reg       *sptr = v0getsrcadr(vm, op);
+    v0reg       *sptr = (v0reg *)&vm->mem[src];
     v0reg       *dptr = (v0reg *)&vm->mem[sp];
-    v0reg        src;
 
     sp -= sizeof(v0reg);
     pc += sizeof(struct v0op);
-    src = *sptr;
     if (op->adr == V0_REG_ADR) {
         v0addspeedcnt(4);
     } else if (op->adr == V0_DIR_ADR) {
         v0addspeedcnt(8);
         pc += sizeof(union v0oparg);
     }
-    *dptr = src;
+    *dptr = *sptr;
     vm->sysregs[V0_SP_REG] = sp;
     opadr = &vm->mem[pc];
     vm->sysregs[V0_PC_REG] = pc;

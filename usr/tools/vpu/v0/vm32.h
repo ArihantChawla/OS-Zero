@@ -35,6 +35,9 @@ struct v0iofuncs {
 #define V0_NINST_MAX   256
 #define V0_NIOPORT_MAX 4096 // must fit in val-field of struct v0op
 
+#define V0_RET_REG     V0_R0_REG
+#define V0_AC_REG      V0_R6_REG
+#define V0_VC_REG      V0_R7_REG
 /* accumulator (general-purpose register) IDs */
 #define V0_R0_REG      0x00
 #define V0_R1_REG      0x01
@@ -42,8 +45,8 @@ struct v0iofuncs {
 #define V0_R3_REG      0x03
 #define V0_R4_REG      0x04
 #define V0_R5_REG      0x05
-#define V0_R6_REG      0x06
-#define V0_R7_REG      0x07
+#define V0_R6_REG      0x06 // subroutine argument count
+#define V0_R7_REG      0x07 // subroutine local variable count
 #define V0_R8_REG      0x08
 #define V0_R9_REG      0x09
 #define V0_R10_REG     0x0a
@@ -67,8 +70,6 @@ struct v0iofuncs {
 #define V0_SP_REG      0x02 // stack pointer
 #define V0_PC_REG      0x03 // program counter i.e. instruction pointer
 #define V0_LN_REG      0x04 // link-register; return address
-#define V0_AC_REG      0x05 // argument count; used with RET
-#define V0_VC_REG      0x05 // argument count; used with ENTER
 #define V0_SYSREG_BIT  0x08 // denotes system-only access
 #if 0
 #define V0_IHT_REG     0x08 // interrupt handler table base address
