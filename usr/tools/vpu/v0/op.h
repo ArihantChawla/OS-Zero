@@ -16,6 +16,7 @@
 
 #define V0_OP_INVAL             NULL
 #define V0_ADR_INVAL            0x00000000
+#define V0_CNT_INVAL            (-1)
 #if !defined(__GNUC__)
 #define _V0OP_T FASTCALL INLINE void *
 #else
@@ -23,19 +24,13 @@
 #endif
 
 #if defined(V0_GAME)
-static long long               v0speedcnt;
-
-#define v0addspeedcnt(n)       (v0speedcnt += (n))
-
+static long long                v0speedcnt;
+#define v0addspeedcnt(n)        (v0speedcnt += (n))
 #else
-
 #define v0addspeedcnt(n)
-
 #endif
 
-#define v0adrtoptr(vm, adr)                                             \
-    ((void *)(&(vm)->mem[(adr)]))
-
+#define v0adrtoptr(vm, adr)     ((void *)(&(vm)->mem[(adr)]))
 #define v0doxcpt(xcpt)                                                  \
     do {                                                                \
         fprintf(stderr, "%s\n", #xcpt);                                 \
@@ -57,14 +52,14 @@ static long long               v0speedcnt;
      ? ((op)->val)                                                      \
      : (((op)->adr == V0_REG_ADR)                                       \
         ? ((vm)->regs.gen[(op)->reg1])                                  \
-        : V0_ADR_INVAL))
+        : V0_CNT_INVAL))
 
 /* argument count for cpl */
-#define v0getfrmcnt(vm, op)                                             \
+#define v0getparmcnt(vm, op)                                            \
     ((op)->val)
 
 /* argument table address for cpl; NOTE: NO indexed/indirect addresses */
-#define v0getfrmargadr(vm, op)                                          \
+#define v0getparmadr(vm, op)                                            \
     (((op)-> adr == V0_REG_ADR)                                         \
      ? ((vm)->regs.gen[(op)->reg2])                                     \
      : (((op)->adr == V0_DIR_ADR)                                       \
@@ -88,7 +83,7 @@ static long long               v0speedcnt;
     (((op)->adr == V0_REG_ADR)                                          \
      ? ((vm)->regs.gen[(op)->reg])                                      \
      : (((op)->adr == V0_NDX_ADR)                                       \
-        ? ((vm)->regs.gen[(op)->reg] + ((op)->val << (op)->parm))       \
+        ? ((vm)->regs.gen[(op)->reg] + ((v0reg)(op)->val << (op)->parm))       \
         : (((op)->adr == V0_DIR_ADR)                                    \
            ? ((op)->arg[0].adr)                                         \
            : V0_ADR_INVAL)))
@@ -103,10 +98,10 @@ static long long               v0speedcnt;
     (((op)->adr == V0_REG_ADR)                                          \
      ? ((vm)->regs.gen[(op)->reg])                                      \
      : (((op)->adr == V0_NDX_ADR)                                       \
-        ? ((vm)->regs.gen[(op)->reg] + ((op)->val << (op)->parm))       \
+        ? ((vm)->regs.gen[(op)->reg] + ((v0reg)(op)->val << (op)->parm)) \
         : (((op)->adr == V0_DIR_ADR)                                    \
            ? ((op)->arg[0].adr)                                         \
-           : ((vm)->regs.gen[V0_PC_REG] + ((op)->val << (op)->parm)))))
+           : ((vm)->regs.gen[V0_PC_REG] + ((v0reg)(op)->val << (op)->parm)))))
 
 #define v0getioport(op)                                                 \
     ((op)->val)
@@ -515,14 +510,6 @@ v0rem(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-#if 0
-static _V0OP_T
-v0crm(struct v0 *vm, void *ptr)
-{
-    ; // TODO: hack this a'la ridiculous_fish?
-}
-#endif
-
 static _V0OP_T
 v0jmp(struct v0 *vm, void *ptr)
 {
@@ -571,8 +558,8 @@ v0cpl(struct v0 *vm, void *ptr)
     v0ureg         pc = regs->sys[V0_PC_REG];
     void          *opadr;
     struct v0op   *op = ptr;
-    v0ureg         cnt = v0getfrmcnt(vm, op);
-    v0ureg         tab = v0getfrmargadr(vm, op);
+    v0ureg         cnt = v0getparmcnt(vm, op);
+    v0ureg         tab = v0getparmadr(vm, op);
     v0ureg         sp = regs->sys[V0_SP_REG];
     v0reg         *fptr = v0adrtoptr(vm, tab);
     v0reg         *sptr = v0adrtoptr(vm, sp);
