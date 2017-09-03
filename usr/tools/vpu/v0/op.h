@@ -14,11 +14,11 @@
 #include <zero/fastudiv.h>
 #include <v0/mach.h>
 
-#define V0_OP_INVAL            NULL
+#define V0_OP_INVAL             NULL
 #if !defined(__GNUC__)
-#define V0OP_T FASTCALL INLINE void *
+#define _V0OP_T FASTCALL INLINE void *
 #else
-#define V0OP_T INLINE          void *
+#define _V0OP_T INLINE          void *
 #endif
 
 #if defined(V0_GAME)
@@ -74,8 +74,8 @@ static long long               v0speedcnt;
 /*
  * V0_REG_ADR -> *reg
  * V0_NDX_ADR -> reg[op->val << op->parm]
- * V0_DIR_ADR -> op->arg.adr
- * V0_PC_ADR  -> pc[op->val << op->parm]
+ * V0_DIR_ADR -> *(op->arg.adr)
+ * V0_PIC_ADR -> pc[op->val << op->parm]
  */
 #define v0getbranch(vm, op, reg)                                        \
     (((op)->adr == V0_REG_ADR)                                          \
@@ -86,7 +86,7 @@ static long long               v0speedcnt;
            ? ((op)->arg[0].adr)                                         \
            : ((vm)->genregs[V0_PC_REG] + ((op)->val << (op)->parm)))))
 
-static V0OP_T
+static _V0OP_T
 v0nop(struct v0 *vm, void *ptr)
 {
     v0ureg  pc = vm->sysregs[V0_PC_REG];
@@ -100,7 +100,7 @@ v0nop(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0not(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -120,7 +120,7 @@ v0not(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0and(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -140,7 +140,7 @@ v0and(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0or(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -160,7 +160,7 @@ v0or(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0xor(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -180,7 +180,7 @@ v0xor(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0shl(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -200,7 +200,7 @@ v0shl(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0shr(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -222,7 +222,7 @@ v0shr(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0sar(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -254,7 +254,7 @@ v0sar(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0inc(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -273,7 +273,7 @@ v0inc(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0dec(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -292,7 +292,7 @@ v0dec(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0add(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -317,7 +317,7 @@ v0add(struct v0 *vm, void *ptr)
 }
 
 /* FIXME: set carry-bit */
-static V0OP_T
+static _V0OP_T
 v0adc(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -341,7 +341,7 @@ v0adc(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0sub(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -361,7 +361,7 @@ v0sub(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0sbb(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -381,7 +381,7 @@ v0sbb(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0cmp(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -407,7 +407,7 @@ v0cmp(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0mul(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -427,7 +427,7 @@ v0mul(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0div(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -453,7 +453,7 @@ v0div(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0rem(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -474,14 +474,14 @@ v0rem(struct v0 *vm, void *ptr)
 }
 
 #if 0
-static V0OP_T
+static _V0OP_T
 v0crm(struct v0 *vm, void *ptr)
 {
     ; // TODO: hack this a'la ridiculous_fish?
 }
 #endif
 
-static V0OP_T
+static _V0OP_T
 v0jmp(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -511,7 +511,7 @@ v0jmp(struct v0 *vm, void *ptr)
  * r0
  * ln <- sp
  */
-static V0OP_T
+static _V0OP_T
 v0call(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -563,7 +563,7 @@ v0call(struct v0 *vm, void *ptr)
  * ...
  * varN <- sp
  */
-static V0OP_T
+static _V0OP_T
 v0enter(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -609,7 +609,7 @@ v0enter(struct v0 *vm, void *ptr)
  * vc
  * local variables
  */
-static V0OP_T
+static _V0OP_T
 v0leave(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -641,7 +641,7 @@ v0leave(struct v0 *vm, void *ptr)
  * - get old link-register value from stack (LN)
  * - adjust stack pointer (SP) to frame pointer (FP)
  */
-static V0OP_T
+static _V0OP_T
 v0ret(struct v0 *vm, void *ptr)
 {
     void        *opadr;
@@ -660,7 +660,7 @@ v0ret(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0bz(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -680,7 +680,7 @@ v0bz(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0bnz(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -700,7 +700,7 @@ v0bnz(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0bc(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -720,7 +720,7 @@ v0bc(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0bnc(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -740,7 +740,7 @@ v0bnc(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0bo(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -760,7 +760,7 @@ v0bo(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0bno(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -780,7 +780,7 @@ v0bno(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0blt(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -800,7 +800,7 @@ v0blt(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0ble(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -821,7 +821,7 @@ v0ble(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0bgt(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -841,7 +841,7 @@ v0bgt(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0bge(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -862,7 +862,7 @@ v0bge(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0ldr(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -939,7 +939,7 @@ v0ldr(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0str(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -1020,7 +1020,7 @@ v0str(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0psh(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -1048,7 +1048,7 @@ v0psh(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0pop(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -1069,7 +1069,7 @@ v0pop(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0psha(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -1103,7 +1103,7 @@ v0psha(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0popa(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -1137,7 +1137,7 @@ v0popa(struct v0 *vm, void *ptr)
 }
 
 /* push caller save registers r0..r7 */
-static V0OP_T
+static _V0OP_T
 v0pshc(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -1166,7 +1166,7 @@ v0pshc(struct v0 *vm, void *ptr)
 }
 
 /* pop caller save registers r0..r7 */
-static V0OP_T
+static _V0OP_T
 v0popc(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -1194,7 +1194,7 @@ v0popc(struct v0 *vm, void *ptr)
 }
 
 /* push callee save registers r8..r15 */
-static V0OP_T
+static _V0OP_T
 v0pshu(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -1223,7 +1223,7 @@ v0pshu(struct v0 *vm, void *ptr)
 }
 
 /* pop callee save registers r8..r15 */
-static V0OP_T
+static _V0OP_T
 v0popu(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -1252,7 +1252,7 @@ v0popu(struct v0 *vm, void *ptr)
 
 #if 0
 
-static V0OP_T
+static _V0OP_T
 v0pshm(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -1304,7 +1304,7 @@ v0pshm(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0popm(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -1358,7 +1358,7 @@ v0popm(struct v0 *vm, void *ptr)
 
 #endif
 
-static V0OP_T
+static _V0OP_T
 v0ior(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];
@@ -1381,7 +1381,7 @@ v0ior(struct v0 *vm, void *ptr)
     return opadr;
 }
 
-static V0OP_T
+static _V0OP_T
 v0iow(struct v0 *vm, void *ptr)
 {
     v0ureg       pc = vm->sysregs[V0_PC_REG];

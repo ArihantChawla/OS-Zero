@@ -87,8 +87,8 @@
 #define V0_STR     0x01  // store into memory
 
 /* V0_STACK */
-#define V0_PSH     0x00  // push from register
-#define V0_POP     0x01  // pop into register
+#define V0_PSH     0x00  // push to stack
+#define V0_POP     0x01  // pop from stack into register
 #define V0_PSHA    0x04  // push all general-purpose registers
 #define V0_POPA    0x05  // pop all general-purpose registers
 /* the following are to ease the life of compiler creators */

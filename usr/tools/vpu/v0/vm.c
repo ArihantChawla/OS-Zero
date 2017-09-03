@@ -5,17 +5,15 @@
 #include <v0/mach.h>
 #include <v0/vm32.h>
 #include <v0/op.h>
-#include <v0/io.h>
-
-extern void vminitio(struct v0 *vm);
+#include <v0/vm.h>
 
 #if defined(__GNUC__)
-#define opadr(x) &&v0op##x
-#define OPTAB_T  void *
+#define _v0opadr(x) &&v0op##x
+#define _V0OPTAB_T  void *
 #else
-#define opadr(x) &v0##x
-typedef v0reg    v0opfunc(struct v0 *vm, uint8_t *ptr, v0ureg pc);
-#define OPTAB_T  v0opfunc *
+#define _v0opadr(x) v0##x
+typedef v0reg       v0opfunc(struct v0 *vm, uint8_t *ptr, v0ureg pc);
+#define _V0OPTAB_T  v0opfunc *
 #endif
 
 #if defined(V0_DEBUG_TABS)
@@ -63,65 +61,65 @@ v0printop(struct v0op *op)
         }                                                               \
     } while (0)
 #endif /* defined(__GNUC__) */
-#define opset(unit, op, func, tab)                                      \
+#define _v0setop(unit, op, func, tab)                                      \
     do {                                                                \
         long _code = v0mkopid(unit, op);                                \
                                                                         \
         opaddtab(unit, op, func);                                       \
-        ((OPTAB_T *)tab)[_code] = (func);                               \
+        ((_V0OPTAB_T *)tab)[_code] = (func);                            \
     } while (0)
 
 #define v0initops(tab)                                                  \
     do {                                                                \
-        opset(V0_BITS, V0_NOP, opadr(nop), tab);                        \
-        opset(V0_BITS, V0_NOT, opadr(not), tab);                        \
-	opset(V0_BITS, V0_AND, opadr(and), tab);                        \
-	opset(V0_BITS, V0_OR, opadr(or), tab);                          \
-	opset(V0_BITS, V0_XOR, opadr(xor), tab);                        \
-	opset(V0_SHIFT, V0_SHL, opadr(shl), tab);                       \
-	opset(V0_SHIFT, V0_SHR, opadr(shr), tab);                       \
-	opset(V0_SHIFT, V0_SAR, opadr(sar), tab);                       \
-	opset(V0_ARITH, V0_INC, opadr(inc), tab);                       \
-	opset(V0_ARITH, V0_DEC, opadr(dec), tab);                       \
-	opset(V0_ARITH, V0_ADD, opadr(add), tab);                       \
-	opset(V0_ARITH, V0_ADC, opadr(adc), tab);                       \
-	opset(V0_ARITH, V0_SUB, opadr(sub), tab);                       \
-	opset(V0_ARITH, V0_SBB, opadr(sbb), tab);                       \
-	opset(V0_ARITH, V0_CMP, opadr(cmp), tab);                       \
-	opset(V0_ARITH, V0_MUL, opadr(mul), tab);                       \
-	opset(V0_ARITH, V0_DIV, opadr(div), tab);                       \
-	opset(V0_ARITH, V0_REM, opadr(rem), tab);                       \
-	opset(V0_FLOW, V0_JMP, opadr(jmp), tab);                        \
-	opset(V0_FLOW, V0_CALL, opadr(call), tab);                      \
-	opset(V0_FLOW, V0_ENTER, opadr(enter), tab);                    \
-	opset(V0_FLOW, V0_LEAVE, opadr(leave), tab);                    \
-	opset(V0_FLOW, V0_RET, opadr(ret), tab);                        \
-	opset(V0_FLOW, V0_BZ, opadr(bz), tab);                          \
-	opset(V0_FLOW, V0_BNZ, opadr(bnz), tab);                        \
-	opset(V0_FLOW, V0_BC, opadr(bc), tab);                          \
-	opset(V0_FLOW, V0_BNC, opadr(bnc), tab);                        \
-        opset(V0_FLOW, V0_BO, opadr(bo), tab);                          \
-	opset(V0_FLOW, V0_BNO, opadr(bno), tab);                        \
-	opset(V0_FLOW, V0_BLT, opadr(blt), tab);                        \
-	opset(V0_FLOW, V0_BLE, opadr(ble), tab);                        \
-	opset(V0_FLOW, V0_BGT, opadr(bgt), tab);                        \
-	opset(V0_FLOW, V0_BGE, opadr(bge), tab);                        \
-	opset(V0_XFER, V0_LDR, opadr(ldr), tab);                        \
-	opset(V0_XFER, V0_STR, opadr(str), tab);                        \
-	opset(V0_STACK, V0_PSH, opadr(psh), tab);                       \
-	opset(V0_STACK, V0_POP, opadr(pop), tab);                       \
-	opset(V0_STACK, V0_PSHA, opadr(psha), tab);                     \
-	opset(V0_STACK, V0_POPA, opadr(popa), tab);                     \
-	opset(V0_STACK, V0_PSHC, opadr(pshc), tab);                     \
-	opset(V0_STACK, V0_POPC, opadr(popc), tab);                     \
-	opset(V0_STACK, V0_PSHU, opadr(pshu), tab);                     \
-	opset(V0_STACK, V0_POPU, opadr(popu), tab);                     \
-	opset(V0_IO, V0_IOR, opadr(ior), tab);                          \
-	opset(V0_IO, V0_IOW, opadr(iow), tab);                          \
+        _v0setop(V0_BITS, V0_NOP, _v0opadr(nop), tab);                  \
+        _v0setop(V0_BITS, V0_NOT, _v0opadr(not), tab);                  \
+	_v0setop(V0_BITS, V0_AND, _v0opadr(and), tab);                  \
+	_v0setop(V0_BITS, V0_OR, _v0opadr(or), tab);                    \
+	_v0setop(V0_BITS, V0_XOR, _v0opadr(xor), tab);                  \
+	_v0setop(V0_SHIFT, V0_SHL, _v0opadr(shl), tab);                 \
+	_v0setop(V0_SHIFT, V0_SHR, _v0opadr(shr), tab);                 \
+	_v0setop(V0_SHIFT, V0_SAR, _v0opadr(sar), tab);                 \
+	_v0setop(V0_ARITH, V0_INC, _v0opadr(inc), tab);                 \
+	_v0setop(V0_ARITH, V0_DEC, _v0opadr(dec), tab);                 \
+	_v0setop(V0_ARITH, V0_ADD, _v0opadr(add), tab);                 \
+	_v0setop(V0_ARITH, V0_ADC, _v0opadr(adc), tab);                 \
+	_v0setop(V0_ARITH, V0_SUB, _v0opadr(sub), tab);                 \
+	_v0setop(V0_ARITH, V0_SBB, _v0opadr(sbb), tab);                 \
+	_v0setop(V0_ARITH, V0_CMP, _v0opadr(cmp), tab);                 \
+	_v0setop(V0_ARITH, V0_MUL, _v0opadr(mul), tab);                 \
+	_v0setop(V0_ARITH, V0_DIV, _v0opadr(div), tab);                 \
+	_v0setop(V0_ARITH, V0_REM, _v0opadr(rem), tab);                 \
+	_v0setop(V0_FLOW, V0_JMP, _v0opadr(jmp), tab);                  \
+	_v0setop(V0_FLOW, V0_CALL, _v0opadr(call), tab);                \
+	_v0setop(V0_FLOW, V0_ENTER, _v0opadr(enter), tab);              \
+	_v0setop(V0_FLOW, V0_LEAVE, _v0opadr(leave), tab);              \
+	_v0setop(V0_FLOW, V0_RET, _v0opadr(ret), tab);                  \
+	_v0setop(V0_FLOW, V0_BZ, _v0opadr(bz), tab);                    \
+	_v0setop(V0_FLOW, V0_BNZ, _v0opadr(bnz), tab);                  \
+	_v0setop(V0_FLOW, V0_BC, _v0opadr(bc), tab);                    \
+	_v0setop(V0_FLOW, V0_BNC, _v0opadr(bnc), tab);                  \
+        _v0setop(V0_FLOW, V0_BO, _v0opadr(bo), tab);                    \
+	_v0setop(V0_FLOW, V0_BNO, _v0opadr(bno), tab);                  \
+	_v0setop(V0_FLOW, V0_BLT, _v0opadr(blt), tab);                  \
+	_v0setop(V0_FLOW, V0_BLE, _v0opadr(ble), tab);                  \
+	_v0setop(V0_FLOW, V0_BGT, _v0opadr(bgt), tab);                  \
+	_v0setop(V0_FLOW, V0_BGE, _v0opadr(bge), tab);                  \
+	_v0setop(V0_XFER, V0_LDR, _v0opadr(ldr), tab);                  \
+	_v0setop(V0_XFER, V0_STR, _v0opadr(str), tab);                  \
+	_v0setop(V0_STACK, V0_PSH, _v0opadr(psh), tab);                 \
+	_v0setop(V0_STACK, V0_POP, _v0opadr(pop), tab);                 \
+	_v0setop(V0_STACK, V0_PSHA, _v0opadr(psha), tab);               \
+	_v0setop(V0_STACK, V0_POPA, _v0opadr(popa), tab);               \
+	_v0setop(V0_STACK, V0_PSHC, _v0opadr(pshc), tab);               \
+	_v0setop(V0_STACK, V0_POPC, _v0opadr(popc), tab);               \
+	_v0setop(V0_STACK, V0_PSHU, _v0opadr(pshu), tab);               \
+	_v0setop(V0_STACK, V0_POPU, _v0opadr(popu), tab);               \
+	_v0setop(V0_IO, V0_IOR, _v0opadr(ior), tab);                    \
+	_v0setop(V0_IO, V0_IOW, _v0opadr(iow), tab);                    \
     } while (0)
 
 void
-vminitio(struct v0 *vm)
+v0initio(struct v0 *vm)
 {
     struct v0iofuncs *vec = vm->iovec;
 
@@ -171,7 +169,7 @@ v0init(struct v0 *vm)
         }
         fastuf16divuf16gentab(ptr, 0xffff);
         vm->divu16tab = ptr;
-        vminitio(vm);
+        v0initio(vm);
         vm->sysregs[V0_FP_REG] = 0x00000000;
         vm->sysregs[V0_SP_REG] = V0_MEM_SIZE;
     }
@@ -183,9 +181,9 @@ v0init(struct v0 *vm)
 int
 v0loop(struct v0 *vm)
 {
-    static OPTAB_T  jmptab[V0_NINST_MAX];
-    v0reg           pc = vm->sysregs[V0_PC_REG];
-    struct v0op    *op = (struct v0op *)&vm->mem[pc];
+    static _V0OPTAB_T  jmptab[V0_NINST_MAX];
+    v0reg              pc = vm->sysregs[V0_PC_REG];
+    struct v0op       *op = (struct v0op *)&vm->mem[pc];
 
     v0initops(jmptab);
 
