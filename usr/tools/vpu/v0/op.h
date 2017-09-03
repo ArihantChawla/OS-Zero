@@ -69,7 +69,7 @@ static long long                v0speedcnt;
 /* operand address for psh */
 #define v0getsrcadr(vm, op)                                             \
     (((op)->adr == V0_REG_ADR)                                          \
-     ? ((vm)->regs.gen[op->reg1])                                       \
+     ? ((vm)->regs.gen[(op)->reg1])                                     \
      : (((op)->adr == V0_DIR_ADR)                                       \
         ? ((vm)->mem[(op)->arg[0].adr])                                 \
         : V0_ADR_INVAL))
