@@ -427,15 +427,6 @@ struct mem {
 
 #define MEMNOBLK (MEMWORD(-1))
 
-#define membufhdrsize()                                                 \
-    (rounduppow2(rounduppow2(sizeof(struct membuf), PAGESIZE)           \
-                + MEMBUFMAXBLKS * sizeof(MEMBLKID_T),                   \
-                 PAGESIZE))
-#define membufmapsize(nblk)                                             \
-    (rounduppow2(rounduppow2(sizeof(struct membuf), PAGESIZE)           \
-                 + (nblk) * sizeof(MEMBLKID_T),                         \
-                 PAGESIZE))
-
 #if 0
 struct membufmap {
     MEMWORD_T freemap[MEMBUFBITMAPWORDS];
@@ -461,8 +452,14 @@ struct membuf {
     MEMBLKID_T             *stk;
     MEMWORD_T               relmap[MEMBUFBITMAPWORDS];
     MEMWORD_T              *freemap;
-    MEMWORD_T               data[EMPTY];
 };
+
+#define membufhdrsize()                                                 \
+    (rounduppow2(rounduppow2(sizeof(struct membuf), PAGESIZE)           \
+                + MEMBUFMAXBLKS * sizeof(MEMBLKID_T),                   \
+                 PAGESIZE))
+#define membufmapsize(nblk)                                             \
+    (rounduppow2((nblk) * sizeof(MEMBLKID_T), PAGESIZE))
 
 #define memtlssize() rounduppow2(sizeof(struct memtls), 8 * PAGESIZE)
 struct memtls {

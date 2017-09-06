@@ -69,7 +69,7 @@
 #elif defined(_MSC_VER) /* !defined(__GNUC__) && !defined(__clang__) */
 
 #define ASMLINK      __stdcall
-    
+
 /* Microsoft */
 #define ALIGNED(a)   __declspec(align((a)))
 #define ALIGNOF(x)   __alignof(x)

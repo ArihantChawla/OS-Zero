@@ -193,7 +193,6 @@ v0init(struct v0 *vm)
                 free(vm);
             }
         }
-        vmnpg--;
         vm->membits = ptr;
         v0initseg(vm, V0_PAGE_SIZE, vmnpg,
                   V0_MEM_PRESENT | V0_MEM_READ | V0_MEM_WRITE | V0_MEM_EXEC);

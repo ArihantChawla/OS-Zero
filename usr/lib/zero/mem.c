@@ -317,7 +317,6 @@ meminit(void)
     fprintf(stderr, "MEMBUFBITMAPWORDS == %d\n", MEMBUFBITMAPWORDS);
     fprintf(stderr, "MEMHASHARRAYITEMS == %d\n", MEMHASHARRAYITEMS);
     fprintf(stderr, "sizeof(struct membuf) == %d\n", sizeof(struct membuf));
-    fprintf(stderr, "membufmapsize() == %d\n", membufmapsize());
     //    spinlk(&g_mem.initlk);
     #if (MEMSIGNAL)
     signal(SIGQUIT, memexit);
@@ -465,8 +464,8 @@ memallocpagebuf(MEMWORD_T slot, MEMWORD_T nblk)
         return NULL;
     }
     buf = (struct membuf *)adr;
-    //    adr += membufmapsize();
     adr += rounduppow2(sizeof(struct membuf), PAGESIZE);
+    adr += membufmapsize(nblk);
     buf->freemap = adr;
     adr = rounduppow2((uintptr_t)adr + MEMBUFBITMAPWORDS * WORDSIZE, PAGESIZE);
     buf->base = adr;
@@ -804,6 +803,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
                      * be the item address
                      * if not found, the mask will be 0 and so will val/slot
                      */
+                    default:
                     case 16:
                         item = &src[15];
                         mask = -(item->adr == page);
@@ -889,7 +889,6 @@ membufop(MEMPTR_T ptr, MEMWORD_T op,
                             break;
                         }
                     case 0:
-                    default:
 
                         break;
                 }
