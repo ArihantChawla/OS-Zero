@@ -405,7 +405,7 @@ memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
     buf = (struct membuf *)adr;
     adr += rounduppow2(sizeof(struct membuf), PAGESIZE);
     buf->stk = adr;
-    adr = rounduppow2((uintptr_t)adr + nblk * sizeof(MEMBLKID_T), PAGESIZE);
+    adr += membufstksize();
     buf->base = adr;
     buf->flg = flg;    // possible MEMHEAPBIT
     meminitbufslot(buf, slot);
@@ -465,9 +465,8 @@ memallocpagebuf(MEMWORD_T slot, MEMWORD_T nblk)
     }
     buf = (struct membuf *)adr;
     adr += rounduppow2(sizeof(struct membuf), PAGESIZE);
-    adr += membufmapsize(nblk);
     buf->freemap = adr;
-    adr = rounduppow2((uintptr_t)adr + MEMBUFBITMAPWORDS * WORDSIZE, PAGESIZE);
+    adr += membufmapsize(nblk);
     buf->base = adr;
     buf->flg = 0;
     meminitbufslot(buf, slot);
@@ -527,10 +526,9 @@ memallocbigbuf(MEMWORD_T slot, MEMWORD_T nblk)
         return NULL;
     }
     buf = (struct membuf *)adr;
-    //    adr += membufmapsize();
     adr += rounduppow2(sizeof(struct membuf), PAGESIZE);
     buf->freemap = adr;
-    adr = rounduppow2((uintptr_t)adr + MEMBUFBITMAPWORDS * WORDSIZE, PAGESIZE);
+    adr += membufmapsize(nblk);
     buf->base = adr;
     buf->flg = 0;
     meminitbufslot(buf, slot);

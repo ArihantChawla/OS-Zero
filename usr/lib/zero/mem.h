@@ -455,9 +455,9 @@ struct membuf {
 };
 
 #define membufhdrsize()                                                 \
-    (rounduppow2(rounduppow2(sizeof(struct membuf), PAGESIZE)           \
-                + MEMBUFMAXBLKS * sizeof(MEMBLKID_T),                   \
-                 PAGESIZE))
+    (rounduppow2(sizeof(struct membuf), PAGESIZE))
+#define membufstksize()                                                 \
+    (MEMBUFMAXBLKS * sizeof(MEMBLKID_T))
 #define membufmapsize(nblk)                                             \
     (rounduppow2((nblk) * sizeof(MEMBLKID_T), PAGESIZE))
 
@@ -670,7 +670,7 @@ static __inline__ MEMWORD_T
 membufscanblk(struct membuf *buf, MEMWORD_T *nfreeret)
 {
     MEMWORD_T  nblk = memgetbufnblk(buf);
-    MEMWORD_T *map = buf->data;
+    MEMWORD_T *map = buf->freemap;
     MEMWORD_T  ndx = 0;
     MEMWORD_T  word;
     MEMWORD_T  mask;
@@ -912,12 +912,16 @@ membuffreestk(struct membuf *buf)
 #define memusesmallbuf(sz)     ((sz) <= PAGESIZE)
 #define memusepagebuf(sz)      ((sz) <= PAGESIZE * MEMPAGESLOTS)
 #define memsmallbufsize(slot, nblk)                                     \
-    (rounduppow2(membufhdrsize(nblk) + ((nblk) << (slot)), PAGESIZE))
+    (rounduppow2(membufhdrsize() + membufstksize() + ((nblk) << (slot)), \
+                 PAGESIZE))
 #define mempagebufsize(slot, nblk)                                      \
-    (rounduppow2(membufmapsize() + (PAGESIZE + PAGESIZE * (slot)) * (nblk), \
+    (rounduppow2(membufhdrsize() + membufmapsize(nblk)                  \
+                + (PAGESIZE + PAGESIZE * (slot)) * (nblk),              \
                  PAGESIZE))
 #define membigbufsize(slot, nblk)                                       \
-    (rounduppow2(membufmapsize() + ((nblk) << (slot)), PAGESIZE))
+    (rounduppow2(membufhdrsize() + membufmapsize(nblk)                  \
+                + (PAGESIZE + PAGESIZE * (slot)) * (nblk),              \
+                 PAGESIZE))
 #if 0
 #define memnbufblk(type, slot)                                          \
     (((type) == MEMSMALLBUF)                                            \

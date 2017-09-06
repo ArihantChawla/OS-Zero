@@ -17,10 +17,10 @@ typedef v0reg       v0opfunc(struct v0 *vm, uint8_t *ptr, v0ureg pc);
 #endif
 
 #if defined(V0_DEBUG_TABS)
-static struct    v0opinfo v0opinfotab[V0_NINST_MAX];
+static struct v0opinfo  v0opinfotab[V0_NINST_MAX];
 #endif
 
-struct v0       *v0vm;
+struct v0              *v0vm;
 
 void
 v0printop(struct v0op *op)
