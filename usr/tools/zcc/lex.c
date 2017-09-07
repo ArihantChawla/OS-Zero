@@ -10,7 +10,7 @@
 #endif
 #include <sys/stat.h>
 #include <zero/param.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zcc/zcc.h>
 #include <zcc/tune.h>
 
@@ -262,7 +262,7 @@ zccinit(int argc,
         if (*str == '-') {
             if (!strcmp(str, "-h") || !strcmp(str, "--help")) {
                 zccusage();
-                
+
                 exit(0);
             } else if (!strcmp(str, "-O")) {
                 zccoptflags |= ZCC_TUNE_ALIGN;
@@ -687,7 +687,7 @@ zccgettoken(char *str, char **retstr, int curfile)
             if (!mptr) {
                 free(tok->str);
                 fprintf(stderr, "out of memory\n");
-                
+
                 exit(1);
             }
             tok->str = mptr;
@@ -808,7 +808,7 @@ zccgettoken(char *str, char **retstr, int curfile)
 
 static int
 zccgetinclude(char *str, char **retstr, int curfile)
-{    
+{
     char  path[] = "/include/:/usr/include/";
     char  name[PATH_MAX + 1] = { '\0' };
     int   ret = ZCC_FILE_ERROR;
@@ -834,7 +834,7 @@ zccgetinclude(char *str, char **retstr, int curfile)
             } else {
                 fprintf(stderr, "invalid #include directive %s\n",
                         name);
-                
+
                 exit(1);
             }
         } else if (*str == '<') {
@@ -862,7 +862,7 @@ zccgetinclude(char *str, char **retstr, int curfile)
             } else {
                 fprintf(stderr, "invalid #include directive %s\n",
                         name);
-                
+
                 exit(1);
             }
         }
@@ -971,7 +971,7 @@ zccreadfile(char *name, int curfile, int doinclude)
                             len++;
                             if (len == buflen) {
                                 fprintf(stderr, "overlong line\n");
-                                
+
                                 exit(1);
                             }
                             switch (ch) {
@@ -983,14 +983,14 @@ zccreadfile(char *name, int curfile, int doinclude)
                                     len++;
                                     if (len == buflen) {
                                         fprintf(stderr, "overlong line\n");
-                                        
+
                                         exit(1);
                                     }
-                                    
+
                                     break;
                                 default:
                                     fprintf(stderr, "unknown escape sequence\n");
-                                    
+
                                     exit(1);
                             }
                         } else {
@@ -1000,7 +1000,7 @@ zccreadfile(char *name, int curfile, int doinclude)
                                     ch = fgetc(fp);
                                     eof = (ch == EOF);
                                 }
-                                
+
                                 continue;
                             }
                         }
@@ -1010,7 +1010,7 @@ zccreadfile(char *name, int curfile, int doinclude)
                         len++;
                         if (len == buflen) {
                             fprintf(stderr, "overlong line\n");
-                            
+
                             exit(1);
                         }
                         ch = fgetc(fp);
@@ -1046,7 +1046,7 @@ zccreadfile(char *name, int curfile, int doinclude)
                     ch = fgetc(fp);
                     if (ch == EOF) {
                         loop = 0;
-                        
+
                         break;
 #if (ZCCDB)
                     } else if (ch == '\n') {
@@ -1055,7 +1055,7 @@ zccreadfile(char *name, int curfile, int doinclude)
                     } else if (ch == '*') {
                         ch = fgetc(fp);
                         if (ch == '/') {
-                            
+
                             comm = 0;
                         } else if (ch == EOF) {
                             comm = 0;
@@ -1091,7 +1091,7 @@ zccreadfile(char *name, int curfile, int doinclude)
         }
     }
     fclose(fp);
-    
+
     return curfile;
 }
 
@@ -1102,16 +1102,16 @@ zpplex(int argc,
     struct zppinput *input = NULL;
     int              arg;
     long             l;
-    
+
     arg = zccinit(argc, argv);
     if (!arg) {
-        
+
         exit(1);
     }
     for (l = arg; l < argc ; l++) {
         zcccurfile = zccreadfile(argv[l], zcccurfile, 1);
         if (zcccurfile == ZCC_FILE_ERROR) {
-            
+
             exit(1);
         }
     }
