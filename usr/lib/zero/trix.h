@@ -50,7 +50,7 @@
 #define copybits(a, b, m) (((a) | (m)) | ((b) & ~(m)))
 
 /* FIXME: test min2() and max2() */
-    
+
 #define min(a, b) ((a) <= (b) ? (a) : (b))
 #define max(a, b) ((a) >= (b) ? (a) : (b))
 
@@ -103,7 +103,7 @@ abs32(int a)
     int _tmp1 = a ^ (((a) >> (CHAR_BIT * sizeof(a) - 1)));
     int _tmp2 = a >> (CHAR_BIT * sizeof(a) - 1);
     int _val = _tmp1 - _tmp2;
-    
+
     return _val;
 }
 #define _abs(a)         zeroabs(a)
@@ -484,7 +484,7 @@ union __ieee754f { uint32_t u32; float f; };
 #define fgetmant(f)       (((union __ieee754f *)&(f))->u32 & 0x007fffff)
 #define fgetexp(f)        ((((union __ieee754f *)&(f))->u32 & 0x7ff00000) >> 23)
 #define fgetsign(f)       (((union __ieee754f *)&(f))->u32 & 0x80000000)
-#define fsetmant(f, mant) (((union __ieee754f *)&(f))->u32 |= (mant))
+#define fsetmant(f, mant) (((union __ieee754f *)&(f))->u32 |= (mant) & 0x7fffff)
 #define fsetexp(f, exp)   (((union __ieee754f *)&(f))->u32 |= (exp) << 23)
 #define fsetsign(f, sign)                                               \
     ((sign)                                                             \
@@ -503,19 +503,19 @@ union __ieee754f { uint32_t u32; float f; };
  */
 union __ieee754d { uint64_t u64; double d; };
 
-#define dgetmant(d)       (((union __ieee754d *)&(d))->u64 & UINT64_C(0x000fffffffffffff))
+#define dgetmant(d)       (((union __ieee754d *)(&(d)))->u64 & UINT64_C(0x000fffffffffffff))
 #define dgetexp(d)        ((((union __ieee754d *)&(d))->u64 & UINT64_C(0x7ff0000000000000)) >> 52)
-#define dgetsign(d)       (((union __ieee754d *)&(d))->u64 & UINT64_C(0x8000000000000000))
-#define dsetmant(d, mant) (((union __ieee754d *)&(d))->u64 |= (mant))
-#define dsetexp(d, exp)   (((union __ieee754d *)&(d))->u64 |= (uint64_t)(exp) << 52)
+#define dgetsign(d)       (((union __ieee754d *)(&(d)))->u64 & UINT64_C(0x8000000000000000))
+#define dsetmant(d, mant) (((union __ieee754d *)(&(d)))->u64 |= (mant))
+#define dsetexp(d, exp)   (((union __ieee754d *)(&(d)))->u64 |= (uint64_t)(exp) << 52)
 #define dsetsign(d, sign)                                               \
     ((sign)                                                             \
-     ? (((union __ieee754d *)&(d))->u64 |= UINT64_C(0x8000000000000000)) \
-     : (((union __ieee754d *)&(d))->u64 &= UINT64_C(0x7fffffffffffffff)))
+     ? (((union __ieee754d *)(&(d)))->u64 |= UINT64_C(0x8000000000000000)) \
+     : (((union __ieee754d *)(&(d)))->u64 &= UINT64_C(0x7fffffffffffffff)))
 #define dsetnan(d)                                                      \
-    (*(uint64_t *)&(d) = UINT64_C(0x7fffffffffffffff))
+    (*(uint64_t *)(&(d)) = UINT64_C(0x7fffffffffffffff))
 #define dsetsnan(d)                                                     \
-    (*(uint64_t *)&(d) = UINT64_C(0xffffffffffffffff))
+    (*(uint64_t *)(&(d)) = UINT64_C(0xffffffffffffffff))
 
 /*
  * IEEE 80-bit
@@ -523,11 +523,11 @@ union __ieee754d { uint64_t u64; double d; };
  * 64..78 - exponent
  * 79     - sign
  */
-#define ldgetmant(ld)       (*((uint64_t *)&ld))
-#define ldgetexp(ld)        (*((uint32_t *)&ld + 2) & 0x7fff)
-#define ldgetsign(ld)       (*((uint32_t *)&ld + 3) & 0x8000)
-#define ldsetmant(ld, mant) (*((uint64_t *)&ld) = (mant))
-#define ldsetexp(ld, exp)   (*((uint32_t *)&ld + 2) |= (exp) & 0x7fff)
+#define ldgetmant(ld)       (*((uint64_t *)&(ld)))
+#define ldgetexp(ld)        (*((uint32_t *)&(ld) + 2) & 0x7fff)
+#define ldgetsign(ld)       (*((uint32_t *)&(ld) + 3) & 0x8000)
+#define ldsetmant(ld, mant) (*((uint64_t *)&(ld)) = (mant))
+#define ldsetexp(ld, exp)   (*((uint32_t *)&(ld) + 2) |= (exp) & 0x7fff)
 #define ldsetsign(ld, sign)                                             \
     ((sign)                                                             \
      ? (*((uint32_t *)&ld + 3) |= 0x8000)                               \
@@ -651,7 +651,7 @@ divu3(unsigned long uval)
     unsigned long long mul = UINT64_C(0xaaaaaaaaaaaaaaab);
     unsigned long long res = uval;
     unsigned long      cnt = 33;
-    
+
     res *= mul;
     res >>= cnt;
     uval = (unsigned long)res;
@@ -792,7 +792,7 @@ static __inline__ long
 divs100(long x) {
     long q;
     long r;
-    
+
     x = x + (x >> 31 & 99);
     q = (x >> 1) + (x >> 3) + (x >> 6) - (x >> 10) +
         (x >> 12) + (x >> 13) - (x >> 16);
@@ -891,7 +891,7 @@ bitcnt1u32a(uint32_t a) {
     /* each 8-bit chunk sums 8 bits */
     a = ((a >> 8) & 0x00FF00FF) + (a & 0x00FF00FF);
     /* each 16-bit chunk sums 16 bits */
-    
+
     return (a >> 16) + (a & 0x0000FFFF);
 }
 
@@ -901,7 +901,7 @@ bitcnt1u32(uint32_t a) {
     a = ((a >> 2) & 0x33333333) + (a & 0x33333333);
     a = ((a >> 4) & 0x07070707) + (a & 0x07070707);
     a = ((a >> 8) & 0x000f000f) + (a & 0x000f000f);
-    
+
     return (a >> 16) + (a & 0x0000001f);
 }
 
@@ -920,7 +920,7 @@ bitcnt1u64(uint64_t a)
     uint64_t m3 = UINT64_C(0x0f0f0f0f0f0f0f0f);
     uint64_t m4 = UINT64_C(0x00ff00ff00ff00ff);
     uint64_t m5 = UINT64_C(0x0000ffff0000ffff);
-    
+
     val = a << 1;
     val &= m1;
     a &= m1;
@@ -944,7 +944,7 @@ bitcnt1u64(uint64_t a)
     val = a << 32;
     a += val;
     a >>= 32;
-    
+
     return a;
 }
 
@@ -1031,7 +1031,7 @@ mod15u32(uint32_t a)
     a = (a >>  4) + (a & 0xf);    /* sum base 2**4 digits */
     if (a < 15) return a;
     if (a < (2 * 15)) return a - 15;
-    
+
     return a - (2 * 15);
 }
 
@@ -1052,7 +1052,7 @@ mod65535u32(uint32_t a)
     a = (a >> 16) + (a & 0xffff); /* sum base 2**16 digits */
     if (a < 65535) return a;
     if (a < (2 * 65535)) return a - 65535;
-    
+
     return a - (2 * 65535);
 }
 
@@ -1121,21 +1121,21 @@ chkmulrng32(int32_t a, int32_t b, int32_t res)
     int     nsigbit;    // # of significant bits
     int     tmp;
     int32_t ret;        // return value
-    
+
     if (!a || !b || a == 1 || b == 1) {
         /* never over- or underflows */
-        
+
         return 0;
     }
     if (a == INT_MIN || b == INT_MIN) {
         /* always underflows */
-        
+
         return -1;
     }
     if ((powerof2(a) && res == INT_MIN)
         || (powerof2(b) && res == INT_MIN)) {
         /* okay, minimum negative value */
-        
+
         return 0;
     }
     a = zeroabs(a);
@@ -1150,7 +1150,7 @@ chkmulrng32(int32_t a, int32_t b, int32_t res)
     } else {
         ret = (nsigbit > 32);
     }
-    
+
     return ret;
 }
 
@@ -1164,18 +1164,18 @@ chkmulrng64(int64_t a, int64_t b, int64_t res)
     int     nsigbit;
     int     tmp;
     int64_t ret;
-    
+
     if (!a || !b || a == 1 || b == 1) {
-        
+
         return 0;
     }
     if (a == INT_MIN || b == INT_MIN) {
-        
+
         return -1;
     }
     if ((powerof2(a) && res == INT_MIN)
         || (powerof2(b) && res == INT_MIN)) {
-        
+
         return 0;
     }
     a = zeroabs(a);
@@ -1189,7 +1189,7 @@ chkmulrng64(int64_t a, int64_t b, int64_t res)
     } else {
         ret = (nsigbit > 64);
     }
-    
+
     return ret;
 }
 

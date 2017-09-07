@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <zcc/zcc.h>
+#include <cc/cc.h>
 #include <stdio.h>
 
 #define NSYMHASH   65536
@@ -13,8 +13,8 @@
 #define NSTRTABLVL 64
 #endif
 
-static struct zccsym   *symhash[NSYMHASH];
-static struct zcctoken *typehash[NTYPEHASH];
+static struct ccsym   *symhash[NSYMHASH];
+static struct cctoken *typehash[NTYPEHASH];
 
 #if (NEWHASH)
 struct hashstr *qualhash[NSTRHASH];
@@ -332,7 +332,7 @@ static uint16_t chvaltab[256] =
 
 /* calculate hash value for symbol name */
 uint16_t
-zcchashsym(char *name)
+cchashsym(char *name)
 {
     uint16_t ret;
     long     val = 0;
@@ -352,9 +352,9 @@ zcchashsym(char *name)
 
 /* add symbol into lookup hash table */
 void
-zccaddsym(struct zccsym *sym)
+ccaddsym(struct ccsym *sym)
 {
-    uint16_t       val = zcchashsym(sym->name);
+    uint16_t val = cchashsym(sym->name);
 
     sym->prev = NULL;
     sym->next = symhash[val];
@@ -367,12 +367,12 @@ zccaddsym(struct zccsym *sym)
 }
 
 /* search hash table for symbol */
-struct zccsym *
-zccfindsym(char *name)
+struct ccsym *
+ccfindsym(char *name)
 {
-    char          *ptr = name;
-    long           val = zcchashsym(name);
-    struct zccsym *sym = symhash[val];
+    char         *ptr = name;
+    long          val = cchashsym(name);
+    struct ccsym *sym = symhash[val];
 
     while (sym) {
         if (!strcmp(ptr, sym->name)) {
@@ -387,12 +387,12 @@ zccfindsym(char *name)
 
 /* remove symbol from hash table */
 void
-zccrmsym(struct zccsym *sym)
+ccrmsym(struct ccsym *sym)
 {
     uint16_t val;
 
     if (!sym->prev) {
-        val = zcchashsym(sym->name);
+        val = cchashsym(sym->name);
         symhash[val] = sym->next;
     } else {
         sym->prev->next = sym->next;
@@ -406,7 +406,7 @@ zccrmsym(struct zccsym *sym)
 
 /* calculate hash value for type name */
 uint16_t
-zcchashtype(char *name)
+cchashtype(char *name)
 {
     uint16_t ret;
     long     val = 0;
@@ -426,9 +426,9 @@ zcchashtype(char *name)
 
 /* add type into lookup hash table */
 void
-zccaddtype(struct zcctoken *token)
+ccaddtype(struct cctoken *token)
 {
-    uint16_t val = zcchashtype(token->str);
+    uint16_t val = cchashtype(token->str);
 
     token->prev = NULL;
     token->next = typehash[val];
@@ -442,12 +442,12 @@ zccaddtype(struct zcctoken *token)
 
 /* search hash table for type */
 long
-zccfindtype(char *name)
+ccfindtype(char *name)
 {
-    char            *ptr = name;
-    long             val = zcchashtype(name);
-    struct zcctoken *token = typehash[val];
-    long             type = ZCC_NONE;
+    char           *ptr = name;
+    long            val = cchashtype(name);
+    struct cctoken *token = typehash[val];
+    long            type = CC_NONE;
 
     while (token) {
         if (!strcmp(ptr, token->str)) {
@@ -463,12 +463,12 @@ zccfindtype(char *name)
 
 /* remove type from hash table */
 void
-zccrmtype(struct zcctoken *token)
+ccrmtype(struct cctoken *token)
 {
     uint16_t val;
 
     if (!token->prev) {
-        val = zcchashtype(token->str);
+        val = cchashtype(token->str);
         typehash[val] = token->next;
     } else {
         token->prev->next = token->next;
@@ -483,7 +483,7 @@ zccrmtype(struct zcctoken *token)
 #if (NEWHASH)
 
 void
-zccaddid(struct hashstr **tab, char *str, long val)
+ccaddid(struct hashstr **tab, char *str, long val)
 {
     int             ch;
     long            key = 0;
@@ -532,14 +532,14 @@ zccaddid(struct hashstr **tab, char *str, long val)
 }
 
 long
-zccfindid(struct hashstr **tab, char *str)
+ccfindid(struct hashstr **tab, char *str)
 {
     int             ch;
     long            key = 0;
     char           *ptr = str;
     long            len = 0;
     struct hashstr *item = NULL;
-    long            ret = ZCC_NONE;
+    long            ret = CC_NONE;
 
     if ((*str) && (isalpha(*str) || *str == '_')) {
         ch = chvaltab[(int)(*str)];
@@ -570,7 +570,7 @@ zccfindid(struct hashstr **tab, char *str)
 #else
 
 void
-zccaddid(struct hashstr *tab, char *str, long val)
+ccaddid(struct hashstr *tab, char *str, long val)
 {
     int             ch;
     struct hashstr *ptr1;
@@ -599,10 +599,10 @@ zccaddid(struct hashstr *tab, char *str, long val)
 }
 
 long
-zccfindid(struct hashstr *tab, char *str)
+ccfindid(struct hashstr *tab, char *str)
 {
     int             ch;
-    long            ret = ZCC_NONE;
+    long            ret = CC_NONE;
     struct hashstr *ptr1;
     struct hashstr *ptr2 = NULL;
 
@@ -612,7 +612,7 @@ zccfindid(struct hashstr *tab, char *str)
         ptr1 = &tab[ch];
         if (!ptr1->ptr) {
 
-            return ZCC_NONE;
+            return CC_NONE;
         }
         while ((*str) && (isalnum(*str) || *str == '_')) {
             ch = chvaltab[(int)(*str)];
@@ -620,7 +620,7 @@ zccfindid(struct hashstr *tab, char *str)
             str++;
             if (!ptr2) {
 
-                return ZCC_NONE;
+                return CC_NONE;
             }
             ptr1 = &ptr2[ch];
         }

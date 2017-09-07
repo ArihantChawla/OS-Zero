@@ -1,29 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <zcc/zcc.h>
-#include <zcc/tune.h>
-#if (ZCCPROF)
+#include <cc/cc.h>
+#include <cc/tune.h>
+#if (CCPROF)
 #include <zero/prof.h>
 #endif
 
-#if (ZCCSTAT)
-extern unsigned long     tokcnttab[256];
-extern char             *toknametab[256];
+#if (CCSTAT)
+extern unsigned long    tokcnttab[256];
+extern char            *toknametab[256];
 #endif
 
-extern unsigned long     ntoken;
-extern unsigned int      zccnfiles;
-struct zccmach           zccmach;
-static struct zcctoken **tokenqtab;
+extern unsigned long    ntoken;
+extern unsigned int     ccnfiles;
+struct ccmach           ccmach;
+static struct cctoken **tokenqtab;
 
 /* initialise machine-dependent parameters */
 int
-zccinitmach(void)
+ccinitmach(void)
 {
     int ret = 1;
 
-    zccmach.ialn = sizeof(long);
-    zccmach.faln = 16;
+    ccmach.ialn = sizeof(long);
+    ccmach.faln = 16;
 
     return ret;
 }
@@ -31,55 +31,55 @@ zccinitmach(void)
 int
 main(int argc, char *argv[])
 {
-    struct zppinput  *input;
+    struct ccinput  *input;
     long              l;
-#if (ZCCPRINT)
-    struct zpptokenq *qp;
+#if (CCPRINT)
+    struct cctokenq *qp;
 #endif
-#if (ZCCPROF)
+#if (CCPROF)
     PROFDECLCLK(clk);
 #endif
 
-#if (ZCCPROF)
+#if (CCPROF)
     profstartclk(clk);
 #endif
-    if (!zccinitmach()) {
+    if (!ccinitmach()) {
         fprintf(stderr, "cannot initialise %s\n", argv[0]);
 
         exit(1);
     }
-    input = zpplex(argc, argv);
+    input = cclex(argc, argv);
     if (!input) {
         fprintf(stderr, "empty input\n");
 
         exit(1);
     }
-#if (ZCCPROF)
+#if (CCPROF)
     profstopclk(clk);
-#if (ZPPTOKENCNT)
+#if (CCTOKENCNT)
     fprintf(stderr, "%lu tokens\n", ntoken);
 #endif
     fprintf(stderr, "%ld microseconds\n", profclkdiff(clk));
 #endif
-#if (ZCCSTAT)
-    for (l = 1 ; l < ZPP_NTOKTYPE ; l++) {
+#if (CCSTAT)
+    for (l = 1 ; l < CC_NTOKTYPE ; l++) {
         fprintf(stderr, "%s: %lu\n", toknametab[l], tokcnttab[l]);
     }
 #endif
-#if (ZCCPRINT)
+#if (CCPRINT)
     if (input) {
         l = input->nq;
         qp = *input->qptr;
         while (l--) {
-            zppprintqueue(qp);
+            ccprintqueue(qp);
             qp++;
         }
     }
 #endif
 #if 0
-    tokenqtab = calloc(input->nq + 1, sizeof(struct zcctoken *));
+    tokenqtab = calloc(input->nq + 1, sizeof(struct cctoken *));
     for (l = 0 ; l < input->nq ; l++) {
-        tokenqtab[l] = zpppreproc(input->qptr[l]->head);
+        tokenqtab[l] = ccpreproc(input->qptr[l]->head);
     }
 #endif
 
