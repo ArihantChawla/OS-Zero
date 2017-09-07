@@ -21,6 +21,9 @@
 #define NFILE    1024
 #define NLINEBUF 4096
 
+struct cctoken * ccmktype(struct cctoken *token, struct cctoken **nextret,
+                          struct cctoken **lastret);
+
 extern struct ccmach   ccmach;
 #if (NEWHASH)
 extern struct hashstr *qualhash[];
@@ -51,8 +54,8 @@ extern void ccaddid(struct hashstr *tab, char *str, long val);
 extern long ccfindid(struct hashstr *tab, char *str);
 #endif
 struct ccstruct * ccgetstruct(struct cctoken *token,
-                             struct cctoken **nextret,
-                             size_t *sizeret);
+                              struct cctoken **nextret,
+                              size_t *sizeret);
 struct ccunion * ccgetunion(struct cctoken *token,
                             struct cctoken **nextret,
                             size_t *sizeret);
@@ -111,7 +114,7 @@ char          *toknametab[256] =
     "CC_PREPROC_TOKEN",
     "CC_CONCAT_TOKEN",
     "CC_STRINGIFY_TOKEN"
-    };
+};
 #endif
 long typesztab[32] = {
     0,                  // CC_NONE
@@ -516,7 +519,7 @@ ccgetliter(char *str, char **retstr)
     return val;
 }
 
-static struct cctoken *
+struct cctoken *
 ccmktype(struct cctoken *token, struct cctoken **nextret,
          struct cctoken **lastret)
 {
@@ -630,7 +633,7 @@ ccgetstruct(struct cctoken *token, struct cctoken **nextret, size_t *sizeret)
                     if (n == nmemb) {
                         nmemb <<= 1;
                         mptr = realloc(newstruct->mtab,
-                                       nmemb * sizeof(struct cctoken *));
+                               nmemb * sizeof(struct cctoken *));
                         if (!mptr) {
                             free(newstruct->mtab);
                             fprintf(stderr, "out of memory\n");
@@ -639,7 +642,7 @@ ccgetstruct(struct cctoken *token, struct cctoken **nextret, size_t *sizeret)
                         }
                         newstruct->mtab = mptr;
                         mptr = realloc(newstruct->ofstab,
-                                       nmemb * sizeof(size_t));
+                               nmemb * sizeof(size_t));
                         if (!mptr) {
                             free(newstruct->ofstab);
                             fprintf(stderr, "out of memory\n");
@@ -1440,7 +1443,7 @@ ccreadfile(char *name, int curfile, int doinclude)
 
 struct ccinput *
 cclex(int argc,
-       char *argv[])
+      char *argv[])
 {
     struct ccinput *input = NULL;
     int              arg;

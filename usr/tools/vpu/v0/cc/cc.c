@@ -6,6 +6,9 @@
 #include <zero/prof.h>
 #endif
 
+struct cctoken * ccmktype(struct cctoken *token, struct cctoken **nextret,
+                          struct cctoken **lastret);
+
 #if (CCSTAT)
 extern unsigned long    tokcnttab[256];
 extern char            *toknametab[256];

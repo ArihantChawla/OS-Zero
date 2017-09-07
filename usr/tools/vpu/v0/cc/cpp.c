@@ -301,7 +301,6 @@ ccgetfunc(struct cctoken *token, struct cctoken **nextret,
     return NULL;
 }
 
-#if 0
 void
 ccqueuetoken(struct cctoken *token, struct cctoken *last,
              struct cctoken **queue, struct cctoken **tail)
@@ -334,7 +333,6 @@ ccqueuetoken(struct cctoken *token, struct cctoken *last,
 
     return;
 }
-#endif
 
 struct cctoken *
 ccpreproc(struct cctoken *token, struct cctoken **tailret)
