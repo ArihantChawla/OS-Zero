@@ -646,25 +646,6 @@ membufinitmap(struct membuf *buf, MEMWORD_T nblk)
 
     return;
 }
-#if 0
-static __inline__ void
-membufinitmap(struct membuf *buf, MEMWORD_T nblk)
-{
-    MEMWORD_T  bits = ~MEMWORD(0);      // all 1-bits
-    MEMWORD_T *ptr = buf->freemap;
-
-    _memfillmap0(ptr, 0, bits);
-#if (MEMBUFBITMAPWORDS >= 8)
-    _memfillmap(ptr, 4, bits);
-#endif
-#if (MEMBUFBITMAPWORDS == 16)
-    _memfillmap(ptr, 8, bits);
-    _memfillmap(ptr, 12, bits);
-#endif
-
-    return;
-}
-#endif
 
 static __inline__ MEMWORD_T
 membufscanblk(struct membuf *buf, MEMWORD_T *nfreeret)

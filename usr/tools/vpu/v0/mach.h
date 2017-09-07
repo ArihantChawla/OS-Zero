@@ -32,20 +32,45 @@
 
 /* sub-unit instructions */
 
+/* r - register argument, i - immediate argument, m - address argument */
+
 /* arg1 -> register or val-field immediate argument */
 
 /* V0_BITS */
+/*
+ * - NOT rm
+ * - AND rm
+ * - OR  rm
+ * - XOR rm
+ */
 #define V0_NOT     0x00 // reg1 = ~reg1;
 #define V0_AND     0x01 // reg2 &= arg1;
 #define V0_OR      0x02 // reg2 |= arg1;
 #define V0_XOR     0x03 // reg2 ^= arg1;
 
 /* V0_SHIFT */
+/*
+ * - SHL ri (val-field for immediate)
+ * - SHR ri (val-field for immediate)
+ * - SAR ri (val-field for immediate)
+ */
 #define V0_SHL     0x00 // reg2 <<= arg1;
 #define V0_SHR     0x01 // reg2 >>= arg1;
 #define V0_SAR     0x02 // reg2 >>>= arg1;
 
 /* V0_ARITH */
+/*
+ * INC r
+ * DEC r
+ * ADD r, r
+ * ADC r, r
+ * SUB r, r
+ * SBB r, r
+ * CMP ri, r
+ * MUL r, r
+ * DIV r, r
+ * REM r, r
+ */
 #define V0_INC     0x00 // reg1++;
 #define V0_DEC     0x01 // reg1--;
 #define V0_ADD     0x02 // reg2 += arg1;
@@ -59,6 +84,25 @@
 //#define V0_CRM     0x0a // calculate reciprocal multiplier for division
 
 /* V0_FLOW */
+/*
+ * - JMP   ri (immediate address in following union v0oparg)
+ * - CPL
+ * - CALL  rni (immediate union v0oparg)
+ * - ENTER rn  (index in val-field)
+ * - LEAVE ri  (argument count in val-field)
+ * - RET   ri  (immediate argument count in val)
+ * - BZ    rni (index in val)
+ * - BNZ   rni
+ * - BC    rni
+ * - BNC   rni
+ * - BO    rni
+ * - BNO   rni
+ * - BEQ   rni
+ * - BLT   rni
+ * - BLE   rni
+ * - BGT   rni
+ * - BGE   rni
+ */
 #define V0_JMP     0x00  // jmp to given address
 #define V0_CPL     0x01  // call prologue
 #define V0_CALL    0x02  // call subroutine
@@ -79,16 +123,30 @@
 #define V0_BGE     0x0f  // branch if greater than or equal
 
 /* V0_XFER */
+/*
+ * - LDR rni, r
+ * - STR rni, m
+ */
 #define V0_LDR     0x00  // load register
 #define V0_STR     0x01  // store into memory
 
 /* V0_STACK */
+/*
+ * PSH  ri
+ * POP  r
+ * PSHA
+ * POPA
+ */
 #define V0_PSH     0x00  // push to stack
 #define V0_POP     0x01  // pop from stack into register
 #define V0_PSHA    0x04  // push all general-purpose registers
 #define V0_POPA    0x05  // pop all general-purpose registers
 
 /* V0_IO */
+/*
+ * IOR p, r (p is port number in val-field)
+ * IOW p, r
+ */
 #define V0_IOR     0x00  // read data from I/O port
 #define V0_IOW     0x01  // write data to I/O port
 
