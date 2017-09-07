@@ -62,14 +62,14 @@
 /*
  * INC r
  * DEC r
- * ADD r, r
- * ADC r, r
- * SUB r, r
- * SBB r, r
+ * ADD ri, r (immediate argument follows as 32-bit union v0oparg)
+ * ADC ri, r
+ * SUB ri, r
+ * SBB ri, r
  * CMP ri, r
- * MUL r, r
- * DIV r, r
- * REM r, r
+ * MUL ri, r
+ * DIV ri, r
+ * REM ri, r
  */
 #define V0_INC     0x00 // reg1++;
 #define V0_DEC     0x01 // reg1--;
