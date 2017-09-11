@@ -72,7 +72,6 @@ struct v0iofuncs {
 #define V0_FP_REG        0x01 // frame pointer
 #define V0_SP_REG        0x02 // stack pointer
 #define V0_PC_REG        0x03 // program counter i.e. instruction pointer
-#define V0_LN_REG        0x04 // link-register; return address
 #define V0_SYSREG_BIT    0x08 // denotes system-only access
 #if 0
 #define V0_IHT_REG       0x08 // interrupt handler table base address

@@ -18,16 +18,17 @@
 #define V0_BITS    0x00 // bitwise operations such as logical functions
 #define V0_SHIFT   0x10 // shift operations (later on, probably rotates as well)
 #define V0_ARITH   0x20 // basic arithmetics
-#define V0_FLOW    0x30 // flow control; jumps, function calls, branches
-#define V0_XFER    0x40 // data transfers between registers and memory
-#define V0_STACK   0x50 // stack operations
-#define V0_IO      0x60 // I/O operations
+#define V0_BRANCH  0x30 // branches
+#define V0_FLOW    0x40 // flow-control; function calls (TODO: threads?)
+#define V0_XFER    0x50 // data transfers between registers and memory
+#define V0_STACK   0x60 // stack operations
+#define V0_IO      0x70 // I/O operations
 #define V0_COUNIT  0x80 // co-unit flag-bit
-#define V0_MMU     0x80 // memory management unit
-#define V0_FPU     0x90 // floating-point unit
-#define V0_GPU     0xa0 // graphics processor
-#define V0_DSP     0xb0 // digital signal processor
-#define V0_FPM     0xc0 // fixed-point mathematics
+#define V0_MMU     0x90 // memory management unit
+#define V0_FPU     0xa0 // floating-point unit
+#define V0_GPU     0xb0 // graphics processor
+#define V0_DSP     0xc0 // digital signal processor
+#define V0_FPM     0xd0 // fixed-point mathematics
 #define V0_COPROC  0xf0 // miscellaneous co-processors (separate op-words)
 
 /* sub-unit instructions */
@@ -83,14 +84,10 @@
 #define V0_REM     0x09 // reg2 %= arg1;
 //#define V0_CRM     0x0a // calculate reciprocal multiplier for division
 
-/* V0_FLOW */
+/* V0_BRANCH */
 /*
- * - JMP   ri (immediate address in following union v0oparg)
- * - CPL
- * - CALL  rni (immediate union v0oparg)
- * - ENTER rn  (index in val-field)
- * - LEAVE ri  (argument count in val-field)
- * - RET   ri  (immediate argument count in val)
+ * - JMP   rip (immediate address in following union v0oparg);
+ *             PC-relative offset with DIR_ADR
  * - BZ    rni (index in val)
  * - BNZ   rni
  * - BC    rni
@@ -104,23 +101,32 @@
  * - BGE   rni
  */
 #define V0_JMP     0x00  // jmp to given address
+#define V0_BZ      0x01  // branch if MSW_ZF is set
+#define V0_BNZ     0x02  // branch if MSW_ZF is zero
+#define V0_BC      0x03  // branch if MSW_CF is set
+#define V0_BNC     0x04  // branch if MSW_CF is zero
+#define V0_BO      0x05  // branch if MSW_OF is set
+#define V0_BNO     0x06  // branch if MSW_OF is zero
+#define V0_BEQ     V0_BZ // branch if equal
+/* TODO: flag combinations for BLT and below */
+#define V0_BLT     0x07  // branch if less than
+#define V0_BLE     0x08  // branch if less than or equal
+#define V0_BGT     0x09  // branch if greater than
+#define V0_BGE     0x0a  // branch if greater than or equal
+
+/* V0_FLOW */
+/*
+ * - CPL
+ * - CALL  rni (immediate union v0oparg)
+ * - ENTER rn  (index in val-field)
+ * - LEAVE ri  (argument count in val-field)
+ * - RET   ri  (immediate argument count in val)
+ */
 #define V0_CPL     0x01  // call prologue
 #define V0_CALL    0x02  // call subroutine
 #define V0_ENTER   0x03  // create stack frame for subroutine
 #define V0_LEAVE   0x04  // destroy stack frame before RET from subroutine
 #define V0_RET     0x05  // return from subroutine
-#define V0_BZ      0x06  // branch if MSW_ZF is set
-#define V0_BNZ     0x07  // branch if MSW_ZF is zero
-#define V0_BC      0x08  // branch if MSW_CF is set
-#define V0_BNC     0x09  // branch if MSW_CF is zero
-#define V0_BO      0x0a  // branch if MSW_OF is set
-#define V0_BNO     0x0b  // branch if MSW_OF is zero
-#define V0_BEQ     V0_BZ // branch if equal
-/* TODO: flag combinations for BLT and below */
-#define V0_BLT     0x0c  // branch if less than
-#define V0_BLE     0x0d  // branch if less than or equal
-#define V0_BGT     0x0e  // branch if greater than
-#define V0_BGE     0x0f  // branch if greater than or equal
 
 /* V0_XFER */
 /*

@@ -13,6 +13,7 @@
 #include <zero/trix.h>
 #include <zero/fastudiv.h>
 #include <v0/mach.h>
+#include <v0/vm32.h>
 
 #define V0_OP_INVAL                 NULL
 #define V0_ADR_INVAL                0x00000000
@@ -496,250 +497,6 @@ v0jmp(struct v0 *vm, void *ptr)
     return pc;
 }
 
-/* cpl(cnt, tab) - Call ProLogue
- * ---
- * - push caller-save registers
- * - load up to 6 arguments into registers r0..r5
- * - store rest of arguments to stack
- * - load argument count into register r6 aka ac
- * - load local variable count into r7 aka vc
- */
-/* stack after cpl
- * ---------------
- * ...
- * r7
- * r6
- * r5
- * r4
- * r3
- * r2
- * r1
- * r0
- * argN
- * ...
- * arg0 <- sp
- */
-
-static _V0OPFUNC_T
-v0cpl(struct v0 *vm, void *ptr)
-{
-    struct v0regs *regs = &vm->regs;
-    v0ureg         pc = regs->sys[V0_PC_REG];
-    struct v0op   *op = ptr;
-    v0ureg         cnt = v0getparmcnt(vm, op);
-    v0ureg         tab = v0getparmadr(vm, op);
-    v0ureg         sp = regs->sys[V0_SP_REG];
-    v0reg         *fptr = v0adrtoptr(vm, tab);
-    v0reg         *sptr = v0adrtoptr(vm, sp);
-    v0reg         *rptr = &regs->gen[V0_R0_REG];
-    v0ureg         ac = fptr[0];
-    v0ureg         vc = fptr[1];
-    v0ureg         ndx;
-
-    v0addspeedcnt(16);
-    sptr -= V0_NSAVEREG;
-    sp -= V0_NSAVEREG * sizeof(v0reg);
-    fptr += 8;
-    /* save caller-save registers r0..r7 on stack */
-    sptr[V0_R0_REG] = rptr[V0_R0_REG];
-    sptr[V0_R1_REG] = rptr[V0_R1_REG];
-    sptr[V0_R2_REG] = rptr[V0_R2_REG];
-    sptr[V0_R3_REG] = rptr[V0_R3_REG];
-    sptr[V0_R4_REG] = rptr[V0_R4_REG];
-    sptr[V0_R5_REG] = rptr[V0_R5_REG];
-    sptr[V0_R6_REG] = rptr[V0_R6_REG];
-    sptr[V0_R7_REG] = rptr[V0_R7_REG];
-    if (ac) {
-        /* store rest of arguments to stack in reverse order */
-        cnt = ac;
-        sptr -= ac;
-        ndx = 0;
-        sp -= ac * sizeof(v0reg);
-        v0addspeedcnt(32);
-        while (cnt--) {
-            sptr[ndx] = fptr[ndx];
-            ndx++;
-        }
-    }
-    fptr -= 6;
-    pc += sizeof(struct v0op);
-    /* load registers r0..r5 from argument table */
-    switch (cnt) {
-        default:
-            rptr[V0_R5_REG] = fptr[5];
-        case 5:
-            rptr[V0_R4_REG] = fptr[4];
-        case 4:
-            rptr[V0_R3_REG] = fptr[3];
-        case 3:
-            rptr[V0_R2_REG] = fptr[2];
-        case 2:
-            rptr[V0_R1_REG] = fptr[1];
-        case 1:
-            rptr[V0_R0_REG] = fptr[0];
-        case 0:
-
-            break;
-    }
-    regs->sys[sp] = sp;
-    regs->gen[V0_AC_REG] = ac;
-    regs->gen[V0_VC_REG] = vc;
-    regs->sys[V0_PC_REG] = pc;
-
-    return pc;
-}
-
-/* call
- * ----
- *
- * prologue; TODO: mkf (construct stack frame)
- * --------
- * call
- * ----
- * - push LN (link register / return address)
- *
- * stack frame after call
- * ----------------------
- * r7
- * r6
- * r5
- * r4
- * r3
- * r2
- * r1
- * r0
- * argN
- * ...
- * arg0
- * ln <- sp
- */
-static _V0OPFUNC_T
-v0call(struct v0 *vm, void *ptr)
-{
-    struct v0regs *regs = &vm->regs;
-    v0ureg         pc = regs->sys[V0_PC_REG];
-    struct v0op   *op = ptr;
-    v0ureg         sp = regs->sys[V0_SP_REG];
-    v0ureg         ln = regs->sys[V0_LN_REG];
-    v0ureg         dest = v0getjmpadr(vm, op, reg1);
-    v0reg         *sptr;
-
-    sp -= sizeof(v0reg);
-    pc += sizeof(struct v0op);
-    sptr = v0adrtoptr(vm, sp);
-    if (op->adr == V0_REG_ADR) {
-        v0addspeedcnt(4);
-    } else {
-        v0addspeedcnt(8);
-    }
-    *sptr = ln;
-    regs->sys[V0_SP_REG] = sp;
-    regs->sys[V0_LN_REG] = pc;
-    regs->sys[V0_PC_REG] = dest;
-
-    return dest;
-}
-
-/* create subroutine stack-frame;
- * - push frame pointer
- * - push callee-save registers
- * - allocate room for local variables on stack
- */
-/*
- * stack after enter
- * -----------------
- * ln
- * oldfp <- fp
- * var0
- * ...
- * varN <- sp
- */
-static _V0OPFUNC_T
-v0enter(struct v0 *vm, void *ptr)
-{
-    struct v0regs *regs = &vm->regs;
-    v0ureg         pc = regs->sys[V0_PC_REG];
-    v0ureg         fp = regs->sys[V0_SP_REG];
-    v0ureg         sp = regs->sys[V0_SP_REG];
-    v0ureg         vc = regs->sys[V0_VC_REG];
-    v0reg         *sptr;
-    v0reg         *rptr = &regs->gen[V0_R0_REG];
-
-    /* set stack frame up */
-    sp -= sizeof(v0reg);
-    v0addspeedcnt(32);
-    sptr = v0adrtoptr(vm, sp);
-    regs->sys[V0_FP_REG] = sp;
-    *sptr = fp;
-    pc += sizeof(struct v0op);
-    sptr -= V0_NSAVEREG;
-    sp -= V0_NSAVEREG * sizeof(v0reg);
-    rptr[V0_R8_REG] = sptr[V0_R8_REG];
-    rptr[V0_R9_REG] = sptr[V0_R9_REG];
-    rptr[V0_R10_REG] = sptr[V0_R10_REG];
-    rptr[V0_R11_REG] = sptr[V0_R11_REG];
-    rptr[V0_R12_REG] = sptr[V0_R12_REG];
-    rptr[V0_R13_REG] = sptr[V0_R13_REG];
-    rptr[V0_R14_REG] = sptr[V0_R14_REG];
-    rptr[V0_R15_REG] = sptr[V0_R15_REG];
-    sp -= vc * sizeof(v0reg);
-    regs->sys[V0_SP_REG] = sp;
-    regs->sys[V0_PC_REG] = pc;
-
-    return pc;
-}
-
-/* destroy subroutine stack-frame */
-/*
- * stack after leave
- * -----------------
- * - deallocate local variables
- * - pop caller frame pointer
- * ln <- sp
- * oldfp
- * local variables
- */
-static _V0OPFUNC_T
-v0leave(struct v0 *vm, void *ptr)
-{
-    struct v0regs *regs = &vm->regs;
-    v0ureg         pc = regs->sys[V0_PC_REG];
-    v0ureg         fp = regs->sys[V0_FP_REG];
-    v0ureg         sp;
-    v0reg         *fptr = v0adrtoptr(vm, fp);
-
-    sp = fp;
-    pc += sizeof(struct v0op);
-    v0addspeedcnt(8);
-    fp = *fptr;
-    regs->sys[V0_SP_REG] = sp;
-    regs->sys[V0_FP_REG] = fp;
-    regs->sys[V0_PC_REG] = pc;
-
-    return pc;
-}
-
-/* return from subroutine;
- * - get old link-register value from stack (LN)
- * - adjust stack pointer (SP) to frame pointer (FP)
- */
-static _V0OPFUNC_T
-v0ret(struct v0 *vm, void *ptr)
-{
-    struct v0regs *regs = &vm->regs;
-    v0ureg         sp = regs->sys[V0_SP_REG];
-    v0reg         *sptr = v0adrtoptr(vm, sp);
-    v0ureg         ln;
-
-    v0addspeedcnt(16);
-    sp -= sizeof(v0reg);
-    ln = *sptr;
-    regs->sys[V0_SP_REG] = sp;
-    regs->sys[V0_PC_REG] = ln;
-
-    return ln;
-}
-
 static _V0OPFUNC_T
 v0bz(struct v0 *vm, void *ptr)
 {
@@ -932,12 +689,347 @@ v0bge(struct v0 *vm, void *ptr)
     return pc;
 }
 
+/*
+ * tab-argument format for cpl
+ * ---------------------------
+ * struct v0cplarg {
+ *     v0ureg  vc; // automatic [local] variable count
+ *     v0reg  *args; // pointer to cnt arguments
+ * };
+ */
+
+/* cpl(cnt, tab) - Call ProLogue
+ * ---
+ * - push caller-save registers
+ * - load up to 6 arguments into registers r0..r5
+ * - store rest of arguments to stack in right-to-left order
+ * - load argument count into register r6 aka ac
+ * - load local variable count into r7 aka vc
+ */
+/* stack after cpl
+ * ---------------
+ * ...
+ * r7   - VC
+ * r6   - AC
+ * r5
+ * r4
+ * r3
+ * r2
+ * r1
+ * r0
+ * argN
+ * ...
+ * arg0 <- sp
+ */
+
 static _V0OPFUNC_T
-v0ldr(struct v0 *vm, void *ptr)
+v0cpl(struct v0 *vm, void *ptr)
 {
     struct v0regs *regs = &vm->regs;
     v0ureg         pc = regs->sys[V0_PC_REG];
     struct v0op   *op = ptr;
+    v0ureg         cnt = v0getparmcnt(vm, op);
+    v0ureg         tab = v0getparmadr(vm, op);
+    v0ureg         sp = regs->sys[V0_SP_REG];
+    v0reg         *aptr = v0adrtoptr(vm, tab);
+    v0reg         *sptr;
+    v0reg         *rptr = &regs->gen[V0_R0_REG];
+    v0ureg         ac = 0;
+    v0ureg         vc = aptr[0];
+    v0ureg         val;
+
+    sp -= V0_NSAVEREG * sizeof(v0reg);
+    v0addspeedcnt(16);
+    sptr = v0adrtoptr(vm, sp);
+    aptr += 1;
+    /* save caller-save registers r0..r7 on stack */
+    sptr[V0_R0_REG] = rptr[V0_R0_REG];
+    sptr[V0_R1_REG] = rptr[V0_R1_REG];
+    sptr[V0_R2_REG] = rptr[V0_R2_REG];
+    sptr[V0_R3_REG] = rptr[V0_R3_REG];
+    sptr[V0_R4_REG] = rptr[V0_R4_REG];
+    sptr[V0_R5_REG] = rptr[V0_R5_REG];
+    sptr[V0_R6_REG] = rptr[V0_R6_REG];
+    sptr[V0_R7_REG] = rptr[V0_R7_REG];
+    /* load up to 6 arguments into registers r0..r5 */
+    val = min(cnt, 6);
+    switch (cnt) {
+        default:
+        case 6:
+            rptr[V0_R5_REG] = aptr[5];
+        case 5:
+            rptr[V0_R4_REG] = aptr[4];
+        case 4:
+            rptr[V0_R3_REG] = aptr[3];
+        case 3:
+            rptr[V0_R2_REG] = aptr[2];
+        case 2:
+            rptr[V0_R1_REG] = aptr[1];
+        case 1:
+            rptr[V0_R0_REG] = aptr[0];
+        case 0:
+
+            break;
+    }
+    aptr += val;
+    cnt -= val;
+    pc += sizeof(struct v0op);
+    if (cnt) {
+        /* store rest of arguments to stack as if pushed in reverse order */
+        sptr -= cnt;
+        sp -= cnt * sizeof(v0reg);
+        ac = cnt;
+        val = 0;
+        v0addspeedcnt(32);
+        while (cnt--) {
+            sptr[val] = aptr[val];
+            val++;
+        }
+    }
+    regs->sys[sp] = sp;
+    rptr[V0_AC_REG] = ac;
+    rptr[V0_VC_REG] = vc;
+    regs->sys[V0_PC_REG] = pc;
+
+    return pc;
+}
+
+/*
+ * call
+ * ----
+ * - push return address
+ *
+ * stack frame after call
+ * ----------------------
+ * r7
+ * r6
+ * r5
+ * r4
+ * r3
+ * r2
+ * r1
+ * r0
+ * argN
+ * ...
+ * arg0 <- after cpl
+ * retadr <- sp
+ */
+static _V0OPFUNC_T
+v0call(struct v0 *vm, void *ptr)
+{
+    struct v0regs *regs = &vm->regs;
+    v0ureg         pc = regs->sys[V0_PC_REG];
+    struct v0op   *op = ptr;
+    v0ureg         sp = regs->sys[V0_SP_REG];
+    v0ureg         dest = v0getjmpadr(vm, op, reg1);
+    v0reg         *sptr;
+
+    sp -= sizeof(v0reg);
+    pc += sizeof(struct v0op);
+    sptr = v0adrtoptr(vm, sp);
+    if (op->adr == V0_REG_ADR) {
+        v0addspeedcnt(4);
+    } else {
+        v0addspeedcnt(8);
+    }
+    *sptr = pc;
+    regs->sys[V0_SP_REG] = sp;
+    regs->sys[V0_PC_REG] = dest;
+
+    return dest;
+}
+
+/* create subroutine stack-frame;
+ * - push frame pointer
+ * - copy stack pointer to frame pointer
+ * - push callee-save registers r8..r15
+ * - allocate room for local variables on stack
+ */
+/*
+ * stack after enter
+ * -----------------
+ * retadr
+ * oldfp <- fp
+ * r15
+ * ...
+ * r8
+ * var0
+ * ...
+ * varN <- sp
+ */
+static _V0OPFUNC_T
+v0enter(struct v0 *vm, void *ptr)
+{
+    struct v0regs *regs = &vm->regs;
+    v0ureg         pc = regs->sys[V0_PC_REG];
+    v0ureg         fp = regs->sys[V0_SP_REG];
+    v0ureg         sp = regs->sys[V0_SP_REG];
+    v0ureg         vc = regs->gen[V0_VC_REG];
+    v0reg         *sptr;
+    v0reg         *rptr = &regs->gen[V0_R0_REG];
+
+    /* set stack frame up */
+    sp -= sizeof(v0reg);
+    v0addspeedcnt(32);
+    sptr = v0adrtoptr(vm, sp);
+    regs->sys[V0_FP_REG] = sp;
+    *sptr = fp;
+    pc += sizeof(struct v0op);
+    sptr -= V0_NSAVEREG;
+    sp -= V0_NSAVEREG * sizeof(v0reg);
+    rptr[V0_R8_REG] = sptr[V0_R8_REG];
+    rptr[V0_R9_REG] = sptr[V0_R9_REG];
+    rptr[V0_R10_REG] = sptr[V0_R10_REG];
+    rptr[V0_R11_REG] = sptr[V0_R11_REG];
+    rptr[V0_R12_REG] = sptr[V0_R12_REG];
+    rptr[V0_R13_REG] = sptr[V0_R13_REG];
+    rptr[V0_R14_REG] = sptr[V0_R14_REG];
+    rptr[V0_R15_REG] = sptr[V0_R15_REG];
+    sp -= vc * sizeof(v0reg);
+    regs->sys[V0_SP_REG] = sp;
+    regs->sys[V0_PC_REG] = pc;
+
+    return pc;
+}
+
+/* destroy subroutine stack-frame
+ * - return value is in r0
+ * - deallocate local variables
+ * - pop callee save registers r8..r15
+ * - pop caller frame pointer
+ */
+/*
+ * stack after leave
+ * -----------------
+ * retadr <- sp
+ * oldfp
+ * callee save registers r8..r15
+ * local variables
+ */
+static _V0OPFUNC_T
+v0leave(struct v0 *vm, void *ptr)
+{
+    struct v0regs *regs = &vm->regs;
+    v0ureg         pc = regs->sys[V0_PC_REG];
+    v0ureg         fp = regs->sys[V0_FP_REG];
+    v0ureg         sp = regs->sys[V0_SP_REG];
+    v0reg         *fptr = v0adrtoptr(vm, fp);
+    v0reg         *rptr = &regs->gen[V0_R0_REG];
+    v0reg         *sptr;
+    v0reg          vc = regs->gen[V0_VC_REG];
+
+    sp -= vc * sizeof(v0reg);
+    pc += sizeof(struct v0op);
+    v0addspeedcnt(8);
+    sptr = v0adrtoptr(vm, sp);
+    fp = *fptr;
+    rptr[V0_R8_REG] = sptr[0];
+    rptr[V0_R9_REG] = sptr[1];
+    rptr[V0_R10_REG] = sptr[2];
+    sp = fp;
+    rptr[V0_R11_REG] = sptr[3];
+    rptr[V0_R12_REG] = sptr[4];
+    rptr[V0_R13_REG] = sptr[5];
+    sp -= sizeof(v0reg);
+    rptr[V0_R14_REG] = sptr[6];
+    rptr[V0_R15_REG] = sptr[7];
+    regs->sys[V0_FP_REG] = fp;
+    regs->sys[V0_SP_REG] = sp;
+    regs->sys[V0_PC_REG] = pc;
+
+    return pc;
+}
+
+/* return from subroutine;
+ * - pop return value
+ */
+/*
+ * stack after ret
+ * ---------------
+ * r7
+ * ...
+ * r0
+ * argN
+ * ...
+ * arg0 <- sp
+ */
+static _V0OPFUNC_T
+v0ret(struct v0 *vm, void *ptr)
+{
+    struct v0regs *regs = &vm->regs;
+    v0ureg         sp = regs->sys[V0_SP_REG];
+    v0reg         *sptr = v0adrtoptr(vm, sp);
+    v0ureg         pc;
+
+    v0addspeedcnt(16);
+    sp -= sizeof(v0reg);
+    pc = *sptr;
+    regs->sys[V0_SP_REG] = sp;
+    regs->sys[V0_PC_REG] = pc;
+
+    return pc;
+}
+
+/* call epilogue;
+ * - number of return values (0, 1, 2) in op->parm
+ * - get possible return value from r0
+ * - deallocate stack arguments
+ * - restore caller-save registers r0..r7
+ * - set r0 to return value
+ */
+static _V0OPFUNC_T
+v0cel(struct v0 *vm, void *ptr)
+{
+    struct v0regs *regs = &vm->regs;
+    struct v0op   *op = ptr;
+    v0reg         *rptr = &regs->gen[V0_R0_REG];
+    v0ureg         pc = regs->sys[V0_PC_REG];
+    v0ureg         sp = regs->sys[V0_SP_REG];
+    v0reg          ac = rptr[V0_AC_REG];
+    v0reg          cnt = op->parm;
+    v0reg          ret;
+    v0reg          rethi;
+    v0reg         *sptr;
+
+    /* adjust SP past stack arguments */
+    sp += ac;
+    pc += sizeof(struct v0op);
+    /* store r0 and r1 in ret and rethi */
+    sptr = v0adrtoptr(vm, sp);
+    ret = rptr[V0_R0_REG];
+    rethi = rptr[V0_R1_REG];
+    sp += V0_NSAVEREG * sizeof(struct v0op);
+    /* restore caller-save registers */
+    rptr[V0_R0_REG] = sptr[V0_R0_REG];
+    rptr[V0_R1_REG] = sptr[V0_R1_REG];
+    rptr[V0_R2_REG] = sptr[V0_R2_REG];
+    rptr[V0_R3_REG] = sptr[V0_R3_REG];
+    rptr[V0_R4_REG] = sptr[V0_R4_REG];
+    rptr[V0_R5_REG] = sptr[V0_R5_REG];
+    rptr[V0_R6_REG] = sptr[V0_R6_REG];
+    rptr[V0_R7_REG] = sptr[V0_R7_REG];
+    /* restore return value(s) */
+    switch (cnt) {
+        case 2:
+            rptr[V0_R1_REG] = rethi;
+        case 1:
+            rptr[V0_R0_REG] = ret;
+        case 0:
+
+            break;
+    }
+    regs->sys[V0_PC_REG] = pc;
+    regs->sys[V0_PC_REG] = pc;
+
+    return pc;
+}
+
+static _V0OPFUNC_T
+v0ldr(struct v0 *vm, void *ptr)
+{
+    struct v0regs *regs = &vm->regs;
+    struct v0op   *op = ptr;
+    v0ureg         pc = regs->sys[V0_PC_REG];
     v0reg          adr = v0getadr(vm, op, reg1);
     v0reg          src = 0;
     v0ureg         usrc;

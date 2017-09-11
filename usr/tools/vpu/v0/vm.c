@@ -93,11 +93,6 @@ v0printop(struct v0op *op)
 	_v0setop(V0_ARITH, V0_DIV, _v0opadr(div), tab);                 \
 	_v0setop(V0_ARITH, V0_REM, _v0opadr(rem), tab);                 \
 	_v0setop(V0_FLOW, V0_JMP, _v0opadr(jmp), tab);                  \
-	_v0setop(V0_FLOW, V0_CALL, _v0opadr(call), tab);                \
-	_v0setop(V0_FLOW, V0_CPL, _v0opadr(cpl), tab);                  \
-	_v0setop(V0_FLOW, V0_ENTER, _v0opadr(enter), tab);              \
-	_v0setop(V0_FLOW, V0_LEAVE, _v0opadr(leave), tab);              \
-	_v0setop(V0_FLOW, V0_RET, _v0opadr(ret), tab);                  \
 	_v0setop(V0_FLOW, V0_BZ, _v0opadr(bz), tab);                    \
 	_v0setop(V0_FLOW, V0_BNZ, _v0opadr(bnz), tab);                  \
 	_v0setop(V0_FLOW, V0_BC, _v0opadr(bc), tab);                    \
@@ -108,6 +103,11 @@ v0printop(struct v0op *op)
 	_v0setop(V0_FLOW, V0_BLE, _v0opadr(ble), tab);                  \
 	_v0setop(V0_FLOW, V0_BGT, _v0opadr(bgt), tab);                  \
 	_v0setop(V0_FLOW, V0_BGE, _v0opadr(bge), tab);                  \
+	_v0setop(V0_FLOW, V0_CPL, _v0opadr(cpl), tab);                  \
+	_v0setop(V0_FLOW, V0_CALL, _v0opadr(call), tab);                \
+	_v0setop(V0_FLOW, V0_ENTER, _v0opadr(enter), tab);              \
+	_v0setop(V0_FLOW, V0_LEAVE, _v0opadr(leave), tab);              \
+	_v0setop(V0_FLOW, V0_RET, _v0opadr(ret), tab);                  \
 	_v0setop(V0_XFER, V0_LDR, _v0opadr(ldr), tab);                  \
 	_v0setop(V0_XFER, V0_STR, _v0opadr(str), tab);                  \
 	_v0setop(V0_STACK, V0_PSH, _v0opadr(psh), tab);                 \
@@ -299,26 +299,6 @@ v0loop(struct v0 *vm)
             pc = v0jmp(vm, op);
 
             opjmp(vm, pc);
-        v0opcpl:
-            pc = v0cpl(vm, op);
-
-            opjmp(vm, pc);
-        v0opcall:
-            pc = v0call(vm, op);
-
-            opjmp(vm, pc);
-        v0openter:
-            pc = v0enter(vm, op);
-
-            opjmp(vm, pc);
-        v0opleave:
-            pc = v0leave(vm, op);
-
-            opjmp(vm, pc);
-        v0opret:
-            pc = v0ret(vm, op);
-
-            opjmp(vm, pc);
         v0opbz:
             pc = v0bz(vm, op);
 
@@ -357,6 +337,26 @@ v0loop(struct v0 *vm)
             opjmp(vm, pc);
         v0opbge:
             pc = v0bge(vm, op);
+
+            opjmp(vm, pc);
+        v0opcpl:
+            pc = v0cpl(vm, op);
+
+            opjmp(vm, pc);
+        v0opcall:
+            pc = v0call(vm, op);
+
+            opjmp(vm, pc);
+        v0openter:
+            pc = v0enter(vm, op);
+
+            opjmp(vm, pc);
+        v0opleave:
+            pc = v0leave(vm, op);
+
+            opjmp(vm, pc);
+        v0opret:
+            pc = v0ret(vm, op);
 
             opjmp(vm, pc);
         v0opldr:
