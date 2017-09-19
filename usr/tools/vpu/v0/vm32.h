@@ -149,7 +149,7 @@ union v0oparg {
 #endif
 
 /* addressing modes */
-#define V0_REG_ADR       0x00 // (%reg), address in register
+#define V0_REG_ADR       0x00 // %reg, argument in register
 #define V0_DIR_ADR       0x01 // address word follows opcode or is in val-field
 #define V0_NDX_ADR       0x02 // ndx(%reg), ndx in opcode val-field
 #define V0_PIC_ADR       0x03 // PC-relative; position-independent code

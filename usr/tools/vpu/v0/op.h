@@ -91,7 +91,7 @@ v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
     (((op)->adr == V0_REG_ADR)                                          \
      ? ((vm)->regs.gen[(op)->reg])                                      \
      : (((op)->adr == V0_NDX_ADR)                                       \
-        ? ((vm)->regs.gen[(op)->reg] + ((v0reg)(op)->val << (op)->parm))       \
+        ? ((vm)->regs.gen[(op)->reg] + ((v0reg)(op)->val << (op)->parm)) \
         : (((op)->adr == V0_DIR_ADR)                                    \
            ? ((op)->arg[0].adr)                                         \
            : V0_ADR_INVAL)))
@@ -100,7 +100,9 @@ v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
  * V0_REG_ADR -> *reg
  * V0_NDX_ADR -> reg[op->val << op->parm]
  * V0_DIR_ADR -> *(op->arg.adr)
- * V0_PIC_ADR -> pc[op->val << op->parm]
+ * V0_PIC_ADR -> (op->val)                                              \
+ *                ? pc[op->val << op->parm]                             \
+ *                : pc[op->arg.adr]
  */
 #define v0getjmpadr(vm, op, reg)                                        \
     (((op)->adr == V0_REG_ADR)                                          \
@@ -109,7 +111,9 @@ v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
         ? ((vm)->regs.gen[(op)->reg] + ((v0reg)(op)->val << (op)->parm)) \
         : (((op)->adr == V0_DIR_ADR)                                    \
            ? ((op)->arg[0].adr)                                         \
-           : ((vm)->regs.gen[V0_PC_REG] + ((v0reg)(op)->val << (op)->parm)))))
+           : (((op)->val)                                               \
+              ? ((vm)->regs.gen[V0_PC_REG] + ((v0reg)(op)->val << (op)->parm)) \
+              : ((vm)->regs.gen[V0_PC_REG] + (v0reg)(op)->arg.adr)))))
 
 #define v0getioport(op)                                                 \
     ((op)->val)
