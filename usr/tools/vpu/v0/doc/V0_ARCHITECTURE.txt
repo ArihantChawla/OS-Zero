@@ -1,9 +1,20 @@
 Valhalla Processor Unit 0 - Machine Architecture
 ------------------------------------------------
 
+Preface
+-------
+
 Valhalla 0 is a processor architecture designed for experimenting with
 implementing new development tools as well as teaching and learning machine-
 level programming.
+
+Valhalla was designed with simplicity in mind. It's RISC-centric with a few
+additions to make the life of compiler implementors easier. The goal is to be
+human-programmable in assembly; the mission is for it to be usable for teaching
+and learning assembly programming on a system resembling common existing
+microprocessors.
+
+The instruction set design was heavily inspired by the C programming language.
 
 Addressing Modes
 ----------------
