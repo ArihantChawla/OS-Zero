@@ -1,0 +1,76 @@
+Valhalla Processor Unit 0 - Machine Architecture
+------------------------------------------------
+
+Valhalla 0 is a processor architecture designed for experimenting with
+implementing new development tools as well as teaching and learning machine-
+level programming.
+
+Instruction Set
+---------------
+
+Addressing Modes
+----------------
+
+V0_REG_ADR      - register argument
+V0_DIR_ADR      - direct address, i.e. memory word following the opcode
+V0_NDX_ADR      - indexed address, base in register, index in val- or argument
+V0_PIC_ADR      - PC-relative, if val is non-zero val(%pc),
+                  otherwise op->val(%pc) (for branch-instructions only)
+
+VA_REG_ADR
+----------
+
+The instruction argument is in a register. This is the most common operand
+type.
+
+VA_DIR_ADR
+----------
+
+The argument is either in the val-field of the opcode or the word following the
+opcode in memory (depending on the instruction).
+
+V0_NDX_ADR
+----------
+
+The argument is located so that the register contains the base address whereas
+the word following the opcode is the index. For example, the C statement
+
+        val = ptr[NDX];
+
+Would translate to
+
+        ptr[op->val << op->parm];
+
+Notice that the parm-field of the opcode is used as a scaling shift count for
+the address; for 8-bit bytes, this scaling-factor is 0.
+
+V0_PIC_ADR
+----------
+
+This PC-relative (PC is the program counter aka instruction pointer register)
+was added to aid translating position independent code. In case the val-field
+of the opcode is not zero, the address will be calculated as
+
+pc[op->val << op->parm] -
+
+if the val-field is zero, the address will be
+
+pc[op->arg.ndx];
+
+Instruction Operands
+--------------------
+
+As Valhalla 0 is a load-store architecture, operands for most instructions are
+in registers with the exceptions of certain memory- and stack-modification
+instructions dealing with memory address arguments.
+
+The following is a list of descriptions for different argument types.
+
+r  - value in register
+m  - memory address
+i  - immediate argument; may be stored in the val-field of the instruction or
+     an extra machine-word following the instruction in memory
+
+NOT     r1                 bitwise negation (reverse all bits)
+AND     ri1, r2            bitwise and
+OR      ri1, r2            bitwise exclusive or
