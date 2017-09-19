@@ -113,7 +113,7 @@ v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
            ? ((op)->arg[0].adr)                                         \
            : (((op)->val)                                               \
               ? ((vm)->regs.gen[V0_PC_REG] + ((v0reg)(op)->val << (op)->parm)) \
-              : ((vm)->regs.gen[V0_PC_REG] + (v0reg)(op)->arg.adr)))))
+              : ((vm)->regs.gen[V0_PC_REG] + (v0reg)(op)->arg[0].ndx)))))
 
 #define v0getioport(op)                                                 \
     ((op)->val)

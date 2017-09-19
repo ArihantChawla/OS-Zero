@@ -129,7 +129,7 @@ struct v0 {
  */
 union v0oparg {
     uint32_t adr;  // memory address
-    uint32_t ndx;  // offset
+    int32_t  ndx;  // offset
     uint32_t u32;  // unsigned 32-bit integer
     int32_t  i32;  // signed 32-bit integer
     uint16_t u16;  // unsigned 16-bit integer
