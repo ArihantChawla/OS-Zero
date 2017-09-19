@@ -87,7 +87,7 @@
 /* V0_BRANCH */
 /*
  * - JMP   rip (immediate address in following union v0oparg);
- *             PC-relative offset with DIR_ADR
+ *             PC-relative offset with DIR_PIC
  * - BZ    rni (index in val)
  * - BNZ   rni
  * - BC    rni
@@ -130,7 +130,7 @@
 
 /* V0_XFER */
 /*
- * - LDR rni, r
+ * - LDR rnim, r
  * - STR rni, m
  */
 #define V0_LDR     0x00  // load register

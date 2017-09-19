@@ -5,9 +5,6 @@ Valhalla 0 is a processor architecture designed for experimenting with
 implementing new development tools as well as teaching and learning machine-
 level programming.
 
-Instruction Set
----------------
-
 Addressing Modes
 ----------------
 
@@ -57,6 +54,9 @@ if the val-field is zero, the address will be
 
 pc[op->arg.ndx];
 
+Instruction Set
+---------------
+
 Instruction Operands
 --------------------
 
@@ -71,6 +71,89 @@ m  - memory address
 i  - immediate argument; may be stored in the val-field of the instruction or
      an extra machine-word following the instruction in memory
 
-NOT     r1                 bitwise negation (reverse all bits)
-AND     ri1, r2            bitwise and
-OR      ri1, r2            bitwise exclusive or
+NOT     r1              bitwise negation (reverse all bits)
+AND     ri1, r2         bitwise and
+OR      ri1, r2         bitwise or
+XOR     ri1, r2         bitwise exclusive or
+
+NOTE: the shift instructions take their immediate argument in opcode val-field
+SHL     ri1, r2         shift left (immediate value in val-field)
+SHR     ri1, r2         shift right
+SHR     ri1, r2         shift right arithmetic (fill with sign)
+
+NOTE: for arithmetic-unit instructions immediate argument follows instruction
+INC     r1              increment register by one
+DEC     r1              decrement register by one
+ADD     ri1, r2         add argument 1 to register 2
+ADC	ri1, r2         add argument 1 to register 2, set carry-bit
+SUB	ri1, r2         subtract argument 1 from register 2
+SBB	ri1, r2         subtract argument 1 from register 2, set carry-bit
+CMP	ri1, r2         compare argument 1 with register 2, set flag-bits
+MUL	ri1, r2         multiply register 2 by argument 1
+DIV	ri1, r2         divide register 2 by argument 1
+REM	ri1, r2         return remainder of register 2 divided by argument 1
+
+NOTE: branch instructions support following addressing modes:
+- r: V0_REG_ADR    target address in register 1
+- n: V0_NDX_ADR    reg1[op->val << op->parm]
+- i: V0_DIR_ADR    op->arg[0].adr (32-bit address follows opcode)
+- p: V0_PIC_ADR    (op->val) ? pc[op->val << op->parm] : pc[op->arg[0].ndx]
+                   - if op->val is non-zero, index pc with it, scale by op->parm
+                     - otherwise, index pc with 32-bit index following opcode
+JMP     rnip1
+BZ      rnip1
+BNZ     rnip1
+BC      rnip1
+BNC     rnip1
+BO      rnip1
+BNO     rnip1
+BEQ     rnip1
+BLT     rnip1
+BLE     rnip1
+BGT     rnip1
+BGE     rnip1
+
+NOTES:
+- CPL takes two arguments
+  - r1 is count of call arguments in p2->args
+  - p2 is address of struct { v0ureg vc; v0reg *args; }
+    - vc is number of _callee_ automatic/stack variables
+    - args is base address of table of r1 arguments
+      - up to 6 stored in registers r0..r5
+      - the rest on stack as if pushed in right-to-left order
+      - r6 will be set to r1 (argument count)
+      - r7 will be set to vc (automatic/stack variable count)
+- CALL takes arguments like the branch instructions (see above)
+CPL     r1, p2              [function] call prologue
+CALL    rnip1               trigger function call (pushes return address)
+ENTER   N/A                 create sub-routine stack frame
+LEAVE   N/A                 destroy sub-routine stack frame
+RET     N/A                 return from sub-routine
+
+NOTES:
+- the non-register argument for LDR or STR may be
+  - register
+  - indexed address reg[op->val << op->parm]
+  - direct address op->arg[0].adr (32-bit address follows opcode)
+LDR     rnim1, r2
+STR     r1, rnim2
+
+NOTES
+-----
+- the argument for PSH may be
+  - register
+  - immediate value op->arg[0].i32 (follows opcode)
+- the argument for POP must be a register
+- PSHA and POPA take no argument
+PSH    ri1
+POP    r1
+PSHA   N/A
+POPA   N/A
+
+NOTES
+-----
+- the first argument (port) of IOR or IOW is stored in the val-field of opcode
+- the second argument must be a register
+IOR     p, r            p is port number in val-field)
+IOW     p, r
+

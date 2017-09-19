@@ -51,10 +51,10 @@ v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
     (((op)->adr == V0_REG_ADR)                                          \
      ? ((vm)->regs.gen[(op)->reg1])                                     \
      : (((op)->adr == V0_DIR_ADR)                                       \
-        ? ((op)->arg[0].i32 & (1 << ((op)->parm * CHAR_BIT)))           \
+        ? ((op)->arg[0].i32)                                            \
         : V0_ADR_INVAL))
 
-/* count for shl, ahr, sar */
+/* count for shl, shr, sar */
 #define v0getcnt(vm, op)                                                \
     (((op)->adr == V0_DIR_ADR)                                          \
      ? ((op)->val)                                                      \
@@ -110,7 +110,7 @@ v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
      : (((op)->adr == V0_NDX_ADR)                                       \
         ? ((vm)->regs.gen[(op)->reg] + ((v0reg)(op)->val << (op)->parm)) \
         : (((op)->adr == V0_DIR_ADR)                                    \
-           ? ((op)->arg[0].adr)                                         \
+           ? ((v0reg)(op)->arg[0].adr)                                  \
            : (((op)->val)                                               \
               ? ((vm)->regs.gen[V0_PC_REG] + ((v0reg)(op)->val << (op)->parm)) \
               : ((vm)->regs.gen[V0_PC_REG] + (v0reg)(op)->arg[0].ndx)))))
@@ -945,7 +945,7 @@ v0leave(struct v0 *vm, void *ptr)
 }
 
 /* return from subroutine;
- * - pop return value
+ * - pop return address
  */
 /*
  * stack after ret
