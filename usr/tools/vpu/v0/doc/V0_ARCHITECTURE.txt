@@ -14,13 +14,13 @@ V0_NDX_ADR      - indexed address, base in register, index in val- or argument
 V0_PIC_ADR      - PC-relative, if val is non-zero val(%pc),
                   otherwise op->val(%pc) (for branch-instructions only)
 
-VA_REG_ADR
+V0_REG_ADR
 ----------
 
 The instruction argument is in a register. This is the most common operand
 type.
 
-VA_DIR_ADR
+V0_DIR_ADR
 ----------
 
 The argument is either in the val-field of the opcode or the word following the
@@ -57,9 +57,6 @@ pc[op->arg.ndx];
 Instruction Set
 ---------------
 
-Instruction Operands
---------------------
-
 As Valhalla 0 is a load-store architecture, operands for most instructions are
 in registers with the exceptions of certain memory- and stack-modification
 instructions dealing with memory address arguments.
@@ -68,20 +65,26 @@ The following is a list of descriptions for different argument types.
 
 r  - value in register
 m  - memory address
+n  - indexed address
 i  - immediate argument; may be stored in the val-field of the instruction or
      an extra machine-word following the instruction in memory
+p  - PC-relative (position-independent)
 
 NOT     r1              bitwise negation (reverse all bits)
 AND     ri1, r2         bitwise and
 OR      ri1, r2         bitwise or
 XOR     ri1, r2         bitwise exclusive or
 
-NOTE: the shift instructions take their immediate argument in opcode val-field
+NOTE
+----
+- the shift instructions take their immediate argument in opcode val-field
 SHL     ri1, r2         shift left (immediate value in val-field)
 SHR     ri1, r2         shift right
-SHR     ri1, r2         shift right arithmetic (fill with sign)
+SAR     ri1, r2         shift right arithmetic (fill with sign)
 
-NOTE: for arithmetic-unit instructions immediate argument follows instruction
+NOTE
+----
+- for arithmetic-unit instructions immediate argument follows instruction
 INC     r1              increment register by one
 DEC     r1              decrement register by one
 ADD     ri1, r2         add argument 1 to register 2
@@ -93,7 +96,9 @@ MUL	ri1, r2         multiply register 2 by argument 1
 DIV	ri1, r2         divide register 2 by argument 1
 REM	ri1, r2         return remainder of register 2 divided by argument 1
 
-NOTE: branch instructions support following addressing modes:
+NOTE
+----
+- branch instructions support following addressing modes:
 - r: V0_REG_ADR    target address in register 1
 - n: V0_NDX_ADR    reg1[op->val << op->parm]
 - i: V0_DIR_ADR    op->arg[0].adr (32-bit address follows opcode)
@@ -113,7 +118,8 @@ BLE     rnip1
 BGT     rnip1
 BGE     rnip1
 
-NOTES:
+NOTES
+-----
 - CPL takes two arguments
   - r1 is count of call arguments in p2->args
   - p2 is address of struct { v0ureg vc; v0reg *args; }
@@ -130,7 +136,8 @@ ENTER   N/A                 create sub-routine stack frame
 LEAVE   N/A                 destroy sub-routine stack frame
 RET     N/A                 return from sub-routine
 
-NOTES:
+NOTES
+-----
 - the non-register argument for LDR or STR may be
   - register
   - indexed address reg[op->val << op->parm]
