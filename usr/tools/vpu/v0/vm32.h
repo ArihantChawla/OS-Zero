@@ -33,6 +33,18 @@ struct v0iofuncs {
 #define v0ofset(vm)      ((vm)->regs.sys[V0_MSW_REG] & V0_MSW_OF_BIT)
 #define v0ifset(vm)      ((vm)->regs.sys[V0_MSW_REG] & V0_MSW_IF_BIT)
 
+#if (__BYTE_ORDER == __LITTLE_ENDIAN)
+#define v0setloval(op, val)                                             \
+    ((op)->val = ((op)->val & 0x3e) | (val))
+#define v0sethival(op, val)                                             \
+    ((op)->val = ((op)->val & 0x1f) | ((val) << 5))
+#else
+#define v0setloval(op, val)                                             \
+    ((op)->val = ((op)->val & 0x1f) | ((val) << 5))
+#define v0sethival(op, val)                                             \
+    ((op)->val = ((op)->val & 0x3e) | (val))
+#endif
+
 #define V0_PAGE_SIZE     4096
 #define V0_TEXT_ADR      V0_PAGE_SIZE
 
@@ -60,7 +72,7 @@ struct v0iofuncs {
 #define V0_R14_REG       0x0e
 #define V0_R15_REG       0x0f
 #define V0_NGENREG       16 // number of registers in group (general, system)
-#define V0_NSAVEREG      8  // caller saves r0..r7
+#define V0_NSAVEREG      8  // caller saves r0..r7, callee r8..r15
 /* system register IDs */
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #define V0_RET_LO        0x00 // [dual-word] return value register, low word

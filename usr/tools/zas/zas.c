@@ -877,6 +877,12 @@ zasgettoken(char *str, char **retptr)
             if (zasgetvalue(str, &val, &str)) {
                 token1->type = ZASTOKENIMMED;
                 token1->val = val;
+                while (isspace(*str)) {
+                    str++;
+                }
+                if (*str == ',') {
+                    str++;
+                }
             } else {
                 fprintf(stderr, "invalid immediate %s\n", str);
 

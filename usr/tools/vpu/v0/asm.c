@@ -14,9 +14,11 @@ extern struct v0    *v0vm;
 
 static struct zasop *zasoptab[256];
 static long          zasvalbits[V0_NINST_MAX / (sizeof(long) * CHAR_BIT)];
-static long          zasvalinit = 0;
+static long          zasrngbits[V0_NINST_MAX / (sizeof(long) * CHAR_BIT)];
+static long          zasarginit = 0;
 
 #define v0insthasval(code) (bitset(zasvalbits, code))
+#define v0insthasrng(code) (bitset(zasrngbits, code))
 
 /*
  * operation info structure addresses are stored in a multilevel table
@@ -152,12 +154,14 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
 //    uint8_t           len = token->data.inst.op == ZASNOP ? 1 : 4;
     uint8_t           len = sizeof(zasop_t);
 
-    if (!zasvalinit) {
+    if (!zasarginit) {
         setbit(zasvalbits, v0mkopid(V0_SHIFT, V0_SHL));
         setbit(zasvalbits, v0mkopid(V0_SHIFT, V0_SHR));
         setbit(zasvalbits, v0mkopid(V0_SHIFT, V0_SAR));
         setbit(zasvalbits, v0mkopid(V0_IO, V0_IOR));
         setbit(zasvalbits, v0mkopid(V0_IO, V0_IOW));
+        setbit(zasrngbits, v0mkopid(V0_STACK, V0_PSHM));
+        setbit(zasrngbits, v0mkopid(V0_STACK, V0_POPM));
     }
     while (adr < opadr) {
 #if (ZAS32BIT)
@@ -246,8 +250,19 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                     break;
                 case ZASTOKENIMMED:
                     val = token1->data.value.val;
+                    inst = v0getinst(op->code);
                     op->adr = V0_DIR_ADR;
-                    if (v0insthasval(op->code)) {
+                    if (v0insthasrng(inst)) {
+                        v0setloval(op, val);
+                        token1 = token1->next;
+                        if (token1->type != ZASTOKENVALUE) {
+                            fprintf(stderr, "invalid range argument\n");
+
+                            exit(1);
+                        }
+                        val = token1->data.value.val;
+                        v0sethival(op, val);
+                    } else if (v0insthasval(op->code)) {
                         op->val = val;
                     } else {
                         switch (token->data.value.size) {

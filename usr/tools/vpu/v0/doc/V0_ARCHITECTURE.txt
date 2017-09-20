@@ -162,11 +162,12 @@ NOTES
   - register
   - immediate value op->arg[0].i32 (follows opcode)
 - the argument for POP must be a register
-- PSHA and POPA take no argument
+- PSHM and POPM take two arguments in 5-bit op->val low- and high-fields
+  - lo and hi define the range of registers to be pushed
 PSH    ri1
 POP    r1
-PSHA   N/A
-POPA   N/A
+PSHM   lo, hi
+POPM   lo, hi
 
 NOTES
 -----

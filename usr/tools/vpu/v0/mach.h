@@ -122,19 +122,19 @@
  * - LEAVE ri  (argument count in val-field)
  * - RET   ri  (immediate argument count in val)
  */
-#define V0_CPL     0x01  // call prologue
-#define V0_CALL    0x02  // call subroutine
-#define V0_ENTER   0x03  // create stack frame for subroutine
-#define V0_LEAVE   0x04  // destroy stack frame before RET from subroutine
-#define V0_RET     0x05  // return from subroutine
+#define V0_CPL     0x01 // call prologue
+#define V0_CALL    0x02 // call subroutine
+#define V0_ENTER   0x03 // create stack frame for subroutine
+#define V0_LEAVE   0x04 // destroy stack frame before RET from subroutine
+#define V0_RET     0x05 // return from subroutine
 
 /* V0_XFER */
 /*
  * - LDR rnim, r
  * - STR rni, m
  */
-#define V0_LDR     0x00  // load register
-#define V0_STR     0x01  // store into memory
+#define V0_LDR     0x00 // load register
+#define V0_STR     0x01 // store into memory
 
 /* V0_STACK */
 /*
@@ -143,10 +143,14 @@
  * PSHA
  * POPA
  */
-#define V0_PSH     0x00  // push to stack
-#define V0_POP     0x01  // pop from stack into register
-#define V0_PSHA    0x04  // push all general-purpose registers
-#define V0_POPA    0x05  // pop all general-purpose registers
+#define V0_PSH     0x00 // push to stack
+#define V0_POP     0x01 // pop from stack into register
+#define V0_PSHM    0x02 // push range of registers
+#define V0_POPM    0x03 // pop range of registers
+#if 0
+#define V0_PSHA    0x04 // push all general-purpose registers
+#define V0_POPA    0x05 // pop all general-purpose registers
+#endif
 
 /* V0_IO */
 /*
