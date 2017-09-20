@@ -4,6 +4,7 @@
 /* VIRTUAL MACHINE */
 
 #include <v0/conf.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <endian.h>
 #include <zero/cdefs.h>
@@ -118,6 +119,8 @@ struct v0 {
     v0memflg         *membits;
     char             *mem;
     struct v0iofuncs *iovec;
+    FILE             *vtdfp;
+    char             *vtdpath;
     struct divuf16   *divu16tab;
 };
 
@@ -183,6 +186,7 @@ struct v0op {
 #define V0_MEM_READ      0x04
 #define V0_MEM_PRESENT   0x08
 
+#define V0_VTD_PATH      "vtd.txt"
 /* predefined I/O ports */
 #define V0_STDIN_PORT    0 // keyboard input
 #define V0_STDOUT_PORT   1 // console or framebuffer output

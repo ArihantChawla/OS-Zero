@@ -1,6 +1,7 @@
 #include <v0/conf.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <zero/fastudiv.h>
 #include <v0/mach.h>
 #include <v0/vm32.h>
@@ -136,7 +137,23 @@ void
 v0initio(struct v0 *vm)
 {
     struct v0iofuncs *vec = vm->iovec;
+    char             *vtd = vm->vtdpath;
+    FILE             *fp;
 
+    if (!vtd) {
+        vtd = strdup(V0_VTD_PATH);
+        if (!vtd) {
+            fprintf(stderr, "V0: failed to duplicate VTD-path\n");
+
+            exit(1);
+        }
+    }
+    fp = fopen(vtd, "a+");
+    if (!fp) {
+        perror("V0: failed to open VTD-file");
+
+        exit(errno);
+    }
     vec[V0_STDIN_PORT].rdfunc = v0readkbd;
     vec[V0_STDOUT_PORT].wrfunc = v0writetty;
     vec[V0_STDERR_PORT].wrfunc = v0writetty;

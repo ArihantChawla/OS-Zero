@@ -56,3 +56,21 @@ v0readtmr(struct v0 *vm, uint16_t port, uint8_t reg)
     return;
 }
 
+void
+v0writevtd(struct v0 *vm, uint16_t port, uint8_t reg)
+{
+    int   ch = vm->regs.gen[reg] & 0xff;
+    FILE *fp = vm->vtdfp;
+    int   ret;
+
+    ret = fputc(ch, fp) == EOF;
+    if (ret != EOF) {
+
+        return;
+    }
+    fprintf(stderr, "V0: failed to print to VTD-file %s\n",
+            vm->vtdpath);
+
+    exit(1);
+}
+
