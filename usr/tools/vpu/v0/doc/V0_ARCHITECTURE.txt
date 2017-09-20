@@ -59,11 +59,11 @@ This PC-relative (PC is the program counter aka instruction pointer register)
 was added to aid translating position independent code. In case the val-field
 of the opcode is not zero, the address will be calculated as
 
-pc[op->val << op->parm] -
+        pc[op->val << op->parm] -
 
 if the val-field is zero, the address will be
 
-pc[op->arg.ndx];
+        pc[op->arg.ndx];
 
 Instruction Set
 ---------------

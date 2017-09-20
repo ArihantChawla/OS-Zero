@@ -184,12 +184,13 @@ struct v0op {
 #define V0_MEM_PRESENT   0x08
 
 /* predefined I/O ports */
-#define V0_STDIN_PORT    0       // keyboard input
-#define V0_STDOUT_PORT   1       // console or framebuffer output
-#define V0_STDERR_PORT   2       // console or framebuffer output
-#define V0_RTC_PORT      3       // real-time clock
-#define V0_TMR_PORT      4       // high-resolution timer for profiling
-#define V0_MOUSE_PORT    5       // mouse input
+#define V0_STDIN_PORT    0 // keyboard input
+#define V0_STDOUT_PORT   1 // console or framebuffer output
+#define V0_STDERR_PORT   2 // console or framebuffer output
+#define V0_RTC_PORT      3 // real-time clock
+#define V0_TMR_PORT      4 // high-resolution timer for profiling
+#define V0_MOUSE_PORT    5 // mouse input
+#define V0_VTD_PORT      6 // virtual tape drive
 
 /* framebuffer graphics interface */
 #define V0_FB_BASE       (3UL * 1024 * 1024 * 1024)      // base address
