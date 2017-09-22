@@ -16,6 +16,9 @@ level.
 Before we get into the translation, let's take a closer look at the anatomy of
 a typical program compiled and assembled from C code.
 
+PROGRAM ANATOMY
+---------------
+
 Code Segments
 -------------
 
@@ -67,7 +70,7 @@ space. The usual arrangement is for this segment to grow down address-wise. This
 is where function-internal automatic variables, function-call stack-frames, and
 related data live in.
 
-Program Run Model
+PROGRAM RUN MODEL
 -----------------
 
 Machine Registers
@@ -84,4 +87,10 @@ Stack Frames
 - caller frame pointer
 - callee-save registers
 - automatic variables
+
+PROGRAM TRANSLATION
+-------------------
+- crt0
+- variables/stack/registers
+- flow control; loops, branches, switch, jump tables, function calls
 
