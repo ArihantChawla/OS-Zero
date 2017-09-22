@@ -8,6 +8,8 @@
 #include <v0/op.h>
 #include <v0/vm.h>
 
+extern void zasinit(void);
+
 #if defined(__GNUC__)
 #define _v0opadr(x) &&v0op##x
 #define _V0OPTAB_T  void *
@@ -210,6 +212,7 @@ v0init(struct v0 *vm)
                 free(vm);
             }
         }
+        vm->mem = mem;
         vm->membits = ptr;
         v0initseg(vm, V0_PAGE_SIZE, vmnpg,
                   V0_MEM_PRESENT | V0_MEM_READ | V0_MEM_WRITE | V0_MEM_EXEC);
@@ -439,6 +442,7 @@ main(int argc, char *argv[])
 
     if (vm) {
         v0getopt(vm, argc, argv);
+        zasinit();
         if (!vm->regs.sys[V0_PC_REG]) {
             vm->regs.sys[V0_PC_REG] = V0_TEXT_ADR;
         }

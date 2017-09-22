@@ -214,7 +214,8 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
 
                                 break;
                             default:
-                                fprintf(stderr, "invalid-size immediate value\n");
+                                fprintf(stderr,
+                                        "invalid-size immediate value\n");
 
                                 exit(1);
                         }
@@ -242,7 +243,8 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                         op->adr = V0_REG_ADR;
                         op->reg1 = token1->data.reg;
                     } else {
-                        fprintf(stderr, "indirect addressing requires a register\n");
+                        fprintf(stderr,
+                                "indirect addressing requires a register\n");
 
                         exit(1);
                     }
@@ -256,7 +258,8 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                         v0setloval(op, val);
                         token1 = token1->next;
                         if (token1->type != ZASTOKENVALUE) {
-                            fprintf(stderr, "invalid range argument\n");
+                            fprintf(stderr,
+                                    "invalid range argument\n");
 
                             exit(1);
                         }
@@ -279,7 +282,8 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
 
                                 break;
                             default:
-                                fprintf(stderr, "invalid-size immediate value\n");
+                                fprintf(stderr,
+                                        "invalid-size immediate value\n");
 
                                 exit(1);
                         }
@@ -304,7 +308,8 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
 
                     break;
                 default:
-                    fprintf(stderr, "invalid argument 1 of type %lx\n", token1->type);
+                    fprintf(stderr,
+                            "invalid argument 1 of type %lx\n", token1->type);
                     zasprinttoken(token1);
 
                     exit(1);
@@ -321,7 +326,8 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                 case ZASTOKENVALUE:
                     op->adr = V0_DIR_ADR;
                     if (inst != V0_STR) {
-                        fprintf(stderr, "invalid address operand for instruction\n");
+                        fprintf(stderr,
+                                "invalid address operand for instruction\n");
 
                         exit(1);
                     }
@@ -348,7 +354,8 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                         op->adr = V0_REG_ADR;
                         op->reg2 = token2->data.reg;
                     } else {
-                        fprintf(stderr, "indirect addressing requires a register\n");
+                        fprintf(stderr,
+                                "indirect addressing requires a register\n");
 
                         exit(1);
                     }
@@ -377,7 +384,8 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
 
                     break;
                 default:
-                    fprintf(stderr, "invalid argument 2 of type %lx\n", token2->type);
+                    fprintf(stderr,
+                            "invalid argument 2 of type %lx\n", token2->type);
                     zasprinttoken(token2);
 
                     exit(1);
