@@ -8,7 +8,7 @@
 #include <v0/op.h>
 #include <v0/vm.h>
 
-extern void zasinit(void);
+extern void vasinit(void);
 
 #if defined(__GNUC__)
 #define _v0opadr(x) &&v0op##x
@@ -442,7 +442,7 @@ main(int argc, char *argv[])
 
     if (vm) {
         v0getopt(vm, argc, argv);
-        zasinit();
+        vasinit();
         if (!vm->regs.sys[V0_PC_REG]) {
             vm->regs.sys[V0_PC_REG] = V0_TEXT_ADR;
         }

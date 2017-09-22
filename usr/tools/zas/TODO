@@ -1,4 +1,0 @@
-- make the assembler interface with a linker to produce object files
-  - devise object file format for virtual architectures, use ELF for real ones
-
-

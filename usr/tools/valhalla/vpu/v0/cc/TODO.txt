@@ -1,0 +1,81 @@
+zcc - c99 compiler
+------------------
+
+This file contains some early ideas for a compiler project.
+
+Zero C Compiler Ideas
+---------------------
+
+compiler pipeline
+-----------------
+- zcctokenize(); tokenizer
+- zccpreproc(); preprocessor
+- zcclex(); lexer
+- zccopt(); optimiser
+- zcclink(); linker
+- loader
+
+preprocessor
+------------
+- combine input files (#include etc.)
+- expand macros
+  - constant expressions
+  - concatenation and stringification
+  - textual replacement of macro invokations with the body
+- output preprocessed code to the tokeniser
+
+compiler
+--------
+
+tokeniser
+---------
+- tokenize input
+  - literals
+	- char; starts with '
+	- string; starts with "
+	- numeric; starts with digits
+  - keywords
+	- start with _ or alphabetic
+  - typedef
+  - macros
+  - functions
+  - symbols
+    - mark the ones to resolve for the linker
+    (- resolve when encountered; link)
+  - expressions
+    - parse; use Dijkstra's shunting yard algorithm to transform to postfix
+      for easy evaluation
+    - partial implementation in ZPC
+    - eval; evaluate [constant] expressions
+- build token list for the lexer
+
+lexer
+-----
+- build a representation of syntax; parse-tree or something
+- statements
+- expressions
+- function calls
+
+lookup structures
+-----------------
+- hash-tables; symbol to address or value
+
+code modules
+------------
+
+zcc
+---
+- preprocessor + compiler functionality
+
+tok
+---
+- tokeniser
+
+lex
+---
+- lexical analysis
+
+hash
+----
+- lookup tables
+
