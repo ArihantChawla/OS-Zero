@@ -15,7 +15,7 @@ extern vasmemadr_t vastokalntab[VASNTOKEN];
 void
 vasinitalign(void)
 {
-	vasmemadr_t aln = sizeof(vasword_t);
+    vasmemadr_t aln = sizeof(vasword_t);
 
     vastokalntab[VASTOKENVALUE] = aln;
     vastokalntab[VASTOKENLABEL] = aln;

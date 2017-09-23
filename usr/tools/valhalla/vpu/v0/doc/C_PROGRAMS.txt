@@ -92,5 +92,126 @@ PROGRAM TRANSLATION
 -------------------
 - crt0
 - variables/stack/registers
-- flow control; loops, branches, switch, jump tables, function calls
+- flow control; conditionals, loops, branches, switch/jump tables,
+  function calls
+
+FLOW CONTROL
+------------
+
+Loops
+-----
+
+These example loops do a simple operation of copying 64 memory values from the
+region pointed to by src to the one pointed to by dest.
+
+for Loop
+--------
+
+C Syntax
+--------
+
+lim = 64;
+for ( ndx = 0 ; ndx < lim ; ndx++) {
+    dest[ndx] = src[ndx];
+}
+
+Assembly Syntax
+---------------
+
+    xor    %r0, %r0             ; ndx = 0;
+    ldr    $64, %r1             ; lim = 64;
+_loop:
+    cmp    %r0, %r1             ; ndx - lim
+    jeq    _done                ; ndx == lim
+    ldr    %r0(%r2), %r4        ; tmp = src[ndx];
+    str    %r4, %r0(%r3)        ; dest[ndx] = tmp;
+    inc    %r0                  ; ndx++;
+    jmp    _loop                ; loop again
+_done:
+    ; REST OF FUNCTION
+
+while Loop
+----------
+
+C Syntax
+--------
+
+lim = 64;
+ndx = 0;
+while (lim--) {
+    dest[lim] = src[lim];
+}
+
+Assembly Syntax
+---------------
+
+    xor    %r0, %r0             ; ndx = 0;
+    ldr    $64, %r1             ; lim = 64;
+_loop:
+    cmp    $0, %r1              ; lim - 0
+    dec    %r1                  ; ndx--;
+    jeq    _done                ; ndx == lim
+    ldr    %r1(%r2), %r4        ; tmp = src[lim];
+    str    %r4, %r1(%r3)        ; dest[lim] = tmp;
+    jmp    _loop                ; loop again
+_done:
+    ; REST OF FUNCTION
+
+do-while Loop
+-------------
+
+C Syntax
+--------
+
+ndx = 63;
+do {
+   dest[ndx] = src[ndx];
+} while (ndx--);
+
+Assembly Syntax
+---------------
+
+    xor    %r0, %r0             ; ndx = 0;
+_loop:
+    ; LOOP BODY
+    ldr    %r0(%r2), %r4        ; tmp = src[ndx];
+    str    %r4, %r0(%r3)        ; dest[ndx] = tmp;
+    dec    %r1                  ; ndx--;
+    cmp    $0, %r1              ; lim - 0
+    jne    _loop                ; loop if lim != 0
+    ; REST OF FUNCTION
+
+Switch Statement
+----------------
+
+This switch statement demonstrates a Duff's device to set 64 contiguous memory
+locations starting from the one pointed to by dest to 0 (zero). In effect, this
+is similar to unrolling a loop by 8 steps.
+
+val = 64;
+while (val) {
+    switch (val) {
+        default:
+        case 8:
+            dest[7] = zero;
+        case 7:
+            dest[6] = zero;
+        case 6:
+            dest[5] = zero;
+        case 5:
+            dest[4] = zero;
+        case 4:
+            dest[3] = zero;
+        case 3:
+            dest[2] = zero;
+        case 2:
+            dest[1] = zero;
+        case 1:
+            dest[0] = zero;
+        case 0:
+
+            break;
+    }
+    val -= 4;
+}
 
