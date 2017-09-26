@@ -41,11 +41,11 @@ V0_NDX_ADR
 ----------
 
 The argument is located so that the register contains the base address whereas
-the word following the opcode is the index. For example, the C statement
+the val-field is the index. For example, the C statement
 
         val = ptr[NDX];
 
-Would translate to
+could translate to
 
         ptr[op->val << op->parm];
 
@@ -63,7 +63,7 @@ of the opcode is not zero, the address will be calculated as
 
 if the val-field is zero, the address will be
 
-        pc[op->arg.ndx];
+        pc[op->arg[0].ndx];
 
 Instruction Set
 ---------------

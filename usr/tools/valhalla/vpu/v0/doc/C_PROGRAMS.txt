@@ -1,6 +1,10 @@
 C Programs and Their Translation to Assembly
 --------------------------------------------
 
+This paper was written to give readers some insight as to how C [and perhaps
+other high-level programs] can be translated to symbolic machine language
+(assembly) and then [quite-trivially] assembled to machine code.
+
 Preface
 -------
 
@@ -94,6 +98,94 @@ PROGRAM TRANSLATION
 - variables/stack/registers
 - flow control; conditionals, loops, branches, switch/jump tables,
   function calls
+
+C OPERATORS
+-----------
+
+One of the most beautiful things about C is its close, typically almost 1-to-1
+mapping to underlying assembly/machine code. I'm about to illustrate this using
+my new Valhalla Processor 0 aka V0 [virtual] architecture's instruction set.
+
+NOT    ~
+AND    &
+OR     |
+XOR    ^
+
+SHL    <<
+SHR    >>       NOTE: only specified for unsigned
+
+INC    ++
+DEC    --
+ADD    +
+SUB    -
+MUL    *
+DIV    /
+REM    %
+
+JMP    goto
+BZ     if (!x)
+BNZ    if (x)
+BEQ    if (x == y)
+BLT    if (x < y)
+BLE    if (x <= y)
+BGT    if (x > y)
+BGE    if (x >= y)
+
+CALL   f()
+RET    return
+
+LDR    r2 = arg1;
+STR    *arg2 = ri1;
+
+MEMORY ADDRESSING
+-----------------
+
+Register Address
+----------------
+
+In this addressing mode, the source or destination memory address is stored in
+a register operand.
+
+Examples
+--------
+
+*rp = val;      // STR, destination register has address
+reg = *rp;      // LDR, source register has address
+
+Direct Address
+--------------
+
+In direct addressing mode, the "immediate" address is stored verbatim in the
+machine word following the opcode in memory [text segment]. This addressing mode
+is mostly relevant for assembly-language programmers.
+
+Examples
+--------
+
+goto label;
+
+Indexed Address
+---------------
+
+V0 stores small (signed 10-bit) offsets in the opcode val-field as well as scale
+factors of 8, 16, 32, or 64 bits in the parm-field. The scale factor is
+implemented as a shift count. The base address is in the source or destination
+operand register, depending on the instruction.
+
+For bigger index values, the word following the opcode in memory stores the base
+address.
+
+Examples
+--------
+ptr[1] = val;
+ptr[ndx] = val;
+
+PC-Relative Address
+-------------------
+
+The Program Counter -Relative addressing mode exists for compilers and such
+tools to produce position independent code for dynamically loaded libraries. It
+is mentioned here for the sake of completeness.
 
 FLOW CONTROL
 ------------
