@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <zero/trix.h>
 #include <cc/cc.h>
+#include <cc/tune.h>
+#if (CCPROF)
+#include <zero/prof.h>
+#endif
 
-extern struct ccmach ccmach;
-extern long          typesztab[32];
+struct cctoken * ccmktype(struct cctoken *token, struct cctoken **nextret,
+                          struct cctoken **lastret);
 
 #if (CCPRINT)
 static void ccprinttoken(struct cctoken *token);
@@ -14,21 +16,19 @@ static struct cctoken * ccgetfunc(struct cctoken *token,
                                   struct cctoken **nextret,
                                   struct cctoken **lastret);
 
-typedef struct cctoken * cctokenfunc_t(struct cctoken *,
-                                       struct cctoken **,
-                                       struct cctoken **);
+#if (CCSTAT)
+extern unsigned long    tokcnttab[256];
+extern char            *toknametab[256];
+#endif
 
-struct cctoken *ccprocif(struct cctoken *, struct cctoken **,
-                         struct cctoken **);
-struct cctoken *ccprocifdef(struct cctoken *, struct cctoken **,
-                            struct cctoken **);
-struct cctoken *ccprocifndef(struct cctoken *, struct cctoken **,
-                             struct cctoken **);
-struct cctoken *ccprocdefine(struct cctoken *, struct cctoken **,
-                             struct cctoken **);
+extern cctokenfunc_t   *cppfunctab[16];
+extern unsigned long    ccntoken;
+extern unsigned int     ccnfiles;
+struct ccmach           ccmach;
+static struct cctoken **cctokenqtab;
 
 #if (CCPRINT) || (CCDEBUG)
-static char *toktypetab[256] =
+static char *cctoktypetab[256] =
 {
     NULL,
     "CC_TYPE_TOKEN",
@@ -72,8 +72,9 @@ static char *toktypetab[256] =
     "CC_UCS16_TOKEN",
     "CC_UCS32_TOKEN"
 #endif
-    };
-static char *tokparmtab[256] =
+};
+
+static char *cctokparmtab[256] =
 {
     "NONE",
     "CC_EXTERN_QUAL",
@@ -87,8 +88,9 @@ static char *tokparmtab[256] =
     "CC_IFDEF_DIR",
     "CC_IFNDEF_DIR",
     "CC_DEFINE_DIR"
-    };
-static char *typetab[32] =
+};
+
+static char *cctypetab[32] =
 {
     "NONE",
     "CC_CHAR",
@@ -105,22 +107,8 @@ static char *typetab[32] =
     "CC_DOUBLE",
     "CC_LDOUBLE",
     "CC_VOID"
-    };
+};
 #endif /* CCPRINT */
-static cctokenfunc_t *dirfunctab[16] = {
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    ccprocif,           // CC_IF_DIR
-    NULL,               // CC_ELIF_DIR
-    NULL,               // CC_ELSE_DIR
-    NULL,               // CC_ENDIF_DIR
-    ccprocifdef,        // CC_IFDEF_DIR
-    ccprocifndef,       // CC_IFNDEF_DIR
-    ccprocdefine        // CC_DEFINE_DIR
-    };
 
 #if (CCPRINT) || (CCDEBUG)
 
@@ -180,11 +168,11 @@ ccprintval(struct ccval *val)
 static void
 ccprinttoken(struct cctoken *token)
 {
-    fprintf(stderr, "TYPE %s\n", toktypetab[token->type]);
+    fprintf(stderr, "TYPE %s\n", cctoktypetab[token->type]);
     if (token->type == CC_TYPE_TOKEN) {
-        fprintf(stderr, "PARM: %s\n", typetab[token->parm]);
+        fprintf(stderr, "PARM: %s\n", cctypetab[token->parm]);
     } else {
-        fprintf(stderr, "PARM: %s\n", tokparmtab[token->parm]);
+        fprintf(stderr, "PARM: %s\n", cctokparmtab[token->parm]);
     }
     fprintf(stderr, "STR: %s\n", token->str);
     if (token->type == CC_VALUE_TOKEN) {
@@ -208,84 +196,6 @@ ccprintqueue(struct cctokenq *queue)
 }
 
 #endif /* CCPRINT */
-
-#if 0
-struct cctoken *
-ccprocif(struct cctoken *token, struct cctoken **nextret,
-         struct cctoken **tailret)
-{
-    struct cctoken *head = NULL;
-    struct cctoken *tail = NULL;
-    long            block = 0;
-    long            skip = 0;
-    long            loop = 1;
-
-    token = token->next;
-    skip = !cceval(token, &token);
-    while (loop) {
-        while (token) {
-            if (!skip) {
-                ccqueuetoken(token, &head, &tail);
-            }
-            token = token->next;
-            if (token->type == CC_ELSE_TOKEN) {
-                if (skip) {
-                    skip = !skip;
-                    token = token->next;
-                } else {
-                    while (token->type != CC_ENDIF_TOKEN) {
-                        token = token->next;
-                    }
-                    loop = 0;
-                }
-            } else if (token->type == CC_ELIF_TOKEN) {
-                if (skip) {
-                    skip = !cceval(token, &token);
-                } else {
-                    while (token->type != CC_ENDIF_TOKEN) {
-                        token = token->next;
-                    }
-                    loop = 0;
-                }
-            } else if (token->type == CC_ENDIF_TOKEN) {
-                loop = 0;
-            }
-        }
-    }
-    if (head) {
-        *nextret = token;
-    }
-
-    return head;
-}
-#endif
-struct cctoken *
-ccprocif(struct cctoken *token, struct cctoken **nextret,
-         struct cctoken **tailret)
-{
-    return NULL;
-}
-
-struct cctoken *
-ccprocifdef(struct cctoken *token, struct cctoken **nextret,
-            struct cctoken **tailret)
-{
-    return NULL;
-}
-
-struct cctoken *
-ccprocifndef(struct cctoken *token, struct cctoken **nextret,
-             struct cctoken **tailret)
-{
-    return NULL;
-}
-
-struct cctoken *
-ccprocdefine(struct cctoken *token, struct cctoken **nextret,
-             struct cctoken **tailret)
-{
-    return NULL;
-}
 
 static struct cctoken *
 ccgetblock(struct cctoken *token, struct cctoken **nextret,
@@ -356,7 +266,7 @@ ccpreproc(struct cctoken *token, struct cctoken **tailret)
             }
         } else if (token->type == CC_PREPROC_TOKEN) {
             parm = token->parm;
-            func = dirfunctab[parm];
+            func = cppfunctab[parm];
             if (func) {
                 tok = func(token, &token, &last);
                 if (!tok) {
@@ -380,5 +290,75 @@ ccpreproc(struct cctoken *token, struct cctoken **tailret)
     }
 
     return head;
+}
+
+/* initialise machine-dependent parameters */
+int
+ccinitmach(void)
+{
+    int ret = 1;
+
+    ccmach.ialn = sizeof(long);
+    ccmach.faln = 16;
+
+    return ret;
+}
+
+int
+main(int argc, char *argv[])
+{
+    struct ccinput  *input;
+    long              l;
+#if (CCPRINT)
+    struct cctokenq *qp;
+#endif
+#if (CCPROF)
+    PROFDECLCLK(clk);
+#endif
+
+#if (CCPROF)
+    profstartclk(clk);
+#endif
+    if (!ccinitmach()) {
+        fprintf(stderr, "cannot initialise %s\n", argv[0]);
+
+        exit(1);
+    }
+    input = cclex(argc, argv);
+    if (!input) {
+        fprintf(stderr, "empty input\n");
+
+        exit(1);
+    }
+#if (CCPROF)
+    profstopclk(clk);
+#if (CCTOKENCNT)
+    fprintf(stderr, "%lu tokens\n", ccntoken);
+#endif
+    fprintf(stderr, "%ld microseconds\n", profclkdiff(clk));
+#endif
+#if (CCSTAT)
+    for (l = 1 ; l < CC_NTOKTYPE ; l++) {
+        fprintf(stderr, "%s: %lu\n", toknametab[l], tokcnttab[l]);
+    }
+#endif
+#if (CCPRINT)
+    if (input) {
+        l = input->nq;
+        qp = *input->qptr;
+        while (l--) {
+            ccprintqueue(qp);
+            qp++;
+        }
+    }
+#endif
+#if 0
+    cctokenqtab = calloc(input->nq + 1, sizeof(struct cctoken *));
+    for (l = 0 ; l < input->nq ; l++) {
+        cctokenqtab[l] = ccpreproc(input->qptr[l]->head);
+    }
+#endif
+
+    exit(0);
 }
 

@@ -17,9 +17,7 @@ typedef union v0oparg vasarg_t;
 #define vasadrtoptr(adr) (&v0vm->mem[adr])
 #endif
 
-#if !defined(VASZEROHASH) && !VASZEROHASH
 #define VASZEROHASH 1
-#endif
 
 #if 0
 /* assembler features */

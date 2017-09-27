@@ -40,24 +40,25 @@ typedef uint64_t  vassize_t;
 #define VASTOKENVAREG  0x05
 #define VASTOKENVLREG  0x06
 #endif
-#define VASTOKENSYM    0x07
-#define VASTOKENCHAR   0x08
-#define VASTOKENIMMED  0x09
-#define VASTOKENINDIR  0x0a
-#define VASTOKENADR    0x0b
-#define VASTOKENINDEX  0x0c
-#define VASTOKENDATA   0x0d
-#define VASTOKENGLOBL  0x0e
-#define VASTOKENSPACE  0x0f
-#define VASTOKENORG    0x10
-#define VASTOKENALIGN  0x11
-#define VASTOKENASCIZ  0x12
-#define VASTOKENSTRING 0x13
-#define VASTOKENPAREN  0x14
+#define VASTOKENDEF    0x07
+#define VASTOKENSYM    0x08
+#define VASTOKENCHAR   0x09
+#define VASTOKENIMMED  0x0a
+#define VASTOKENINDIR  0x0b
+#define VASTOKENADR    0x0c
+#define VASTOKENINDEX  0x0d
+#define VASTOKENDATA   0x0e
+#define VASTOKENGLOBL  0x0f
+#define VASTOKENSPACE  0x10
+#define VASTOKENORG    0x11
+#define VASTOKENALIGN  0x12
+#define VASTOKENASCIZ  0x13
+#define VASTOKENSTRING 0x14
+#define VASTOKENPAREN  0x15
 #if (VASPREPROC)
-#define VASTOKENOP     0x15
+#define VASTOKENOP     0x16
 #endif
-#define VASNTOKEN      0x16
+#define VASNTOKEN      0x20
 
 struct vasopinfo {
     const char *name;
@@ -102,6 +103,12 @@ struct vassymrec {
     uintptr_t         adr;
 };
 
+struct vasdef {
+    struct vasdef *next;
+    char          *name;
+    vasword_t      val;
+};
+
 struct vassym {
     char       *name;
     vasuword_t  adr;
@@ -143,6 +150,7 @@ struct vastoken {
         struct vaslabel  label;
         struct vasvalue  value;
         struct vasinst   inst;
+        struct vasdef    def;
         struct vassym    sym;
         struct vasadr    adr;
         struct vasndx    ndx;

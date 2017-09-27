@@ -37,8 +37,9 @@ extern vasuword_t        vasgetreg(char *str, vasword_t *retsize,
 static char            * vasgetlabel(char *str, char **retptr);
 static struct vasop    * vasgetinst(char *str, char **retptr);
 static char            * vasgetsym(char *str, char **retptr);
-static vasuword_t        vasgetvalue(char *str, vasword_t *retval,
+static long              vasgetvalue(char *str, vasword_t *retval,
                                      char **retptr);
+static char *            vasgetdef(char *srt, char **retptr);
 static int               vasgetchar(char *str, char **retptr);
 #if (VASMMAP)
 static struct vastoken * vasgettoken(char *str, char **retptr,
@@ -60,6 +61,7 @@ static struct vastoken * vasprocalign(struct vastoken *, vasmemadr_t, vasmemadr_
 static struct vastoken * vasprocasciz(struct vastoken *, vasmemadr_t, vasmemadr_t *);
 
 static struct vassymrec *vassymhash[VASNHASH] ALIGNED(PAGESIZE);
+static struct vasdef    *vasdefhash[VASNHASH];
 static struct vasval    *vasvalhash[VASNHASH];
 static struct vaslabel  *vasglobhash[VASNHASH];
 #if (VASDB)
@@ -227,6 +229,55 @@ vasfindline(vasmemadr_t adr)
 }
 
 #endif
+
+void
+vasadddef(struct vasdef *def)
+{
+    unsigned long   key = 0;
+    char           *ptr;
+
+    ptr = def->name;
+    while (*ptr) {
+        key += *ptr++;
+    }
+    key &= (VASNHASH - 1);
+    def->next = vasdefhash[key];
+    vasdefhash[key] = def;
+
+    return;
+}
+
+struct vasdef *
+vasfinddef(char *str, vasword_t *defptr, char **retptr)
+{
+    unsigned long  key = 0;
+    struct vasdef *def = NULL;
+    char          *ptr;
+    long           len = 0;
+
+    if ((*str) && (isalpha(*str) || *str == '_')) {
+        ptr = str;
+        key += *str;
+        str++;
+        len++;
+        while ((*str) && (isalnum(*str) || *str == '_')) {
+            key += *str;
+            str++;
+            len++;
+        }
+        key &= (VASNHASH - 1);
+        def = vasdefhash[key];
+        while ((def) && strncmp(def->name, ptr, len)) {
+            def = def->next;
+        }
+        if (def) {
+            *defptr = def->val;
+            *retptr = str;
+        }
+    }
+
+    return def;
+}
 
 void
 vasaddval(struct vasval *val)
@@ -437,6 +488,33 @@ vasgetinst(char *str, char **retptr)
 }
 
 static char *
+vasgetdef(char *str, char **retptr)
+{
+    char *ptr = str;
+    char *name = NULL;
+
+#if (VASDEBUG)
+    fprintf(stderr, "getdef: %s\n", str);
+#endif
+    if (isalpha(*str) || *str == '_') {
+        str++;
+    }
+    while (isalnum(*str) || *str == '_') {
+        str++;
+    }
+    while ((*str) && (isspace(*str))) {
+        str++;
+    }
+    if (*str == '=') {
+        *str++ = '\0';
+    }
+    name = strdup(ptr);
+    *retptr = str;
+
+    return name;
+}
+
+static char *
 vasgetsym(char *str, char **retptr)
 {
     char *ptr = str;
@@ -463,7 +541,7 @@ vasgetsym(char *str, char **retptr)
     return name;
 }
 
-static vasuword_t
+static long
 vasgetvalue(char *str, vasword_t *valret, char **retstr)
 {
     long                found = 0;
@@ -854,23 +932,29 @@ vasgettoken(char *str, char **retptr)
         }
     } else if ((*str) && *str == '$') {
         str++;
-        if ((*str) && (isalpha(*str) || *str == '_' || *str == '-')) {
-            if (vasfindval(str, &val, &str)) {
-                token1->type = VASTOKENIMMED;
+        if (isalpha(*str) || *str == '_') {
+            if (vasfinddef(str, &val, &str)) {
+                token1->type = VASTOKENDEF;
                 token1->val = val;
-            } else if (vasgetvalue(str, &val, &str)) {
-                token1->type = VASTOKENIMMED;
-                token1->val = val;
-            } else {
-                name = vasgetsym(str, &str);
-                if (name) {
-                    token1->type = VASTOKENADR;
-                    token1->data.adr.name = name;
-                    token1->data.adr.val = VASRESOLVE;
+            } else if ((*str) && (isalpha(*str)
+                                 || *str == '_' || *str == '-')) {
+                if (vasfindval(str, &val, &str)) {
+                    token1->type = VASTOKENIMMED;
+                    token1->val = val;
+                } else if (vasgetvalue(str, &val, &str)) {
+                    token1->type = VASTOKENIMMED;
+                    token1->val = val;
                 } else {
-                    fprintf(stderr, "invalid token %s\n", vaslinebuf);
+                    name = vasgetsym(str, &str);
+                    if (name) {
+                        token1->type = VASTOKENADR;
+                        token1->data.adr.name = name;
+                        token1->data.adr.val = VASRESOLVE;
+                    } else {
+                        fprintf(stderr, "invalid token %s\n", vaslinebuf);
 
-                    exit(1);
+                        exit(1);
+                    }
                 }
             }
         } else if ((*str) && isdigit(*str)) {
@@ -958,6 +1042,18 @@ vasgettoken(char *str, char **retptr)
             fprintf(stderr, "invalid token %s\n", vaslinebuf);
 
             exit(1);
+        }
+    } else if (isalpha(*str) || *str == '_') {
+        name = vasgetdef(str, &str);
+        if (name) {
+            while (isspace(*str)) {
+                str++;
+            }
+            if (vasgetvalue(str, &val, &str)) {
+                token1->type = VASTOKENDEF;
+                token1->data.def.name = name;
+                token1->data.def.val = val;
+            }
         }
     }
     *retptr = str;

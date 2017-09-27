@@ -12,6 +12,12 @@
 #include <stdint.h>
 #endif
 
+struct cctoken;
+
+typedef struct cctoken * cctokenfunc_t(struct cctoken *,
+                                       struct cctoken **,
+                                       struct cctoken **);
+
 #define ccvarsz(t)      (typesztab[(t)])
 
 #define CC_NONE         0x00
