@@ -1,4 +1,4 @@
-/* zero virtual machine compile-time configuration */
+/* valhalla virtual machine compile-time configuration */
 
 #ifndef __VAS_CONF_H__
 #define __VAS_CONF_H__

@@ -229,7 +229,6 @@ C Syntax
 --------
 
 lim = 64;
-ndx = 0;
 while (lim--) {
     dest[lim] = src[lim];
 }
@@ -304,6 +303,6 @@ while (val) {
 
             break;
     }
-    val -= 4;
+    val -= 8;
 }
 
