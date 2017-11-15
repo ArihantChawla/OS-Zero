@@ -126,8 +126,8 @@ memgentlsadr(MEMPTR_T adr)
 
     rnd = memrandofs();
     ofs = CLSIZE;
-    res &= 15;
-    ofs *= res;
+    rnd &= 15;
+    ofs *= rnd;
     adr += ofs;
 
     return adr;
