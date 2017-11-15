@@ -16,10 +16,10 @@ long
 randk(void)
 {
     long *tblptr;
-    long mj;
-    long mk;
-    int inext;
-    int inextp;
+    long  mj;
+    long  mk;
+    int   inext;
+    int   inextp;
 
     if (!_randkglobal.initialized) {
         srandk(0);
@@ -96,7 +96,7 @@ srandk(long seed)
     _randkglobal.inext = 0;
     _randkglobal.inextp = 31;
     _randkglobal.initialized = 1;
-    
+
     return;
 }
 
@@ -135,3 +135,4 @@ main(int argc, char *argv[])
 }
 #endif
 #endif /* 0 */
+
