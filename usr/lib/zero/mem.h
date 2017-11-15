@@ -107,12 +107,10 @@ static __inline__ MEMPTR_T
 memgenadr(MEMPTR_T adr, MEMADR_T pos, MEMADR_T nmax, MEMADR_T scale)
 {
     MEMADR_T val = (MEMADR_T)adr;
-    MEMADR_T res;
+    MEMADR_T rnd;
 
-    val >>= pos;
-    res = fastumod8(val, nmax);
-    res *= nmax;
-    val -= res;
+    rnd = memrandofs();
+    val = fastumod8(rnd, nmax);
     val <<= scale;
     adr += val;
 
