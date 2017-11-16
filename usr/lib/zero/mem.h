@@ -5,27 +5,26 @@
 
 /* internal allocator parameters */
 
-/* header size with block bitmap */
-#define MEMBITMAPHDRSIZE (sizeof(struct membuf))
-/* header size with block stack */
-#define MEMSTKHDRSIZE    (4 * PAGESIZE)
+#define MEMBUFHDRSIZE    (MEMBUFTABOFS + MEMBUFTABSIZE)
 /* allocation buffer types */
 #define MEMSMALLBUF      0x00 // cacheline multiples
 #define MEMPAGEBUF       0x01 // page multiples
 #define MEMBIGBUF        0x02 // big allocations
+#define MEMBUFTYPES      8
 /* numbers of buckets for allocation types */
-#define MEMMAXBKTS       (MEMWORD_T(1) << MEMBUFBKTBITS)
-#define MEMSMALLBKTS     (PAGESIZE / CLSIZE)
-#define MEMPAGEBKTS      min(MEMALLOCMIN / PAGESIZE, MEMMAXBKTS)
-#define MEMBIGBKTS       MEMPTRBITS
+#define MEMMAXSIZES      (MEMWORD_T(1) << MEMBUFBKTBITS)
+#define MEMSMALLSIZES    (PAGESIZE / CLSIZE)
+#define MEMPAGESIZES     min(MEMMINSLABSIZE / PAGESIZE, MEMMAXSIZES)
+#define MEMBIGSIZES      MEMPTRBITS
 /* queue parameters */
-#define MEMBUFSLOTQUEUES 16 // number of queues per slot
+#define MEMSLOTQUEUES    16 // number of queues per slot; 2^x, x > 0
 /* buffer/slab parameters */
 /* maximum number of blocks in buffer */
-#define MEMBUFMAXBLKS    ((MEMSTKSHDRSIZE - MEMBUFPTRTABOFS) / PTRSIZE)
+#define MEMBUFMAXBLKS    (MEMBUFTABSIZE / PTRSIZE)
 #define MEMBUFBKTBITS    8
 #define MEMBUFTYPEBITS   4
-#define MEMBUFPTRTABOFS  2 * PAGESIZE)
+#define MEMBUFTABSIZE    (2 * PAGESIZE)
+#define MEMBUFTABOFS     (2 * PAGESIZE)
 
 /* macros */
 
@@ -52,42 +51,62 @@
               : (membigblksize(buf))))))))
 /* calculate address for buffer block */
 #define membufblkadr(buf, ndx) (membufblksize(buf) * (ndx))
-#define membufstk(buf)         ((MEMBLK_T *)(&buf->tab[0]))
-#define membufptrtab(buf)      ((MEMWORD_T *)((MEMPTR_T)(buf)           \
-                                             + MEMBUFPTRTABOFS))
+#define membufblkid(buf, ptr)  (
+#define membufstk(buf)         ((MEMBLK_T *)(buf->stk[0]))
+#define membuftab(buf)         ((MEMPTR_T *)((MEMPTR_T)(buf) + MEMBUFTABOFS))
 
 /* forward-declaration */
 struct membufslot;
 
 /* allocation block buffer header */
 struct membuf {
-    struct memtls     *tls;
-    struct membufslot *slot;
-    struct membuf     *prev;
-    struct membuf     *next;
-    MEMWORD_T          info;
-    MEMPTR_T           base;
-    m_atomic_t         ndx;
-    MEMWORD_T          nblk;
-    uint8_t            tab[EMPTY];
+    volatile struct memtls *tls;
+    struct membufslot      *slot;
+    struct membuf          *prev;
+    struct membuf          *next;
+    MEMWORD_T               info;
+    MEMPTR_T                base;
+    m_atomic_t              ndx;
+    volatile MEMWORD_T      nblk;
+    uint8_t                 stk[EMPTY];
     /* allocation pointer table at offset MEMBUFTABOFS from struct beginning */
 };
 
 /* memory buffer slot header */
 
+#define MEMBUFQUEUESIZE (2 * PTRSIZE)
 struct membufqueue {
-    m_atomic_t              nref;
-    m_atomic_t              nblk;
-    volatile struct membuf *head;
-    volatile struct membuf *tail;
+    volatile struct membuf *prev;
+    volatile struct membuf *next;
+};
+
+#define MEMBUFSLOTSIZE (PTRSIZE + WORDSIZE + 2 * MEMBUFQUEUESIZE)
+struct membufslot {
+    volatile struct memtls *tls;
+    volatile MEMWORD_T      nbuf;
+    struct membufqueue      head;
+    struct membufqueue      tail;
+    uint8_t                 _pad[CLSIZE - MEMBUFSLOTSIZE];
 };
 
 #define membufqueue(slot, ndx) (&((slot)->qtab[(ndx)].hdr))
-struct membufslot {
-    union {
-        struct membufqueue hdr;
-        uint8_t            _pad[CLSIZE];
-    } qtab[MEMBUFSLOTQUEUES];
+struct membufbkt {
+    struct membufslot tab[MEMBUFSLOTS];
+};
+
+#define MEMTLSSIZE rounduppow2(sizeof(struct memtls), 2 * PAGESIZE)
+struct memtls {
+    struct membufslot  smalltab[MEMSMALLSIZES];
+    struct membufslot  pagetab[MEMPAGESIZES];
+    struct membufslot  bigtab[MEMBIGSIZES];
+    struct membufslot *buftab[MEMBUFTYPES];
+};
+
+struct mem {
+    struct membufbkt  smalltab[MEMSMALLSIZES];
+    struct membufbkt  pagetab[MEMPAGESIZES];
+    struct membufbkt  bigtab[MEMBIGSIZES];
+    struct membufbkt *buftab[MEMBUFTYPES];
 };
 
 static __inline__ void *
@@ -117,7 +136,7 @@ memgenadr(MEMPTR_T adr, MEMADR_T pos, MEMADR_T nmax, MEMADR_T scale)
     return adr;
 }
 
-static __inline__ MEMPTR_T
+static __inline__ struct memtls *
 memgentlsadr(MEMPTR_T adr)
 {
     MEMADR_T val = (MEMADR_T)adr;
@@ -130,75 +149,141 @@ memgentlsadr(MEMPTR_T adr)
     ofs *= rnd;
     adr += ofs;
 
-    return adr;
+    return (struct memtls *)adr;
 }
 
-static __inline__ membufqueue *
-memfindqueue(struct membuf *buf)
+static __inline__ struct membufqueue *
+memrandqueue(struct membufslot *slot)
 {
-    struct memtls     *tls = memlkbit((m_atomic_t *)&buf->tls, MEMLKBITPOS);
-    MEMWORD_T          bkt = membufbkt(buf);
-    MEMWORD_T          type = membuftype(buf);
-    struct membufslot *slot;
+    MEMADR_T            rnd;
+    struct membufqueue *queue;
 
-    if ((tls) && tls == t_memtls) {
-        /* FASTPATH */
-        tab = tls->bufqtab[type];
-        queue = &tab[bkt];
+    rnd = memrandofs();
+    rnd &= MEMBUFQUEUESLOTS - 1;
+    queue = &slot->tab[rnd].queue;
 
-        return slot;
-    } else if (!tls) {
-        /* global */
-    } else {
-        ;
-    }
+    return queue;
+}
+
+static __inline__ membufslot *
+memfindslot(struct membuf *buf)
+{
+    MEMWORD_T           bkt = membufbkt(buf);
+    MEMWORD_T           type = membuftype(buf);
+    struct membufslot  *tab;
+    struct membufslot  *slot;
 
     return queue;
 }
 
 static __inline__ void
-mempushbuf(struct membuf *buf)
+mempushbuf(struct membuf *buf, struct membufslot *slot, long flg)
 {
-    struct membufslot *slot = memfindqueue(buf);
-    struct membuf     *head = NULL;
-    struct membuf     *tail = NULL;
-    struct membuf     *bptr;
+    struct membuf *head = NULL;
+    struct membuf *next = NULL;
+    struct membuf *tail = NULL;
+    struct membuf *prev = NULL;
 
-    buf->prev = NULL;
-    buf->next = NULL;
-    head = memlkbit(&slot->head, MEMLKBITPOS);
-    tail = m_atomread(&slot->tail);
-    if (!tail && !m_cmpswapptr((m_atomic_t **)&slot->tail, NULL, buf)) {
-        memlkbit((m_atomic_t *)&slot->tail, MEMLKBITPOS);
-    } else if (!m_atomread(&slot->nblk)) {
-        tail = memlkbit((m_atomic_t *)&slot->tail, MEMLKBITPOS);
-        if (!tail) {
-            m_atomwrite(&slot->tail, buf);
-        } else {
-            memrellkbit(&slot->tail);
+    if (!(flg & MEMQUEUEGLOBAL)) {
+        /* FASTPATH: thread local buffer */
+        head = slot->head.next;
+        if (head) {
+            head->prev = buf;
         }
+        buf->next = head;
+        slot->head->next = buf;
+    } else {
+        buf->prev = NULL;
+        head = memlkbit((m_atomic_t *)&slot->head.next, MEMLKBITPOS);
+        if (head) {
+            head->prev = buf;
+        }
+        if ((head) && (next = memlkbit((m_atomic_t *)&head->next,
+                                       MEMLKBITPOS))) {
+            buf->next = head;
+            memunlkbit((m_atomic_t *)&head->next, MEMLKBITPOS);
+        } else if (head) {
+            memunlkbit((m_atomic_t *)&head->next, MEMLKBITPOS);
+        } else {
+            tail = memlkbit((m_atomic_t *)&slot->tail.next, MEMLKBITPOS);
+            if (!tail) {
+                slot->tail.prev = NULL;
+                m_atomwrite((m_atomic_t *)&slot->tail.next, buf);
+            } else {
+                slot->tail.prev = buf;
+                m_atomwrite((m_atomic_t *)&slot->tail.next, tail);
+            }
+        }
+        m_atominc((m_atomic_t *)&slot->nbuf);
+        m_atomwrite((m_atomic_t *)&slot->head.next, buf);
     }
-    buf->next = head;
-    if (head) {
-        head->prev = buf;
-    }
-    m_atominc((m_atomic_t *)&slot->nblk);
-    m_atomwrite((m_atomic_t *)&slot->head, (m_atomic_t)buf);
 
     return;
 }
 
 static __inline__ void
-memaddblk(struct membuf *buf, vpid *ptr)
+memaddbuf(struct membuf *buf, struct memtls *tls)
 {
-    MEMWORD_T nblk = buf->nblk;
-    MEMWORD_T ndx = memgetblkid(buf, ptr);
+    struct membufslot *slot = NULL;
+    MEMWORD_T          type = membuftype(buf);
+    MEMWORD_T          bkt = membufbkt(buf);
+    MEMWORD_T          nbuf;
+    MEMWORD_T          flg;
 
-    ndx = m_fetchadd(&buf->nblk, 1);
-    if (!ndx) {
-        mempushbuf(buf);
-    } else if (ndx == nblk) {
-        memslot(buf);
+    flg = MEMQUEUEGLOBAL;
+    if (tls) {
+        slot = tls->buftab[type];
+        nbuf = m_atomdec(&slot->nbuf);
+        if (nbuf >= 2) {
+            slot = NULL;
+        } else {
+            slot = &slot[bkt];
+        }
+    }
+    if (!slot) {
+        tls = t_memtls;
+        slot = tls->buftab[type];
+        nbuf = m_atomdec(&slot->nbuf);
+        if (nbuf >= 2) {
+            tls = NULL;
+        } else {
+            slot = &slot[bkt];
+        }
+    }
+    if (!slot) {
+        flg &= ~MEMQUEUEGLOBAL;
+        slot = memfindslot(buf);
+        nbuf = m_atomdec(&slot->nbuf);
+    }
+    memqueuebuf(buf, slot, flg);
+}
+
+static __inline__ void
+mempushblk(struct membuf *buf, void *ptr)
+{
+    MEMWORD_T  nblk;
+    MEMBLK_T   id = membufblkid(buf, ptr);
+    MEMPTR_T  *tab = membuftab(buf);
+    MEMBLK_T  *stk = membufstk(buf);
+    MEMWORD_T  lim;
+    MEMWORD_T  top;
+
+    nblk = m_atomread(&buf->nblk);
+    top = m_atomdec(&buf->ndx);
+    lim = nblk;
+    top--;
+    lim--;
+    stk[top] = id;
+    if (top == 0) {
+        memlkbit((m_atomic_t *)&buf->tls, MEMLKBITPOS);
+        if (!m_atomread(&buf->ndx)) {
+            memfreebuf(buf, tls);
+        }
+    } else if (top == lim) {
+        memlkbit((m_atomic_t *)&buf->tls, MEMLKBITPOS);
+        if (m_atomread(&buf->ndx) == lim) {
+            memaddbuf(buf, tls);
+        }
     }
 
     return;

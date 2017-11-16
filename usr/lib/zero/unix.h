@@ -70,7 +70,7 @@
 #if !defined(MAP_FAILED)
 #define MAP_FAILED          ((void *)-1)
 #endif
-#if (defined(MMAP_DEV_ZERO) && MMAP_DEV_ZERO)
+#if (defined(MMAP_DEV_ZERO) && (MMAP_DEV_ZERO))
 #define mapanon(fd, size)                                               \
     mmap(NULL, size, PROT_READ | PROT_WRITE,                            \
          MAP_PRIVATE | MAP_FILE,                                        \
