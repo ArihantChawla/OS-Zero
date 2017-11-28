@@ -1,30 +1,30 @@
-#ifndef __ZERO_BITS_MEM_H__
-#define __ZERO_BITS_MEM_H__
+#ifndef __ZERO_MEM_H__
+#define __ZERO_MEM_H__
 
-#define MEMMINSLABSIZE   (1024 * 1024)
+#define MEMMINSLABSIZE (1024 * 1024)
 
 /* internal allocator parameters */
 
-#define MEMBUFHDRSIZE    (MEMBUFTABOFS + MEMBUFTABSIZE)
+#define MEMBUFHDRSIZE  (MEMBUFTABOFS + MEMBUFTABSIZE)
 /* allocation buffer types */
-#define MEMSMALLBUF      0x00 // cacheline multiples
-#define MEMPAGEBUF       0x01 // page multiples
-#define MEMBIGBUF        0x02 // big allocations
-#define MEMBUFTYPES      8
+#define MEMSMALLBUF    0x00 // cacheline multiples
+#define MEMPAGEBUF     0x01 // page multiples
+#define MEMBIGBUF      0x02 // big allocations
+#define MEMBUFTYPES    8
 /* numbers of buckets for allocation types */
-#define MEMMAXSIZES      (MEMWORD_T(1) << MEMBUFBKTBITS)
-#define MEMSMALLSIZES    (PAGESIZE / CLSIZE)
-#define MEMPAGESIZES     min(MEMMINSLABSIZE / PAGESIZE, MEMMAXSIZES)
-#define MEMBIGSIZES      MEMPTRBITS
+#define MEMMAXSIZES    (MEMWORD_T(1) << MEMBUFBKTBITS)
+#define MEMSMALLSIZES  (PAGESIZE / CLSIZE)
+#define MEMPAGESIZES   min(MEMMINSLABSIZE / PAGESIZE, MEMMAXSIZES)
+#define MEMBIGSIZES    MEMPTRBITS
 /* queue parameters */
-#define MEMSLOTQUEUES    16 // number of queues per slot; 2^x, x > 0
+#define MEMSLOTQUEUES  16 // number of queues per slot; 2^x, x > 0
 /* buffer/slab parameters */
 /* maximum number of blocks in buffer */
-#define MEMBUFMAXBLKS    (MEMBUFTABSIZE / PTRSIZE)
-#define MEMBUFBKTBITS    8
-#define MEMBUFTYPEBITS   4
-#define MEMBUFTABSIZE    (2 * PAGESIZE)
-#define MEMBUFTABOFS     (2 * PAGESIZE)
+#define MEMBUFMAXBLKS  (MEMBUFTABSIZE / PTRSIZE)
+#define MEMBUFBKTBITS  8 // number of bits for bucket/size-IDs
+#define MEMBUFTYPEBITS 4 // number of bits for type/zone-IDs
+#define MEMBUFTABSIZE  (4 * PAGESIZE)
+#define MEMBUFTABOFS   (4 * PAGESIZE)
 
 /* macros */
 
@@ -59,7 +59,9 @@
 struct membufslot;
 
 /* allocation block buffer header */
+#define MEMBUFHDRSIZE (offsetof(struct membuf, stk))
 struct membuf {
+    /* 8 machine words; struct membuf should be exact multiple of cacheline */
     volatile struct memtls *tls;
     struct membufslot      *slot;
     struct membuf          *prev;
@@ -68,12 +70,12 @@ struct membuf {
     MEMPTR_T                base;
     m_atomic_t              ndx;
     volatile MEMWORD_T      nblk;
+    /* end of header information */
     uint8_t                 stk[EMPTY];
     /* allocation pointer table at offset MEMBUFTABOFS from struct beginning */
 };
 
-/* memory buffer slot header */
-
+/* memory buffer queue header */
 #define MEMBUFQUEUESIZE (2 * PTRSIZE)
 struct membufqueue {
     volatile struct membuf *prev;
@@ -122,18 +124,51 @@ memlkbit(m_atomic_t *ptr, long ndx)
     return (void *)ret;
 }
 
-static __inline__ MEMPTR_T
-memgenadr(MEMPTR_T adr, MEMADR_T pos, MEMADR_T nmax, MEMADR_T scale)
+/*
+ * ASSUMPTIONS
+ * -----------
+ * - ptr is aligned to
+ */
+static __inline__ void *
+memzeroblk(void *ptr, size_t size)
 {
-    MEMADR_T val = (MEMADR_T)adr;
-    MEMADR_T rnd;
+    MEMWORD_T *wp = ptr;
+    MEMWORD_T  zero = MEMWORD(0);
+    MEMWORD_T  nw = CLSIZE - ((MEMADR_T)ptr & ((MEMWORD(1) << CLSIZELOG2) - 1));
+    size_t     ncl;
 
-    rnd = memrandofs();
-    val = fastumod8(rnd, nmax);
-    val <<= scale;
-    adr += val;
+    size -= n * sizeof(MEMWORD_T);
+    while (nw--) {
+        *wp++ = zero;
+    }
+#if (WORDSIZE == 8)
+    nw = (size & ((MEMWORD(1) << CLSIZELOG2) - 1)) >> 3;
+#else
+    nw = (size & ((MEMWORD(1) << CLSIZELOG2) - 1)) >> 2;
+#endif
+    ncl = size >> CLSIZELOG2;
+    while (ncl--) {
+#if (CLSIZE >= 4 * WORDSIZE)
+        wp[0] = zero;
+        wp[1] = zero;
+        wp[2] = zero;
+        wp[3] = zero;
+#if (CLSIZE >= 8 * WORDSIZE)
+        wp[4] = zero;
+        wp[5] = zero;
+        wp[6] = zero;
+        wp[7] = zero;
+        wp += 8;
+#else
+        wp += 4;
+#endif
+#endif
+    }
+    while (nw--) {
+        *wp++ = zero;
+    }
 
-    return adr;
+    return;
 }
 
 static __inline__ struct memtls *
@@ -152,17 +187,16 @@ memgentlsadr(MEMPTR_T adr)
     return (struct memtls *)adr;
 }
 
-static __inline__ struct membufqueue *
-memrandqueue(struct membufslot *slot)
+static __inline__ struct memslot *
+memrandslot(struct membufslot *slot)
 {
-    MEMADR_T            rnd;
-    struct membufqueue *queue;
+    MEMADR_T rnd;
 
     rnd = memrandofs();
     rnd &= MEMBUFQUEUESLOTS - 1;
-    queue = &slot->tab[rnd].queue;
+    slot += rnd;
 
-    return queue;
+    return slot;
 }
 
 static __inline__ membufslot *
@@ -171,9 +205,9 @@ memfindslot(struct membuf *buf)
     MEMWORD_T           bkt = membufbkt(buf);
     MEMWORD_T           type = membuftype(buf);
     struct membufslot  *tab;
-    struct membufslot  *slot;
+    struct membufslot  *slot = &buf->buftab[type][bkt];
 
-    return queue;
+    return slot;
 }
 
 static __inline__ void
@@ -268,8 +302,8 @@ mempushblk(struct membuf *buf, void *ptr)
     MEMWORD_T  lim;
     MEMWORD_T  top;
 
-    nblk = m_atomread(&buf->nblk);
     top = m_atomdec(&buf->ndx);
+    nblk = m_atomread(&buf->nblk);
     lim = nblk;
     top--;
     lim--;
@@ -289,5 +323,5 @@ mempushblk(struct membuf *buf, void *ptr)
     return;
 }
 
-#endif /* __ZERO_BITS_MEM_H__ +/
+#endif /* __ZERO_MEM_H__ +/
 

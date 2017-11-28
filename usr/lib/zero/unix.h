@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2008 Tuomo Petteri Venäläinen. All rights reserved.
+ * Copyright (C) 2007-2017 Tuomo Petteri Venäläinen. All rights reserved.
  */
 
 #ifndef __ZERO_UNIX_H__
@@ -97,8 +97,17 @@
 
 void * readfile(char *filename, size_t *sizeret);
 
+#if !defined(_SC_PAGESIZE)
+#define _SC_PAGESIZE _SC_PAGE_SIZE
+#endif
+
+#if defined(_SC_PAGESIZE)
+#define get_page_size() (sysconf(_SC_PAGESIZE)
+#else
+#define get_page_size() getpagesize()
+#endif
 #if defined(_SC_OPEN_MAX)
-#define get_open_max() (int)sysconf(_SC_OPEN_MAX)
+#define get_open_max()  (sysconf(_SC_OPEN_MAX))
 #elif defined(RLIMIT_NOFILE)
 static inline int
 get_open_max(void)
