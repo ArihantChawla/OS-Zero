@@ -21,7 +21,7 @@
 
 extern const uint8_t stringcolltab_c_en_US[256];
 
-static THREADLOCAL struct _string  _string;
+//static THREADLOCAL struct _string  _string;
 static const  uint8_t             *colltab = stringcolltab_c_en_US;
 static const  uint8_t             *localecolltab = stringcolltab_c_en_US;
 const unsigned char               *collnametab[STRINGNLANG]
@@ -372,7 +372,7 @@ strchr(const char *str,
     char *cptr = (char *)str;
     char  c = (char)ch;
     void *retval = NULL;
-    
+
     while ((*cptr) && *cptr != c) {
         cptr++;
     }
@@ -399,7 +399,7 @@ strcspn(const char *str1,
             ucptr2++;
         }
         if (*ucptr2) {
-            
+
             break;
         }
         ucptr1++;
@@ -430,7 +430,7 @@ strpbrk(const char *str1,
             ucptr1++;
         }
     }
-    
+
     return retptr;
 }
 
@@ -441,7 +441,7 @@ strrchr(const char *str,
 {
     char *cptr = (char *)str;
     char  c = (char)ch;
-    
+
     while (*cptr) {
         cptr++;
     }
@@ -470,7 +470,7 @@ strspn(const char *str1,
             ucptr2++;
         }
         if (!*ucptr2) {
-            
+
             break;
         }
         ucptr1++;
@@ -488,7 +488,7 @@ strstr(const char *str1,
     char *cptr2;
     char *cptr3;
     char *retptr = NULL;
-    
+
     while (!retptr && (*cptr1)) {
         cptr2 = cptr1;
         cptr3 = (char *)str2;
@@ -511,10 +511,11 @@ char *
 strtok(char *str1,
        const char *str2)
 {
-    char   *cptr = _string.curtok;
+    static char *curtok = NULL;
+    char   *cptr = curtok;
     char   *retptr = NULL;
     size_t  nspn;
-    
+
     if ((str1) && (*str1)) {
         nspn = strspn(str1, str2);
         str1 += nspn;
@@ -525,9 +526,9 @@ strtok(char *str1,
         nspn = strcspn(cptr, str2);
         cptr += nspn;
         *cptr = '\0';
-        _string.curtok = ++cptr;
+        curtok = ++cptr;
         if (!*cptr) {
-            _string.curtok = NULL;
+            curtok = NULL;
         }
         if (!retptr) {
             retptr = cptr;
@@ -536,11 +537,11 @@ strtok(char *str1,
             if (*cptr) {
                 *cptr = '\0';
             } else {
-                _string.curtok = NULL;
+                curtok = NULL;
             }
         }
     }
-    
+
     return retptr;
 }
 
@@ -642,7 +643,7 @@ memset(void *ptr,
     while (nleft--) {
         *u8ptr++ = u8;
     }
-    
+
     return ptr;
 }
 
@@ -709,7 +710,7 @@ memset(void *ptr,
     while (nleft--) {
         *u8ptr++ = u8;
     }
-    
+
     return ptr;
 }
 
@@ -719,7 +720,7 @@ char *
 strerror(int errnum)
 {
 //    fprintf(stderr, "TODO: strerror() not implemented\n");
-    
+
     return NULL;
 }
 
@@ -727,11 +728,11 @@ size_t
 strlen(const char *str)
 {
     size_t len = 0;
-    
+
     while (*str++) {
         len++;
     }
-    
+
     return len;
 }
 

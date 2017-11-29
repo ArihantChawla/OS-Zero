@@ -1,5 +1,7 @@
 /*
  * Copyright (C) 2007-2017 Tuomo Petteri Venäläinen. All rights reserved.
+ *
+ * system-programming utility routines for Unix-like systems
  */
 
 #ifndef __ZERO_UNIX_H__
@@ -49,26 +51,26 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#define SBRK_FAILED        ((void *)-1L)
+#define SBRK_FAILED   ((void *)-1L)
 
 #if !defined(MMAP_DEV_ZERO) || defined(MAP_ANON) || defined(MAP_ANONYMOUS)
-#define MMAP_DEV_ZERO      0 /* set mmap to use /dev/zero; else, use MAP_ANON */
+#define MMAP_DEV_ZERO 0 /* set mmap to use /dev/zero; else, use MAP_ANON */
 #endif
 
-/* some systems may need MAP_FILE with MAP_ANON(YMOUS). */
+/* some systems may need MAP_FILE with MAP_ANON or MAP_ANONYMOUS. */
 #ifndef MAP_FILE
-#define MAP_FILE            0
+#define MAP_FILE      0
 #endif
 #if (!MMAP_DEV_ZERO)
 #if !defined(MAP_ANON) && defined(MAP_ANONYMOUS)
-#define MAP_ANON            MAP_ANONYMOUS
+#define MAP_ANON      MAP_ANONYMOUS
 #endif
 #if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
-#define MAP_ANONYMOUS       MAP_ANON
+#define MAP_ANONYMOUS MAP_ANON
 #endif
 #endif /* !MMAP_DEV_ZERO */
 #if !defined(MAP_FAILED)
-#define MAP_FAILED          ((void *)-1)
+#define MAP_FAILED    ((void *)-1)
 #endif
 #if (defined(MMAP_DEV_ZERO) && (MMAP_DEV_ZERO))
 #define mapanon(fd, size)                                               \

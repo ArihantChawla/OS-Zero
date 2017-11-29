@@ -102,6 +102,7 @@ struct memtls {
     struct membufslot  pagetab[MEMPAGESIZES];
     struct membufslot  bigtab[MEMBIGSIZES];
     struct membufslot *buftab[MEMBUFTYPES];
+
 };
 
 struct mem {
@@ -202,14 +203,15 @@ memrandslot(struct membufslot *slot)
 static __inline__ membufslot *
 memfindslot(struct membuf *buf)
 {
-    MEMWORD_T           bkt = membufbkt(buf);
-    MEMWORD_T           type = membuftype(buf);
-    struct membufslot  *tab;
-    struct membufslot  *slot = &buf->buftab[type][bkt];
+    MEMWORD_T          bkt = membufbkt(buf);
+    MEMWORD_T          type = membuftype(buf);
+    struct membufslot *tab;
+    struct membufslot *slot = &buf->buftab[type][bkt];
 
     return slot;
 }
 
+/* prepend a queue with buffer of allcations */
 static __inline__ void
 mempushbuf(struct membuf *buf, struct membufslot *slot, long flg)
 {
@@ -261,14 +263,14 @@ memaddbuf(struct membuf *buf, struct memtls *tls)
     struct membufslot *slot = NULL;
     MEMWORD_T          type = membuftype(buf);
     MEMWORD_T          bkt = membufbkt(buf);
+    MEMWORD_T          flg = 0;
     MEMWORD_T          nbuf;
-    MEMWORD_T          flg;
 
-    flg = MEMQUEUEGLOBAL;
     if (tls) {
         slot = tls->buftab[type];
-        nbuf = m_atomdec(&slot->nbuf);
+        nbuf = m_atomadd(&slot->nbuf, 1);
         if (nbuf >= 2) {
+            m_atomdec(&slot->nbuf);
             slot = NULL;
         } else {
             slot = &slot[bkt];
@@ -277,17 +279,21 @@ memaddbuf(struct membuf *buf, struct memtls *tls)
     if (!slot) {
         tls = t_memtls;
         slot = tls->buftab[type];
-        nbuf = m_atomdec(&slot->nbuf);
+        nbuf = m_atomadd(&slot->nbuf, 1);
         if (nbuf >= 2) {
+            m_atomdec(&slot->nbuf);
             tls = NULL;
         } else {
             slot = &slot[bkt];
         }
     }
+    if (!tls) {
+        flg |= MEMQUEUEGLOBAL;
+    }
     if (!slot) {
         flg &= ~MEMQUEUEGLOBAL;
         slot = memfindslot(buf);
-        nbuf = m_atomdec(&slot->nbuf);
+        m_atominc(&slot->nbuf);
     }
     memqueuebuf(buf, slot, flg);
 }
@@ -302,7 +308,7 @@ mempushblk(struct membuf *buf, void *ptr)
     MEMWORD_T  lim;
     MEMWORD_T  top;
 
-    top = m_atomdec(&buf->ndx);
+    top = m_atomadd(&buf->ndx, -1);
     nblk = m_atomread(&buf->nblk);
     lim = nblk;
     top--;

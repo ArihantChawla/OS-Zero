@@ -10,9 +10,11 @@
      ? -1                                                               \
      : (localecolltab = colltab[(coll)], 0))
 
+#if 0
 struct _string {
     char    *curtok;
 };
+#endif
 
 #endif /* __BITS_STRING_H__ */
 
