@@ -78,12 +78,24 @@
          MAP_PRIVATE | MAP_FILE,                                        \
          fd,                                                            \
          0)
+#define mapanonlk(fd, size)                                             \
+    mmap(NULL, size, PROT_READ | PROT_WRITE,                            \
+         MAP_PRIVATE | MAP_FILE | MAP_LOCKED,                           \
+         fd,                                                            \
+         0)
 #else
 #define mapanon(fd, size)                                               \
     mmap(NULL,                                                          \
          size,                                                          \
          PROT_READ | PROT_WRITE,                                        \
          MAP_PRIVATE | MAP_ANON | MAP_FILE,                             \
+         -1,                                                            \
+         0)
+#define mapanonlk(fd, size)                                             \
+    mmap(NULL,                                                          \
+         size,                                                          \
+         PROT_READ | PROT_WRITE,                                        \
+         MAP_PRIVATE | MAP_ANON | MAP_FILE | MAP_LOCKED,                \
          -1,                                                            \
          0)
 #endif
