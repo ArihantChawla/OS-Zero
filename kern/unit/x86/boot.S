@@ -24,7 +24,7 @@ _start:
 start:
 	cli		// disable interrupts
 	movw	$BIOSWARMREBOOT, BIOSREBOOTMODE
-	jmp	_start2	// flush CPU pipeline
+	jmp	    _start2	// flush CPU pipeline
 
 .align	4
 
