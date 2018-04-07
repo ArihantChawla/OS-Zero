@@ -9,8 +9,6 @@
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-#include <kern/mem/pool.h>
-#include <kern/mem/slab.h>
 
 /* memory caching type */
 #define MEMWRBIT     0x01
@@ -60,10 +58,15 @@
 #define memgetbkt(hdr)                                                  \
     (&(hdr)->info & ((1 << MEMNBKTBIT) - 1))
 
+#include <kern/mem/slab.h>
+#include <kern/mem/mag.h>
+#include <kern/mem/bkt.h>
+#include <kern/mem/zone.h>
+
 void meminit(size_t nbphys, size_t nbvirt);
-void meminitphys(struct kmempool *pool, uintptr_t base, size_t nbyte);
-void meminitvirt(struct kmempool *pool, size_t nbvirt);
-void memfree(struct kmempool *pool, void *ptr);
+void meminitphys(struct memzone *zone, uintptr_t base, size_t nbyte);
+void meminitvirt(struct memzone *zone, size_t nbvirt);
+void memfree(struct memzone *zone, void *ptr);
 
 #endif /* __KERN_MEM_MEM_H__ */
 

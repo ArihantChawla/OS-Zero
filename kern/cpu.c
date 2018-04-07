@@ -16,10 +16,9 @@ cpuinit(long unit)
     struct m_cpuinfo *info = &cpu->info;
 
     taskinittls(unit);
-    cpuprobe(info, &info->cache);
+    cpuprobe(unit, info, &info->cache);
     cpu->flg |= CPUINITBIT | CPUHASINFO;
 
     return;
 };
-
 

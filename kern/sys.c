@@ -14,15 +14,17 @@ void
 sysinit(void)
 {
     volatile struct m_cpucacheinfo  cbuf;
-    volatile struct cpu            *cpu = k_curcpu;
-    volatile struct m_cpuinfo      *info = &cpu->info;
+    //    volatile struct cpu            *cpu = k_curcpu;
+    //    volatile struct m_cpuinfo      *info = &cpu->info;
     long                           *tab = k_sys.conf.tab;
     long                           *ptr = tab + zeroabs(MINSYSCONF);
 
+#if 0
     if (!(cpu->flg & CPUINITBIT)) {
         /* CPU interface */
         cpuprobe(info, &cbuf);
     }
+#endif
     ptr[_SC_OS_VERSION] = _ZERO_VERSION;
     ptr[_SC_VERSION] = _POSIX_VERSION;
     ptr[_SC_ARG_MAX] = ARG_MAX;
@@ -56,6 +58,7 @@ sysinit(void)
     ptr[_SC_AVPHYS_PAGES] = 0;
     ptr[_SC_NPROCESSORS_CONF] = 1;
     ptr[_SC_NPROCESSORS_ONLN] = 1;
+#if 0
     ptr[_SC_CACHELINE_SIZE] = cpugetclsize(&cbuf);
     ptr[_SC_NTLB] = cpugetntlb(&cbuf);
     ptr[_SC_L1_INST_SIZE] = cpugetl1isize(&cbuf);
@@ -64,6 +67,7 @@ sysinit(void)
     ptr[_SC_L1_DATA_NWAY] = cpugetl1dnway(&cbuf);;
     ptr[_SC_L2_SIZE] = cpugetl2size(&cbuf);;
     ptr[_SC_L2_NWAY] = cpugetl2nway(&cbuf);;
+#endif
     ptr[_SC_BUF_BLK_SIZE] = BUFMAXSIZE;
     k_sys.conf.ptr = ptr;
 
@@ -75,14 +79,14 @@ sysgetconf(int scval)
 {
     long *ptr = k_sys.conf.tab;
     long  retval;
-    
+
     if (scval < MINSYSCONF || scval > MAXSYSCONF) {
 //        kseterrno(EINVAL);
-        
+
         return -1;
     }
     retval = ptr[scval];
-    
-    return retval; 
+
+    return retval;
 }
 

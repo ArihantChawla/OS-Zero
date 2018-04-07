@@ -38,10 +38,10 @@ extern void tssinit(long id);
 extern void gdtinit(void);
 extern void trapinitidt(void);
 #if (APIC)
-extern void apicinit(void);
+extern void apicinit(long unit);
 #endif
 #if (IOAPIC)
-extern void ioapicinit(void);
+extern void ioapicinit(long unit);
 #endif
 extern void cpuinit(long unit);
 extern void seginit(long id);
@@ -117,7 +117,7 @@ mpsearch(void)
         adr = TOPMEMDEF - 1024;
         mp = mpprobe(adr, 1024);
         if (mp) {
-            
+
             return mp;
         }
     }
@@ -234,9 +234,9 @@ mpinitcpu(long unit)
 #if (HPET)
     hpetinit();
 #endif
-    apicinit();
+    apicinit(unit);
 #if (IOAPIC)
-    ioapicinit();
+    ioapicinit(unit);
 #endif
     tssinit(unit);
 
@@ -248,7 +248,7 @@ void
 mpmain(struct cpu *cpu)
 {
     long unit = cpu->unit;
-    
+
     seginit(unit);
     idtset();
     m_atomwrite((m_atomic_t *)&cpu->flg, CPUSTARTED);
@@ -278,7 +278,7 @@ mpstart(void)
     for (cpu = &cputab[0] ; cpu < lim ; cpu++) {
         if (cpu == mpbootcpu) {
             /* started already */
-            
+
             continue;
         }
         kprintf("starting CPU %ld @ 0x%lx\n", cpu->unit, MPENTRY);

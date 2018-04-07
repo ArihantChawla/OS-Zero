@@ -23,7 +23,7 @@ schedsetsleep(struct task *task)
                     task->prev = sleeptask->prev;
                     task->next = sleeptask;
                     sleeptask->prev = task;
-                    
+
                     return;
                 }
                 sleeptask = sleeptask->next;

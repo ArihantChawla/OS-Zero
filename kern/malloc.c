@@ -13,9 +13,6 @@
 #include <kern/cpu.h>
 #include <kern/mem/vm.h>
 #include <kern/mem/mem.h>
-#include <kern/mem/slab.h>
-#include <kern/mem/mag.h>
-#include <kern/mem/bkt.h>
 #include <kern/proc/proc.h>
 #if defined(__i386__)
 #include <kern/unit/x86/link.h>
@@ -28,30 +25,31 @@
 #define kbzero bzero
 #define panic(pid, trap, err) abort()
 #endif
+//#define panic(pid, trap, err)
 
-extern struct kmempool kmemphyspool;
-struct kmempool        kmemvirtpool;
+extern struct memzone memphyszone;
+struct memzone        memvirtzone;
 
 void *
 memalloc(size_t nb, long flg)
 {
-    struct kmempool *physpool = &kmemphyspool;
-    struct kmempool *virtpool = &kmemvirtpool;
-    void            *ptr = NULL;
-    size_t           sz = max(MEMMINSIZE, nb);
-    size_t           bsz;
-    long             vmflg;
-    unsigned long    slab = 0;
-    unsigned long    bktid = memcalcbkt(sz);
+    struct memzone *physzone = &memphyszone;
+    struct memzone *virtzone = &memvirtzone;
+    void           *ptr = NULL;
+    size_t          sz = max(MEMMINSIZE, nb);
+    size_t          bsz;
+    long            vmflg;
+    unsigned long   slab = 0;
+    unsigned long   bktid = memcalcbkt(sz);
 #if defined(MEMPARANOIA)
-    unsigned long   *bmap;
+    unsigned long  *bmap;
 #endif
 //    struct memmag   *mag;
-    uint8_t         *u8ptr;
-    unsigned long    ndx;
-    unsigned long    n;
-    struct kmembkt  *bkt = &virtpool->tab[bktid];
-    struct kmemmag  *mag;
+    uint8_t        *u8ptr;
+    unsigned long   ndx;
+    unsigned long   n;
+    struct membkt  *bkt = &virtzone->tab[bktid];
+    struct memmag  *mag;
 
     vmflg = PAGEPRES | PAGEWRITE;
     if (MEMWIRE) {
@@ -59,13 +57,13 @@ memalloc(size_t nb, long flg)
     }
     fmtxlk(&bkt->lk);
     if (bktid >= MEMSLABSHIFT) {
-        ptr = slaballoc(virtpool, sz, flg);
+        ptr = slaballoc(virtzone, sz, flg);
         if (ptr) {
 #if (!MEMTEST)
             vminitvirt(&_pagetab, ptr, sz, vmflg);
 #endif
             slab++;
-            mag = memgetmag(ptr, virtpool);
+            mag = memgetmag(ptr, virtzone);
             mag->base = (uintptr_t)ptr;
             mag->n = 1;
             mag->ndx = 1;
@@ -84,7 +82,7 @@ memalloc(size_t nb, long flg)
                 bkt->list = mag->next;
             }
         } else {
-            ptr = slaballoc(virtpool, sz, flg);
+            ptr = slaballoc(virtzone, sz, flg);
             if (ptr) {
 #if (!MEMTEST)
                 vminitvirt(&_pagetab, ptr, sz, vmflg);
@@ -93,7 +91,7 @@ memalloc(size_t nb, long flg)
                 slab++;
                 bsz = (uintptr_t)1 << bktid;
                 n = (uintptr_t)1 << (MEMSLABSHIFT - bktid);
-                mag = memgetmag(ptr, virtpool);
+                mag = memgetmag(ptr, virtzone);
                 mag->base = (uintptr_t)ptr;
                 mag->n = n;
                 mag->ndx = 1;
@@ -123,7 +121,7 @@ memalloc(size_t nb, long flg)
             kprintf("duplicate allocation %p (%ld/%ld)\n",
                     ptr, ndx, mag->n);
 
-            panic(k_curpid, TRAPNONE, -EINVAL);
+            panic(TRAPNONE, -EINVAL);
         }
         setbit(bmap, ndx);
 #endif /* defined(MEMPARANOIA) */
@@ -132,7 +130,7 @@ memalloc(size_t nb, long flg)
         }
     }
     if (!ptr) {
-        panic(k_curpid, TRAPNONE, -ENOMEM);
+        panic(TRAPNONE, -ENOMEM);
     }
     fmtxunlk(&bkt->lk);
 
@@ -150,7 +148,7 @@ memwtalloc(size_t nb, long flg, long spin)
         do {
             ptr = memalloc(nb, flg);
             if (ptr) {
-                
+
                 return ptr;
             }
         } while (spin--);
@@ -164,16 +162,16 @@ memwtalloc(size_t nb, long flg, long spin)
 void
 kfree(void *ptr)
 {
-    struct kmempool *physpool = &kmemphyspool;
-    struct kmempool *virtpool = &kmemvirtpool;
-    struct kmemmag  *mag = memgetmag(ptr, virtpool);
-    unsigned long    bktid = (mag) ? memmaggetbkt(mag) : 0;
+    struct memzone *physzone = &memphyszone;
+    struct memzone *virtzone = &memvirtzone;
+    struct memmag  *mag = memgetmag(ptr, virtzone);
+    unsigned long   bktid = (mag) ? memmaggetbkt(mag) : 0;
 #if defined(MEMPARANOIA)
-    unsigned long    ndx;
-    unsigned long   *bmap;
+    unsigned long   ndx;
+    unsigned long  *bmap;
 #endif
-    struct kmembkt  *bkt = &virtpool->tab[bktid];
-    struct kmemmag  *head;
+    struct membkt  *bkt = &virtzone->tab[bktid];
+    struct memmag  *head;
 
     if (!ptr || !mag) {
 
@@ -191,7 +189,7 @@ kfree(void *ptr)
         kprintf("invalid free: %p (%ld/%ld)\n",
                 ptr, ndx, mag->n);
 
-        panic(k_curproc->pid, TRAPNONE, -EINVAL);
+        panic(TRAPNONE, -EINVAL);
     }
 #endif
     mempush(mag, ptr);
@@ -209,7 +207,7 @@ kfree(void *ptr)
                 bkt->list = NULL;
             }
         }
-        slabfree(physpool, ptr);
+        slabfree(physzone, ptr);
         mag->base = 0;
     } else if (mag->ndx == mag->n - 1) {
         head = bkt->list;

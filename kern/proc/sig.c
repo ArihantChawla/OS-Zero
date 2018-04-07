@@ -19,7 +19,7 @@ __sighandler_t     sigfunctab[NSIG] ALIGNED(PAGESIZE);
 long               traperrbits = TRAPERRBITS;
 
 void
-prockill(volatile struct proc *proc)
+prockill(struct proc *proc)
 {
     ;
 }
@@ -28,13 +28,13 @@ FASTCALL
 void
 sigfunc(unsigned long pid, int32_t trap, long err, void *frame)
 {
-    volatile struct task *task = &tasktab[pid];
-    long                  sig = trapsigmap[trap];
-    volatile struct proc *proc = task->proc;
-    __sighandler_t        func;
+    struct task    *task = &tasktab[pid];
+    long            sig = trapsigmap[trap];
+    struct proc    *proc = task->proc;
+    __sighandler_t  func;
 
     if (pid < TASKNPREDEF) {
-        panic(pid, trap, err);
+        panic(trap, err);
     }
 //    kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
     if (trap == TRAPUD) {

@@ -15,33 +15,36 @@
 #include <kern/malloc.h>
 #include <kern/util.h>
 
-#define mtod(m, t) ((t)((m)->hdr.data))
-
 /* TODO: perhaps hack a dedicated pool/allocator for memory blocks? */
 
 /* check if it's safe to write to buffer's data region */
-#define mbwritable(buf)                                                 \
+#define membufwritable(buf)                                             \
     (!((buf)->hdr.flg & MEMBUF_RDONLY_BIT)                              \
-     && (!(mbexthdr(buf)->flg & MEMBUF_EXT_RDONLY)                      \
-         || (mbexthdr(buf)->nref > 1)))
+     && (!(membufexthdr(buf)->flg & MEMBUF_EXT_RDONLY)                  \
+         || (membufexthdr(buf)->nref > 1)))
 /* longword-align buffer data pointer for object of len */
-#define mbalignbuf(buf, len)                                            \
-    ((buf)->hdr.data += (MEMBUF_DATA_LEN - (len)) & ~(sizeof(long) - 1))
+#define membufaligndata(buf, len)                                       \
+    ((buf)->hdr.data += ((uintptr_t)&membufdata(buf) + MEMBUF_DATA_LEN  \
+                         - (len)) & ~(sizeof(uintptr_t) - 1))
 /* longword-align buffer packet data pointer for object of len */
-#define mbalignpkt(buf, len)                                            \
-    ((buf)->hdr.data += (MEMBUF_PKT_LEN - (len)) & ~(sizeof(long) - 1))
+#define membufalignpkt(buf, len)                                        \
+    ((buf)->hdr.data = (void *)(((uintptr_t)&membufpktdata(buf)         \
+                                 + (MEMBUF_PKT_LEN - (len)))            \
+                                & ~(sizeof(uintptr_t) - 1)))
 /* compute amount of space before current start of data */
-#define mbleadspace(buf)                                                \
+#define membufleadspace(buf)                                            \
     (((buf)->hdr.flg & MEMBUF_EXT_BIT)                                  \
      ? 0                                                                \
      : (((buf)->hdr.flg & MEMBUF_PKTHDR)                                \
-        ? ((buf)->hdr.data - mbpktbuf(buf))                             \
-        : ((buf)->hdr.data - mbdata(buf))))
+        ? ((buf)->hdr.data - membufpktdata(buf))                        \
+        : ((buf)->hdr.data - membufdata(buf))))
 /* compute amount of space after current end of data */
-#define mbtrailspace(buf)                                               \
+#define membuftrailspace(buf)                                           \
     (((buf)->hdr.flg & MEMBUF_EXT_BIT)                                  \
-     ? (mbextbuf(buf) + mbextsize(buf) - mbadr(buf))                    \
-     : (&mbdata(buf)[MEMBUF_DATA_LEN] - mbadr(buf) - mblen(buf)))
+     ? (membufextsize(buf) - membufextlen(buf))                         \
+     : (((buf)->hdr.flg & MEMBUF_PKTHDR)                                \
+        ? (membufpktsize(buf) - membufpktlen(buf))                      \
+        : (membufsize(buf) - membuflen(buf))))
 
 #endif /* __KERN_MEM_BITS_MEMBUF_H__ */
 

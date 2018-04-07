@@ -2,6 +2,7 @@
 #define __KERN_MEM_ZONE_H__
 
 #include <stddef.h>
+#include <zero/param.h>
 
 /* flags for creating memzones */
 #define MEMZONE_ZERO    0x00000001 // initialize with zeroes
@@ -18,11 +19,21 @@
 #define MEMZONE_REFCNT  0x00000800 // keep allocation reference counts
 
 struct memzone {
-    volatile long *lk;
-    long           flg;
-    void          *base;
-    size_t         len;
+    struct membkt        tab[PTRBITS];
+    volatile m_atomic_t  lk;
+    long                 flg;
+    uintptr_t            base;
+    unsigned long       nblk;
+    void               *hdrtab;
+    uint8_t             _pad[CLSIZE
+                             - sizeof(uintptr_t)
+                             - sizeof(unsigned long)
+                             - sizeof(void *)
+                             - sizeof(m_atomic_t)];
 };
+
+void * zonegetslab(struct memzone *zone, unsigned long nb, unsigned long flg);
+void   zonefreeslab(struct memzone *zone, void *ptr);
 
 #endif /* __KERN_MEM_ZONE_H__ */
 

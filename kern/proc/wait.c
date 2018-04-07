@@ -8,7 +8,7 @@
 #include <kern/proc/task.h>
 
 #define DEQ_SINGLE_TYPE
-#define DEQ_TYPE struct task
+#define DEQ_TYPE        struct task
 #include <zero/deq.h>
 
 struct tasktabl0 taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
@@ -23,7 +23,7 @@ schedsetwait(struct task *task)
     void             **pptr;
     struct taskqueue  *queue;
     uintptr_t          wtchan = task->waitchan;
-    long               fail = 0;    
+    long               fail = 0;
     long               key0;
     long               key1;
     long               key2;
@@ -67,7 +67,7 @@ schedsetwait(struct task *task)
             queue = kmalloc(TASKNLVL3WAIT * sizeof(struct taskqueue));
             if (queue) {
                 kbzero(queue, TASKNLVL3WAIT * sizeof(struct taskqueue));
-            } 
+            }
             ptab[2] = queue;
             pptr[key2] = queue;
         } else {
@@ -89,7 +89,7 @@ schedsetwait(struct task *task)
         tab->nref++;
     }
     fmtxunlk(&taskwaittab[key0].lk);
-    
+
     return;
 }
 

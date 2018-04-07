@@ -94,7 +94,7 @@ apicinittmr(void)
     tmp8 = inb(PITCTRL2) & 0xfd;
     tmp8 |= PITONESHOT;
     outb(tmp8, PITCTRL2);
-    
+
 //    outb(0xb2, PITCTRL);
 //    outb(PITCMD | PITONESHOT, PITCTRL2);
     apicwrite(0, APICTASKPRIO);
@@ -116,14 +116,14 @@ apicinittmr(void)
     trapsetintrgate(&kernidt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
     tmrcnt = max(tmrcnt, 16);
     apictmrcnt = tmrcnt;
-    
+
     return;
 }
 
 void
-apicinit(void)
+apicinit(long id)
 {
-    volatile struct cpu *cpu = k_curcpu;
+    volatile struct cpu *cpu = &cputab[id];
     static long          first = 1;
     uint32_t             tmrcnt;
 

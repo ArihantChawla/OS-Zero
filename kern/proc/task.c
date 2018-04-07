@@ -36,10 +36,16 @@ taskinittls(long unit, long id)
     struct cpu  *cpu = &cputab[unit];
     struct task *task = &tasktab[id];
 
-    k_curcpu = cpu;
-    k_curunit = unit;
-    k_curtask = task;
-    k_curpid = id;
+    k_setcurcpu(cpu);
+    k_setcurunit(unit);
+    k_setcurtask(task);
+    k_setcurpid(id);
+#if 0
+    k_curcpu = (volatile struct cpu *)cpu;
+    k_curunit = (volatile long)unit;
+    k_curtask = (volatile struct task *)task;
+    k_curpid = (volatile long)id;
+#endif
 
     return;
 }
@@ -47,8 +53,8 @@ taskinittls(long unit, long id)
 void
 taskinit(struct task *task, long unit)
 {
-    long id = (k_curtask) ? k_curtask->id : PROCKERN;
-    
+    long id = (task) ? task->id : PROCKERN;
+
     taskinittls(unit, id);
     if (!task) {
         ;
@@ -87,7 +93,7 @@ taskfreeid(long id)
 {
     struct taskid *queue = &taskidqueue;
     struct taskid *taskid = &taskidtab[id];
-    
+
     fmtxlk(&queue->lk);
     deqappend(taskid, &queue);
     fmtxunlk(&queue->lk);

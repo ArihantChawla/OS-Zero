@@ -18,13 +18,13 @@
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/task.h>
 
-extern pde_t        kernpagedir[NPDE];
-extern struct task  tasktab[NTASK];
-struct proc         proctab[NTASK] ALIGNED(PAGESIZE);
-struct proc        *proczombietab[NTASK];
+extern pde_t          kernpagedir[NPDE];
+extern struct task    tasktab[NTASK];
+struct proc           proctab[NTASK] ALIGNED(PAGESIZE);
+volatile struct proc *proczombietab[NTASK];
 
 long
-procinit(long id, long sched)
+procinit(long unit, long id, long sched)
 {
     volatile struct cpu *cpu;
     struct proc         *proc;
@@ -36,8 +36,7 @@ procinit(long id, long sched)
     uint8_t             *u8ptr;
 
     if (id < TASKNPREDEF) {
-//        cpu = &cputab[0];
-        cpu = k_curcpu;
+        cpu = &cputab[unit];
         proc = &proctab[id];
         task = &tasktab[id];
         prio = SCHEDSYSPRIOMIN;
@@ -49,10 +48,12 @@ procinit(long id, long sched)
         if (cpu->info.flg & CPUHASFXSR) {
             task->flg |= CPUHASFXSR;
         }
+#if 0
         k_curcpu = cpu;
         k_curunit = 0;
         k_curtask = task;
         k_curpid = id;
+#endif
 
         return id;
     } else {
@@ -64,7 +65,9 @@ procinit(long id, long sched)
         proc->pid = id;
         proc->nice = 0;
         proc->task = task;
+#if 0
         k_curtask = task;
+#endif
         task->proc = proc;
         val = 0;
         if (cpu->flg & CPUHASFXSR) {
@@ -99,7 +102,7 @@ procinit(long id, long sched)
                 proc->pagedir = ptr;
             } else {
                 kfree(proc);
-                
+
                 return -1;
             }
 #if (VMFLATPHYSTAB)
@@ -111,7 +114,7 @@ procinit(long id, long sched)
             } else {
                 kfree(proc->pagedir);
                 kfree(proc);
-                
+
                 return -1;
             }
 #endif
@@ -130,20 +133,20 @@ procinit(long id, long sched)
             }
         }
     }
-    
+
     return id;
 }
 
 /* see <kern/proc.h> for definitions of scheduler classes */
 struct proc *
-newproc(int argc, char *argv[], char *envp[], long sched)
+newproc(long unit, int argc, char *argv[], char *envp[], long sched)
 {
     long         id = taskgetid();
     struct proc *proc = (id >= 0) ? &proctab[id] : NULL;
     struct task *task = (id >= 0) ? &tasktab[id] : NULL;
 
     if (proc) {
-        procinit(id, sched);
+        procinit(unit, id, sched);
         proc->argc = argc;
         proc->argv = argv;
         proc->envp = envp;

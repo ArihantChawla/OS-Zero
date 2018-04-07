@@ -16,16 +16,16 @@
 #endif
 #include <kern/unit/ia32/task.h>
 
-void                     schedinitset(void);
-FASTCALL struct task   * schedswitchtask(struct task *curtask);
-void                     schedsetready(struct task *task);
-void                     schedsetstopped(struct task *task);
-void                     schedsetzombie(struct proc *proc);
+void schedinitset(void);
+void schedswitchtask(struct task *curtask);
+void schedsetready(struct task *task);
+void schedsetstopped(struct task *task);
+void schedsetzombie(struct proc *proc);
 
-extern volatile struct cpu  cputab[NCPU];
-extern struct proc         *proczombietab[NTASK];
-extern struct tasktabl0     taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
-extern struct divu16        fastu16divu16tab[SCHEDDIVU16TABSIZE];
+extern struct cpu   cputab[NCPU];
+extern struct proc *proczombietab[NTASK];
+extern struct tasktabl0      taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
+extern struct divu16         fastu16divu16tab[SCHEDDIVU16TABSIZE];
 
 /* lookup table to convert nice values to priority offsets */
 /* nice is between -20 and 19 inclusively */
@@ -79,7 +79,7 @@ schedinit(void)
 {
 #if 0
 #if (ZEROSCHED)
-    schedswtchtask = schedswitchtask;
+    schedswitch = schedswitchtask;
 #else
 #error define supported scheduler such as ZEROSCHED
 #endif
@@ -87,20 +87,6 @@ schedinit(void)
     kprintf("SCHEDHISTORYSIZE == %ld\n", SCHEDHISTORYSIZE);
     fastu16divu16gentab(fastu16divu16tab, SCHEDDIVU16TABSIZE);
     schedinitset();
-
-    return;
-}
-
-void
-schedyield(void)
-{
-    struct task *oldtask = (struct task *)k_curtask;
-    struct task *task = NULL;
-
-    task = schedswitchtask(oldtask);
-    if (task != oldtask) {
-        m_taskjmp(&task->m_task);
-    }
 
     return;
 }
@@ -119,14 +105,14 @@ schedinitset(void)
 {
     long                  lim = NCPU;
     struct schedqueueset *set = &schedreadyset;
-    long                  unit = k_curcpu->unit;
+    //    long                  unit = k_curcpu->unit;
     long                  id;
 
     lim >>= __LONGBITSLOG2;
     for (id = 0 ; id < lim ; id++) {
         schedidlecoremap[id] = ~1L;
     }
-    clrbit(schedidlecoremap, unit);
+    //    clrbit(schedidlecoremap, unit);
     set->curmap = schedreadymap0;
     set->nextmap = schedreadymap1;
     set->idlemap = schedidlemap;
@@ -139,7 +125,7 @@ schedinitset(void)
 }
 
 #define DEQ_SINGLE_TYPE
-#define DEQ_TYPE      struct task
+#define DEQ_TYPE        struct task
 #include <zero/deq.h>
 
 void
@@ -177,7 +163,7 @@ schedsetdeadline(struct task *task)
             queue = kmalloc(SCHEDNLVL2DL * sizeof(struct taskqueue));
             if (queue) {
                 kbzero(queue, SCHEDNLVL2DL * sizeof(struct taskqueue));
-            } 
+            }
             ptab[1] = queue;
             pptr[key1] = queue;
         } else {
@@ -196,7 +182,7 @@ schedsetdeadline(struct task *task)
         tab->nref++;
     }
     fmtxunlk(&scheddeadlinetab[key0].lk);
-    
+
     return;
 }
 
@@ -302,10 +288,10 @@ schedsetready(struct task *task)
     }
     set->loadmap[qid] = load;
     fmtxunlk(&set->lk);
-    
+
     return;
 }
-    
+
 void
 schedsetstopped(struct task *task)
 {
@@ -327,11 +313,13 @@ schedsetzombie(struct proc *proc)
 }
 
 /* switch tasks */
-FASTCALL
-struct task *
+void
+//schedswitchtask(struct task *curtask)
 schedswitchtask(struct task *curtask)
 {
-    long                   unit = k_curcpu->unit;
+    //    long                   unit = k_curcpu->unit;
+    //    struct task           *curtask = (struct task *)k_curtask;
+    long                   unit = curtask->unit;
     long                   state = (curtask) ? curtask->state : -1;
     struct schedqueueset  *set = &schedreadyset;
     struct task           *task;
@@ -347,29 +335,29 @@ schedswitchtask(struct task *curtask)
     if (!curtask) {
         /* kernel initialisations are still taking place */
 
-        return NULL;
+        return;
     }
     switch (state) {
         case TASKNEW:
         case TASKREADY:
             schedsetready(curtask);
-            
+
             break;
         case TASKSLEEPING:
             schedsetsleep(curtask);
-            
+
             break;
         case TASKSTOPPED:
             schedsetstopped(curtask);
-            
+
             break;
         case TASKZOMBIE:
             schedsetzombie(curtask->proc);
-            
+
             break;
         default:
-            panic(curtask->id, -1, 0); /* FIXME: error # */
-            
+            panic(-1, 0); /* FIXME: error # */
+
             break;
     }
     do {
@@ -394,8 +382,8 @@ schedswitchtask(struct task *curtask)
                             m_clrbit((m_atomic_t *)map, ofs);
                         }
                         fmtxunlk(&set->lk);
-                    
-                        return task;
+
+                        m_taskjmp(&task->m_task);
                     }
                 }
             }
@@ -424,8 +412,8 @@ schedswitchtask(struct task *curtask)
                         m_clrbit((m_atomic_t *)map, ofs);
                     }
                     fmtxunlk(&set->lk);
-                    
-                    return task;
+
+                    m_taskjmp(&task->m_task);
                 }
             }
         }
@@ -438,9 +426,35 @@ schedswitchtask(struct task *curtask)
         k_enabintr();
         m_waitint();
     } while (1);
+    m_taskjmp(&task->m_task);
 
     /* NOTREACHED */
-    return NULL;
+    return;
+}
+
+#if 0
+void
+schedyield(void)
+{
+    struct task *curtask = k_getcurtask();
+
+    schedswitchtask(curtask);
+}
+#endif
+
+void
+schedyield(void)
+{
+    struct task *oldtask = k_getcurtask();
+    //    struct task *task = NULL;
+
+    schedswitchtask(oldtask);
+    //    task = schedswitchtask(oldtask);
+    //    //    if (task != oldtask) {
+    //    m_taskjmp(&task->m_task);
+    //    }
+
+    return;
 }
 
 #endif /* ZEROSCHED */

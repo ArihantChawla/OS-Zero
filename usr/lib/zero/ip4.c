@@ -1,7 +1,7 @@
 #if !defined(IP4TEST)
 #define IP4TEST    0
 #else
-#define IP4NPKT    16384
+#define IP4NPKT    4096
 #define IP4PKTSIZE 65536
 #endif
 
@@ -43,14 +43,14 @@ ip4chksum16(const uint8_t *buf, size_t size)
 
         sum += word16;
     }
-    
+
     /* Handle odd-sized case */
     if (size & 1) {
         uint16_t word16 = (uint8_t)buf[ndx];
 
         sum += word16;
     }
-    
+
     /* Fold to get the ones-complement result */
     while (sum >> 16) sum = (sum & 0xffff) + (sum >> 16);
 
@@ -95,7 +95,7 @@ ip4chksum64(const uint8_t *buf, size_t size)
             sum++;
         }
     }
-    
+
     if (size & 2) {
         uint16_t u = *(uint16_t *)buf;
 
@@ -105,14 +105,14 @@ ip4chksum64(const uint8_t *buf, size_t size)
             sum++;
         }
     }
-    
+
     if (size) {
         uint8_t u = *(uint8_t *)buf;
 
         sum += u;
         if (sum < u) sum++;
     }
-    
+
     /* Fold down to 16 bits */
     tmp1 = sum;
     tmp2 = sum >> 32;
@@ -126,7 +126,7 @@ ip4chksum64(const uint8_t *buf, size_t size)
     if (tmp3 < tmp4) {
         tmp3++;
     }
-    
+
     return ~tmp3;
 }
 
@@ -191,7 +191,7 @@ ip4chksum64_2(const uint8_t *buf, size_t size)
     if (tmp3 < tmp4) {
         tmp3++;
     }
-    
+
     return ~tmp3;
 }
 
@@ -202,40 +202,55 @@ ip4chksum64_2(const uint8_t *buf, size_t size)
 int
 main(int argc, char *argv[])
 {
-    uint64_t *pkttab[IP4NPKT];
-    size_t    lentab[IP4NPKT];
-    uint16_t  chk1tab[IP4NPKT];
-    uint16_t  chk2tab[IP4NPKT];
+    uint64_t           *pkttab[IP4NPKT];
+    size_t              lentab[IP4NPKT];
+    uint16_t            chk1tab[IP4NPKT];
+    uint16_t            chk2tab[IP4NPKT];
+    unsigned long long  nbyte = 0;
+    uint8_t            *ptr;
+    long                nus;
+    long                l;
+    long                n;
+    uint16_t            len;
     PROFDECLCLK(clk);
-    uint8_t  *ptr;
-    long      l;
-    long      n;
-    uint16_t  len;
-    unsigned long long nbyte;
 
     srandmt32(666);
+    fprintf(stderr, "IP4test, %d packets\n", IP4NPKT);
     for (l = 0 ; l < IP4NPKT ; l++) {
+b        //        fprintf(stderr, "%ld\n", l);
         len = (randmt32() & (IP4PKTSIZE - 1)) + 1;
         lentab[l] = len;
+        nbyte += len;
 //        pkttab[l] = calloc(rounduppow2(len, sizeof(uint64_t)) / sizeof(uint64_t), sizeof(uint64_t));
-        pkttab[l] = malloc(rounduppow2(len, sizeof(uint64_t)) * sizeof(uint64_t));
+        pkttab[l] = malloc(rounduppow2(len, sizeof(uint64_t)) * sizeof
+                           (uint64_t));
+        //        pkttab[l] = malloc(len);
         ptr = (uint8_t *)pkttab[l];
         for (n = 0 ; n < len ; n++) {
             ptr[n] = randmt32() % 0xff;
         }
     }
+#if 0
     nbyte = 0;
     for (l = 0 ; l < IP4NPKT ; l++) {
         nbyte += lentab[l];
     }
-    fprintf(stderr, "%llu\n", nbyte);
+#endif
+    fprintf(stderr, "allocated %llu bytes\n", nbyte);
     profstartclk(clk);
     for (l = 0 ; l < IP4NPKT ; l++) {
+        //        profstartclk(clk);
         chk1tab[l] = ip4chksum64((const uint8_t *)pkttab[l], lentab[l]);
+        //        profstopclk(clk);
+#if 0
+        nus = profclkdiff(clk);
+        fprintf(stderr, "%ld microseconds for %ld bytes - %lfMBps\n",
+                nus, (long)lentab[l], lentab[l] / (1000000000.0 * nus));
+#endif
     }
     profstopclk(clk);
     fprintf(stderr, "%ld microseconds\n", profclkdiff(clk));
-    fprintf(stderr, "%f KB/s\n", (1000000.0 * ((double)nbyte / (double)profclkdiff(clk))) / 1024.0);
+    fprintf(stderr, "%f MBps\n", (1000000.0 * ((double)nbyte / (double)profclkdiff(clk))) / 1048576.0);
     profstartclk(clk);
     for (l = 0 ; l < IP4NPKT ; l++) {
         chk2tab[l] = ip4chksum64_2((const uint8_t *)pkttab[l], lentab[l]);
@@ -252,7 +267,7 @@ main(int argc, char *argv[])
             exit(1);
         }
     }
-    
+
     return 0;
 }
 

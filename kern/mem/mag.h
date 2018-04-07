@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
-#include <kern/mem/mem.h>
 
 #define mempop(mp)       ((mp)->ptab[((mp)->ndx)++])
 #define mempush(mp, ptr) ((mp)->ptab[--((mp)->ndx)] = (ptr))
@@ -14,37 +13,37 @@
 #define __STRUCT_MEMMAG_PTAB_SIZE                                       \
     ((1UL << (MEMSLABSHIFT - MEMMINSHIFT)) * sizeof(void *))
 #if defined(MEMPARANOIA)
-#if (MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZESHIFT + 3))
+#if (MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZELOG2 + 3))
 #define __STRUCT_MEMMAG_BMAP_SIZE sizeof(long)
 #else
-#define
 #define __STRUCT_MEMMAG_BMAP_SIZE                                       \
     (1UL << (MEMSLABSHIFT - MEMMINSHIFT - 3))
 #endif
 #else
 #define __STRUCT_MEMMAG_BMAP_SIZE 0
 #endif /* defined(MEMPARANOIA) */
-struct kmemmag {
-    uintptr_t       base;
-    volatile long   info;
-    struct kmemmag *prev;
-    struct kmemmag *next;
-#if defined(MEMPARANOIA) && (MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZESHIFT + 3)) && 0
+struct memmag {
+    m_atomic_t     lk;
+    uintptr_t      base;
+    volatile long  info;
+    struct memmag *prev;
+    struct memmag *next;
+#if defined(MEMPARANOIA) && (MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZELOG2 + 3)) && 0
     unsigned long   bmap;
 #endif
     volatile long   ndx;
     volatile long   n;
     void           *ptab[1UL << (MEMSLABSHIFT - MEMMINSHIFT)];
-#if defined(MEMPARANOIA) &&  !(MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZESHIFT + 3)) && 0
+#if defined(MEMPARANOIA) &&  !(MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZELOG2 + 3)) && 0
     uint8_t         bmap[__STRUCT_MEMMAG_BMAP_SIZE];
 #endif /* defined(MEMPARANOIA) */
 };
 
 #if 0
-    
+
 #define memgetmag(ptr, pool)                                            \
     (((ptr)                                                             \
-      ? ((struct kmemmag *)(pool)->blktab + memgetmagnum(ptr, pool))    \
+      ? ((struct memmag *)(pool)->blktab + memgetmagnum(ptr, pool))     \
       : NULL))
 
 #endif

@@ -67,7 +67,7 @@
 
 #define PROCNEW (-1L)
 
-long procinit(long id, long sched);
+long procinit(long unit, long id, long sched);
 long procgetpid(void);
 void procfreepid(long id);
 

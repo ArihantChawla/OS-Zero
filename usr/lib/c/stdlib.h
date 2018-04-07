@@ -91,7 +91,7 @@ char               * fcvt(double num, int ndigit, int *decptr, int *sign);
 char               * gcvt(double num, int ndigit, char *buf);
 char               * getenv(const char *name);
 int                  getsubopt(char *opt, char *const *tok, char **val);
-char               * l64a(long val); 
+char               * l64a(long val);
 long                 labs(long val);
 void                 lcong48(unsigned short tab[7]);
 ldiv_t               ldiv(long numer, long denom);

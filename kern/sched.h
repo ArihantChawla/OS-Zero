@@ -11,7 +11,7 @@
 #if defined(__KERNEL__)
 extern void schedinit(void);
 #endif
-extern void schedyield(void);
+extern void schedyield();
 
 #if defined(ZEROSCHED)
 
@@ -22,7 +22,7 @@ extern void schedyield(void);
 #define SCHEDNQUEUEPRIO     (1 << SCHEDNQUEUESHIFT)
 /* 'system' classes */
 #define SCHEDDEADLINE       (-SCHEDREALTIME - 1) // deadline tasks
-#define SCHEDREALTIMERR     (-SCHEDREALTIME) // 
+#define SCHEDREALTIMERR     (-SCHEDREALTIME) //
 #define SCHEDTRAP           0           // interrupt tasks
 #define SCHEDREALTIME       1           // realtime threads
 #define SCHEDSYSTEM         2

@@ -5,35 +5,30 @@
 #include <limits.h>
 #include <zero/param.h>
 #include <kern/types.h>
-#include <kern/mem/mem.h>
-#include <kern/mem/pool.h>
 
 #define __STRUCT_MEMSLAB_PAD                                            \
     (CLSIZE - 3 * PTRSIZE - WORDSIZE)
-struct kmemslab {
-    void            *adr;
-    m_ureg_t         info;
-    struct kmemslab *prev;
-    struct kmemslab *next;
+struct memslab {
+    void           *adr;
+    m_ureg_t        info;
+    struct memslab *prev;
+    struct memslab *next;
 #if (__STRUCT_MEMSLAB_PAD)
-    uint8_t          _pad[__STRUCT_MEMSLAB_PAD];
+    uint8_t         _pad[__STRUCT_MEMSLAB_PAD];
 #endif
 };
 
-#define memgethdrnum(hdr, pool)                                         \
-    ((uintptr_t)(hdr) - (uintptr_t)(pool)->hdrtab)
-#define memgetblknum(ptr, pool)                                         \
-    (((uintptr_t)(ptr) - (pool)->base) >> MEMSLABSHIFT)
-#define memgetadr(hdr, pool)                                            \
-    ((void *)((uint8_t *)(pool)->base                                   \
-              + (memgethdrnum(hdr, pool) << MEMMINSHIFT)))
-#define memgetslab(ptr, pool)                                           \
-    ((struct kmemslab *)(pool)->hdrtab + memgetblknum(ptr, pool))
-#define memgetmag(ptr, pool)                                            \
-    ((struct kmemmag *)(pool)->hdrtab + memgetblknum(ptr, pool))
-
-void * slaballoc(struct kmempool *pool, unsigned long nb, unsigned long flg);
-void   slabfree(struct kmempool *pool, void *ptr);
+#define memgethdrnum(hdr, zone)                                         \
+    ((uintptr_t)(hdr) - (uintptr_t)(zone)->hdrtab)
+#define memgetblknum(ptr, zone)                                         \
+    (((uintptr_t)(ptr) - (zone)->base) >> MEMSLABSHIFT)
+#define memgetadr(hdr, zone)                                            \
+    ((void *)((uint8_t *)(zone)->base                                   \
+              + (memgethdrnum(hdr, zone) << MEMMINSHIFT)))
+#define memgetslab(ptr, zone)                                           \
+    ((struct memslab *)(zone)->hdrtab + memgetblknum(ptr, zone))
+#define memgetmag(ptr, zone)                                            \
+    ((struct memmag *)(zone)->hdrtab + memgetblknum(ptr, zone))
 
 #endif /* __KERN_MEM_SLAB_H__ */
 

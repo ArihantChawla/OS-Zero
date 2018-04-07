@@ -17,16 +17,27 @@
 
 /* membuf convenience macros */
 #define MEMBUF_SIZE         PAGESIZE                    // membuf size
-#define MEMBUF_BLK_SHIFT    (PAGESIZELOG2 + 1)          // blk of 2 * PAGESIZE
+#define MEMBUF_BLK_SHIFT    16                          // blk of 64 K
 #define MEMBUF_BLK_SIZE     (1 << MEMBUF_BLK_SHIFT)
-#define MEMBUF_BLK_MINSIZE  (MEMBUF_PKT_LEN + 1)
-#define MEMBUF_DATA_LEN     ((long)(MEMBUF_SIZE - sizeof(struct kmemhdr)))
-#define MEMBUF_PKT_LEN      ((long)(MEMBUF_DATA_LEN - sizeof(struct kmempkt)))
-#define MEMBUF_BLK_MIN_SIZE (MEMBUF_PKT_LEN + 1)
+#define MEMBUF_DATA_LEN     ((long)(MEMBUF_SIZE - sizeof(struct membufhdr)))
+#define MEMBUF_PKT_LEN      ((long)(MEMBUF_DATA_LEN - sizeof(struct mempkthdr)))
+#define MEMBUF_BLK_MIN      (MEMBUF_PKT_LEN + 1)
 #define MEMBUF_MAX_COMPRESS (MEMBUF_PKT_LEN >> 1)
 
+/* TODO
+ * ----
+ */
+struct membufctl {
+    size_t bufsize;     // MEMBUF_SIZE
+    size_t blkshift;    // MEMBUF_BLK_SHIFT
+    size_t blkmin;      // MEMBUF_BLK_MIN_SIZE
+    size_t datalen;     // MEMBUF_DATA_LEN
+    size_t pktlen;      // MEMBUF_PKT_LEN
+    size_t maxcompress;
+};
+
 /* copy parameter */
-#define MEMBUF_COPYALL       (~0L)
+#define MEMBUF_COPY_ALL     (~0UL)
 
 /* membuf types */
 #define MEMBUF_FREE         0  // on free-list
@@ -47,7 +58,6 @@
 #define MEMBUF_OOBDATA      15 // expedited data
 #define MEMBUF_NTYPE        16
 #define MEMBUF_NOINIT       (~0L) // for allocating non-initialised membufs */
-/* membuf flg-bits */
 /* membuf flags */
 #define MEMBUF_EXT_BIT       (1 << 0)  // associated external storage
 #define MEMBUF_PKTHDR_BIT    (1 << 1)  // start of record
@@ -106,13 +116,14 @@
 #define MEMBUF_CHKSUM_L5_VALID  (1 << 29)
 #define MEMBUF_CHKSUM_MERGED    (1 << 30)
 /* record/packet header in first mb of chain; MEMBUF_PKTHDR is set */
-struct kmempkt {
-    struct netif   *recvif;     // receiver interface
-    long            len;        // total packet length
-    uint8_t        *hdr;        // packet header
-    int32_t         flg;        // checksum and other flags
-    int32_t         chksum;     // checksum data
-    struct kmembuf *aux;        // extra data buffer, e.g. IPSEC
+struct mempkthdr {
+    struct netif  *recvif;      // receiver interface
+    size_t         size;        // buffer length
+    size_t         len;         // packet length
+    uint8_t       *hdr;         // packet header
+    int32_t        flg;         // checksum and other flags
+    int32_t        chksum;      // checksum data
+    struct membuf *aux;         // extra data buffer, e.g. IPSEC
 };
 
 /* external buffer types */
@@ -130,73 +141,76 @@ struct kmempkt {
 #define MEMBUF_EXT_QUAD_PAGE  5          // 4 * PAGESIZE bytes
 #define MEMBUF_EXT_PACKET     6          // mb + memblk from packet zone
 #define MEMBUF_EXT_DATA       7          // external membuf (M_IOVEC)
-struct kmemext {
-    uint8_t     *buf;   // buffer base address
-    m_atomic_t   nref;  // external reference count
-    long         size;  // buffer size
-    void       (*rel)(void *, void *); // optional custom free()
-    void        *args;  // optional argument pointer
-    long         type;  // storage type
+struct memexthdr {
+    volatile m_atomic_t   nref;
+    uint8_t              *data; // buffer base address
+    size_t                size; // buffer size
+    size_t                len;  // buffer data length
+    void                (*rel)(void *, void *); // optional custom free()
+    void                 *args; // optional argument pointer
+    long                  type; // storage type
 };
 
-struct kmemhdr {
-    uint8_t        *data;       // data address
-    long            len;        // # of bytes in membuf
-    long            type;       // buffer type
-    long            flg;        // flags
-    struct kmembuf *next;       // next buffer in chain
-    struct kmembuf *nextpkt;    // next packet in chain
+struct membufhdr {
+    uint8_t          *data;     // buffer data base address
+    size_t            size;     // buffer size
+    size_t            len;      // # of bytes in membuf
+    long              type;     // buffer type
+    long              flg;      // flags
+    struct membuf    *next;     // next buffer in chain
+    struct mempktbuf *nextpkt;  // next packet in chain
 };
 
-struct kmembuf {
-    struct kmemhdr             hdr;
+struct membuf {
+    struct membufhdr             hdr;
     union {
         struct {
-            struct kmempkt     pkt;     // MEMBUF_PKTHDR is set
+            struct mempkthdr     pkt;   // MEMBUF_PKTHDR is set
             union {
-                struct kmemext ext;
-                uint8_t        buf[MEMBUF_PKT_LEN];
-            } data;
-        } s;
-        uint8_t               buf[MEMBUF_DATA_LEN];
-    } u;
+                struct memexthdr ext;
+                uint8_t          data[MEMBUF_PKT_LEN];
+            } mem;
+        } info;
+        uint8_t                  mem[MEMBUF_DATA_LEN];
+    } data;
 };
 
 #if (SMP)
-#define mbincref(mb)      m_atominc(&(mbexthdr(mb))->nref)
-#define mbdecref(mb)      m_atomdec(&(mbexthdr(mb))->nref)
-#define mbgetref(mb, res) m_syncread(&(mbexthdr(mb))->nref, (res))
+#define membufincref(buf)       m_atominc(&(buf).nref)
+#define membufdecref(buf)       m_atomdec(&(buf).nref)
+#define membufgetnref(buf, res) m_syncread(&(buf).nref, (res))
 #else
-#define mbincref(mb)      ((mbexthdr(mb))->nref++)
-#define mbdecref(mb)      ((mbexthdr(mb))->nref--)
-#define mbgetref(mb, res) ((mbexthdr(mb))->nref)
+#define membufincref(buf)       ((buf)->nref++)
+#define membufdecref(buf)       ((buf)->nref--)
+#define membufgetref(buf, res)  ((buf)->nref)
 #endif
 
-#define mbadr(mb)         ((mb)->hdr.data)
-#define mblen(mb)         ((mb)->hdr.len)
-#define mbtype(mb)        ((mb)->hdr.type)
-#define mbflg(mb)         ((mb)->hdr.flg)
-#define mbnext(mb)        ((mb)->hdr.next)
-#define mbdata(mb)        ((mb)->u.buf)
-#define mbpkthdr(mb)      (&((mb)->u.s.pkt))
-#define mbpktbuf(mb)      ((mb)->u.s.data.buf)
-#define mbpktlen(mb)      ((mb)->u.s.pkt.len)
-#define mbexthdr(mb)      (&((mb)->u.s.data.ext))
-#define mbextbuf(mb)      (((mb)->u.s.data.ext.buf))
-#define mbextsize(mb)     (((mb)->u.s.data.ext.size))
+#define membufdata(buf)         ((buf)->data.mem)
+#define membufsize(buf)         ((buf)->hdr.size)
+#define membuflen(buf)          ((buf)->hdr.len)
+#define membuftype(buf)         ((buf)->hdr.type)
+#define membufflg(buf)          ((buf)->hdr.flg)
+#define membufnext(buf)         ((buf)->hdr.next)
+#define membufpkthdr(buf)       (((buf)->data.info.pkt))
+#define membufpktdata(buf)      ((buf)->data.info.mem.data)
+#define membufpktsize(buf)      ((buf)->data.info.pkt.size)
+#define membufpktlen(buf)       ((buf)->data.info.pkt.len)
+#define membufexthdr(buf)       (((buf)->data.info.mem.ext))
+#define membufextdata(buf)      (((buf)->data.info.mem.data))
+#define membufextsize(buf)      ((buf)->data.info.mem.ext.size)
+#define membufextlen(buf)       ((buf)->data.info.mem.ext.len)
 
-struct kmempktaux {
+struct membufauxpkt {
     long af;
     long type;
 };
 
-struct kmembufbkt {
-    m_atomic_t      lk;
-    m_atomic_t      nref;
-    long            flg;
-    long            nbuf;
-    long            nblk;
-    struct kmembuf *buflist;
+struct membufpool {
+    m_atomic_t     lk;
+    long           flg;
+    size_t         nbuf;
+    size_t         nblk;
+    struct membuf *buflist;
     uint8_t         _pad[CLSIZE - 5 * sizeof(long) - 1 * sizeof(void *)];
 };
 

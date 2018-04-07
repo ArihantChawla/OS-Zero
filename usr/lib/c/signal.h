@@ -89,7 +89,7 @@ extern int            sigpause(int sig) __asm__ ("__xpg_sigpause\n");
 /* none of these functions should be used any longer */
 #define    sigmask(sig)   (1L << ((sig) - 1))
 /* block signals in mask, return old mask */
-extern int sigblock(int mask); 
+extern int sigblock(int mask);
 /* set mask of blocked signals, return old mask */
 extern int sigsetmask(int mask);
 /* return current signal mask */

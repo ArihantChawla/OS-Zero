@@ -97,7 +97,7 @@ static __inline__ void
 deqrmitem(DEQ_TYPE *item, DEQ_TYPE **deq)
 {
     DEQ_TYPE *list = *deq;
-    
+
     if (!deqissingular(item)) {
         item->prev->next = item->next;
         item->next->prev = item->prev;

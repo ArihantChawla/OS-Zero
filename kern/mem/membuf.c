@@ -1,117 +1,207 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <zero/mtx.h>
 #include <kern/util.h>
 #include <kern/malloc.h>
 #include <kern/mem/membuf.h>
 
-/* convenience macro to allocate buffers */
-#define __memgetbuf(buf, nb, how)                                       \
-    do {                                                                \
-        if ((how) & MEM_WAIT) {                                         \
-            buf = kwtwalloc(nb);                                        \
-        } else {                                                        \
-            buf = kwalloc(nb);                                          \
-        }                                                               \
-        if (buf) {                                                      \
-            if (how & MEM_ZERO) {                                       \
-                kbzero(buf, nb);                                        \
-            } else {                                                    \
-                buf->hdr.len = 0;                                       \
-                buf->hdr.flg = 0;                                       \
-                buf->hdr.next = NULL;                                   \
-                buf->hdr.nextpkt = NULL;                                \
-            }                                                           \
-            buf->hdr.data = mbdata(buf);                                \
-        }                                                               \
-    } while (0)
-#define __memgetblk(buf, nb, how)                                       \
-    do {                                                                \
-        struct kmembuf *_mb;                                            \
-        struct kmemext *_ext;                                           \
-                                                                        \
-        if ((how) & MEM_WAIT) {                                         \
-            _mb = kwtwalloc(nb);                                        \
-        } else {                                                        \
-            _mb = kwalloc(nb);                                          \
-        }                                                               \
-        if (_mb) {                                                      \
-            _ext = mbexthdr(buf);                                       \
-            if ((how) & MEM_ZERO) {                                     \
-                kbzero(_mb, nb);                                        \
-            } else {                                                    \
-                _ext->rel = NULL;                                       \
-                _ext->args = NULL;                                      \
-            }                                                           \
-        }                                                               \
-    } while (0)
-#define __memputbuf(buf) kfree(buf)
-#define __memputblk(ptr) kfree(ptr)
+//static struct membufpool membufpooltab[NCPU] ALIGNED(PAGESIZE);
+static struct membufpool membufpool;
 
-/* allocate buffer and initialise for internal data */
-static __inline__ struct kmembuf *
-memgetbuf(long type, long how)
+long
+membufinit(void)
 {
-    struct kmembuf *buf;
+    struct membufpool *tab = &membufpool;
+    struct membuf     *buf;
+    struct memblk     *blk;
+    void              *last;
+    uint8_t           *u8ptr1;
+    uint8_t           *u8ptr2;
+    long               n;
 
-    __memgetbuf(buf, MEMBUF_SIZE, how);
-    if (buf) {
-        buf->hdr.data = mbdata(buf);
-        buf->hdr.type = type;
+    /* allocate wired memory for membufs */
+    u8ptr1 = kwalloc(MEMNBUF * MEMBUF_SIZE);
+    if (!u8ptr1) {
+        kprintf("FAILED to allocate membufs\n");
+
+        return 0;
     }
+    kbzero(u8ptr1, MEMNBUF * MEMBUF_SIZE);
+    /* initialise global membuf container */
+    n = MEMNBUF;
+    tab->nbuf = n;
+    u8ptr1 += MEMNBUF * MEMBUF_SIZE;
+    last = NULL;
+    while (n--) {
+        u8ptr1 -= MEMBUF_SIZE;
+        buf = (struct membuf *)u8ptr1;
+        buf->hdr.next = last;
+        last = buf;
+    }
+    tab->buflist = last;
+#if 0
+    /* initialise per-CPU buf containers */
+    n = NCPU;
+    while (n--) {
+        meminitcpubuf(n, MEM_DONTWAIT);
+    }
+#endif
 
-    return buf;
+    return 1;
 }
 
-/* allocate block and refer it to buffer */
-static __inline__ struct kmembuf *
-memgetblk(struct kmembuf *buf, long how)
+/* FIXME: steal membufs from other CPUs if need arises
+ * - do lock-free pop of buffer from front of list
+ */
+struct membuf *
+memgetbuf(long how)
 {
-    struct kmembuf *mb;
-    struct kmemext *ext;
-    uint8_t        *adr;
+    struct membufpool *tab = &membufpool;
+    struct membuf     *ret = NULL;
+    uint8_t            *ptr;
+    struct membuf     *buf;
+    struct membuf     *last;
+    long                loop;
+    size_t              n;
 
-    __memgetblk(mb, MEMBUF_BLK_SIZE, how);
-    if (buf) {
-        adr = (uint8_t *)buf;
-        ext = mbexthdr(buf);
-        buf->hdr.data = adr;
+    loop = how & MEM_WAIT;
+    do {
+        fmtxlk(&tab->lk);
+        ret = tab->buflist;
+        if (ret) {
+            tab->buflist = ret->hdr.next;
+            tab->nbuf--;
+        }
+        fmtxunlk(&tab->lk);
+    } while (!ret && (loop));
+
+    return ret;
+}
+
+void
+memputbuf(struct membuf *buf)
+{
+    struct membufpool *tab = &membufpool;
+
+    fmtxlk(&tab->lk);
+    buf->hdr.next = tab->buflist;
+    tab->buflist = buf;
+    tab->nbuf++;
+    fmtxunlk(&tab->lk);
+
+    return;
+}
+
+#if 0
+
+/* FIXME: steal mbufs from other CPUs if need arises */
+void *
+memgetcpubuf(long how)
+{
+    volatile long       unit = k_curunit;
+    struct membufpool *tab = &membufpooltab[unit];
+    uint8_t            *ptr;
+    struct memblk      *ret = NULL;
+    struct memblk      *blk;
+    struct memblk      *last;
+    long                loop;
+    long                n;
+
+    loop = how & MEM_WAIT;
+    do {
+        fmtxlk(&tab->lk);
+        ret = tab->buflist;
+        if (ret) {
+            tab->buflist = blk->next;
+            tab->nblk--;
+        } else {
+            fmtxlk(&tab->lk);
+            ret = tab->buflist;
+            if (ret) {
+                tab->buflist = blk->next;
+                tab->nblk--;
+            }
+            fmtxunlk(&tab->lk);
+        }
+        fmtxunlk(&tab->lk);
+    } while (!ptr && (loop));
+
+    return ret;
+}
+
+void
+memputcpubuf(struct memblk *blk)
+{
+    long                unit = k_curunit;
+    struct membufpool *tab = &membufpooltab[unit];
+
+    fmtxlk(&tab->lk);
+    blk->next = tab->buflist;
+    tab->buflist = blk;
+    tab->nblk++;
+    fmtxunlk(&tab->lk);
+}
+
+/*
+ * called without locks at boot time, or with locks held by memgetbuf() */
+long
+meminitcpubuf(long unit, long how)
+{
+    struct membufpool *tab = &membufpooltab[unit];
+    uint8_t            *u8ptr = kwalloc(PAGESIZE);
+    size_t              n = PAGESIZE / MEMBUF_SIZE;
+    void               *last = NULL;
+    struct membuf     *buf;
+
+    if (!u8ptr) {
+
+        return 0;
+    }
+    u8ptr += PAGESIZE;
+    tab->nbuf = n;
+    while (n--) {
+        u8ptr -= MEMBUF_SIZE;
+        buf = (struct membuf *)u8ptr;
+        buf->hdr.next = last;
+        last = buf;
+    }
+    tab->buflist = last;
+
+    return 1;
+}
+
+#endif /* 0 */
+
+/* allocate block and refer it to buffer */
+static __inline__ void *
+memallocext(struct membuf *buf, long how)
+{
+    void             *ptr;
+    struct memexthdr *ext;
+
+    ptr = memalloc(MEMBUF_BLK_SIZE, how);
+    if (ptr) {
+        ext = &membufexthdr(buf);
         buf->hdr.flg |= MEMBUF_EXT_BIT;
-        ext->buf = adr;
+        ext->data = ptr;
         ext->size = MEMBUF_BLK_SIZE;
         ext->type = MEMBUF_EXT_BLK;
     }
 
-    return buf;
-}
-
-/* allocate buffer and initialize for packet header and internal data */
-static __inline__ struct kmembuf *
-memgetpkt(long type, long how)
-{
-    struct kmembuf *buf;
-
-    __memgetbuf(buf, MEMBUF_SIZE, how);
-    if (buf) {
-        buf->hdr.data = mbpktbuf(buf);
-        buf->hdr.type = type;
-        buf->hdr.flg = MEMBUF_PKTHDR_BIT;
-    }
-
-    return buf;
+    return ptr;
 }
 
 /* set up preallocated external storage and refer it to buffer */
 static __inline__ void
-memsetext(struct kmembuf *buf, void *adr, long size,
+memsetext(struct membuf *buf, void *adr, long size,
           void (*rel)(void *, void *),
           void *args, long type, long flg)
 {
-    struct kmemext *ext;
+    struct memexthdr *ext;
 
-    ext = mbexthdr(buf);
-    buf->hdr.data = adr;
+    ext = &membufexthdr(buf);
     buf->hdr.flg |= MEMBUF_EXT_BIT | flg;
-    ext->buf = adr;
+    ext->data = adr;
     ext->size = size;
     ext->rel = rel;
     ext->args = args;
@@ -122,17 +212,18 @@ memsetext(struct kmembuf *buf, void *adr, long size,
 
 /* release external storage if reference count is zero */
 static __inline__ void
-memrelext(struct kmembuf *buf)
+memrelext(struct membuf *buf)
 {
-    struct kmemext *ext;
+    struct memexthdr *ext;
 
-    ext = mbexthdr(buf);
-    mbdecref(buf);
+    ext = &membufexthdr(buf);
+    membufdecref(ext);
     if (m_cmpswap(&ext->nref, 0, 1)) {
         if (ext->type != MEMBUF_EXT_BLK) {
-            ext->rel(ext->buf, ext->args);
+            ext->rel(ext->data, ext->args);
         } else {
-            __memputblk(ext->buf);
+            kfree(ext->data);
+            kfree(ext->args);
         }
     }
     buf->hdr.flg &= ~MEMBUF_EXT_BIT;
@@ -142,32 +233,31 @@ memrelext(struct kmembuf *buf)
  * release buffer and possible associated external storage
  * - return next buffer in chain
  */
-static __inline__ struct kmembuf *
-memrelbuf(struct kmembuf *buf)
+static __inline__ struct membuf *
+memrelbuf(struct membuf *buf)
 {
-    struct kmembuf *next;
+    struct membuf *next;
 
-    next = mbnext(buf);
+    next = membufnext(buf);
     if (buf->hdr.flg & MEMBUF_EXT_BIT) {
         memrelext(buf);
     }
-    __memputbuf(buf);
+    memputbuf(buf);
 
     return next;
 }
 
 /* free chain of buffers */
 static __inline__ void
-memrelchain(struct kmembuf *buf)
+memrelchain(struct membuf *buf)
 {
-    struct kmembuf *mb;
-    struct kmembuf *aux;
-    struct kmempkt *pkt;
-    
+    struct membuf    *aux;
+    struct mempkthdr *pkt;
+
     if (buf) {
         do {
-            if (mbflg(buf) & MEMBUF_PKTHDR_BIT) {
-                pkt = mbpkthdr(buf);
+            if (membufflg(buf) & MEMBUF_PKTHDR_BIT) {
+                pkt = &membufpkthdr(buf);
                 aux = pkt->aux;
                 memrelbuf(aux);
                 pkt->aux = NULL;
@@ -180,59 +270,58 @@ memrelchain(struct kmembuf *buf)
 }
 
 /*
- * allocate len-bytes's worth of buffers
+ * allocate len bytes's worth of buffers
  * - return pointer to top of chain;
  *   if buf is non-NULL, allocate chain and return buf
  * - in case of failure we free everything we allocated and return NULL
+ * - TODO: implement MEM_BLOCK
  */
-static __inline__ struct kmembuf *
-memgetchain(struct kmembuf *buf, long len, long how, long type)
+static __inline__ struct membuf *
+memgetchain(size_t len, long how, long type)
 {
-    struct kmembuf *last = NULL;
-    struct kmembuf *mb;
-    struct kmembuf *top;
-    struct kmembuf *tail;
+    struct membuf *buf;
+    struct membuf *last = NULL;
+    struct membuf *top;
+    struct membuf *tail;
 
-    mb = memgetbuf(type, how);
-    if (!mb) {
+    buf = memgetbuf(how);
+    if (!buf) {
 
         return NULL;
     } else if (len > MEMBUF_PKT_LEN) {
-        __memgetblk(mb, MEMBUF_BLK_SIZE, how);
-        if (!(mbflg(mb) & MEMBUF_EXT_BIT)) {
-            memrelbuf(mb);
+        memallocext(buf, how);
+        if (!(membufflg(buf) & MEMBUF_EXT_BIT)) {
+            memrelbuf(buf);
 
             return NULL;
         }
     }
-    len -= mbtrailspace(mb);
+    len -= membuftrailspace(buf);
     if (buf) {
-        for (last = buf ; (mbnext(last)) ; last = mbnext(last)) {
+        for (last = buf ; (membufnext(last)) ; last = membufnext(last)) {
             ;
         }
-    } else {
-        buf = mb;
     }
-    top = mb;
-    tail = mb;
+    top = buf;
+    tail = buf;
     while (len > 0) {
-        mb = memgetbuf(type, how);
-        if (!mb) {
+        buf = memgetbuf(how);
+        if (!buf) {
             memrelchain(top);
 
             return NULL;
         }
-        tail->hdr.next = mb;
+        tail->hdr.next = buf;
         if (len > MEMBUF_PKT_LEN) {
-            memgetblk(mb, how);
-            if (!(mbflg(mb) & MEMBUF_EXT_BIT)) {
+            memallocext(buf, how);
+            if (!(membufflg(buf) & MEMBUF_EXT_BIT)) {
                 memrelchain(top);
-                
+
                 return NULL;
             }
         }
-        tail = mb;
-        len -= mbtrailspace(mb);
+        tail = buf;
+        len -= membuftrailspace(buf);
     }
     if (last != NULL) {
         last->hdr.next = top;
@@ -246,14 +335,14 @@ memgetchain(struct kmembuf *buf, long len, long how, long type)
  * - src->hdr.flg must have MEMBUF_PKTHDR_BIT set, and dest must be empty
  */
 static __inline__ void
-memcpypkthdr(struct kmembuf *src, struct kmembuf *dest)
+memcpypkthdr(struct membuf *src, struct membuf *dest)
 {
-    struct kmempkt *spkt;
-    struct kmempkt *dpkt;
+    struct mempkthdr *spkt;
+    struct mempkthdr *dpkt;
 
-    spkt = mbpkthdr(src);
-    dpkt = mbpkthdr(dest);
-    dest->hdr.data = mbpktbuf(src);
+    spkt = &membufpkthdr(src);
+    dpkt = &membufpkthdr(dest);
+    dest->hdr.data = membufpktdata(src);
     dest->hdr.flg = spkt->flg & MEMBUF_PKT_COPY_BITS;
     *dpkt = *spkt;
     spkt->aux = NULL;
@@ -262,125 +351,129 @@ memcpypkthdr(struct kmembuf *src, struct kmembuf *dest)
 }
 
 /* allocate new buffer to prepend to chain, copy data along */
-static __inline__ struct kmembuf *
-_memprepend(struct kmembuf *buf, long nb, long how)
+static __inline__ struct membuf *
+_membufprepend(struct membuf *buf, size_t len, long how)
 {
-    struct kmembuf *mb;
+    struct membuf *head;
+    long           type;
 
-    mb = memgetbuf(mbtype(buf), how);
-    if (!mb) {
+    type = membuftype(buf);
+    head = memgetbuf(how);
+    if (!head) {
         memrelchain(buf);
 
         return NULL;
     }
-    if (mbflg(buf) & MEMBUF_PKTHDR_BIT) {
-        memcpypkthdr(buf, mb);
+    head->hdr.type = type;
+    if (membufflg(buf) & MEMBUF_PKTHDR_BIT) {
+        memcpypkthdr(buf, head);
         buf->hdr.flg &= ~MEMBUF_PKTHDR_BIT;
     }
-    mb->hdr.next = buf;
-    if (nb < MEMBUF_PKT_LEN) {
-        mbalignpkt(mb, nb);
+    head->hdr.next = buf;
+    if (len < MEMBUF_PKT_LEN) {
+        membufalignpkt(head, len);
     }
-    mb->hdr.len = nb;
+    head->hdr.len = len;
 
-    return mb;
+    return head;
 }
 
 /* prepare buf for prepending len bytes of data */
-static __inline__ struct kmembuf *
-memprepend(struct kmembuf *buf, long nb, long how)
+static __inline__ struct membuf *
+membufprepend(struct membuf *buf, size_t len, long how)
 {
-    struct kmempkt *pkt;
-    
-    if (mbleadspace(buf) >= nb) {
-        buf->hdr.data -= nb;
-        buf->hdr.len += nb;
+    struct mempkthdr *pkt;
+    size_t            lead = membufleadspace(buf);
+
+    if (lead >= len) {
+        buf->hdr.data -= len;
+        buf->hdr.len += len;
     } else {
-        buf = _memprepend(buf, nb, how);
+        buf = _membufprepend(buf, len, how);
     }
-    if ((buf) && (mbflg(buf) & MEMBUF_PKTHDR_BIT)) {
-        pkt = mbpkthdr(buf);
-        pkt->len += nb;
+    if ((buf) && (membufflg(buf) & MEMBUF_PKTHDR_BIT)) {
+        pkt = &membufpkthdr(buf);
+        pkt->len += len;
     }
 
     return buf;
 }
 
 /*
- * - copy nb bytes from membuf chain starting from ofs0 bytes from the beginning
- * - if nb is MEMBUF_COPY_ALL, copy to end of buf
+ * - copy len bytes from membuf chain starting from ofs0 bytes from the beginning
+ * - if len is MEMBUF_COPY_ALL, copy to end of buf
  * - how can be 0 or MEM_WAIT
  * - copy is read-only; blocks are not copied, just reference counts incremented
  */
-static __inline__ struct kmembuf *
-memcpychain(struct kmembuf *buf, int ofs0, long nb, long how)
+static __inline__ struct membuf *
+memcpychain(struct membuf *src, size_t ofs0, size_t nb, long how)
 {
-    long             ofs = ofs0;
-    long             cpyhdr = 0;
-    long             len;
-    struct kmembuf  *mb;
-    struct kmembuf **hi;
-    struct kmembuf  *top;
-    struct kmempkt  *pkt;
-    struct kmemext  *ext1;
-    struct kmemext  *ext2;
+    size_t             ofs = ofs0;
+    long               cpyhdr = 0;
+    size_t             len;
+    long               type;
+    struct membuf     *top = NULL;
+    struct membuf     *dest;
+    struct mempkthdr  *pkt;
+    struct memexthdr  *ext1;
+    struct memexthdr  *ext2;
 
-    if (!ofs && (mbflg(buf) & MEMBUF_PKTHDR_BIT)) {
-        cpyhdr = 1;
-    }
+    cpyhdr = !ofs && (membufflg(src) & MEMBUF_PKTHDR_BIT);
     while (ofs > 0) {
-        len = mblen(buf);
-        if (ofs < len) {
+        len = membuflen(src);
+        if (len < nb) {
 
             break;
         }
-        ofs -= len;
-        buf = mbnext(buf);
+        nb -= len;
+        src = membufnext(src);
     }
-    hi = &top;
-    top = NULL;
     while (nb > 0) {
-        if (!buf) {
+        if (!src) {
 
             break;
         }
-        mb = memgetbuf(mbtype(buf), how);
-        len = mblen(buf);
-        *hi = mb;
-        if (!mb) {
+        type = membuftype(src);
+        dest = memgetbuf(how);
+        if (!top) {
+            top = dest;
+        }
+        len = membuflen(src);
+        if (!dest) {
             memrelchain(top);
 
             return NULL;
         }
+        dest->hdr.type = type;
         if (cpyhdr) {
-            pkt = mbpkthdr(mb);
-            memcpypkthdr(buf, mb);
-            if (nb == MEMBUF_COPYALL) {
+            pkt = &membufpkthdr(src);
+            memcpypkthdr(dest, src);
+            if (len == MEMBUF_COPY_ALL) {
                 pkt->len -= ofs0;
             } else {
-                pkt->len = nb;
+                pkt->len = len;
             }
             cpyhdr = 0;
         }
-        mb->hdr.len = min(nb, len - ofs);
-        if (mbflg(buf) & MEMBUF_EXT_BIT) {
-            ext1 = mbexthdr(buf);
-            ext2 = mbexthdr(mb);
-            mb->hdr.data = buf->hdr.data + ofs;
+        dest->hdr.len = min(len, len - ofs);
+        if (membufflg(src) & MEMBUF_EXT_BIT) {
+            ext1 = &membufexthdr(src);
+            ext2 = &membufexthdr(dest);
+            dest->hdr.data = src->hdr.data + ofs;
             *ext2 = *ext1;
-            mb->hdr.flg |= MEMBUF_EXT_BIT;
-            mbincref(buf);
+            dest->hdr.flg |= MEMBUF_EXT_BIT;
+            membufincref(ext1);
         } else {
-            kbcopy(mtod(buf, uint8_t *) + ofs,
-                   mtod(mb, uint8_t *),
-                   (uintptr_t)mblen(mb));
+            kbcopy(membufpktdata(src) + ofs,
+                   membufpktdata(dest),
+                   membuflen(src));
         }
-        if (nb != MEMBUF_COPYALL) {
-            nb -= mblen(mb);
+        if (len != MEMBUF_COPY_ALL) {
+            len -= membuflen(src);
         }
         ofs = 0;
-        buf = mbnext(buf);
-        hi = &mbnext(mb);
+        dest = membufnext(dest);
+        src = membufnext(src);
     }
 
     return top;
@@ -388,70 +481,73 @@ memcpychain(struct kmembuf *buf, int ofs0, long nb, long how)
 
 /*
  * - copy whole packet including header (which must be present)
- * - optimisation of memcpychain(buf, 0, M_COPYALL, how)
+ * - optimisation of memcpychain(buf, 0, M_COPY_ALL, how)
  * - how can be 0 or MEM_WAIT
  * - copy is read-only; blocks are not copied, just reference counts incremented
  * - preserve alignment of first membuf, e.g. for protocol headers
  */
-static __inline__ struct kmembuf *
-memcpypkt(struct kmembuf *buf, long how)
+static __inline__ struct membuf *
+memcpypkt(struct membuf *src, long how)
 {
-    struct kmembuf *mb1;
-    struct kmembuf *mb2;
-    struct kmembuf *top;
-    struct kmemext *ext1;
-    struct kmemext *ext2;
-    uint8_t        *buf1;
-    uint8_t        *buf2;
+    struct membuf    *dest;
+    struct membuf    *buf;
+    struct membuf    *top;
+    struct memexthdr *ext1;
+    struct memexthdr *ext2;
+    size_t            len;
+    uint8_t          *pkt1;
+    uint8_t          *pkt2;
+    long              type;
 
-    mb1 = memgetbuf(mbtype(buf), how);
-    top = mb1;
-    if (!mb1) {
-        memrelchain(top);
+    type = membuftype(src);
+    dest = memgetbuf(how);
+    if (!dest) {
 
         return NULL;
     }
-    memcpypkthdr(buf, mb1);
-    mb1->hdr.len = mblen(buf);
-    if (mbflg(buf) & MEMBUF_EXT_BIT) {
-        ext1 = mbexthdr(mb1);
-        ext2 = mbexthdr(buf);
-        mb1->hdr.data = mbadr(buf);
-        *ext1 = *ext2;
-        mb1->hdr.flg |= MEMBUF_EXT_BIT;
-        mbincref(buf);
+    top = dest;
+    memcpypkthdr(src, dest);
+    dest->hdr.len = membuflen(src);
+    if (membufflg(src) & MEMBUF_EXT_BIT) {
+        ext1 = &membufexthdr(src);
+        ext2 = &membufexthdr(dest);
+        dest->hdr.data = membufextdata(dest);
+        *ext2 = *ext1;
+        dest->hdr.flg |= MEMBUF_EXT_BIT;
+        membufincref(ext1);
     } else {
-        buf1 = mbpktbuf(mb1);
-        buf2 = mbpktbuf(buf);
-        mb1->hdr.data = buf1 + (buf->hdr.data - buf2);
-        kbcopy(mtod(buf, uint8_t *),
-               mtod(mb1, uint8_t *),
-               (uintptr_t)mblen(mb1));
+        pkt1 = membufpktdata(src);
+        pkt2 = membufpktdata(dest);
+        dest->hdr.data = pkt1 + (src->hdr.data - pkt2);
+        kbcopy(pkt1,
+               pkt2,
+               membuflen(src));
     }
-    buf = mbnext(buf);
-    while (buf) {
-        mb2 = memgetbuf(mbtype(buf), how);
-        if (!mb2) {
+    src = membufnext(src);
+    while (src) {
+        buf = memgetbuf(how);
+        if (!buf) {
             memrelchain(top);
-            
+
             return NULL;
         }
-        mb1->hdr.next = mb2;
-        mb2->hdr.len = mblen(buf);
-        mb1 = mb2;
-        if (mbflg(buf) & MEMBUF_EXT_BIT) {
-            ext1 = mbexthdr(mb1);
-            ext2 = mbexthdr(buf);
-            mb1->hdr.data = mbadr(buf);;
-            mb1->hdr.flg |= MEMBUF_EXT_BIT;
-            *ext1 = *ext2;
-            mbincref(buf);
+        dest->hdr.next = buf;
+        len = membufpktlen(src);
+        dest = buf;
+        buf->hdr.len = len;
+        if (membufflg(src) & MEMBUF_EXT_BIT) {
+            ext1 = &membufexthdr(src);
+            ext2 = &membufexthdr(dest);
+            dest->hdr.data = membufextdata(src);;
+            dest->hdr.flg |= MEMBUF_EXT_BIT;
+            *ext2 = *ext1;
+            membufincref(ext1);
         } else {
-            kbcopy(mtod(buf, uint8_t *),
-                   mtod(mb1, uint8_t *),
-                   (uintptr_t)mblen(mb1));
+            kbcopy(membufpktdata(src),
+                   membufpktdata(dest),
+                   membufpktlen(src));
         }
-        buf = mbnext(buf);
+        buf = membufnext(buf);
     }
 
     return top;
@@ -462,29 +558,29 @@ memcpypkt(struct kmembuf *buf, long how)
  * the indicated buffer
  */
 static __inline__ void
-memcpydata(struct kmembuf *buf, long ofs, long nb, uint8_t *dest)
+memcpydata(struct membuf *src, size_t ofs, size_t len, uint8_t *dest)
 {
-    unsigned long cnt;
-    long          len;
+    size_t csz;
 
-    len = mblen(buf);
+    csz = membuflen(src);
     while (ofs > 0) {
-        if (ofs < len) {
+        if (ofs < csz) {
 
             break;
         }
-        ofs -= len;
-        buf = mbnext(buf);
-        len = mblen(buf);
+        ofs -= csz;
+        src = membufnext(src);
+        len = membuflen(src);
     }
-    while (nb > 0) {
-        cnt = min(len - ofs, nb);
-        kbcopy(mtod(buf, uint8_t *), dest, cnt);
-        len -= cnt;
-        buf = mbnext(buf);
-        dest += cnt;
-        ofs = 0;
-        len = mblen(buf);
+    if (len > 0) {
+        csz = min(len - ofs, len);
+        while (len > 0) {
+            kbcopy(membufdata(src), dest, csz);
+            len -= csz;
+            src = membufnext(src);
+            dest += csz;
+            csz = membuflen(src);
+        }
     }
 
     return;
@@ -495,99 +591,107 @@ memcpydata(struct kmembuf *buf, long ofs, long nb, uint8_t *dest)
  * - blocks are copied along
  * - like memcpypkt(), but produces a writable copy
  */
-static __inline__ struct kmembuf *
-mduppkt(struct kmembuf *buf, long how)
+static __inline__ struct membuf *
+memduppkt(struct membuf *src, long how)
 {
-    struct kmembuf  *mb;
-    struct kmembuf **hi;
-    struct kmembuf  *top;
-    long            len;
-    long            ofs;
-    long            nb;
+    struct membuf  *dest;
+    struct membuf  *top = NULL;
+    uint8_t        *sptr;
+    uint8_t        *dptr;
+    long            type;
+    size_t          ofs;
+    size_t          len;
     long            sz;
     long            csz;
-    long            nleft;
 
-    if (!buf) {
+    if (!src) {
 
         return NULL;
     }
-    nleft = mbpktlen(buf);
-    ofs = 0;
-    hi = &top;
-    while (nleft > 0 || !top) {
-        mb = memgetbuf(mbtype(buf), how);
-        if (!mb) {
+    len = membufpktlen(src);
+    while (len > 0) {
+        type = membuftype(src);
+        dest = memgetbuf(how);
+        if (!top) {
+            top = dest;
+        }
+        if (!dest) {
             memrelchain(top);
 
             return NULL;
         }
+        dest->hdr.type = type;
         if (!top) {
-            memcpypkthdr(buf, mb);
-            len = MEMBUF_PKT_LEN;
+            memcpypkthdr(src, dest);
+            csz = MEMBUF_PKT_LEN;
         } else {
-            len = MEMBUF_DATA_LEN;
+            csz = MEMBUF_DATA_LEN;
         }
-        if (nleft > MEMBUF_PKT_LEN) {
-            memgetblk(mb, how);
-            if (!(mbflg(mb) & MEMBUF_EXT_BIT)) {
-                __memputbuf(mb);
+        if (len > MEMBUF_PKT_LEN) {
+            dptr = memallocext(dest, how);
+            if (!(membufflg(dest) & MEMBUF_EXT_BIT)) {
+                memputbuf(dest);
                 memrelchain(top);
-                
+
                 return NULL;
             }
             len = MEMBUF_BLK_SIZE;
         }
-        *hi = mb;
-        mb->hdr.len = 0;
-        nb = 0;
-        hi = &mbnext(mb);
-        while (nb < len && (buf)) {
-            sz = mblen(buf);
-            csz = min(len - nb, sz - ofs);
-            kbcopy(mbdata(buf), mbdata(mb) + nb, csz);
-            ofs += csz;
-            nb += csz;
-            nleft -= csz;
-            if (ofs == sz) {
-                buf = mbnext(buf);
-                ofs = 0;
+        csz = membuflen(src);
+        dest = membufnext(dest);
+        ofs = 0;
+        sptr = membufpktdata(src);
+        dptr = membufpktdata(dest);
+        csz = min(csz, MEMBUF_PKT_LEN);
+        kbcopy(sptr, dptr, csz);
+        while ((len) && (src)) {
+            dest->hdr.len = csz;
+            sptr = membufpktdata(src);
+            dptr += csz;
+            len -= csz;
+            kbcopy(sptr, dptr, csz);
+            if (len) {
+                src = membufnext(src);
             }
+            ofs += csz;
+            csz = membuflen(src);
+            csz = min(csz, MEMBUF_PKT_LEN);
         }
-        mb->hdr.len = nb;
+        dest->hdr.len = len;
     }
 
     return top;
 }
 
 static __inline__ void
-memcatchain(struct kmembuf *src, struct kmembuf *dest)
+memcatchain(struct membuf *src, struct membuf *dest)
 {
     uint8_t *sptr;
     uint8_t *dptr;
     uint8_t *lim;
     long     join;
-    long     slen;
-    long     dlen;
-    
-    while (mbnext(dest)) {
-        dest = mbnext(dest);
+    size_t   slen;
+    size_t   dlen;
+
+    dptr = membufdata(dest);
+    while (membufnext(dest)) {
+        dest = membufnext(dest);
     }
-    join = mbflg(dest);
-    dlen = mblen(dest);
+    join = membufflg(dest);
+    dlen = membuflen(dest);
+    dptr += dlen;
     while (src) {
-        dptr = mbadr(dest);
-        slen = mblen(src);
+        slen = membuflen(src);
         lim = &dptr[MEMBUF_DATA_LEN];
-        sptr = mbadr(src);
+        sptr = membufdata(src);
         if ((join)
-            || dptr + dlen + slen >= lim) {
+            || dptr + slen >= lim) {
             dest->hdr.next = src;
 
             return;
         }
-        kbcopy(sptr, dptr + dlen, (uintptr_t)slen);
-        dlen += slen;
+        kbcopy(sptr, dptr, slen);
+        dptr += slen;
         src = memrelbuf(src);
     }
     dest->hdr.len = dlen;

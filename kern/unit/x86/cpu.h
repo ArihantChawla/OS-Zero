@@ -10,8 +10,8 @@
 #include <zero/mtx.h>
 #include <kern/cpu.h>
 #include <kern/types.h>
-#include <kern/proc/proc.h>
-#include <kern/proc/task.h>
+//#include <kern/proc/proc.h>
+//#include <kern/proc/task.h>
 #include <kern/unit/x86/bits/cpu.h>
 #endif
 //#include <zero/types.h>
@@ -58,7 +58,7 @@ extern struct m_cacheinfo cpuidcacheinfo[16];
                               : "r" (op)                                \
                               : "eax", "ebx", "ecx", "edx");            \
     } while (0)
-        
+
 struct m_cpuid {
     int32_t eax;
     int32_t ebx;
@@ -133,27 +133,27 @@ cpuid_print_cache_info_intel(uint8_t id)
             case M_CPUIDINSTRTLB:
                 __printf("itlb: %ldK pages, %ld-way, %ld entries\n",
                        (long)info->size / 1024, (long)info->nway, (long)info->xsize);
-                
+
                 break;
             case M_CPUIDDATATLB:
                 __printf("dtlb: %ldK pages, %ld-way, %ld entries\n",
                        (long)info->size / 1024, (long)info->nway, (long)info->xsize);
-                
+
                 break;
             case M_CPUIDINSTRCACHE:
                 __printf("icache: %ldK, %ld-way, %ld-byte line\n",
                        (long)info->size / 1024, (long)info->nway, (long)info->xsize);
-                
+
                 break;
             case M_CPUIDDATACACHE:
                 __printf("dcache: %ldK, %ld-way, %ld-byte line\n",
                        (long)info->size / 1024, (long)info->nway, (long)info->xsize);
-                
+
                 break;
             case M_CPUIDUNICACHE:
                 __printf("ucache: %ldK, %ld-way, %ld-byte line\n",
                        (long)info->size / 1024, (long)info->nway, (long)info->xsize);
-                
+
                 break;
             default:
                 __printf("failed to probe cache info\n");
@@ -280,10 +280,11 @@ struct m_cpuinfo {
     struct m_cpucacheinfo cache;
 };
 
-void cpuprobe(volatile struct m_cpuinfo *cpuinfo,
+void cpuprobe(long id,
+              volatile struct m_cpuinfo *cpuinfo,
               volatile struct m_cpucacheinfo *cache);
 
-#if defined(__KERNEL__)
+#if defined(__KERNEL__) && 0
 
 #if (PTRBITS == 32)
 extern volatile struct cpu  * k_curcpu  __asm__ ("%gs:0");

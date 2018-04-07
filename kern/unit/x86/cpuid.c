@@ -31,6 +31,8 @@
 #include <kern/unit/x86/cpu.h>
 #endif
 
+extern struct cpu  cputab[NCPU];
+
 struct m_cacheinfo cpuidcacheinfo[16] ALIGNED(PAGESIZE);
 struct m_cpuinfo   cpuinfo;
 
@@ -148,10 +150,11 @@ static const char *_vendortab[]
 #define CPUIDSSE3      0x00000001 /* sse3. */
 
 void
-cpuprobe(volatile struct m_cpuinfo *info,
+cpuprobe(long id,
+         volatile struct m_cpuinfo *info,
          volatile struct m_cpucacheinfo *cache)
 {
-    volatile struct cpu  *m_cpu = k_curcpu;
+    volatile struct cpu  *m_cpu = &cputab[id];
     struct m_cacheinfo   *cbuf;
     struct m_cpuid        buf;
     union  m_cpuidvendor  vbuf;
@@ -207,14 +210,14 @@ cpuprobe(volatile struct m_cpuinfo *info,
 }
 
 void
-cpuprintinfo(void)
+cpuprintinfo(long id)
 {
-    volatile struct cpu  *cpu = k_curcpu;
+    volatile struct cpu  *cpu = &cputab[id];
     struct m_cacheinfo    cbuf;
     struct m_cpuid        buf;
     union  m_cpuidvendor  vbuf;
     struct m_cpuidcregs   crbuf;
-   
+
     cpuidgetvendor(&vbuf);
     __printf("CPU: vendor: %s\n", vbuf.str);
     if (!__strcmp((const char *)vbuf.str, _vendortab[CPUIDINTEL])) {
@@ -265,7 +268,7 @@ cpuprintinfo(void)
         __printf(" sse3");
     }
 //    __printf("\n");
-    
+
     cpuidgetexti(&buf);
 //    __printf("amd features: ");
     if (cpuidhasamd_mmx(&buf)) {
@@ -278,7 +281,7 @@ cpuprintinfo(void)
         __printf(" 3dnow2");
     }
     __printf("\n");
-    
+
 #if defined(__ZEROKERNEL__)
     cpugetmodes(&crbuf);
     __printf("cpu modes:");
@@ -299,7 +302,7 @@ cpuprintinfo(void)
     }
     __printf("\n");
 #endif
- 
+
     return;
 }
 
@@ -310,7 +313,7 @@ main(int argc,
 {
     cpuprobe(&cpuinfo);
     cpuprintinfo();
-    
+
     exit(0);
 }
 #endif /* TEST */

@@ -38,6 +38,6 @@
 #define netpktalign(x)                                                  \
     (((x) + NET_PKT_ALIGNMENT - 1) & ~(NET_PKT_ALIGNMENT - 1))
 #define NET_PKT_HDRLEN      (
-    
+
 #endif /*  __KERN_IO_NET_PKT_H__ */
 

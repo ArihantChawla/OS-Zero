@@ -15,7 +15,7 @@
 
 extern uint32_t *volatile mpapic;
 
-void apicinit(void);
+void apicinit(long id);
 void apicstart(uint8_t id, uint32_t adr);
 void kusleep(unsigned long nusec);
 

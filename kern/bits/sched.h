@@ -102,7 +102,7 @@ struct schedqueueset {
     uint8_t       _pad[__STRUCT_SCHEDQUEUESET_PAD];
 };
 
-extern volatile struct cpu   cputab[NCPU];
+extern struct cpu   cputab[NCPU];
 extern long                  schedidlecoremap[SCHEDIDLECOREMAPNWORD];
 extern struct task          *schedreadytab0[SCHEDNQUEUE];
 extern struct task          *schedreadytab1[SCHEDNQUEUE];
@@ -114,17 +114,17 @@ extern long                 *schedniceptr;
 extern long                 *schedsliceptr;
 
 /* based on sched_pctcpu_update from ULE */
-static __inline__ void
+static INLINE void
 schedadjcpupct(struct task *task, long run)
 {
-    volatile struct cpu *cpu = k_curcpu;
-    long                 tick = cpu->ntick;
-    unsigned             last = task->lastrun;
-    long                 diff = tick - last;
-    long                 delta;
-    long                 ntick;
-    long                 val;
-    long                 div;
+    struct cpu *cpu = k_getcurcpu();
+    long        tick = cpu->ntick;
+    unsigned    last = task->lastrun;
+    long        diff = tick - last;
+    long        delta;
+    long        ntick;
+    long        val;
+    long        div;
 
     if (diff >= SCHEDHISTORYNTICK) {
         task->ntick = 0;
@@ -153,7 +153,7 @@ schedadjcpupct(struct task *task, long run)
     return;
 }
 
-static __inline__ void
+static INLINE void
 schedswapqueues(void)
 {
     struct schedqueueset *set = &schedreadyset;
@@ -172,10 +172,10 @@ schedswapqueues(void)
     return;
 }
 
-static __inline__ volatile struct cpu *
+static INLINE struct cpu *
 schedfindidlecore(long unit, long *retcore)
 {
-    volatile struct cpu *cpu = &cputab[unit];
+    struct cpu *cpu = &cputab[unit];
     long                 nunit = NCPU;
     long                 ndx = 0;
     long                 val = 0;
@@ -191,12 +191,12 @@ schedfindidlecore(long unit, long *retcore)
     return NULL;
 }
 
-static __inline__ void
+static INLINE void
 schedsetnice(struct task *task, long val)
 {
     struct proc *proc = task->proc;
     long         nice;
-    
+
     val = max(-20, val);
     val = min(19, val);
     nice = schedniceptr[val];
@@ -207,7 +207,7 @@ schedsetnice(struct task *task, long val)
 }
 
 /* CHECKED against sched_interact_score() in ULE :) */
-static __inline__ long
+static INLINE long
 schedcalcscore(struct task *task)
 {
     long run = task->runtime;
@@ -220,7 +220,7 @@ schedcalcscore(struct task *task)
         && run >= slp) {
         res = SCHEDSCOREHALF;
         task->score = res;
-        
+
         return res;
     }
     if (run > slp) {
@@ -234,7 +234,7 @@ schedcalcscore(struct task *task)
         tmp = fastu16divu16(slp, div, fastu16divu16tab);
         res -= tmp;
         task->score = res;
-        
+
         return res;
     }
     if (slp > run) {
@@ -262,7 +262,7 @@ schedcalcscore(struct task *task)
     return 0;
 }
 
-static __inline__ uint32_t
+static INLINE uint32_t
 schedcalcuserprio(struct task *task)
 {
     uint32_t time = schedcalctime(task);
@@ -282,7 +282,7 @@ schedcalcuserprio(struct task *task)
 }
 
 /* based on sched_priority() from ULE */
-static __inline__ void
+static INLINE void
 schedcalcprio(struct task *task)
 {
     long score = schedcalcscore(task);
@@ -325,7 +325,7 @@ schedcalcprio(struct task *task)
  * enforce maximum limit of scheduling history kept; call after either runtime
  * or slptime is adjusted
  */
-static __inline__ void
+static INLINE void
 schedadjintparm(struct task *task)
 {
     long run = task->runtime;
@@ -365,7 +365,7 @@ schedadjintparm(struct task *task)
 }
 
 /* based on sched_interact_fork() in ULE */
-static __inline__ void
+static INLINE void
 schedadjforkintparm(struct task *task)
 {
     long run = task->runtime;
@@ -402,7 +402,7 @@ schedadjforkintparm(struct task *task)
 
 /* applied for time-share tasks of classes SCHEDNORMAL and SCHEDBATCH */
 /* return value is new priority */
-static __inline__ long
+static INLINE long
 schedcalcintparm(struct task *task, long *retscore)
 {
     long range = SCHEDINTRANGE;
@@ -415,7 +415,7 @@ schedcalcintparm(struct task *task, long *retscore)
     long total;
     long div;
     long tmp;
-    
+
     score = schedcalcscore(task);
     score += nice;
     score = max(0, score);
@@ -449,28 +449,29 @@ schedcalcintparm(struct task *task, long *retscore)
         }
     }
     *retscore = score;
-    
+
     return res;
 }
 
 /* based on sched_wakeup() from ULE :) */
-static __inline__ void
+static INLINE void
 taskwakeup(struct task *task)
 {
-    long unit = k_curcpu->unit;
-    long sched = task->sched;
-    long slptick = task->slptick;
-    long slp;
-    long tick;
-    long ntick;
-    long diff;
+    struct cpu *cpu = k_getcurcpu();
+    long        unit = cpu->unit;
+    long        sched = task->sched;
+    long        slptick = task->slptick;
+    long        slp;
+    long        tick;
+    long        ntick;
+    long        diff;
 #if (SMP)
-    long core;
+    long        core;
 #endif
 
     task->slptick = 0;
     if (slptick) {
-        tick = k_curcpu->ntick;
+        tick = cpu->ntick;
         if (slptick != tick) {
             diff = tick - slptick;
             slp = task->slptime;

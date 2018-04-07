@@ -203,8 +203,8 @@ vbeinitcons(int w, int h)
         buf = kcalloc(bufsz);
         if (!buf) {
             kprintf("CONS: failed to allocate console row buffer\n");
-            
-            kpanic();
+
+            panic(0, 0);
         }
         n++;
         cons->textbuf = buf;
@@ -214,8 +214,8 @@ vbeinitcons(int w, int h)
             if (!ptr) {
                 kprintf("CONS %l: failed to allocate console row %l (%l)\n",
                         l, row, n);
-                
-                kpanic();
+
+                panic(0, 0);
             }
             n++;
             buf[row] = ptr;
@@ -288,7 +288,7 @@ vbeclrscr(gfxpix32 pix)
                     vbeputpix(pix, &ptr[incr]);
                 case 1:
                     vbeputpix(pix, ptr);
-                    
+
                     break;
             }
             n -= lim;
@@ -311,7 +311,7 @@ vbedrawchar(unsigned char c, int x, int y, gfxpix32 fg)
     uint16_t *glyph = (uint16_t *)vgafontbuf + (int)c * vbefonth;
     uint8_t  *ptr = vbepixadr(x, y);
     uint16_t  mask;
-    
+
     for (cy = 0 ; cy < lim ; cy++) {
         mask = *glyph;
 #if 0
@@ -435,7 +435,7 @@ vbedrawcharbg(unsigned char c, int x, int y, gfxpix32 fg, gfxpix32 bg)
             glyph++;
         }
     }
-        
+
     return;
 }
 
@@ -449,7 +449,6 @@ vbedrawchar(unsigned char c, int x, int y, gfxpix32 fg)
     uint8_t *glyph = (uint8_t *)vgafontbuf + ((int)c << 3);
     uint8_t *ptr = vbepixadr(x, y);
     uint8_t  mask;
-    
 
     for (cy = 0 ; cy < VGAGLYPHH >> 1 ; cy++) {
         mask = *glyph;
@@ -492,7 +491,6 @@ vbedrawcharbg(unsigned char c, int x, int y, gfxpix32 fg, gfxpix32 bg)
     uint8_t *glyph = (uint8_t *)vgafontbuf + ((int)c << 3);
     uint8_t *ptr = vbepixadr(x, y);
     uint8_t  mask;
-    
 
     for (cy = 0 ; cy < VGAGLYPHH >> 1 ; cy++) {
         mask = *glyph;
@@ -595,6 +593,6 @@ vbeputchar(int ch)
 
     return;
 }
-        
+
 #endif /* VBE */
 

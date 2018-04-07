@@ -82,7 +82,7 @@ kbzero(void *adr, size_t len)
     long  val = 0;
     long  incr = 8;
     long  nleft = 0;
-    
+
     if (len > (1UL << (LONGSIZELOG2 + 3))) {
         /* zero non-cacheline-aligned head long-word by long-word */
         nleft = ((uintptr_t)adr) & ((1UL << (LONGSIZELOG2 + 3)) - 1);
@@ -119,7 +119,7 @@ kbzero(void *adr, size_t len)
         /* zero tail long-words */
         *ptr++ = val;
     }
-    
+
     return;
 }
 
@@ -132,7 +132,7 @@ kmemset(void *adr, int byte, size_t len)
     long  val = 0;
     long  incr = 8;
     long  nleft = 0;
-    
+
     val = byte;
     val |= (val << 8);
     val |= (val << 16);
@@ -175,7 +175,7 @@ kmemset(void *adr, int byte, size_t len)
         /* zero tail long-words */
         *ptr++ = val;
     }
-    
+
     return;
 }
 
@@ -499,19 +499,19 @@ kprintf(const char *fmt, ...)
                             isch = 1;
                             val = (char)va_arg(al, int);
                             arg++;
-                            
+
                             break;
                         case 'h':
                             isdec = 1;
                             val = (short)va_arg(al, int);
                             arg++;
-                            
+
                             break;
                         case 'd':
                             isdec = 1;
                             val = va_arg(al, int);
                             arg++;
-                            
+
                             break;
                         case 'p':
                         case 'l':
@@ -544,7 +544,7 @@ kprintf(const char *fmt, ...)
 #endif
                                 }
                             }
-                            
+
                             break;
                         case 'x':
 //                            val = va_arg(al, int);
@@ -552,7 +552,7 @@ kprintf(const char *fmt, ...)
                             isuns = 1;
                             uval = va_arg(al, unsigned int);
                             arg++;
-                            
+
                             break;
                         case 'u':
                             isuns = 1;
@@ -562,12 +562,12 @@ kprintf(const char *fmt, ...)
                                     case 'c':
                                         isch = 1;
                                         uval = (char)va_arg(al, unsigned int);
-                                        
+
                                         break;
                                     case 'h':
                                         isdec = 1;
                                         uval = (short)va_arg(al, unsigned int);
-                                        
+
                                         break;
                                     case 'd':
                                         isdec = 1;
@@ -577,22 +577,22 @@ kprintf(const char *fmt, ...)
                                     case 'l':
                                         isdec = 1;
                                         uval = va_arg(al, unsigned long);
-                                        
+
                                         break;
                                     default:
-                                        
+
                                         break;
                                 }
                                 arg++;
                             } else {
                                 va_end(al);
-                                
+
                                 return;
                             }
-                            
+
                             break;
                         default:
-                            
+
                             break;
                     }
                     if (isuns) {
@@ -622,7 +622,7 @@ kprintf(const char *fmt, ...)
                     }
                 } else {
                     va_end(al);
-                    
+
                     return;
                 }
             } else {
@@ -630,14 +630,14 @@ kprintf(const char *fmt, ...)
                     cons->puts(sptr);
                 }
                 va_end(al);
-                
+
                 return;
             }
             sptr = arg;
         }
         va_end(al);
     }
-    
+
     return;
 }
 
@@ -670,10 +670,10 @@ bfindzerol(long *bmap, long ofs, long nbit)
                     ofs++;
                 }
                 if (ofs < nbit) {
-                    
+
                     return ofs;
                 } else {
-                    
+
                     return -1;
                 }
             } else {
@@ -683,7 +683,7 @@ bfindzerol(long *bmap, long ofs, long nbit)
         while (ofs < nbit) {
             val = *ptr;
             if (!val) {
-                
+
                 return ofs;
             } else if (val != ones) {
                 while (val & bit) {
@@ -691,10 +691,10 @@ bfindzerol(long *bmap, long ofs, long nbit)
                     ofs++;
                 }
                 if (ofs < nbit) {
-                    
+
                     return ofs;
                 } else {
-                    
+
                     return -1;
                 }
             } else {
@@ -703,7 +703,7 @@ bfindzerol(long *bmap, long ofs, long nbit)
             }
         }
     }
-    
+
     return -1;
 }
 

@@ -31,14 +31,11 @@
  * - elimination of modulus calculations and in-loop branches by unrolling loops
  */
 
+#include <zero/conf.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
-//#include <zero/mtx.h>
-#if defined(_REENTRANT)
-#include <pthread.h>
-#endif
 #include <zero/trix.h>
 #if (RANDMT32TEST)
 #include <stdio.h>
@@ -81,23 +78,40 @@ static unsigned long randmt32key[4]
 };
 #endif
 #if defined(_REENTRANT)
+#if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
+#include <zero/mtx.h>
+ZERO_MUTEX_TYPE     randmt32initmtx = FMTXINITVAL;
+ZERO_MUTEX_TYPE     randmt32mtx = FMTXINITVAL;
+#else
 pthread_mutex_t     randmt32initmtx = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t     randmt32mtx;
+pthread_mutex_t     randmt32mtx = PTHREAD_MUTEX_INITIALIZE#if 0
+ZERO_MUTEX_TYPE     randmt32initmtx = ZERO_FMTX_INITIALIZER;
+ZERO_MUTEX_TYPE     randmt32mtx = ZERO_FMTX_INITIALIZER;
 pthread_mutexattr_t randmt32mtxatr;
-volatile long       randmt32init;
 #endif
+#endif
+
 //static volatile long randmt32mtx;
 
+#if defined(_REENTRANT)
+
+#if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
 void
-_randmt32init(pthread_mutex_t *mtx, pthread_mutexattr_t *atr)
+_randmt32init(ZERO_MUTEX_TYPE *mtx, void *atr)
+{
+
+    return;
+}
+#define _randmt32mtxinit(imptr, mptr, aptr, iptr)
+#else
+void
+_randmt32init(pthread_mutex_t *mtx, void *atr)
 {
     pthread_mutexattr_init(atr);
-    pthread_mutexattr_settype(atr, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(mtx, atr);
 
     return;
 }
-
 #define _randmt32mtxinit(imptr, mptr, aptr, iptr)                       \
     do {                                                                \
         if (!randmt32init) {                                            \
@@ -108,6 +122,9 @@ _randmt32init(pthread_mutex_t *mtx, pthread_mutexattr_t *atr)
             }                                                           \
         }                                                               \
     } while (0)
+#endif
+
+#endif /* _REENTRANT */
 
 void
 srandmt32(unsigned long seed)
@@ -116,11 +133,17 @@ srandmt32(unsigned long seed)
     unsigned long tmp;
     unsigned long ndx;
 
+#if defined(_REENTRANT)
+#if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
+    fmtxlk(&randmt32mtx);
+#else
     if (!randmt32init) {
         _randmt32mtxinit(&randmt32initmtx, &randmt32mtx,
                          &randmt32mtxatr, &randmt32init);
     }
     pthread_mutex_lock(&randmt32mtx);
+#endif
+#endif
     tmp = seed & 0xffffffffUL;
     randmt32state[0] = tmp;
     for (ndx = 1 ; ndx < RANDMT32NSTATE ; ndx++) {
@@ -130,7 +153,13 @@ srandmt32(unsigned long seed)
         tmp = val;
     }
     randmt32curndx = ndx;
+#if defined(_REENTRANT)
+#if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
+    fmtxunlk(&randmt32mtx);
+#else
     pthread_mutex_unlock(&randmt32mtx);
+#endif
+#endif
 
     return;
 }
@@ -144,11 +173,17 @@ srandmt32tab(unsigned long *key, unsigned long keylen)
     unsigned long tmp;
     unsigned long val;
 
+#if defined(_REENTRANT)
+#if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
+    fmtxlk(&randmt32mtx);
+#else
     if (!randmt32init) {
         _randmt32mtxinit(&randmt32initmtx, &randmt32mtx,
                          &randmt32mtxatr, &randmt32init);
     }
     pthread_mutex_lock(&randmt32mtx);
+#endif
+#endif
     srandmt32(RANDMT32TABSEED);
     ndx = max(keylen, RANDMT32NSTATE);
     tmp = randmt32state[0];
@@ -186,7 +221,13 @@ srandmt32tab(unsigned long *key, unsigned long keylen)
         tmp = val;
     }
     randmt32state[0] = RANDMT32HIMASK;
+#if defined(_REENTRANT)
+#if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
+    fmtxunlk(&randmt32mtx);
+#else
     pthread_mutex_unlock(&randmt32mtx);
+#endif
+#endif
 
     return;
 }
@@ -232,11 +273,17 @@ randmt32(void)
 {
     unsigned long x;
 
+#if defined(_REENTRANT)
+#if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
+    fmtxlk(&randmt32mtx);
+#else
     if (!randmt32init) {
         _randmt32mtxinit(&randmt32initmtx, &randmt32mtx,
                          &randmt32mtxatr, &randmt32init);
     }
     pthread_mutex_lock(&randmt32mtx);
+#endif
+#endif
     if (randmt32curndx >= RANDMT32NSTATE) {
         if (randmt32curndx == RANDMT32NSTATE + 1) {
             srandmt32(RANDMT32DEFSEED);
@@ -249,7 +296,13 @@ randmt32(void)
     x ^= (x << RANDMT32SHIFT3) & RANDMT32MASK2;
     x ^= x >> RANDMT32SHIFT4;
     randmt32curndx++;
+#if defined(_REENTRANT)
+#if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
+    fmtxunlk(&randmt32mtx);
+#else
     pthread_mutex_unlock(&randmt32mtx);
+#endif
+#endif
 
     return x;
 }

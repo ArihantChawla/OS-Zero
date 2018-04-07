@@ -13,14 +13,17 @@
 #include <kern/syscall.h>
 #include <kern/cpu.h>
 #include <kern/asm.h>
+#include <kern/proc/proc.h>
 #if defined(__x86_64__) || defined(__amd64__)
+//#include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86-64/task.h>
 #elif (defined(__i386__) || defined(__i486__)                           \
        || defined(__i586__) || defined(__i686__))
+//#include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/task.h>
 #endif
 
-#define __errnoloc() (&k_curtask->errnum)
+#define __errnoloc() (&(k_getcurtask()->errnum))
 
 //extern struct m_cpuinfo cpuinfo;
 

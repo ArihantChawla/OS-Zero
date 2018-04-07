@@ -1,6 +1,8 @@
 #ifndef __KERN_CONF_H__
 #define __KERN_CONF_H__
 
+#define ZERO_KERNEL (defined(__KERNEL__))
+
 #include <zero/param.h>
 
 #define VMTKTLK       1
@@ -34,6 +36,8 @@
 #endif
 #define BUFNBYTE      (BUFNMEG * 1024 * 1024)
 #define BUFMINBYTES   (BUFNBYTE >> 2)
+
+#define INET4         1
 
 #define kgethz()      HZ
 #define HZ            250       // scheduler timer frequency

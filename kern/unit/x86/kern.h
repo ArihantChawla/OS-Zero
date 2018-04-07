@@ -58,7 +58,7 @@ extern void sb16init(void);
 extern void plasmainit(void);
 #endif
 #if (APIC)
-extern void apicinit(void);
+extern void apicinit(long id);
 extern void apicstarttmr(void);
 #endif
 extern void taskinitenv(void);

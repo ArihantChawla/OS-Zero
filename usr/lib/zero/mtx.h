@@ -2,9 +2,12 @@
 #define __ZERO_MTX_H__
 
 #if !defined(ZEROMTX)
-#define ZEROMTX     1
+#define ZEROMTX  1
+#if !defined(ZEROFMTX)
+#define ZEROFMTX 1
 #endif
 
+#include <zero/conf.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
@@ -21,28 +24,25 @@
 #undef PTHREAD
 #endif
 
-#include <zero/asm.h>
-//#if defined(__KERNEL__) && (__MTKERNEL__)
-#if !defined(__KERNEL__)
+#if defined(__KERNEL__) && (__MTKERNEL__)
 #if !defined(PTHREAD) && defined(__linux__)
 #include <sched.h>
-#endif
 #endif /* !defined(__KERNEL__) */
-
-#if (defined(__KERNEL__) || defined(ZEROFMTX))
-typedef m_atomic_t      zerofmtx;
-#elif defined(PTHREAD) && defined(ZEROPTHREAD)
-typedef pthread_mutex_t zerofmtx;
 #endif
 
-#if (defined(__KERNEL__) || defined(ZEROFMTX))
+#if defined(PTHREAD) && defined(ZEROPTHREAD)
+typedef pthread_mutex_t zerofmtx;
+#else
+typedef volatile m_atomic_t      zerofmtx;
+#endif
 
-//#include <zero/thr.h>
-
+#if (defined(ZERO_THREADS) || defined(ZERO_MUTEX)                       \
+     || defined(__KERNEL__) || defined(ZEROFMTX))
 #define FMTXINITVAL 0
 #define FMTXLKVAL   1
 #if defined(ZERONEWFMTX)
 #define FMTXCONTVAL 2
+#endif
 #endif
 
 #define fmtxinit(lp) (*(lp) = FMTXINITVAL)
@@ -57,18 +57,14 @@ typedef pthread_mutex_t zerofmtx;
 static INLINE long
 fmtxtrylk(m_atomic_t *lp)
 {
-    m_atomic_t res = *lp;
-
-    if (res == FMTXINITVAL) {
-        res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
-    }
+    long res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
 
     return res;
 }
 
 /*
- * acquire fast mutex lock
- * - allow other threads to run when blocking
+ * - acquire fast mutex lock
+ * - spin on volatile lock to avoid excess lock-operations
  */
 static INLINE void
 fmtxlk(m_atomic_t *lp)
@@ -76,13 +72,12 @@ fmtxlk(m_atomic_t *lp)
     m_atomic_t res;
 
     do {
-        res = *lp;
-        if (res == FMTXINITVAL) {
-            res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
-        } else {
-            res = 0;
-        }
+        do {
+            res = *lp;
+        } while (res);
+        res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
         if (!res) {
+            /* do a "light-weight busy-wait" */
             m_waitspin();
         }
     } while (!res);
@@ -99,7 +94,6 @@ fmtxunlk(m_atomic_t *lp)
 {
     m_membar();
     *lp = FMTXINITVAL;
-    m_endspin();
 
     return;
 }
@@ -148,7 +142,6 @@ fmtxunlk(m_atomic_t *lp)
 {
     m_membar();
     *lp = FMTXINITVAL;
-    m_endspin();
 
     return;
 }
@@ -161,9 +154,16 @@ fmtxunlk(m_atomic_t *lp)
 
 #endif /* ZEROFMTX */
 
-#if defined(PTHREAD) && !defined(ZEROPTHREAD)
+#if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
 
-#define MTXINITVAL PTHREAD_MUTEX_INITIALIZER
+#define zerotrylkmtx(mp) fmtxtrylk
+#define zerolkmtx(mp)    fmtxtlk
+#define zerounlkmtx(mp)  fmtxunlk
+
+#elif defined(PTHREAD) && !defined(ZEROPTHREAD)
+
+#define PTHREAD_MUTEX_INITIALIZER MTXINITVAL
+#define PTHREAD_FMTX_INITIALIZER  FMTXINITVAL
 
 #define zerotrylkmtx(mp) pthread_mutex_trylock(mp)
 #define zerolkmtx(mp)    pthread_mutex_lock(mp)
@@ -180,6 +180,8 @@ fmtxunlk(m_atomic_t *lp)
 #define pthread_mutex_unlock(mp)    mtxunlk(mp)
 
 #elif defined(ZEROMTX)
+
+#define FMTXINITVAL           MTXINITVAL
 
 /* initializer for non-dynamic attributes */
 #define ZEROMTXATR_DEFVAL     { 0L }

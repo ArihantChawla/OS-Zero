@@ -14,10 +14,8 @@
 #include <sys/sysmacros.h>
 #endif
 #include <zero/param.h>
-#if !defined(_POSIX_SOURCE) && (USEBSD) && !defined(NFDBITS)
+#if !defined(__KERNEL__) && !defined(__struct_timeval_defined)
 #include <kern/conf.h>
-#endif
-#if !defined(__struct_timeval_defined)
 struct timeval {
     time_t      tv_sec;
     suseconds_t tv_usec;

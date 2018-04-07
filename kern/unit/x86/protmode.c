@@ -40,7 +40,7 @@
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
 extern uint8_t                   kernsysstktab[NCPU * KERNSTKSIZE];
 extern uint8_t                   kernusrstktab[NCPU * KERNSTKSIZE];
-extern volatile struct cpu       cputab[NCPU];
+extern struct cpu                cputab[NCPU];
 extern struct proc               proctab[NTASK];
 #if (VBE)
 extern uint64_t                  kernidt[NINTR];
@@ -82,7 +82,7 @@ kinitprot(unsigned long pmemsz)
                           : "rm" (sp));
     meminit(min(pmemsz, lim), min(KERNVIRTBASE, lim));
     cpuinit(0);
-    procinit(PROCKERN, SCHEDNOCLASS);
+    procinit(0, PROCKERN, SCHEDNOCLASS);
     taskinitenv();
     tssinit(0);
 #if (VBE)
@@ -113,10 +113,10 @@ kinitprot(unsigned long pmemsz)
         kprintf("found %ld processors\n", mpncpu);
     }
 #if (APIC)
-    apicinit();
+    apicinit(0);
 #endif
 #if (IOAPIC)
-    ioapicinit();
+    ioapicinit(0);
 #endif
 #if 0
     if (mpmultiproc) {
@@ -206,7 +206,7 @@ kinitprot(unsigned long pmemsz)
     plasmaloop(-1);
 #elif (USERMODE)
     m_jmpusr(0, schedloop);
-#else    
+#else
     schedloop();
 #endif
 
