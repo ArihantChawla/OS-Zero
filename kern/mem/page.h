@@ -39,8 +39,8 @@ extern pid_t           vmsetmap[NPAGEPHYS];
 #define PAGEWIREBIT 0x00000001
 #define PAGEBUFBIT  0x00000002
 struct virtpage {
-    void      *adr;     // virtual or physical address
-    uintptr_t  link;    // prev XOR next
+    void            *adr;     // virtual or physical address
+    uintptr_t        link;    // prev XOR next
 #if 0
     unsigned long    flg;
     struct virtpage *prev;
@@ -55,7 +55,7 @@ struct virtpage {
     (roundup(__STRUCT_PHYSLRUQUEUE_SIZE, CLSIZE) - __STRUCT_PHYSLRUQUEUE_SIZE)
 struct physlruqueue {
     VM_LK_T          lk;
-    struct physpage *list;
+    struct page *list;
     uint8_t          _pad[__STRUCT_PHYSLRUQUEUE_PAD];
 };
 
@@ -63,15 +63,15 @@ struct physlruqueue {
     (sizeof(long) + 3 * sizeof(void *) + 4 * sizeof(m_ureg_t))
 #define __STRUCT_PHYSPAGE_PAD                                           \
     (roundup(__STRUCT_PHYSPAGE_SIZE, CLSIZE) - __STRUCT_PHYSPAGE_SIZE)
-struct physpage {
-    VM_LK_T          lk;        // mutual exclusion lock
-    m_ureg_t         nref;      // reference count
-    m_ureg_t         pid;       // owner process ID
-    m_ureg_t         adr;       // page address
-    struct perm     *perm;      // permissions
-    m_ureg_t         nflt;      // # of page-fault exceptions triggered
-    struct physpage *prev;      // previous on queue
-    struct physpage *next;      // next on queue
+struct page {
+    VM_LK_T      lk;        // mutual exclusion lock
+    m_ureg_t     nref;      // reference count
+    m_ureg_t     pid;       // owner process ID
+    m_ureg_t     adr;       // page address
+    struct perm *perm;      // permissions
+    m_ureg_t     nflt;      // # of page-fault exceptions triggered
+    struct page *prev;      // previous on queue
+    struct page *next;      // next on queue
     uint8_t          _pad[__STRUCT_PHYSPAGE_PAD];
 };
 
@@ -87,24 +87,20 @@ typedef uint64_t swapoff_t;
 #define __STRUCT_SWAPDEV_PAD                                            \
     (roundup(__STRUCT_SWAPDEV_SIZE, CLSIZE) - __STRUCT_SWAPDEV_SIZE)
 struct swapdev {
-    m_atomic_t       lk;
-    swapoff_t        npg;
-    swapoff_t       *pgmap;
-    struct physpage *pgtab;
-    struct physpage *freeq;
-    uint8_t          _pad[__STRUCT_SWAPDEV_PAD];
+    m_atomic_t   lk;
+    swapoff_t    npg;
+    swapoff_t   *pgmap;
+    struct page *pgtab;
+    struct page *freeq;
+    uint8_t      _pad[__STRUCT_SWAPDEV_PAD];
 };
 
 #define DEQ_SINGLE_TYPE
-#define DEQ_TYPE struct physpage
+#define DEQ_TYPE struct page
 #include <zero/deq.h>
 
-unsigned long     pageinitphyszone(uintptr_t base, struct physpage **zone,
-                                   unsigned long nb);
-unsigned long     pageaddphyszone(uintptr_t base, struct physpage **zone,
-                                  unsigned long nb);
 unsigned long     pageinitphys(uintptr_t base, unsigned long nb);
-struct physpage * pageallocphys(void);
+struct page *     pageallocphys(void);
 void              pagefreephys(void *adr);
 #if 0
 void              pagefree(void *adr);

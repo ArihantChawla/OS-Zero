@@ -12,6 +12,10 @@
  * - hacks to make it run with zero kernel using graphics framebuffer
  */
 
+#include <kern/conf.h>
+
+#if (PLASMA)
+
 #define PLASMAKMALLOC   0
 #define PLASMAMODLUT    1
 #if (__KERNEL__)
@@ -131,7 +135,6 @@ void drawLogo(SDL_Surface *surface, const SDL_Surface *logo);
 void initfpstimer(struct fpsctx* t, int fpslimit);
 void limitfps(struct fpsctx* t);
 #endif
-
 
 /*
  * TODO: Clean this mess up
@@ -282,7 +285,7 @@ bool init(void)
 
     intermediateG = malloc(INTER_WIDTH * INTER_HEIGHT * sizeof(uint8_t));
     if (!intermediateG) return false;
-    
+
     intermediateB = malloc(INTER_WIDTH * INTER_HEIGHT * sizeof(uint8_t));
     if (!intermediateR) return false;
 #endif
@@ -331,7 +334,7 @@ void cleanup(void)
     free(intermediateR);
     free(intermediateG);
     free(intermediateB);
-    
+
     SDL_Quit();
 }
 #endif
@@ -373,13 +376,13 @@ void drawPlasma(SDL_Surface *surface)
                      p3_xoff = 0x0000,
                      p3_yoff = 0x0000;
 
-#if 0                    
+#if 0
     static uint16_t  p1_fade = 0x0000,
                      p2_fade = 0x0000,
                      p3_fade = 0x0000;
 #endif
     static uint16_t  p1_fade = 0x0000;
-    
+
     uint16_t         p1_sinpos_start_x = p1_xoff;
     uint16_t         p1_sinpos_start_y = p1_yoff;
     uint16_t         p1_sinposy;
@@ -391,13 +394,13 @@ void drawPlasma(SDL_Surface *surface)
     uint16_t         p2_sinposy;
     uint16_t         p2_sinposx;
     int              p2_palettePos = OFFSET_MAG;
-    
+
     uint16_t         p3_sinpos_start_x = p3_xoff;
     uint16_t         p3_sinpos_start_y = p3_yoff;
     uint16_t         p3_sinposy;
     uint16_t         p3_sinposx;
     int              p3_palettePos = OFFSET_MAG;
-        
+
     unsigned         ypos = 0;
 
 #if (__KERNEL__)
@@ -434,10 +437,10 @@ void drawPlasma(SDL_Surface *surface)
             colour = palette1[p2_palettePos - offsetTable[p2_sinposy>>7]];
             //colour >>= 1;
             *(intermediateG + x + ypos) = colour;
-            
+
             p3_sinposy += 67;
             colour = 255-palette1[p3_palettePos - offsetTable[p3_sinposy>>7]];
-            
+
             *(intermediateB + x + ypos) = colour;
 
         }
@@ -451,12 +454,12 @@ void drawPlasma(SDL_Surface *surface)
                 gfxpix32 g;
                 gfxpix32 b;
 #endif
-                
+
                 mask = modxlut[x];
                 // copy to row y
                 srcpos = OFFSET_MAG + x
                     + ypos - (offsetTable[p1_sinposx>>7]>>1);
-                
+
                 /* FIXME: SDL_MapRGB() is very likely not a very fast way to do this
                  */
 #if (__KERNEL__)
@@ -487,13 +490,12 @@ void drawPlasma(SDL_Surface *surface)
                 gfxpix32 g;
                 gfxpix32 b;
 #endif
-                
 
                 if (x % vbefontw) {
                     // copy to row y
                     srcpos = OFFSET_MAG + x
                                 + ypos - (offsetTable[p1_sinposx>>7]>>1);
-                    
+
                     /* FIXME: SDL_MapRGB() is very likely not a very fast way to do this
                     */
 #if (__KERNEL__)
@@ -517,10 +519,10 @@ void drawPlasma(SDL_Surface *surface)
         p1_palettePos++;
         p1_sinposx += 263;
         p1_fade++;
-        
+
         p2_palettePos++;
         p2_sinposx += 907;
-                
+
         p3_palettePos++;
         p3_sinposx += 397;
 
@@ -536,13 +538,13 @@ void drawPlasma(SDL_Surface *surface)
 
     p1_xoff += 1559;//1087;    // Lots of magic values. They're all prime numbers
     p1_yoff += 307;     // because I figure that will make them more magical.
-    
+
     p2_xoff += 521;//503;
     p2_yoff += 179;
-    
+
     p3_xoff += 131;
     p3_yoff += 89;
-    
+
 }
 
 #if (__KERNEL__) && (PLASMADOUBLEBUF)
@@ -571,7 +573,7 @@ void drawLogo(SDL_Surface *surface, const SDL_Surface *logo)
     destxmod = surface->w - logo->w;
 
     dest = surface->pixels;
-    
+
 #if 0
     dest += (surface->w - logo->w) / 3;                   // start dest xpos
     dest += (surface->h - logo->h) * 2/3 * surface->w;    // start dest ypos
@@ -623,3 +625,4 @@ void limitfps(struct fpsctx* t)
 
 #endif /* !__KERNEL__ */
 
+#endif /* PLASMA */

@@ -5,6 +5,7 @@
 
 #include <zero/param.h>
 
+#define USYSINFO      0
 #define VMTKTLK       1
 
 //#define REENTRANTGDTINIT 1
@@ -84,7 +85,7 @@
 
 /* planned and developed drivers */
 #define VBE           1         // VBE2 graphics driver
-#define VBEMTRR       1         // map graphics framebuffer write-combining
+#define VBEMTRR       0         // map graphics framebuffer write-combining
 #define PIC           0
 #define IOAPIC        0         // enable I/O APIC support
 #define SMBIOS        0         // SMBIOS (system management) support

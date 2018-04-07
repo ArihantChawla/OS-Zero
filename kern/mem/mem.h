@@ -62,6 +62,7 @@
 #include <kern/mem/mag.h>
 #include <kern/mem/bkt.h>
 #include <kern/mem/zone.h>
+//#include <kern/mem/page.h>
 
 void meminit(size_t nbphys, size_t nbvirt);
 void meminitphys(struct memzone *zone, uintptr_t base, size_t nbyte);

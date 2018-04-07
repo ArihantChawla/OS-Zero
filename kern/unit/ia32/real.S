@@ -6,7 +6,7 @@
 #include <kern/unit/x86/boot.h>
 
 .globl	realstart, realend, realint10
-.extern	idtptr
+.extern	gdtptr, idtptr
 
 .text
 
@@ -79,7 +79,7 @@ _real16:
 
 	/* reinitialise 32-bit protected mode */
 _protmode:
-//	lgdtl	(gdtptr)
+	lgdtl	(gdtptr)
 	/* set up segment registers */
 	movw	$0x10, %ax
 	movw	%ax, %ds
@@ -118,7 +118,7 @@ _realgdtptr:
 	.long	_realgdt - realstart + BOOTREALBASE
 
 .align	4
-	
+
 _espsave:
 	.long	0x00000000
 
@@ -129,7 +129,7 @@ _realidtptr:
 	.long	0x00000000
 
 .align	4
-	
+
 realend:
 
 #endif /* VBE */

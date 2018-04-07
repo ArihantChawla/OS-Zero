@@ -44,6 +44,8 @@ SECTIONS {
 	setup.o(.data)
 	real.o(.text)
 	real.o(.data)
+	main.o(.text)
+	main.o(.data)
 /*
         mp.o(.text)
         mp.o(.data)
@@ -57,8 +59,6 @@ SECTIONS {
 	m_trap.o(.data)
 	pic.o(.text)
 	pic.o(.data)
-	main.o(.text)
-	main.o(.data)
 	protmode.o(.text)
 	protmode.o(.data)
 	vm.o(.text)
@@ -71,6 +71,7 @@ SECTIONS {
 	ps2.o(.data)
 	vbe.o(.text)
 	vbe.o(.data)
+        test.o(.text)
 /*	vbe.o(.bss) */
 /*
 	bmfonts.o(.text)
@@ -87,11 +88,13 @@ SECTIONS {
 	. = ALIGN(PAGESIZE);
     }
 
+/*
     .usysinfo : {
         _usysinfo = .;
 	. += USYSINFOSIZE;
 	_eusysinfo = .;
     }
+*/
 
     . = DMABUF;
 
@@ -121,7 +124,7 @@ SECTIONS {
     .text : AT(PAGETAB + SIZEOF(.pgtab)) {
         _text = .;
 	_textvirt = PAGETAB + SIZEOF(.pgtab);
-	*(EXCLUDE_FILE(*usr.o *test.o).text*)
+	*(EXCLUDE_FILE(*usr.o).text*)
 	*(.text*)
 	*(.rodata*)
 	*(.rodata.*)
@@ -130,7 +133,7 @@ SECTIONS {
 	_etextvirt = _textvirt + SIZEOF(.text);
 	. = ALIGN(PAGESIZE);
     }
- 
+
     /* read-write data segment; initialised global structures */
     .data : AT(PAGETAB + SIZEOF(.pgtab) + SIZEOF(.text)) {
     	_data = _etext;

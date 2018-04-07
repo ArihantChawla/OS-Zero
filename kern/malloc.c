@@ -13,6 +13,7 @@
 #include <kern/cpu.h>
 #include <kern/mem/vm.h>
 #include <kern/mem/mem.h>
+#include <kern/mem/slab.h>
 #include <kern/proc/proc.h>
 #if defined(__i386__)
 #include <kern/unit/x86/link.h>

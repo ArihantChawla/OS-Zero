@@ -27,12 +27,12 @@ consinit(int w, int h)
 #endif
 #if 0
     cons = &constab[0];
-    bufsz = CONSNTEXTROW * (w + 1) * sizeof(conschar_t);
+    bufsz = CONSNBUFROW * (w + 1) * sizeof(conschar_t);
     for (l = 0 ; l < NCONS ; l++) {
         cons->textbuf = kmalloc(bufsz);
         if (!cons->textbuf) {
             kprintf("CONS failed to allocate text buffer\n");
-            
+
             return;
         }
         kbzero(cons->textbuf, bufsz);
@@ -50,9 +50,9 @@ consscroll(struct cons *cons, long nrow)
         row = cons->row;
         row += nrow;
         if (nrow > 0) {
-            row = min(row, CONSNTEXTROW - 1);
+            row = min(row, CONSNBUFROW - 1);
         } else {
-            row = max(row, CONSNTEXTROW - 1);
+            row = max(row, CONSNBUFROW - 1);
         }
         cons->row = row;
     }

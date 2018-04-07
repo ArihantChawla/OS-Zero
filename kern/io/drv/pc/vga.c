@@ -346,14 +346,14 @@ vgainitcons(int w, int h)
     for (l = 0 ; l < NCONS ; l++) {
         kbzero(ptr, PAGESIZE);
         cons->buf = (uint16_t *)ptr;
-        cons->x = 0;
-        cons->y = 0;
+        cons->col = 0;
+        cons->row = 0;
         cons->ncol = w;
         cons->nrow = h;
         cons->chatr = vgasetfg(0, VGAWHITE);
-        cons->nbufln = 0;
+        cons->nbufrow = 0;
         /* TODO: allocate scrollback buffer */
-        cons->data = NULL;
+        //        cons->data = NULL;
         cons++;
     }
     conscur = 0;
@@ -374,13 +374,13 @@ vgaputs2(struct cons *cons, char *str)
     uint8_t   ch;
     uint8_t   atr;
 
-    x = cons->x;
-    y = cons->y;
+    x = cons->col;
+    y = cons->row;
     w = cons->ncol;
     h = cons->nrow;
     atr = cons->chatr;
     while (*str) {
-        ptr = cons->buf + y * w + x;
+        ptr = (uint16_t *)cons->buf + y * w + x;
         ch = *str;
         if (ch == '\n') {
             if (++y == h) {
@@ -397,8 +397,8 @@ vgaputs2(struct cons *cons, char *str)
             vgaputch3(ptr, ch, atr);
         }
         str++;
-        cons->x = x;
-        cons->y = y;
+        cons->col = x;
+        cons->row = y;
     }
 
     return;
@@ -411,7 +411,7 @@ vgaputchar(int ch)
     uint16_t    *ptr;
 
     cons = &constab[conscur];
-    ptr = cons->buf + cons->ncol * cons->x + cons->y;
+    ptr = (uint16_t *)cons->buf + cons->ncol * cons->col + cons->row;
     *ptr = _vgamkch(ch, cons->chatr);
 
     return;

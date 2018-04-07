@@ -2,8 +2,14 @@
 #include <zero/trix.h>
 #include <kern/unit/ia32/vm.h>
 
-extern struct memzone   memphyszone;
-extern struct memzone   memvirtzone;
+extern struct memzone memphyszone;
+extern struct memzone memvirtzone;
+
+struct page;
+unsigned long pageinitphyszone(uintptr_t base, struct page **zone,
+                               unsigned long nb);
+unsigned long pageaddphyszone(uintptr_t base, struct page **zone,
+                              unsigned long nb);
 
 void
 meminit(size_t nbphys, size_t nbvirt)
@@ -18,11 +24,11 @@ meminit(size_t nbphys, size_t nbvirt)
              PAGEPRES | PAGEWRITE);
 #if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
     || defined(__arm__)
-    meminitphys(&memphyszone, (uintptr_t)&_epagetab,
-               lim - (size_t)&_epagetab);
+    pageinitphys((uintptr_t)&_epagetab,
+                 lim - (size_t)&_epagetab);
     lim = max(nbvirt, KERNVIRTBASE);
     //    meminitzone((uintptr_t)&_epagetab, lim - (size_t)&_epagetab);
-    meminitzone(&memvirtzone, lim);
+    vminitvirt(&_pagetab, &_epagetab, nbvirt, PAGEWRITE);
 #elif defined(__x86_64__) || defined(__amd64__)
 #error implement x86-64 memory management
 #endif

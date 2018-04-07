@@ -16,7 +16,6 @@
 #include <kern/mem/vm.h>
 #include <kern/mem/page.h>
 //#include <kern/proc/task.h>
-#include <kern/mem/page.h>
 // #include <kern/io/buf.h>
 #include <kern/io/drv/pc/dma.h>
 #include <kern/unit/x86/link.h>
@@ -34,7 +33,7 @@ extern uint8_t       kernusrstktab[NCPU * KERNSTKSIZE];
 extern pde_t         kernpagedir[NPDE];
 extern pde_t         usrpagedir[NPDE];
 #if (VMFLATPHYSTAB)
-struct physpage      vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
+struct page          vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
 #endif
 //m_atomic_t         vmlrulktab[PTRBITS];
 struct physlruqueue  vmlrutab[PTRBITS];
@@ -45,8 +44,8 @@ static struct dev    vmdevtab[NPAGEDEV];
 static m_atomic_t    vmdevlktab[NPAGEDEV];
 #endif
 VM_LK_T              vmphyslk;
-struct physpage     *vmphysqueue;
-struct physpage     *vmshmqueue;
+struct page         *vmphysqueue;
+struct page         *vmshmqueue;
 struct vmpagestat    vmpagestat;
 
 /*
@@ -144,11 +143,13 @@ vminit(void *pagetab)
              (uint32_t)&_eboot,
              PAGEPRES | PAGEWRITE);
 
+#if (USYSINFO)
     /* identity-map USYSINFO */
     vmmapseg(pagetab, (uint32_t)&_usysinfo, (uint32_t)&_usysinfo,
              (uint32_t)&_eusysinfo,
              PAGEPRES | PAGEWRITE);
-    
+#endif
+
     /* identity-map kernel DMA buffers */
     vmmapseg(pagetab, (uint32_t)&_dmabuf, DMABUFBASE,
              (uint32_t)&_dmabuf + DMABUFSIZE,
@@ -168,7 +169,7 @@ vminit(void *pagetab)
 //    kbzero(&_epagetab, lim - (uint32_t)&_epagetab);
 
     /* VIRTUAL MEMORY */
-    
+
     /* map kernel text/read-only segments */
     vmmapseg(pagetab, (uint32_t)&_text, vmlinkadr((uint32_t)&_textvirt),
              (uint32_t)&_etextvirt,
@@ -184,7 +185,7 @@ vminit(void *pagetab)
 
     /* initialize paging */
     pginit();
-    
+
     return;
 }
 
@@ -192,7 +193,7 @@ void
 vminitphys(uintptr_t base, unsigned long nbphys)
 {
     unsigned long nb = min(nbphys, KERNVIRTBASE);
-    
+
     /* initialise physical memory manager */
     pageinitphys(base, nb);
 
@@ -224,7 +225,7 @@ vmfreephys(void *virt, uint32_t size)
     pte_t    *pte;
     long      n;
 //    long          nref;
-//    struct physpage  *pg;
+//    struct page  *pg;
 
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
     pte = (pte_t *)&_pagetab + vmpagenum(virt);
@@ -235,7 +236,7 @@ vmfreephys(void *virt, uint32_t size)
 
             continue;
         }
-        
+
         if (*pte & PAGESWAPPED) {
 //            swapfree(adr);
         } else if (!(*pte & PAGEWIRED)) {
@@ -260,10 +261,10 @@ FASTCALL
 void
 vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
 {
-    pte_t           *pte = (pte_t *)&_pagetab + vmpagenum(adr);
-    uint32_t         flg = (uint32_t)*pte & (PAGEFLTFLGMASK | PAGESYSFLAGS);
-    struct physpage *page = NULL;
-    unsigned long    qid;
+    pte_t         *pte = (pte_t *)&_pagetab + vmpagenum(adr);
+    uint32_t       flg = (uint32_t)*pte & (PAGEFLTFLGMASK | PAGESYSFLAGS);
+    struct page   *page = NULL;
+    unsigned long  qid;
 
     kprintf("PAGEFAULT: pid == %lx, adr == %lx, error == %lx\n",
             pid, adr, error);
@@ -321,10 +322,10 @@ vmseekdev(uint32_t dev, uint64_t ofs)
 uint32_t
 vmpagein(uint32_t adr)
 {
-    uint32_t         pageid = vmpagenum(adr);
-    uint32_t         blk = vmblkid(pageid);
-    struct physpage *page = pagefind(adr);
-    void            *data;
+    uint32_t     pageid = vmpagenum(adr);
+    uint32_t     blk = vmblkid(pageid);
+    struct page *page = pagefind(adr);
+    void        *data;
 
     vmgetlk(&vmdevlktab[dev], MEMPID);
     vmseekdev(dev, blk * PAGESIZE);

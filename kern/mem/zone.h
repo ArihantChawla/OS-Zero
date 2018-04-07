@@ -32,8 +32,11 @@ struct memzone {
                              - sizeof(m_atomic_t)];
 };
 
-void * zonegetslab(struct memzone *zone, unsigned long nb, unsigned long flg);
-void   zonefreeslab(struct memzone *zone, void *ptr);
+void * slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg);
+void   slabfree(struct memzone *zone, void *ptr);
+
+//void * zonegetslab(struct memzone *zone, unsigned long nb, unsigned long flg);
+//#void   zonefreeslab(struct memzone *zone, void *ptr);
 
 #endif /* __KERN_MEM_ZONE_H__ */
 

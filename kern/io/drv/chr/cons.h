@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <gfx/rgb.h>
 
-#define CONSNTEXTROW 4096
+#define CONSNBUFROW 4096
 
 void consinit(int w, int h);
 
@@ -27,7 +27,7 @@ struct cons {
 //    long           w;         // width in pixels
 //    long           h;         // height in pixels
     long             chatr;     // text attributes such as color
-    long             ntextrow;  // number of buffer lines
+    long             nbufrow;   // number of buffer lines
     void            *textbuf;   // text buffers
 };
 

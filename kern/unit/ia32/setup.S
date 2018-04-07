@@ -3,8 +3,8 @@
 #include <kern/unit/x86/boot.h>
 
 .globl	gdtinit, pginit, idtset, idtptr
-.globl	realgdtptr	
-.globl	gdtptrtab
+.globl	realgdtptr
+.globl	gdtptr, gdtptrtab
 .extern	kernpagedir
 
 .text	32
@@ -53,10 +53,11 @@ idtset:
 	ret
 
 .align	8
-	
+
 realgdtptr:
 	.short	0x0000
 	.long	0x00000000
+gdtptr:
 gdtptrtab:
 	.space	8 * NCPU
 idtptr:

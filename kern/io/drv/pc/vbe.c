@@ -181,7 +181,7 @@ vbeinitcons(int w, int h)
     struct cons  *cons = constab;
     conschar_t  **buf;
     void         *ptr;
-    long          bufsz = CONSNTEXTROW * sizeof(conschar_t *);
+    long          bufsz = CONSNBUFROW * sizeof(conschar_t *);
     long          rowsz = (w + 1) * sizeof(conschar_t);
     long          l;
     long          row;
@@ -197,7 +197,7 @@ vbeinitcons(int w, int h)
         cons->row = 0;
         cons->ncol = w;
         cons->nrow = h;
-        cons->ntextrow = CONSNTEXTROW;
+        cons->nbufrow = CONSNBUFROW;
 #if 0
         /* TODO: allocate scrollback buffer */
         buf = kcalloc(bufsz);
@@ -208,7 +208,7 @@ vbeinitcons(int w, int h)
         }
         n++;
         cons->textbuf = buf;
-        for (row = 0 ; row < CONSNTEXTROW ; row++) {
+        for (row = 0 ; row < CONSNBUFROW ; row++) {
             /* allocate NUL-terminated row */
             ptr = kcalloc(rowsz);
             if (!ptr) {

@@ -47,23 +47,17 @@ mboothdr:
 _start2:
 	/* set kernel stack up */
 	movl	$BOOTSTKTOP, %esp
-#if 0
-	movl	$kernsysstktab, %eax
-	addl	$(NCPU * KERNSTKSIZE), %eax
-	movl	%eax, %esp
-#endif
+//	movl	$kernsysstktab, %eax
+//	addl	$(NCPU * KERNSTKSIZE), %eax
+//	movl	%eax, %esp
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx			// store boot-header address
 #if (LONGMODE)
-	call	_chkcpuid
+  	call	_chkcpuid
 	call	_chklongmode
-	cmp	$0, %eax
-	je	_protmode
-	movl	$1, 4(%esp)		// longmode argument for kmain()
-_protmode:
 #else
-	xorl	%eax, %eax
+    xorl    %eax, %eax
 #endif
 	pushl	%eax			// store longmode argument for kmain()
 	call	kmain			// call kmain()
@@ -76,7 +70,6 @@ _chkcpuid:
 	xorl	$(1 << 21), %eax
 	pushl	%eax
 	popfl
-	pushfl
 	popl	%eax
 	pushl	%ecx
 	popfl
