@@ -28,16 +28,17 @@
 #include <v0/vm.h>
 #endif
 
-extern struct v0       * v0vm;
+extern struct v0       *v0vm;
+struct vasop           *v0optab[256];
 
-extern struct vasop    * vasfindop(const char *str);
+extern long            * vasgetinst(char *str, char **retptr);
 
-extern vasuword_t        vasgetreg(char *str, vasword_t *retsize,
+extern vasuword          v0getreg(char *str, vasword *retsize,
                                    char **retptr);
+extern struct vasop    * vasfindop(const char *str);
 static char            * vasgetlabel(char *str, char **retptr);
-static struct vasop    * vasgetinst(char *str, char **retptr);
 static char            * vasgetsym(char *str, char **retptr);
-static long              vasgetvalue(char *str, vasword_t *retval,
+static long              vasgetvalue(char *str, vasword *retval,
                                      char **retptr);
 static char *            vasgetdef(char *srt, char **retptr);
 static int               vasgetchar(char *str, char **retptr);
@@ -48,17 +49,17 @@ static struct vastoken * vasgettoken(char *str, char **retptr,
 static struct vastoken * vasgettoken(char *str, char **retptr);
 #endif
 
-static struct vastoken * vasprocvalue(struct vastoken *, vasmemadr_t, vasmemadr_t *);
-static struct vastoken * vasproclabel(struct vastoken *, vasmemadr_t, vasmemadr_t *);
+static struct vastoken * vasprocvalue(struct vastoken *, vasmemadr, vasmemadr *);
+static struct vastoken * vasproclabel(struct vastoken *, vasmemadr, vasmemadr *);
 /* vasprocinst() is machine-specific */
-extern struct vastoken * vasprocinst(struct vastoken *, vasmemadr_t, vasmemadr_t *);
-static struct vastoken * vasprocchar(struct vastoken *, vasmemadr_t, vasmemadr_t *);
-static struct vastoken * vasprocdata(struct vastoken *, vasmemadr_t, vasmemadr_t *);
-static struct vastoken * vasprocglobl(struct vastoken *, vasmemadr_t, vasmemadr_t *);
-static struct vastoken * vasprocspace(struct vastoken *, vasmemadr_t, vasmemadr_t *);
-static struct vastoken * vasprocorg(struct vastoken *, vasmemadr_t, vasmemadr_t *);
-static struct vastoken * vasprocalign(struct vastoken *, vasmemadr_t, vasmemadr_t *);
-static struct vastoken * vasprocasciz(struct vastoken *, vasmemadr_t, vasmemadr_t *);
+extern struct vastoken * vasprocop(struct vastoken *, vasmemadr, vasmemadr *);
+static struct vastoken * vasprocchar(struct vastoken *, vasmemadr, vasmemadr *);
+static struct vastoken * vasprocdata(struct vastoken *, vasmemadr, vasmemadr *);
+static struct vastoken * vasprocglobl(struct vastoken *, vasmemadr, vasmemadr *);
+static struct vastoken * vasprocspace(struct vastoken *, vasmemadr, vasmemadr *);
+static struct vastoken * vasprocorg(struct vastoken *, vasmemadr, vasmemadr *);
+static struct vastoken * vasprocalign(struct vastoken *, vasmemadr, vasmemadr *);
+static struct vastoken * vasprocasciz(struct vastoken *, vasmemadr, vasmemadr *);
 
 static struct vassymrec *vassymhash[VASNHASH] ALIGNED(PAGESIZE);
 static struct vasdef    *vasdefhash[VASNHASH];
@@ -93,14 +94,14 @@ vastokfunc_t            *vasktokfunctab[VASNTOKEN]
     NULL
 };
 #if (VASALIGN)
-vasmemadr_t              vastokalntab[VASNTOKEN];
+vasmemadr              vastokalntab[VASNTOKEN];
 #endif
 
 struct vastoken         *vastokenqueue;
 struct vastoken         *vastokentail;
 static struct vassymrec *symqueue;
-vasmemadr_t              _startadr;
-static vasmemadr_t       _startset;
+vasmemadr              _startadr;
+static vasmemadr       _startset;
 unsigned long            vasinputread;
 char                    *vaslinebuf;
 char                    *vasstrbuf;
@@ -123,8 +124,8 @@ vasprinttoken(struct vastoken *token)
 
             break;
         case VASTOKENINST:
-            fprintf(stderr, "instruction %s (op == 0x%02x)\n",
-                    token->data.inst.name, token->data.inst.op);
+            fprintf(stderr, "instruction %s (code == 0x%02x)\n",
+                    token->data.inst.name, token->data.inst.code);
 
             break;
         case VASTOKENREG:
@@ -195,7 +196,7 @@ vasqueuetoken(struct vastoken *token)
 #if (VASDB)
 
 void
-vasaddline(vasmemadr_t adr, uint8_t *data, uint8_t *filename, unsigned long line)
+vasaddline(vasmemadr adr, uint8_t *data, uint8_t *filename, unsigned long line)
 {
     struct vasline *newline = malloc(sizeof(struct vasline));
     unsigned long   key;
@@ -213,7 +214,7 @@ vasaddline(vasmemadr_t adr, uint8_t *data, uint8_t *filename, unsigned long line
 }
 
 struct vasline *
-vasfindline(vasmemadr_t adr)
+vasfindline(vasmemadr adr)
 {
     struct vasline *line;
     unsigned long   key;
@@ -248,7 +249,7 @@ vasadddef(struct vasdef *def)
 }
 
 struct vasdef *
-vasfinddef(char *str, vasword_t *defptr, char **retptr)
+vasfinddef(char *str, vasword *defptr, char **retptr)
 {
     unsigned long  key = 0;
     struct vasdef *def = NULL;
@@ -297,7 +298,7 @@ vasaddval(struct vasval *val)
 }
 
 struct vasval *
-vasfindval(char *str, vasword_t *valptr, char **retptr)
+vasfindval(char *str, vasword *valptr, char **retptr)
 {
     unsigned long  key = 0;
     struct vasval *val = NULL;
@@ -352,7 +353,7 @@ vasaddsym(struct vassymrec *sym)
         key += *str++;
     }
 #if (VASZEROHASH)
-#if (WORDSIZE == 8)
+#if (LONGSIZE == 8)
     key = tmhash64(key);
 #else
     key = tmhash32(key);
@@ -470,23 +471,6 @@ vasgetlabel(char *str, char **retptr)
     return name;
 }
 
-static struct vasop *
-vasgetinst(char *str, char **retptr)
-{
-    struct vasop *op;
-
-    op = vasfindop(str);
-#if (VASDEBUG)
-    fprintf(stderr, "getinst: %s\n", str);
-#endif
-    if (op) {
-        str += op->len;
-        *retptr = str;
-    }
-
-    return op;
-}
-
 static char *
 vasgetdef(char *str, char **retptr)
 {
@@ -542,11 +526,11 @@ vasgetsym(char *str, char **retptr)
 }
 
 static long
-vasgetvalue(char *str, vasword_t *valret, char **retstr)
+vasgetvalue(char *str, vasword *valret, char **retstr)
 {
     long                found = 0;
-    vasuword_t          uval = 0;
-    vasword_t           val = 0;
+    vasuword          uval = 0;
+    vasword           val = 0;
     long                neg = 0;
 
 #if (VASDEBUG)
@@ -600,10 +584,10 @@ vasgetvalue(char *str, vasword_t *valret, char **retstr)
     if (found) {
         *retstr = str;
         if (neg) {
-            val = -((vasword_t)uval);
+            val = -((vasword)uval);
             *valret = val;
         } else {
-            *valret = (vasword_t)uval;
+            *valret = (vasword)uval;
         }
     }
 
@@ -631,13 +615,13 @@ vasgetadr(char *str, char **retptr)
     return name;
 }
 
-static vasuword_t
-vasgetindex(char *str, vasword_t *retndx, char **retptr)
+static vasuword
+vasgetindex(char *str, vasword *retndx, char **retptr)
 {
-    vasuword_t reg = 0xff;
-    vasword_t  val = 0;
-    vasword_t  ndx = 0;
-    vasword_t  size = 0;
+    vasuword reg = 0xff;
+    vasword  val = 0;
+    vasword  ndx = 0;
+    vasword  size = 0;
     long       neg = 0;
 
 #if (VASDEBUG)
@@ -700,11 +684,9 @@ vasgetindex(char *str, vasword_t *retndx, char **retptr)
 #endif
         *retptr = str;
     }
-#if (VASNEWHACKS)
     if (size) {
         val &= (1L << (CHAR_BIT * size)) - 1;
     }
-#endif
     if (neg) {
         val = -val;
     }
@@ -717,7 +699,7 @@ static int
 vasgetchar(char *str, char **retptr)
 {
     char      *name = str;
-    vasword_t  val = 0;
+    vasword  val = 0;
 
 #if (VASDEBUG)
     fprintf(stderr,"getchar: %s\n", str);
@@ -801,11 +783,11 @@ vasgettoken(char *str, char **retptr)
     char            *buf = vasstrbuf;
     struct vastoken *token1 = malloc(sizeof(struct vastoken));
     struct vastoken *token2;
-    struct vasop    *op = NULL;
+    struct vasinst  *op = NULL;
     char            *name = str;
-    vasword_t        val = VASRESOLVE;
-    vasword_t        size = 0;
-    vasword_t        ndx;
+    vasword          val = VASRESOLVE;
+    vasword          size = 0;
+    vasword          ndx;
     int              ch;
 #if (VASDB)
     char            *ptr;
@@ -886,9 +868,7 @@ vasgettoken(char *str, char **retptr)
         str++;
         val = vasgetreg(str, &size, &str);
         token1->type = VASTOKENREG;
-#if (VASNEWHACKS)
         token1->size = size;
-#endif
         token1->data.reg = val;
     } else if ((*str) && (isalpha(*str) || *str == '_')) {
         name = vasgetlabel(str, &str);
@@ -900,11 +880,11 @@ vasgettoken(char *str, char **retptr)
 #if (VASDB)
             ptr = str;
 #endif
-            op = vasgetinst(str, &str);
+            op = vasgetop(str, &str);
             if (op) {
                 token1->type = VASTOKENINST;
                 token1->data.inst.name = op->name;
-                token1->data.inst.op = op->code;
+                token1->data.inst.code = op->code;
                 token1->data.inst.narg = op->narg;
 #if (VASDB)
                 token1->data.inst.data = strdup(ptr);
@@ -1020,9 +1000,7 @@ vasgettoken(char *str, char **retptr)
             str++;
             val = vasgetreg(str, &size, &str);
             token2->type = VASTOKENREG;
-#if (VASNEWHACKS)
             token2->size = size;
-#endif
             token2->data.reg = VASREGINDIR | val;
             vasqueuetoken(token1);
             token1 = token2;
@@ -1062,10 +1040,10 @@ vasgettoken(char *str, char **retptr)
 }
 
 static struct vastoken *
-vasprocvalue(struct vastoken *token, vasmemadr_t adr,
-             vasmemadr_t *retadr)
+vasprocvalue(struct vastoken *token, vasmemadr adr,
+             vasmemadr *retadr)
 {
-    vasmemadr_t      ret = adr + token->data.value.size;
+    vasmemadr      ret = adr + token->data.value.size;
     char            *valptr = vasadrtoptr(adr);
     struct vastoken *retval;
 
@@ -1095,8 +1073,8 @@ vasprocvalue(struct vastoken *token, vasmemadr_t adr,
 }
 
 static struct vastoken *
-vasproclabel(struct vastoken *token, vasmemadr_t adr,
-             vasmemadr_t *retadr)
+vasproclabel(struct vastoken *token, vasmemadr adr,
+             vasmemadr *retadr)
 {
     struct vassymrec *sym;
     struct vastoken  *retval;
@@ -1128,8 +1106,8 @@ vasproclabel(struct vastoken *token, vasmemadr_t adr,
 }
 
 static struct vastoken *
-vasprocchar(struct vastoken *token, vasmemadr_t adr,
-            vasmemadr_t *retadr)
+vasprocchar(struct vastoken *token, vasmemadr adr,
+            vasmemadr *retadr)
 {
     char            *valptr = vasadrtoptr(adr);
     struct vastoken *retval;
@@ -1144,11 +1122,11 @@ vasprocchar(struct vastoken *token, vasmemadr_t adr,
 }
 
 static struct vastoken *
-vasprocdata(struct vastoken *token, vasmemadr_t adr,
-            vasmemadr_t *retadr)
+vasprocdata(struct vastoken *token, vasmemadr adr,
+            vasmemadr *retadr)
 {
     struct vastoken *token1 = token->next;
-    vasmemadr_t      valadr = adr;
+    vasmemadr      valadr = adr;
 
     while ((token1) && token1->type == VASTOKENVALUE) {
         token1->data.value.size = token->data.size;
@@ -1160,8 +1138,8 @@ vasprocdata(struct vastoken *token, vasmemadr_t adr,
 }
 
 static struct vastoken *
-vasprocglobl(struct vastoken *token, vasmemadr_t adr,
-             vasmemadr_t *retadr)
+vasprocglobl(struct vastoken *token, vasmemadr adr,
+             vasmemadr *retadr)
 {
     struct vastoken *token1;
     struct vaslabel *label;
@@ -1180,12 +1158,12 @@ vasprocglobl(struct vastoken *token, vasmemadr_t adr,
 }
 
 static struct vastoken *
-vasprocspace(struct vastoken *token, vasmemadr_t adr,
-             vasmemadr_t *retadr)
+vasprocspace(struct vastoken *token, vasmemadr adr,
+             vasmemadr *retadr)
 {
     struct vastoken *token1;
     struct vastoken *token2;
-    vasmemadr_t      spcadr;
+    vasmemadr      spcadr;
     char            *ptr;
     uint8_t          val;
 
@@ -1217,11 +1195,11 @@ vasprocspace(struct vastoken *token, vasmemadr_t adr,
 }
 
 static struct vastoken *
-vasprocorg(struct vastoken *token, vasmemadr_t adr,
-           vasmemadr_t *retadr)
+vasprocorg(struct vastoken *token, vasmemadr adr,
+           vasmemadr *retadr)
 {
     struct vastoken *token1;
-    vasmemadr_t      orgadr;
+    vasmemadr      orgadr;
     char            *ptr;
     uint8_t          val;
 
@@ -1241,8 +1219,8 @@ vasprocorg(struct vastoken *token, vasmemadr_t adr,
 }
 
 static struct vastoken *
-vasprocalign(struct vastoken *token, vasmemadr_t adr,
-             vasmemadr_t *retadr)
+vasprocalign(struct vastoken *token, vasmemadr adr,
+             vasmemadr *retadr)
 {
     struct vastoken *token1;
 
@@ -1261,8 +1239,8 @@ vasprocalign(struct vastoken *token, vasmemadr_t adr,
 }
 
 static struct vastoken *
-vasprocasciz(struct vastoken *token, vasmemadr_t adr,
-             vasmemadr_t *retadr)
+vasprocasciz(struct vastoken *token, vasmemadr adr,
+             vasmemadr *retadr)
 {
     struct vastoken *token1;
     struct vastoken *token2;
@@ -1326,10 +1304,10 @@ vasinit(void)
 #endif
 }
 
-vasmemadr_t
-vastranslate(vasmemadr_t base)
+vasmemadr
+vastranslate(vasmemadr base)
 {
-    vasmemadr_t      adr = base;
+    vasmemadr      adr = base;
     struct vastoken *token = vastokenqueue;
     struct vastoken *token1;
     vastokfunc_t    *func;
@@ -1358,7 +1336,7 @@ vastranslate(vasmemadr_t base)
 }
 
 void
-vasresolve(vasmemadr_t base)
+vasresolve(vasmemadr base)
 {
     struct vassymrec *sym = symqueue;
     struct vassymrec *sym1;
@@ -1378,11 +1356,11 @@ vasresolve(vasmemadr_t base)
 
                 exit(1);
             }
-            *((vasmemadr_t *)sym->adr) = item->adr;
+            *((vasmemadr *)sym->adr) = item->adr;
         } else {
             label = vasfindglob(sym->name);
             if (label) {
-                *((vasmemadr_t *)sym->adr) = label->adr;
+                *((vasmemadr *)sym->adr) = label->adr;
             } else {
                 fprintf(stderr, "unresolved symbol %s\n", sym->name);
 
@@ -1400,10 +1378,10 @@ vasresolve(vasmemadr_t base)
 
 #if (VASBUF)
 void
-vasreadfile(char *name, vasmemadr_t adr, int bufid)
+vasreadfile(char *name, vasmemadr adr, int bufid)
 #else
 void
-vasreadfile(char *name, vasmemadr_t adr)
+vasreadfile(char *name, vasmemadr adr)
 #endif
 {
 #if (VASMMAP)
@@ -1434,7 +1412,7 @@ vasreadfile(char *name, vasmemadr_t adr)
 #if (VASDB)
     unsigned long    line = 0;
 #endif
-    vasword_t        val = 0;
+    vasword        val = 0;
 
 #if (VASBUF) || (VASMMAP)
     do {

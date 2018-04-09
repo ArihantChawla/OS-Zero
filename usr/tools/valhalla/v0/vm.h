@@ -169,20 +169,28 @@ union v0oparg {
 #define V0_TRAP_BIT      0x02 // breakpoint
 
 /* NOP is declared as all 0-bits */
-#define V0_NOP     (UINT32_C(~0))
+#define V0_NOP           (UINT32_C(~0))
 #define v0opisnop(op)                                                   \
     (*(uint32_t *)op == V0_NOP)
 #define v0opissigned(op)                                                \
     ((op)->flg & V0_SIGNED_BIT)
 
-struct v0op {
-    unsigned int  code : 8;   // unit and instruction IDs
-    unsigned int  reg1 : 4;   // register argument #1 ID
-    unsigned int  reg2 : 4;   // register argument #2 ID
+struct v0opparm {
     unsigned int  adr  : 2;   // addressing mode
     unsigned int  parm : 2;   // parameter such as address scale shift count
     unsigned int  flg  : 2;   // V0_SIGNED_BIT, V0_TRAP_BIT
     int           val  : 10;  // immediate value such as shift count or offset
+};
+
+/* I/O-operations always have a single register argument */
+struct v0op {
+    unsigned int  code : 8;   // unit and instruction IDs
+    unsigned int  reg1 : 4;   // register argument #1 ID
+    unsigned int  reg2 : 4;   // register argument #2 ID
+    union {
+        uint16_t        port;
+        struct v0opparm parm;
+    };
     union v0oparg arg[EMPTY]; // possible argument value
 };
 
@@ -201,6 +209,7 @@ struct v0op {
 #define V0_TMR_PORT      4 // high-resolution timer for profiling
 #define V0_MOUSE_PORT    5 // mouse input
 #define V0_VTD_PORT      6 // virtual tape drive
+#define V0_MAP_PORT      7 // memory-mapped device control
 
 /* framebuffer graphics interface */
 #define V0_FB_BASE       (3UL * 1024 * 1024 * 1024)      // base address

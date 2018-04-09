@@ -3,12 +3,15 @@
 #include <string.h>
 #include <errno.h>
 #include <zero/fastudiv.h>
+#include <v0/types.h>
 #include <v0/mach.h>
 #include <v0/vm.h>
 #include <v0/io.h>
 #include <v0/op.h>
+#include <vas/types.h>
 
-extern void vasinit(void);
+extern void   vasinit(void);
+extern long * vasgetinst(char *str);
 
 struct v0              *v0vm;
 #if defined(V0_GAME)
