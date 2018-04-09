@@ -28,7 +28,7 @@ kmain(unsigned long longmode, struct mboothdr *boothdr)
     /* bootstrap kernel */
     /* INITIALISE BASE HARDWARE */
     seginit(0);
-#if (VBE) && 0
+#if (VBE)
     /* initialise VBE graphics subsystem */
     vbeinit();
 #endif

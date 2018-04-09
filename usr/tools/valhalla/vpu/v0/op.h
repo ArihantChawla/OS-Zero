@@ -14,7 +14,7 @@
 #include <zero/trix.h>
 #include <zero/fastudiv.h>
 #include <v0/mach.h>
-#include <v0/vm32.h>
+#include <v0/vm.h>
 
 #define V0_OP_INVAL                 NULL
 #define V0_ADR_INVAL                0x00000000
@@ -25,15 +25,24 @@
 #define _V0OPFUNC_T INLINE          v0ureg
 #endif
 
+#define v0adrtoptr(vm, adr)         ((void *)(&(vm)->mem[(adr)]))
+#if defined(__GNUC__)
+#define _v0opadr(x) &&v0op##x
+#define _V0OPTAB_T  void *
+#else
+#define _v0opadr(x) v0##x
+typedef v0reg       v0opfunc(struct v0 *vm, uint8_t *ptr, v0ureg pc);
+#define _V0OPTAB_T  v0opfunc *
+#endif
+
 #if defined(V0_GAME)
-static long long                    v0speedcnt;
 #define v0addspeedcnt(n)            (v0speedcnt += (n))
 #else
 #define v0addspeedcnt(n)
 #endif
 
-#define v0adrtoptr(vm, adr)         ((void *)(&(vm)->mem[(adr)]))
-
+#define v0doxcpt(xcpt)                                                  \
+    v0procxcpt(xcpt, __FILE__, __FUNCTION__, __LINE__)
 static __inline__ uintptr_t
 v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
 {
@@ -44,8 +53,90 @@ v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
     exit(xcpt);
 }
 
-#define v0doxcpt(xcpt)                                                  \
-    v0procxcpt(xcpt, __FILE__, __FUNCTION__, __LINE__)
+#if defined(V0_DEBUG_TABS)
+#define opaddinfo(proc, inst, handler)                                  \
+    do {                                                                \
+        long _code = v0mkopid(proc, inst);                              \
+                                                                        \
+        v0opinfotab[_code].unit = strdup(#proc);                        \
+        v0opinfotab[_code].op = strdup(#inst);                          \
+        v0opinfotab[_code].func = strdup(#handler);                     \
+    } while (0)
+#else
+#define opaddinfo(unit, op)
+#endif
+
+#if defined(__GNUC__)
+#define opjmp(vm, pc)                                                   \
+    do {                                                                \
+        struct v0op *_op = v0adrtoptr(vm, pc);                          \
+                                                                        \
+        while (v0opisvalid(vm, pc) && v0opisnop(_op)) {                 \
+            pc += sizeof(struct v0op);                                  \
+            (_op)++;                                                    \
+        }                                                               \
+        if (v0opisvalid(vm, pc)) {                                      \
+            goto *jmptab[(_op)->code];                                  \
+        } else {                                                        \
+            v0doxcpt(V0_TEXT_FAULT);                                    \
+                                                                        \
+            return V0_TEXT_FAULT;                                       \
+        }                                                               \
+    } while (0)
+#endif /* defined(__GNUC__) */
+#define _v0setop(unit, op, func, tab)                                   \
+    do {                                                                \
+        long _code = v0mkopid(unit, op);                                \
+                                                                        \
+        opaddinfo(unit, op, func);                                      \
+        ((_V0OPTAB_T *)tab)[_code] = (func);                            \
+    } while (0)
+
+#define v0initops(tab)                                                  \
+    do {                                                                \
+        _v0setop(V0_BITS, V0_NOP, _v0opadr(nop), tab);                  \
+        _v0setop(V0_BITS, V0_NOT, _v0opadr(not), tab);                  \
+	_v0setop(V0_BITS, V0_AND, _v0opadr(and), tab);                  \
+	_v0setop(V0_BITS, V0_OR, _v0opadr(or), tab);                    \
+	_v0setop(V0_BITS, V0_XOR, _v0opadr(xor), tab);                  \
+	_v0setop(V0_SHIFT, V0_SHL, _v0opadr(shl), tab);                 \
+	_v0setop(V0_SHIFT, V0_SHR, _v0opadr(shr), tab);                 \
+	_v0setop(V0_SHIFT, V0_SAR, _v0opadr(sar), tab);                 \
+	_v0setop(V0_ARITH, V0_INC, _v0opadr(inc), tab);                 \
+	_v0setop(V0_ARITH, V0_DEC, _v0opadr(dec), tab);                 \
+	_v0setop(V0_ARITH, V0_ADD, _v0opadr(add), tab);                 \
+	_v0setop(V0_ARITH, V0_ADC, _v0opadr(adc), tab);                 \
+	_v0setop(V0_ARITH, V0_SUB, _v0opadr(sub), tab);                 \
+	_v0setop(V0_ARITH, V0_SBB, _v0opadr(sbb), tab);                 \
+	_v0setop(V0_ARITH, V0_CMP, _v0opadr(cmp), tab);                 \
+	_v0setop(V0_ARITH, V0_MUL, _v0opadr(mul), tab);                 \
+	_v0setop(V0_ARITH, V0_DIV, _v0opadr(div), tab);                 \
+	_v0setop(V0_ARITH, V0_REM, _v0opadr(rem), tab);                 \
+	_v0setop(V0_FLOW, V0_JMP, _v0opadr(jmp), tab);                  \
+	_v0setop(V0_FLOW, V0_BZ, _v0opadr(bz), tab);                    \
+	_v0setop(V0_FLOW, V0_BNZ, _v0opadr(bnz), tab);                  \
+	_v0setop(V0_FLOW, V0_BC, _v0opadr(bc), tab);                    \
+	_v0setop(V0_FLOW, V0_BNC, _v0opadr(bnc), tab);                  \
+        _v0setop(V0_FLOW, V0_BO, _v0opadr(bo), tab);                    \
+	_v0setop(V0_FLOW, V0_BNO, _v0opadr(bno), tab);                  \
+	_v0setop(V0_FLOW, V0_BLT, _v0opadr(blt), tab);                  \
+	_v0setop(V0_FLOW, V0_BLE, _v0opadr(ble), tab);                  \
+	_v0setop(V0_FLOW, V0_BGT, _v0opadr(bgt), tab);                  \
+	_v0setop(V0_FLOW, V0_BGE, _v0opadr(bge), tab);                  \
+	_v0setop(V0_FLOW, V0_CPL, _v0opadr(cpl), tab);                  \
+	_v0setop(V0_FLOW, V0_CALL, _v0opadr(call), tab);                \
+	_v0setop(V0_FLOW, V0_ENTER, _v0opadr(enter), tab);              \
+	_v0setop(V0_FLOW, V0_LEAVE, _v0opadr(leave), tab);              \
+	_v0setop(V0_FLOW, V0_RET, _v0opadr(ret), tab);                  \
+	_v0setop(V0_XFER, V0_LDR, _v0opadr(ldr), tab);                  \
+	_v0setop(V0_XFER, V0_STR, _v0opadr(str), tab);                  \
+	_v0setop(V0_STACK, V0_PSH, _v0opadr(psh), tab);                 \
+	_v0setop(V0_STACK, V0_POP, _v0opadr(pop), tab);                 \
+	_v0setop(V0_STACK, V0_PSHM, _v0opadr(pshm), tab);               \
+	_v0setop(V0_STACK, V0_POPM, _v0opadr(popm), tab);               \
+	_v0setop(V0_IO, V0_IOR, _v0opadr(ior), tab);                    \
+	_v0setop(V0_IO, V0_IOW, _v0opadr(iow), tab);                    \
+    } while (0)
 
 /* register or immediate source operand */
 #define v0getsrc(vm, op)                                                \

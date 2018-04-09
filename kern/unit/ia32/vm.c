@@ -111,8 +111,10 @@ vminit(void *pagetab)
     kbzero(pagetab, PAGETABSIZE);
 
     /* zero stacks */
+#if 0
     kbzero(kernsysstktab, NCPU * KERNSTKSIZE);
     kbzero(kernusrstktab, NCPU * KERNSTKSIZE);
+#endif
     /* map kernel-mode stacks */
     vmmapseg(pagetab,
              (uint32_t)kernsysstktab, (uint32_t)kernsysstktab,
@@ -160,13 +162,12 @@ vminit(void *pagetab)
              (uint32_t)pagetab + PAGETABSIZE,
              PAGEPRES | PAGEWRITE | PAGEWIRED);
 
-#if 0
     /* identity map free RAM */
     vmmapseg(pagetab, (uint32_t)&_epagetab, (uint32_t)&_epagetab,
              KERNVIRTBASE - (uint32_t)&_epagetab,
              PAGEWRITE);
-#endif
-//    kbzero(&_epagetab, lim - (uint32_t)&_epagetab);
+
+    //    kbzero(&_epagetab, lim - (uint32_t)&_epagetab);
 
     /* VIRTUAL MEMORY */
 

@@ -25,7 +25,7 @@
 #include <vas/opt.h>
 #include <vas/io.h>
 #if (V0)
-#include <v0/vm32.h>
+#include <v0/vm.h>
 #endif
 
 extern struct v0       * v0vm;

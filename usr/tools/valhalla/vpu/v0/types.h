@@ -1,7 +1,7 @@
-#ifndef __VPU_TYPES_H__
-#define __VPU_TYPES_H__
+#ifndef __V0_TYPES_H__
+#define __V0_TYPES_H__
 
-#include <vpu/conf.h>
+#include <v0/conf.h>
 #include <stdint.h>
 
 typedef int8_t   vpubyte;
@@ -10,7 +10,7 @@ typedef int16_t  vpuword;
 typedef uint16_t vpuuword;
 typedef int32_t  vpulong;
 typedef uint32_t vpuulong;
-#if defined(VPU64BIT)
+#if defined(V064BIT)
 typedef int64_t  vpuquad;
 typedef uint64_t vpuuquad;
 typedef vpuquad  vpureg;
@@ -21,5 +21,5 @@ typedef vpuulong vpuureg;
 #endif
 typedef vpuureg  vpuadr;
 
-#endif /* __VPU_TYPES_H__ */
+#endif /* __V0_TYPES_H__ */
 

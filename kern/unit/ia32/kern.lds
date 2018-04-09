@@ -39,12 +39,16 @@ SECTIONS {
     /* identity-mapped low kernel segment */
     .boot : AT(HICORE) {
     	boot.o(.text)
+    	boot.o(.text.*)
     	boot.o(.data)
 	setup.o(.text)
+	setup.o(.text.*)
 	setup.o(.data)
 	real.o(.text)
+	real.o(.text.*)
 	real.o(.data)
 	main.o(.text)
+	main.o(.text.*)
 	main.o(.data)
 /*
         mp.o(.text)
@@ -52,26 +56,36 @@ SECTIONS {
         mp.o(.bss)
 */
 	seg.o(.text)
+	seg.o(.text.*)
 	seg.o(.data)
 	trap.o(.text)
+	trap.o(.text.*)
 	trap.o(.data)
 	m_trap.o(.text)
+	m_trap.o(.text.*)
 	m_trap.o(.data)
 	pic.o(.text)
+	pic.o(.text.*)
 	pic.o(.data)
 	protmode.o(.text)
+	protmode.o(.text.*)
 	protmode.o(.data)
 	vm.o(.text)
+	vm.o(.text.*)
 	vm.o(.data)
 /* 	vm.o(.bss) */
 	util.o(.text)
+	util.o(.text.*)
 	util.o(.data)
 /*	util.o(.bss) */
 	ps2.o(.text)
+	ps2.o(.text.*)
 	ps2.o(.data)
 	vbe.o(.text)
+	vbe.o(.text.*)
 	vbe.o(.data)
         test.o(.text)
+        test.o(.text.*)
 /*	vbe.o(.bss) */
 /*
 	bmfonts.o(.text)
@@ -124,8 +138,9 @@ SECTIONS {
     .text : AT(PAGETAB + SIZEOF(.pgtab)) {
         _text = .;
 	_textvirt = PAGETAB + SIZEOF(.pgtab);
-	*(EXCLUDE_FILE(*usr.o).text*)
-	*(.text*)
+	*(EXCLUDE_FILE(*usr.o) .text*)
+	*(.text)
+	*(.text.*)
 	*(.rodata*)
 	*(.rodata.*)
 	*(.eh*)

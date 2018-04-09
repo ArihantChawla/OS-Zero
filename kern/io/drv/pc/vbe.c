@@ -288,6 +288,8 @@ vbeclrscr(gfxpix32 pix)
                     vbeputpix(pix, &ptr[incr]);
                 case 1:
                     vbeputpix(pix, ptr);
+                case 0:
+                default:
 
                     break;
             }

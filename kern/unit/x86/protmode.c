@@ -65,8 +65,8 @@ kinitprot(unsigned long pmemsz)
     uint32_t sp = (uint32_t)kernusrstktab + NCPU * KERNSTKSIZE;
 
     /* initialise virtual memory */
+    //    vminit((uint32_t *)&_pagetab);
     vminit((uint32_t *)&_pagetab);
-//    vminit((uint32_t *)&_pagetab);
 //    schedinit();
     /* zero kernel BSS segment */
     kbzero(&_bssvirt, (uint32_t)&_ebssvirt - (uint32_t)&_bssvirt);

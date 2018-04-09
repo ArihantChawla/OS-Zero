@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
-#include <v0/vm32.h>
+#include <v0/vm.h>
 
 void
 v0readkbd(struct v0 *vm, uint16_t port, uint8_t reg)

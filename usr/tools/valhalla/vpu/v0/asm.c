@@ -8,7 +8,7 @@
 #include <zero/trix.h>
 #include <vas/vas.h>
 #include <v0/mach.h>
-#include <v0/vm32.h>
+#include <v0/vm.h>
 
 extern struct v0    *v0vm;
 

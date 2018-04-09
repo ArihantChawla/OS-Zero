@@ -7,7 +7,7 @@
 
 #if defined(V0)
 #include <v0/mach.h>
-#include <v0/vm32.h>
+#include <v0/vm.h>
 #define VAS32BIT    1
 #define VASNOP      V0_NOP
 #define VASREGINDEX 0x40000000U
