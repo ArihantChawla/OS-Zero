@@ -23,15 +23,15 @@ struct v0iofuncs {
     v0iofunc_t *wrfunc;
 };
 
-#define v0clrmsw(vm)     ((vm)->regs.sys[V0_MSW_REG] = 0)
-#define v0setcf(vm)      ((vm)->regs.sys[V0_MSW_REG] |= V0_MSW_CF_BIT)
-#define v0setzf(vm)      ((vm)->regs.sys[V0_MSW_REG] |= V0_MSW_ZF_BIT)
-#define v0setof(vm)      ((vm)->regs.sys[V0_MSW_REG] |= V0_MSW_OF_BIT)
-#define v0setif(vm)      ((vm)->regs.sys[V0_MSW_REG] |= V0_MSW_IF_BIT)
-#define v0cfset(vm)      ((vm)->regs.sys[V0_MSW_REG] & V0_MSW_CF_BIT)
-#define v0zfset(vm)      ((vm)->regs.sys[V0_MSW_REG] & V0_MSW_ZF_BIT)
-#define v0ofset(vm)      ((vm)->regs.sys[V0_MSW_REG] & V0_MSW_OF_BIT)
-#define v0ifset(vm)      ((vm)->regs.sys[V0_MSW_REG] & V0_MSW_IF_BIT)
+#define v0clrmsw(vm)     ((vm)->regs[V0_MSW_REG] = 0)
+#define v0setcf(vm)      ((vm)->regs[V0_MSW_REG] |= V0_MSW_CF_BIT)
+#define v0setzf(vm)      ((vm)->regs[V0_MSW_REG] |= V0_MSW_ZF_BIT)
+#define v0setof(vm)      ((vm)->regs[V0_MSW_REG] |= V0_MSW_OF_BIT)
+#define v0setif(vm)      ((vm)->regs[V0_MSW_REG] |= V0_MSW_IF_BIT)
+#define v0cfset(vm)      ((vm)->regs[V0_MSW_REG] & V0_MSW_CF_BIT)
+#define v0zfset(vm)      ((vm)->regs[V0_MSW_REG] & V0_MSW_ZF_BIT)
+#define v0ofset(vm)      ((vm)->regs[V0_MSW_REG] & V0_MSW_OF_BIT)
+#define v0ifset(vm)      ((vm)->regs[V0_MSW_REG] & V0_MSW_IF_BIT)
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #define v0setloval(op, val)                                             \
@@ -65,8 +65,8 @@ struct v0iofuncs {
 #define V0_R13_REG       0x0d
 #define V0_R14_REG       0x0e
 #define V0_R15_REG       0x0f
-#define V0_NGENREG       16 // number of registers in group (general, system)
-#define V0_NSAVEREG      8  // caller saves r0..r7, callee r8..r15
+#define V0_GEN_REGS      16 // number of registers in group (general, system)
+#define V0_SAVE_REGS     8  // caller saves r0..r7, callee r8..r15
 /* system register IDs */
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #define V0_RET_LO        0x00 // [dual-word] return value register, low word
@@ -75,11 +75,11 @@ struct v0iofuncs {
 #define V0_RET_HI        0x00 // [dual-word] return value register, high word
 #define V0_RET_LO        0x01 // [dual-word] return value register, low word
 #endif
-#define V0_FP_REG        0x00 // frame pointer
-#define V0_SP_REG        0x01 // stack pointer
-#define V0_PC_REG        0x02 // program counter i.e. instruction pointer
-#define V0_MSW_REG       0x03 // machine status word
-#define V0_SYSREG_BIT    0x08 // denotes system-only access
+#define V0_PC_REG        (V0_GEN_REGS + 0x00) // program counter i.e. instruction pointer
+#define V0_FP_REG        (V0_GEN_REGS + 0x01) // frame pointer
+#define V0_SP_REG        (V0_GEN_REGS + 0x02) // stack pointer
+#define V0_MSW_REG       (V0_GEN_REGS + 0x03) // machine status word
+#define V0_MFW_REG       (V0_GEN_REGS + 0x04) // machine feature word
 #if 0
 #define V0_IHT_REG       0x08 // interrupt handler table base address
 #define V0_PDB_REG       0x09 // page directory base address register
@@ -87,11 +87,14 @@ struct v0iofuncs {
 #define V0_TLS_REG       0x0b // thread-local storage base address register
 #define V0_TSR_REG       0x0c // task-structure/state base address
 #endif
-#define V0_NSYSREG       16
-/* values for regs.sys[V0_MSW] */
-#define V0_MSW_ZF_BIT    (1 << 0) // zero-flag
-#define V0_MSW_OF_BIT    (1 << 1) // overflow-flag
-#define V0_MSW_CF_BIT    (1 << 2) // carry-flag
+#define V0_SYS_REGS      16
+/* values for regs[V0_MSW] */
+#define V0_MSW_DEF_BITS  (V0_TF_BIT)
+#define V0_MSW_ZF_BIT    (1 << 0)  // zero-flag
+#define V0_MSW_CF_BIT    (1 << 1)  // carry-flag
+#define V0_MSW_OF_BIT    (1 << 2)  // overflow-flag
+#define V0_MSW_TF_BIT    (1 << 3)  // trap-flag, i.e. interrupts enabled
+#define V0_MSW_RF_BIT    (1 << 4)  // return-flag for BTC, BTR, BTS
 #define V0_MWS_IF_BIT    (1 << 29) // interrupts pending
 #define V0_MSW_SF_BIT    (1 << 30) // system-mode
 #define V0_MSW_LF_BIT    (1 << 31) // bus lock flag
@@ -101,15 +104,10 @@ struct v0iofuncs {
 #define V0_DATA_SEG      0x02 // read-write (initialised) data
 #define V0_BSS_SEG       0x03 // uninitialised (zeroed) runtime-allocated data
 #define V0_STACK_SEG     0x04
-#define V0_NSEG          8
+#define V0_SEGS          8
 /* option-bits for flg-member */
 #define V0_TRACE         0x01
 #define V0_PROFILE       0x02
-
-struct v0regs {
-    v0reg  gen[V0_NGENREG];
-    v0ureg sys[V0_NSYSREG];
-};
 
 struct v0seg {
     v0ureg   id;
@@ -119,8 +117,8 @@ struct v0seg {
 };
 
 struct v0 {
-    struct v0regs     regs;
-    struct v0seg      segs[V0_NSEG];
+    v0reg             regs[V0_GEN_REGS + V0_SYS_REGS];
+    struct v0seg      segs[V0_SEGS];
     long              flg;
     v0memflg         *membits;
     char             *mem;
@@ -136,16 +134,6 @@ struct v0 {
  * 32-bit little-endian argument parcel
  * - declared as union for 32-bit alignment of all arguments
  */
-union v0oparg {
-    uint32_t adr;  // memory address
-    int32_t  ndx;  // offset
-    uint32_t u32;  // unsigned 32-bit integer
-    int32_t  i32;  // signed 32-bit integer
-    uint16_t u16;  // unsigned 16-bit integer
-    int16_t  i16;  // signed 16-bit integer
-    uint8_t  u8;   // unsigned 8-bit integer
-    int8_t   i8;   // signed 8-bit integer
-};
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #define v0mkopid(unit, inst) ((uint8_t)((unit) | ((inst) << 4)))
@@ -159,39 +147,32 @@ union v0oparg {
 
 /* addressing modes */
 #define V0_REG_ADR       0x00 // %reg, argument in register
-#define V0_DIR_ADR       0x01 // address word follows opcode or is in val-field
-#define V0_NDX_ADR       0x02 // ndx(%reg), ndx in opcode val-field
-#define V0_PIC_ADR       0x03 // PC-relative; position-independent code
-/* val- and flg-fields */
+#define V0_VAL_ADR       0x01 // $val, address in val-field
+#define V0_ABS_ADR       0x02 // $val, address follows opcode
+#define V0_NDX_ADR       0x03 // ndx(%reg) << op->parm, ndx follows opcode
+/* parm-field */
+#define V0_TRAP_BIT      0x01 // breakpoint
+#define V0_AUX_BIT       0x04 // reserved for per-instruction flags
+/* val-field */
 #define V0_IMM_VAL_MAX   0x3ff
 #define V0_IMM_VAL_MIN   (-0x1ff - 1)
-#define V0_SIGNED_BIT    0x01 // signed operation
-#define V0_TRAP_BIT      0x02 // breakpoint
 
 /* NOP is declared as all 0-bits */
-#define V0_NOP           (UINT32_C(~0))
-#define v0opisnop(op)                                                   \
-    (*(uint32_t *)op == V0_NOP)
-#define v0opissigned(op)                                                \
-    ((op)->flg & V0_SIGNED_BIT)
-
-struct v0opparm {
-    unsigned int  adr  : 2;   // addressing mode
-    unsigned int  parm : 2;   // parameter such as address scale shift count
-    unsigned int  flg  : 2;   // V0_SIGNED_BIT, V0_TRAP_BIT
-    int           val  : 10;  // immediate value such as shift count or offset
-};
+#define V0_NOP           UINT32_C(0)
+#define v0opisnop(op)    (*(uint32_t *)(op) == V0_NOP)
+#define V0_SIGNED_BIT    (1 << 9)
+#define v0opissigned(op) ((op)->val & V0_SIGNED_BIT)
 
 /* I/O-operations always have a single register argument */
 struct v0op {
     unsigned int  code : 8;   // unit and instruction IDs
     unsigned int  reg1 : 4;   // register argument #1 ID
     unsigned int  reg2 : 4;   // register argument #2 ID
-    union {
-        uint16_t        port;
-        struct v0opparm parm;
-    };
-    union v0oparg arg[EMPTY]; // possible argument value
+    unsigned int  adr1 : 2;   // addressing mode
+    unsigned int  adr2 : 2;   // addressing mode
+    unsigned int  parm : 2;   // parameter such as address scale shift count
+    unsigned int  val  : 10;  // immediate value such as shift count or offset
+    uint32_t      arg[EMPTY]; // possible argument value
 };
 
 /* memory parameters */

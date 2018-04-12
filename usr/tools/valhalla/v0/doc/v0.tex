@@ -44,7 +44,9 @@
 	V0 is an architecture with 32-bit machine words; room has been left in
 	the implementation for future 64-bit suppport.
 
-	V0 words are little-endian (LSB) in byte-order.
+	V0 words are little-endian (LSB) in byte-order; the rationale includes
+        easy ``casting'' of scalar types to smaller ones by just accessing the
+        low-order bytes without need for address calculations.
 
 \section{Register File}
 
@@ -66,7 +68,7 @@
         \hline
 \end{tabular}
 
-        \subsection{Special Registers}
+        \subsection{System Registers}
 
 \begin{tabular}{ | l | l | l | l | }
         \hline
@@ -78,7 +80,9 @@
         \hline
         SP   & Stack Pointer       & Local [Variable] Stack        & Yes \\
         \hline
-        MSW  & Machine Status Word & Processor Status and Features & Low 16 Bits (POP) \\
+        MSW  & Machine Status Word & Processor Features & Low 16 Bits (POP) \\
+        \hline
+        MFW  & Machine Feature Word & Processor Features & Low 16 Bits (POP) \\
         \hline
 \end{tabular}
 
@@ -94,8 +98,9 @@
 \section{Input-Output}
 
         \textbf{Brief}
-        Inspired by former Intel, AMD, and competitor PC-processors, we have a
-        reasonable-size I/O-port address space of 65536 ports.
+        V0 implements I/O with a separate address space of ``ports''. The range
+        is 0-1023; this should be adequate for a minimalistic system and the
+        range (opcode val-field) may be bigger in other Valhalla processors.
 
         I will reserve ports for things such as keyboard input, text-mode
         screen output, as well as timers and other standard peripherals.
@@ -120,13 +125,15 @@
 
 \begin{tabular}{ | l | l | l | l | }
         \hline
-        Mnemonic & Opcode & Brief                   & Notes \\
+        Mnemonic & Opcode & Brief                      & Notes \\
         \hline
         NOP      & 0x00      & No Operation            & Dummy or Delay Operation \\
         \hline
         INC      & 0x01      & Increment By One        & \\
         \hline
         DEC      & 0x02      & Decrement By One        & \\
+        \hline
+        CMP      & 0x03      & Compare                 & copy sign-bit to high-order bits \\
         \hline
         ADD      & 0x04      & Addition                & SIGN-bit, SATU-bit \\
         \hline
@@ -144,13 +151,13 @@
 \begin{tabular}{ | l | l | l | }
         Mnemonic & Opcode & Brief \\
         \hline
-        SHR      & 0x08 & Shift Right Logical \\
+        SHL      & 0x08 & Shift Left Logical \\
         \hline
-        SAR      & 0x09 & Shift Right Arithmetical \\
+        SAL      & 0x09 & Shift Left Arithmetical \\
         \hline
-        SLL      & 0x0a & Shift Left Logical \\
+        SHR      & 0x0a & Shift Right Logical \\
         \hline
-        SAL      & 0x0b & Shift Left Arithmetical \\
+        SAR      & 0x0b & Shift Right Arithmetical \\
         \hline
 \end{tabular}
 
@@ -165,7 +172,7 @@
         \hline
         XOR      & 0x0e & Exclusive Disjunction \\
         \hline
-        OR       & 0x0f & Disjunction \\
+        LOR      & 0x0f & Disjunction \\
         \hline
 \end{tabular}
 
@@ -205,6 +212,32 @@
         \hline
 \end{tabular}
 
+\section{Bit Operations}
+
+\begin{tabular}{ | l | l | l | }
+        \hline
+        Mnemonic & Opcode & Brief \\
+        \hline
+        BTR      & 0x14   & Bit Test and Reset \\
+        \hline
+        BTS      & 0x15   & Bit Test and Set \\
+        \hline
+        BTC      & 0x16   & Bit Test and Complement \\
+        \hline
+        BHW      & 0x17   & Hamming Weight / Bit Population (1-count) \\
+        \hline
+        BLZ      & 0x18   & Leading Zero Count \\
+        \hline
+        BLS      & 0x19   & Leading Sign-Bit Count \\
+        \hline
+        BSH      & 0x20   & 16-Bit Byte Swap \\
+        \hline
+        BSW      & 0x21   & 32-bit byte swap \\
+        \hline
+        BWL      & 0x22   & 64-bit byte swap \\
+        \hline
+\end{tabular}
+
 \section{Memory Operations}
 
 \subsection{Load-Store}
@@ -217,9 +250,9 @@
 \begin{tabular}{ | l | l | l | }
         Mnemonic & Opcode & Brief \\
         \hline
-        LDR      & 0x14 & Load Register \\
+        LDR      & 0x20 & Load Register \\
         \hline
-        MLS      & 0x15 & Store Register \\
+        STR      & 0x21 & Store Register \\
         \hline
 \end{tabular}
 
@@ -234,13 +267,13 @@
         \begin{tabular}{ | l | l | l | }
         Mnemonic & Opcode & Brief \\
         \hline
-        PSH      & 0x16 & Push Register \\
+        PSH      & 0x22 & Push Register \\
         \hline
-        PSM      & 0x17 & Push Many Registers \\
+        PSM      & 0x23 & Push Many Registers \\
         \hline
-        POP      & 0x18 & Pop Register \\
+        POP      & 0x24 & Pop Register \\
         \hline
-        POM      & 0x19 & Pop Many Registers \\
+        POM      & 0x25 & Pop Many Registers \\
         \hline
 \end{tabular}
 
@@ -255,41 +288,41 @@
  \begin{tabular}{ | l | l | l | }
         Mnemonic & Opcode & Brief \\
         \hline
-        JMP      & 0x20 & Branch Unconditionally; Absolute \\
+        JMP      & 0x31 & Branch Unconditionally; Absolute \\
         \hline
-        JMP      & 0x21 & Branch Unconditionally; Relative \\
+        JMP      & 0x30 & Branch Unconditionally; Relative \\
         \hline
-        BZ       & 0x22 & Branch If Zero \\
+        BIZ      & 0x32 & Branch If Zero \\
         \hline
-        BNZ      & 0x23 & Branch if Non-Zero \\
+        BEQ      & 0x32 & Synonymous with Branch if Zero (Equal) \\
         \hline
-        BEQ      & 0x22 & Synonymous with Branch if Zero (Equal) \\
+        BNZ      & 0x33 & Branch if Non-Zero \\
         \hline
-        BNE      & 0x23 & Synonymous with Branch if Non-Zero (Not Equal) \\
+        BNE      & 0x33 & Synonymous with Branch if Non-Zero (Not Equal) \\
         \hline
-        BLT      & 0x24 & Branch if Less Than \\
+        BLT      & 0x34 & Branch if Less Than \\
         \hline
-        BLE      & 0x25 & Branch if Less Than or Equal \\
+        BLE      & 0x35 & Branch if Less Than or Equal \\
         \hline
-        BGT      & 0x26 & Branch if Greater Than \\
+        BGT      & 0x36 & Branch if Greater Than \\
         \hline
-        BLE      & 0x27 & Branch if Greater Than or Equal \\
+        BGE      & 0x37 & Branch if Greater Than or Equal \\
         \hline
-        BO       & 0x28 & Branch if Overflow \\
+        BIO      & 0x38 & Branch if Overflow \\
         \hline
-        BNO      & 0x29 & Branch if No Overflow \\
+        BNO      & 0x39 & Branch if No Overflow \\
         \hline
-        BC       & 0x2a & Branch if Carry Set \\
+        BIC      & 0x3a & Branch if Carry Set \\
         \hline
-        BNC      & 0x2b & Branch if Carry Not Set \\
+        BNC      & 0x3b & Branch if Carry Not Set \\
         \hline
-        CSR      & 0x2c & Call Sub-Routine (narg) \\
+        CSR      & 0x3c & Call Sub-Routine (narg) \\
         \hline
-        BEG      & 0x2d & Begin Sub-Routine (nvar) \\
+        BEG      & 0x3d & Begin Sub-Routine (nvar) \\
         \hline
-        FIN      & 0x2e & Finish Sub-Routine (nvar) \\
+        FIN      & 0x3e & Finish Sub-Routine (nvar) \\
         \hline
-        RET      & 0x2f & Return From Sub-Routine (val) \\
+        RET      & 0x3f & Return From Sub-Routine (val) \\
         \hline
 \end{tabular}
 
@@ -305,25 +338,25 @@
 \begin{tabular}{ | l | l | l | }
         Mnemonic & Opcode & Brief \\
         \hline
-        RDB      & 0x30 & Read 8-Bit Byte \\
+        IRB      & 0x40 & Read 8-Bit Byte \\
         \hline
-        RDH      & 0x31 & Read 16-Bit Half-Word \\
+        IRH      & 0x41 & Read 16-Bit Half-Word \\
         \hline
-        RDW      & 0x32 & Read 32-Bit Half-Word \\
+        IRW      & 0x42 & Read 32-Bit Half-Word \\
         \hline
-        RDL      & 0x33 & Read 64-Bit Long-Word \\
+        IRL      & 0x43 & Read 64-Bit Long-Word \\
         \hline
-        WRB      & 0x34 & Read 8-Bit Byte \\
+        IWB      & 0x44 & Read 8-Bit Byte \\
         \hline
-        WRH      & 0x35 & Read 16-Bit Half-Word \\
+        IWH      & 0x45 & Read 16-Bit Half-Word \\
         \hline
-        WRW      & 0x36 & Read 32-Bit Half-Word \\
+        IWW      & 0x46 & Read 32-Bit Half-Word \\
         \hline
-        WRL      & 0x37 & Read 64-Bit Long-Word \\
+        IWL      & 0x47 & Read 64-Bit Long-Word \\
         \hline
-        IOR      & 0x39 & Set or Query I/O Read Permission \\
+        ISF      & 0x48 & Set or Clear I/O Flag \\
         \hline
-        IOW      & 0x3a & Set or Query I/O Write Permission \\
+        ICF      & 0x49 & Check I/O Flag \\
         \hline
 \end{tabular}
 
@@ -365,7 +398,7 @@ locator \\
 
 \chapter{Instruction Set}
 
-	The VPU instruction set was designed to resemble the C language closely,
+	The V0 instruction set was designed to resemble the C language closely,
 	as well as to support a RISC-oriented set of typical machine operations.
 
 \section{Instruction Reference}
@@ -379,7 +412,7 @@ locator \\
 \begin{itemize}
 	\item{\textbf{i} stands for immediate operand}
 	\item{\textbf{r} stands for register operand}
-	\item{\textbf{m} stands for memory operand}
+	\item{\textbf{m} stands for memory address operand}
 \end{itemize}
 
 	\textbf{Flags}
@@ -387,14 +420,17 @@ locator \\
 	Certain instructions set bits in the machine status word register (MSW).
 	This is	documented here on per-instruction basis.
 
+        \textbf{TODO}: interrupts disabled (IDF), PF (paging enabled)
+
 \begin{itemize}
 	\item{\textbf{z} stands for zero flag (ZF)}
-	\item{\textbf{c} stands for carry flag (CF)}
+	\item{\textbf{c} stands for carry/borrow flag (CF)}
 	\item{\textbf{o} stands for overflow flag (OF)}
-	\item{\textbf{s} stands for sign flag (SF)}
+	\item{\textbf{t} stands for trap flag (TF)}
+	\item{\textbf{t} stands for return flag (RF)}
 \end{itemize}
 
-	\textbf{TODO}: stack/call conventions for certain instructions such as THR
+	\textbf{TODO}: stack/call conventions
 
 \subsection{Instruction Table}
 
@@ -404,8 +440,7 @@ locator \\
 
 	\textbf{I/O Address Space}
 
-	The I/O address space maps 65,536 I/O ports to unsigned 16-bit address
-	space.
+	The I/O address space maps 65,536 I/O ports to 16-bit address space.
 
 \begin{tabular}{| l | l | l | l | l |}
 	\hline

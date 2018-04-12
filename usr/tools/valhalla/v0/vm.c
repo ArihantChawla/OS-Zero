@@ -152,40 +152,16 @@ v0loop(struct v0 *vm)
             pc = v0nop(vm, op);
 
             opjmp(vm, pc);
-        v0opnot:
-            pc = v0not(vm, op);
-
-            opjmp(vm, pc);
-        v0opand:
-            pc = v0and(vm, op);
-
-            opjmp(vm, pc);
-        v0opor:
-            pc = v0or(vm, op);
-
-            opjmp(vm, pc);
-        v0opxor:
-            pc = v0xor(vm, op);
-
-            opjmp(vm, pc);
-        v0opshl:
-            pc = v0shl(vm, op);
-
-            opjmp(vm, pc);
-        v0opshr:
-            pc = v0shr(vm, op);
-
-            opjmp(vm, pc);
-        v0opsar:
-            pc = v0sar(vm, op);
-
-            opjmp(vm, pc);
         v0opinc:
             pc = v0inc(vm, op);
 
             opjmp(vm, pc);
         v0opdec:
             pc = v0dec(vm, op);
+
+            opjmp(vm, pc);
+        v0opcmp:
+            pc = v0cmp(vm, op);
 
             opjmp(vm, pc);
         v0opadd:
@@ -204,54 +180,80 @@ v0loop(struct v0 *vm)
             v0sbb(vm, op);
 
             opjmp(vm, pc);
-        v0opcmp:
-            pc = v0cmp(vm, op);
+        v0opshl:
+            pc = v0shl(vm, op);
+
+            opjmp(vm, pc);
+        v0opsal:
+            pc = v0sal(vm, op);
+
+            opjmp(vm, pc);
+        v0opshr:
+            pc = v0shr(vm, op);
+
+            opjmp(vm, pc);
+        v0opsar:
+            pc = v0sar(vm, op);
+
+            opjmp(vm, pc);
+        v0opnot:
+            pc = v0not(vm, op);
+
+            opjmp(vm, pc);
+        v0opand:
+            pc = v0and(vm, op);
+
+            opjmp(vm, pc);
+        v0opxor:
+            pc = v0xor(vm, op);
+
+            opjmp(vm, pc);
+        v0oplor:
+            pc = v0lor(vm, op);
 
             opjmp(vm, pc);
         v0opmul:
             pc = v0mul(vm, op);
 
             opjmp(vm, pc);
-        v0opdiv:
-            pc = v0div(vm, op);
+        v0opldr:
+            pc = v0ldr(vm, op);
 
             opjmp(vm, pc);
-        v0oprem:
-            pc = v0rem(vm, op);
+        v0opstr:
+            pc = v0str(vm, op);
 
             opjmp(vm, pc);
-#if 0
-        v0opcrm:
-            pc = v0crm(vm, op);
+        v0oppsh:
+            pc = v0psh(vm, op);
 
             opjmp(vm, pc);
-#endif
-        v0opjmp:
+        v0oppsm:
+            pc = v0psm(vm, op);
+
+            opjmp(vm, pc);
+        v0oppop:
+            pc = v0pop(vm, op);
+
+            opjmp(vm, pc);
+        v0oppom:
+            pc = v0pom(vm, op);
+
+            opjmp(vm, pc);
+        v0opjmp1:
             pc = v0jmp(vm, op);
 
             opjmp(vm, pc);
-        v0opbz:
+        v0opjmp2:
+            pc = v0jmp(vm, op);
+
+            opjmp(vm, pc);
+        v0opbiz:
             pc = v0bz(vm, op);
 
             opjmp(vm, pc);
         v0opbnz:
             pc = v0bnz(vm, op);
-
-            opjmp(vm, pc);
-        v0opbc:
-            pc = v0bc(vm, op);
-
-            opjmp(vm, pc);
-        v0opbnc:
-            pc = v0bnc(vm, op);
-
-            opjmp(vm, pc);
-        v0opbo:
-            pc = v0bo(vm, op);
-
-            opjmp(vm, pc);
-        v0opbno:
-            pc = v0bno(vm, op);
 
             opjmp(vm, pc);
         v0opblt:
@@ -270,6 +272,23 @@ v0loop(struct v0 *vm)
             pc = v0bge(vm, op);
 
             opjmp(vm, pc);
+        v0opbio:
+            pc = v0bo(vm, op);
+
+            opjmp(vm, pc);
+        v0opbno:
+            pc = v0bno(vm, op);
+
+            opjmp(vm, pc);
+        v0opbic:
+            pc = v0bc(vm, op);
+
+            opjmp(vm, pc);
+        v0opbnc:
+            pc = v0bnc(vm, op);
+
+            opjmp(vm, pc);
+
         v0opcpl:
             pc = v0cpl(vm, op);
 
@@ -286,40 +305,24 @@ v0loop(struct v0 *vm)
             pc = v0leave(vm, op);
 
             opjmp(vm, pc);
-        v0opret:
-            pc = v0ret(vm, op);
+        v0opret0:
+            pc = v0ret1(vm, op);
 
             opjmp(vm, pc);
-        v0opldr:
-            pc = v0ldr(vm, op);
+        v0opret1:
+            pc = v0ret2(vm, op);
 
             opjmp(vm, pc);
-        v0opstr:
-            pc = v0str(vm, op);
+        v0opcsr:
+            pc = v0csr(vm, op);
 
             opjmp(vm, pc);
-        v0oppsh:
-            pc = v0psh(vm, op);
+        v0opbeg:
+            pc = v0beg(vm, op);
 
             opjmp(vm, pc);
-        v0oppop:
-            pc = v0pop(vm, op);
-
-            opjmp(vm, pc);
-        v0oppshm:
-            pc = v0pshm(vm, op);
-
-            opjmp(vm, pc);
-        v0oppopm:
-            pc = v0popm(vm, op);
-
-            opjmp(vm, pc);
-        v0opior:
-            pc = v0ior(vm, op);
-
-            opjmp(vm, pc);
-        v0opiow:
-            pc = v0iow(vm, op);
+        v0opfin:
+            pc = v0fin(vm, op);
 
             opjmp(vm, pc);
     } while (1);
