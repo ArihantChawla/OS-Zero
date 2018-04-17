@@ -73,19 +73,19 @@ static struct vasop *
 vasfindop(char *str)
 {
     char         *cptr = (char *)str;
-    struct vasop *ptr = NULL;
+    struct vasop *op = NULL;
     long          key;
 
     while (*cptr && isalpha(*cptr)) {
         key = *cptr++;
-        ptr = ptr->tab[key];
-        if (!ptr) {
+        op = op->tab[key];
+        if (!op) {
 
             return NULL;
         }
     }
 
-    return ptr;
+    return op;
 }
 
 struct vasop *
@@ -170,15 +170,10 @@ vasprocop(struct vastoken *token, v0memadr adr,
     uint8_t           len = 1;
 
     if (!v0arginit) {
-        setbit(v0valbits, v0mkopid(V0_SHIFT, V0_SHL));
-        setbit(v0valbits, v0mkopid(V0_SHIFT, V0_SHR));
-        setbit(v0valbits, v0mkopid(V0_SHIFT, V0_SAR));
-        setbit(v0valbits, v0mkopid(V0_IO, V0_IOR));
-        setbit(v0valbits, v0mkopid(V0_IO, V0_IOW));
-#if 0
-        setbit(v0rngbits, v0mkopid(V0_STACK, V0_PSHM));
-        setbit(v0rngbits, v0mkopid(V0_STACK, V0_POPM));
-#endif
+        setbit(v0valbits, V0_SHL);
+        setbit(v0valbits, V0_SAL);
+        setbit(v0valbits, V0_SHR);
+        setbit(v0valbits, V0_SAR);
     }
     while (adr < opadr) {
 #if (V032BIT)
@@ -202,7 +197,8 @@ vasprocop(struct vastoken *token, v0memadr adr,
         /* FIXME: failure? */
         op->reg1 = 0;
         op->reg2 = 0;
-        op->adr = 0;
+        op->adr1 = 0;
+        op->adr2 = 0;
         op->parm = 0;
         op->val = 0;
         retval = token->next;
@@ -213,15 +209,15 @@ vasprocop(struct vastoken *token, v0memadr adr,
             switch(token1->type) {
                 case VASTOKENVALUE:
                     val = token1->data.value.val;
-                    op->adr = V0_DIR_ADR;
+                    op->adr1 = V0_DIR_ADR;
                     havearg = 1;
                     switch (token->data.value.size) {
                         case 1:
-                            op->arg[0].i8 = val;
+                            op->arg[0].i32 = val;
 
                             break;
                         case 2:
-                            op->arg[0].i16 = val;
+                            op->arg[0].i32 = val;
 
                             break;
                         case 3:
@@ -239,12 +235,12 @@ vasprocop(struct vastoken *token, v0memadr adr,
 
                     break;
                 case VASTOKENREG:
-                    op->adr = V0_REG_ADR;
+                    op->adr1 = V0_REG_ADR;
                     op->reg1 = token1->data.reg;
 
                     break;
                 case VASTOKENSYM:
-                    op->adr = V0_DIR_ADR;
+                    op->adr1 = V0_DIR_ADR;
                     sym = malloc(sizeof(struct vassymrec));
                     sym->name = strdup((char *)token1->data.sym.name);
                     sym->adr = (uintptr_t)&op->arg[0].adr;
@@ -255,7 +251,7 @@ vasprocop(struct vastoken *token, v0memadr adr,
                 case VASTOKENINDIR:
                     token1 = token1->next;
                     if (token1->type == VASTOKENREG) {
-                        op->adr = V0_REG_ADR;
+                        op->adr1 = V0_REG_ADR;
                         op->reg1 = token1->data.reg;
                     } else {
                         fprintf(stderr,
@@ -267,7 +263,7 @@ vasprocop(struct vastoken *token, v0memadr adr,
                     break;
                 case VASTOKENIMMED:
                     val = token1->data.value.val;
-                    op->adr = V0_DIR_ADR;
+                    op->adr1 = V0_DIR_ADR;
                     havearg = 1;
                     op->val = val;
                     switch (token->data.value.size) {
@@ -293,7 +289,7 @@ vasprocop(struct vastoken *token, v0memadr adr,
 
                     break;
                 case VASTOKENADR:
-                    op->adr = V0_DIR_ADR;
+                    op->adr1 = V0_DIR_ADR;
                     sym = malloc(sizeof(struct vassymrec));
                     sym->name = strdup((char *)token1->data.sym.name);
                     sym->adr = (uintptr_t)&op->arg[0].adr;
@@ -302,9 +298,9 @@ vasprocop(struct vastoken *token, v0memadr adr,
 
                     break;
                 case VASTOKENINDEX:
-                    op->adr = V0_NDX_ADR;
+                    op->adr1 = V0_NDX_ADR;
                     op->reg1 = token1->data.ndx.reg;
-                    op->arg[0].ndx = token1->data.ndx.val;
+                    op->arg[0].ofs = token1->data.ndx.val;
                     len++;
 
                     break;
@@ -332,13 +328,13 @@ vasprocop(struct vastoken *token, v0memadr adr,
             } else {
                 switch(token2->type) {
                     case VASTOKENVALUE:
-                        op->adr = V0_DIR_ADR;
+                        op->adr2 = V0_DIR_ADR;
                         op->arg[0].adr = token2->data.value.val;
                         len++;
 
                         break;
                     case VASTOKENSYM:
-                        op->adr = V0_DIR_ADR;
+                        op->adr2 = V0_DIR_ADR;
                         sym = malloc(sizeof(struct vassymrec));
                         sym->name = strdup((char *)token2->data.sym.name);
                         sym->adr = (uintptr_t)&op->arg[0].adr;
@@ -349,7 +345,7 @@ vasprocop(struct vastoken *token, v0memadr adr,
                     case VASTOKENINDIR:
                         token2 = token2->next;
                         if (token2->type == VASTOKENREG) {
-                            op->adr = V0_REG_ADR;
+                            op->adr2 = V0_REG_ADR;
                             op->reg2 = token2->data.reg;
                         } else {
                             fprintf(stderr,
@@ -360,13 +356,13 @@ vasprocop(struct vastoken *token, v0memadr adr,
 
                         break;
                     case VASTOKENIMMED:
-                        op->adr = V0_DIR_ADR;
+                        op->adr2 = V0_DIR_ADR;
                         op->arg[0].adr = token2->val;
                         len++;
 
                         break;
                     case VASTOKENADR:
-                        op->adr = V0_DIR_ADR;
+                        op->adr2 = V0_DIR_ADR;
                         sym = malloc(sizeof(struct vassymrec));
                         sym->name = strdup((char *)token2->data.sym.name);
                         sym->adr = (uintptr_t)&op->arg[0].adr;
@@ -375,9 +371,9 @@ vasprocop(struct vastoken *token, v0memadr adr,
 
                         break;
                     case VASTOKENINDEX:
-                        op->adr = V0_NDX_ADR;
+                        op->adr2 = V0_NDX_ADR;
                         op->reg2 = token2->data.ndx.reg;
-                        op->arg[0].ndx = token2->data.ndx.val;
+                        op->arg[0].ofs = token2->data.ndx.val;
                         len++;
 
                         break;
@@ -423,9 +419,9 @@ vasprocinst(struct vastoken *token, vasmemadr adr,
 #if (VASDB)
     vasaddline(adr, token->data.inst.data, token->file, token->line);
 #endif
-    op = (struct zpuop *)&v0.physmem[adr];
-    op->inst = token->data.inst.op;
-    if (op->inst == VAS_NOP) {
+    op = (struct v0op *)&v0vm->mem[adr];
+    op->code = token->data.inst.code;
+    if (op->code == V0_NOP) {
         vassetnop(op);
         retval = token->next;
     } else if (!narg) {
@@ -439,21 +435,25 @@ vasprocinst(struct vastoken *token, vasmemadr adr,
         if (token1) {
             switch(token1->type) {
                 case VASTOKENVALUE:
-                    op->arg1t = ARGIMMED;
-                    op->args[0] = token1->data.value.val;
-                    len += sizeof(vasword_t);
+                    if (vasophasval(op->code)) {
+                        op->val = token1->data.value.val;
+                    } else {
+                        op->adr1 = V0_DIR_ADR;
+                        op->arg[0].val = token1->data.value.val;
+                        len += sizeof(vasword);
+                    }
 
                     break;
                 case VASTOKENREG:
-                    op->arg1t = ARGREG;
+                    op->adr1 = V0_REG_ADR;
                     op->reg1 = token1->data.reg;
 
                     break;
                 case VASTOKENSYM:
-                    op->arg1t = ARGADR;
+                    op->adr1 = V0_DIR_ADR;
                     sym = malloc(sizeof(struct vassymrec));
-                    sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
-                    sym->adr = (uintptr_t)&op->args[0];
+                    sym->name = strdup((char *)token1->data.sym.name);
+                    sym->adr = (uintptr_t)&op->arg[0].adr;
                     vasqueuesym(sym);
                     len += sizeof(uintptr_t);
 
@@ -461,7 +461,7 @@ vasprocinst(struct vastoken *token, vasmemadr adr,
                 case VASTOKENINDIR:
                     token1 = token1->next;
                     if (token1->type == VASTOKENREG) {
-                        op->arg1t = ARGREG;
+                        op->adr1 = V0_NDX_ADR;
                         op->reg1 = token1->data.reg;
                     } else {
                         fprintf(stderr, "indirect addressing requires a register\n");
@@ -471,25 +471,30 @@ vasprocinst(struct vastoken *token, vasmemadr adr,
 
                     break;
                 case VASTOKENIMMED:
-                    op->arg1t = ARGIMMED;
-                    op->args[0] = token1->val;
-                    len += sizeof(vasword_t);
+                    if (vasophasval(op->code)) {
+                        op->adr1 = V0_IMM_ADR;
+                        op->val = token1->val;
+                    } else {
+                        op->adr1 = V0_DIR_ADR;
+                        op->arg[0].val = token1->val;
+                        len += sizeof(vasword);
+                    }
 
                     break;
                 case VASTOKENADR:
-                    op->arg1t = ARGIMMED;
+                    op->adr1 = V0_DIR_ADR;
                     sym = malloc(sizeof(struct vassymrec));
-                    sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
-                    sym->adr = (uintptr_t)&op->args[0];
+                    sym->name = strdup((char *)token1->data.sym.name);
+                    sym->adr = (uintptr_t)&op->arg[0].adr;
                     vasqueuesym(sym);
                     len += sizeof(uintptr_t);
 
                     break;
                 case VASTOKENINDEX:
-                    op->arg1t = ARGREG;
+                    op->adr1 = V0_NDX_ADR;
                     op->reg1 = token1->data.ndx.reg;
-                    op->args[0] = token1->data.ndx.val;
-                    len += sizeof(vasword_t);
+                    op->arg[0].ofs = token1->data.ndx.val;
+                    len += sizeof(vasword);
 
                     break;
                 default:
@@ -505,45 +510,25 @@ vasprocinst(struct vastoken *token, vasmemadr adr,
             retval = token2;
         }
         if (narg == 1) {
-            op->arg2t = ARGNONE;
+            op->adr2 = 0;
         } else if (narg == 2 && (token2)) {
             switch(token2->type) {
-#if (WPMVEC)
-                case VASTOKENVAREG:
-                    op->arg2t = ARGVAREG;
-                    op->reg2 = token2->data.reg & 0xff;
-
-                    break;
-                case VASTOKENVLREG:
-                    op->arg2t = ARGVLREG;
-                    op->reg2 = token2->data.reg & 0xff;
-
-                    break;
-#endif
                 case VASTOKENVALUE:
-                    op->arg2t = ARGIMMED;
-                    if (op->arg1t == ARGREG) {
-                        op->args[0] = token2->data.value.val;
-                    } else {
-                        op->args[1] = token2->data.value.val;
-                    }
-                    len += sizeof(vasword_t);
+                    op->adr2 = V0_DIR_ADR;
+                    op->arg[0].val = token2->data.value.val;
+                    len += sizeof(vasword);
 
                     break;
                 case VASTOKENREG:
-                    op->arg2t = ARGREG;
+                    op->adr2 = V0_REG_ADR;
                     op->reg2 = token2->data.reg;
 
                     break;
                 case VASTOKENSYM:
-                    op->arg2t = ARGADR;
+                    op->adr2 = V0_DIR_ADR;
                     sym = malloc(sizeof(struct vassymrec));
-                    sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
-                    if (op->arg1t == ARGREG) {
-                        sym->adr = (uintptr_t)&op->args[0];
-                    } else {
-                        sym->adr = (uintptr_t)&op->args[1];
-                    }
+                    sym->name = strdup((char *)token2->data.sym.name);
+                    sym->adr = (uintptr_t)&op->arg[0].adr;
                     vasqueuesym(sym);
                     len += sizeof(uintptr_t);
 
@@ -551,7 +536,7 @@ vasprocinst(struct vastoken *token, vasmemadr adr,
                 case VASTOKENINDIR:
                     token2 = token2->next;
                     if (token2->type == VASTOKENREG) {
-                        op->arg2t = ARGREG;
+                        op->adr2 = V0_REG_ADR;
                         op->reg2 = token2->data.reg;
                     } else {
                         fprintf(stderr, "indirect addressing requires a register\n");
@@ -561,37 +546,25 @@ vasprocinst(struct vastoken *token, vasmemadr adr,
 
                     break;
                 case VASTOKENIMMED:
-                    op->arg2t = ARGIMMED;
-                    if (op->arg1t == ARGREG) {
-                        op->args[0] = token2->val;
-                    } else {
-                        op->args[1] = token2->val;
-                    }
-                    len += sizeof(vasword_t);
+                    op->adr2 = V0_DIR_ADR;
+                    op->arg[0].val = token2->val;
+                    len += sizeof(vasword);
 
                     break;
                 case VASTOKENADR:
-                    op->arg2t = ARGIMMED;
+                    op->adr2 = V0_DIR_ADR;
                     sym = malloc(sizeof(struct vassymrec));
-                    sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
-                    if (op->arg1t == ARGREG) {
-                        sym->adr = (uintptr_t)&op->args[0];
-                    } else {
-                        sym->adr = (uintptr_t)&op->args[1];
-                    }
+                    sym->name = strdup((char *)token2->data.sym.name);
+                    sym->adr = (uintptr_t)&op->arg[0].adr;
                     vasqueuesym(sym);
                     len += sizeof(uintptr_t);
 
                     break;
                 case VASTOKENINDEX:
-                    op->arg2t = ARGREG;
+                    op->adr2 = V0_NDX_ADR;
                     op->reg2 = token2->data.ndx.reg;
-                    if (op->arg1t == ARGREG) {
-                        op->args[0] = token2->data.ndx.val;
-                    } else {
-                        op->args[1] = token2->data.ndx.val;
-                    }
-                    len += sizeof(vasword_t);
+                    op->arg[0].ofs = token2->data.ndx.val;
+                    len += sizeof(vasword);
 
                     break;
                 default:
@@ -611,6 +584,4 @@ vasprocinst(struct vastoken *token, vasmemadr adr,
 
     return retval;
 }
-
-#endif
 

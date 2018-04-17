@@ -128,6 +128,19 @@ struct v0 {
     struct divuf16   *divu16tab;
 };
 
+union v0oparg {
+    v0ureg   adr;
+    v0ureg   uval;
+    v0reg    val;
+    v0reg    ofs;
+    int32_t  i32;
+    uint32_t u32;
+    int16_t  i16;
+    uint16_t u16;
+    int8_t   i8;
+    uint8_t  u8;
+};
+
 /* OPCODES */
 
 /*
@@ -147,8 +160,8 @@ struct v0 {
 
 /* addressing modes */
 #define V0_REG_ADR       0x00 // %reg, argument in register
-#define V0_VAL_ADR       0x01 // $val, address in val-field
-#define V0_ABS_ADR       0x02 // $val, address follows opcode
+#define V0_IMM_ADR       0x01 // $val, address in val-field
+#define V0_DIR_ADR       0x02 // $val, address follows opcode
 #define V0_NDX_ADR       0x03 // ndx(%reg) << op->parm, ndx follows opcode
 /* parm-field */
 #define V0_TRAP_BIT      0x01 // breakpoint
@@ -158,21 +171,21 @@ struct v0 {
 #define V0_IMM_VAL_MIN   (-0x1ff - 1)
 
 /* NOP is declared as all 0-bits */
-#define V0_NOP           UINT32_C(0)
+#define V0_NOP_CODE      UINT32_C(0)
 #define v0opisnop(op)    (*(uint32_t *)(op) == V0_NOP)
 #define V0_SIGNED_BIT    (1 << 9)
 #define v0opissigned(op) ((op)->val & V0_SIGNED_BIT)
 
 /* I/O-operations always have a single register argument */
 struct v0op {
-    unsigned int  code : 8;   // unit and instruction IDs
-    unsigned int  reg1 : 4;   // register argument #1 ID
-    unsigned int  reg2 : 4;   // register argument #2 ID
-    unsigned int  adr1 : 2;   // addressing mode
-    unsigned int  adr2 : 2;   // addressing mode
-    unsigned int  parm : 2;   // parameter such as address scale shift count
-    unsigned int  val  : 10;  // immediate value such as shift count or offset
-    uint32_t      arg[EMPTY]; // possible argument value
+    unsigned int   code : 8; // unit and instruction IDs
+    unsigned int   reg1 : 4; // register argument #1 ID
+    unsigned int   reg2 : 4; // register argument #2 ID
+    unsigned int   adr1 : 2; // addressing mode
+    unsigned int   adr2 : 2; // addressing mode
+    unsigned int   parm : 2; // parameter such as address scale shift count
+    unsigned int   val  : 10; // immediate value such as shift count or offset
+    union v0oparg  arg[EMPTY]; // possible argument value
 };
 
 /* memory parameters */

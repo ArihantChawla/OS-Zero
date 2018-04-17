@@ -128,8 +128,8 @@ v0init(struct v0 *vm)
         v0initseg(vm, V0_PAGE_SIZE, vmnpg,
                   V0_MEM_PRESENT | V0_MEM_READ | V0_MEM_WRITE | V0_MEM_EXEC);
         v0initio(vm);
-        vm->regs.sys[V0_FP_REG] = 0x00000000;
-        vm->regs.sys[V0_SP_REG] = V0_MEM_SIZE;
+        vm->regs[V0_FP_REG] = 0x00000000;
+        vm->regs[V0_SP_REG] = V0_MEM_SIZE;
     }
     v0vm = vm;
 
@@ -140,7 +140,7 @@ int
 v0loop(struct v0 *vm)
 {
     static _V0OPTAB_T  jmptab[V0_NINST_MAX];
-    v0ureg             pc = vm->regs.sys[V0_PC_REG];
+    v0ureg             pc = vm->regs[V0_PC_REG];
     struct v0op       *op = (struct v0op *)&vm->mem[pc];
 
     v0initops(jmptab);
@@ -240,12 +240,12 @@ v0loop(struct v0 *vm)
             pc = v0pom(vm, op);
 
             opjmp(vm, pc);
-        v0opjmp1:
-            pc = v0jmp(vm, op);
+        v0opjm1:
+            pc = v0jm1(vm, op);
 
             opjmp(vm, pc);
-        v0opjmp2:
-            pc = v0jmp(vm, op);
+        v0opjm2:
+            pc = v0jm2(vm, op);
 
             opjmp(vm, pc);
         v0opbiz:
@@ -305,12 +305,12 @@ v0loop(struct v0 *vm)
             pc = v0leave(vm, op);
 
             opjmp(vm, pc);
-        v0opret0:
-            pc = v0ret1(vm, op);
+        v0oprt0:
+            pc = v0rt0(vm, op);
 
             opjmp(vm, pc);
-        v0opret1:
-            pc = v0ret2(vm, op);
+        v0oprt1:
+            pc = v0rt1(vm, op);
 
             opjmp(vm, pc);
         v0opcsr:
@@ -357,8 +357,8 @@ main(int argc, char *argv[])
     if (vm) {
         v0getopt(vm, argc, argv);
         vasinit();
-        if (!vm->regs.sys[V0_PC_REG]) {
-            vm->regs.sys[V0_PC_REG] = V0_TEXT_ADR;
+        if (!vm->regs[V0_PC_REG]) {
+            vm->regs[V0_PC_REG] = V0_TEXT_ADR;
         }
         ret = v0loop(vm);
     }

@@ -7,7 +7,7 @@
 void
 v0readkbd(struct v0 *vm, uint16_t port, uint8_t reg)
 {
-    v0reg *dest = &vm->regs.gen[reg];
+    v0reg *dest = &vm->regs[reg];
     v0reg  key = getchar();
 
     if (key == EOF) {
@@ -21,7 +21,7 @@ v0readkbd(struct v0 *vm, uint16_t port, uint8_t reg)
 void
 v0writetty(struct v0 *vm, uint16_t port, uint8_t reg)
 {
-    v0reg *src = &vm->regs.gen[reg];
+    v0reg *src = &vm->regs[reg];
     int    ch = *src;
 
     printf("%c", ch);
@@ -32,7 +32,7 @@ v0writetty(struct v0 *vm, uint16_t port, uint8_t reg)
 void
 v0readrtc(struct v0 *vm, uint16_t port, uint8_t reg)
 {
-    v0reg  *dest = &vm->regs.gen[reg];
+    v0reg  *dest = &vm->regs[reg];
     time_t  tm = time(NULL);
     v0reg   val = (v0reg)tm;
 
@@ -45,7 +45,7 @@ void
 v0readtmr(struct v0 *vm, uint16_t port, uint8_t reg)
 {
     struct timeval  tv = { 0 };
-    v0reg          *dest = &vm->regs.gen[reg];
+    v0reg          *dest = &vm->regs[reg];
     v0reg           val;
 
     gettimeofday(&tv, NULL);
@@ -59,7 +59,7 @@ v0readtmr(struct v0 *vm, uint16_t port, uint8_t reg)
 void
 v0writevtd(struct v0 *vm, uint16_t port, uint8_t reg)
 {
-    int   ch = vm->regs.gen[reg] & 0xff;
+    int   ch = vm->regs[reg] & 0xff;
     FILE *fp = vm->vtdfp;
     int   ret;
 
