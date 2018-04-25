@@ -40,6 +40,8 @@ typedef v0reg       v0opfunc(struct v0 *vm, uint8_t *ptr, v0ureg pc);
 #define v0addspeedcnt(n)
 #endif
 
+extern char *v0opnametab[V0_NINST_MAX];
+
 #define v0doxcpt(xcpt)                                                  \
     v0procxcpt(xcpt, __FILE__, __FUNCTION__, __LINE__)
 static __inline__ uintptr_t
@@ -65,14 +67,7 @@ v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
 #define opaddinfo(unit, op)
 #endif
 
-static void
-v0traceop(struct v0 *vm, struct v0op *op, v0ureg pc)
-{
-    fprintf(stderr, "%ld: %ld\n", pc, op->code);
-
-    return;
-}
-
+#define v0traceop(vm, op, pc) vasdisasm(vm, op, pc);
 #define v0opisvalid(vm, pc) (vm)
 #if defined(__GNUC__)
 #define opjmp(vm, pc)                                                   \
@@ -81,21 +76,27 @@ v0traceop(struct v0 *vm, struct v0op *op, v0ureg pc)
                                                                         \
         while (v0opisnop(_op)) {                                        \
             v0traceop(vm, _op, pc);                                     \
-            pc += sizeof(struct v0op);                                  \
-            (_op)++;                                                    \
+            (pc) += sizeof(struct v0op);                                \
         }                                                               \
-        if (v0opisvalid(vm, pc)) {                                      \
+        if (v0opisvalid(_op, pc)) {                                     \
             v0traceop(vm, _op, pc);                                     \
+            if (_op->adr == V0_DIR_ADR || _op->adr == V0_NDX_ADR) {     \
+                (pc) += sizeof(struct v0op) + sizeof(union v0oparg);    \
+            } else {                                                    \
+                (pc) += sizeof(struct v0op);                            \
+            }                                                           \
             goto *jmptab[(_op)->code];                                  \
         } else {                                                        \
             v0doxcpt(V0_TEXT_FAULT);                                    \
                                                                         \
             return V0_TEXT_FAULT;                                       \
         }                                                               \
+        vm->regs[V0_PC_REG] = (pc);                                     \
     } while (0)
 #endif /* defined(__GNUC__) */
 #define v0setop(op, str, narg, tab)                                     \
     (vasaddop(#str, op, narg),                                          \
+     (v0opnametab[(op)] = #str),                                        \
      ((_V0OPTAB_T *)(tab))[(op)] = _v0opadr(str))
 
 #define v0setopbits(op, bits1, bits2, tab)                              \

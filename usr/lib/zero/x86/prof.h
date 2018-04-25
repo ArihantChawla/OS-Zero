@@ -12,21 +12,21 @@ extern "C" {
  * ------
  * Thomas 'tommycannady' Cannady for help with testing and fixing the MSVC
  * versions of the macros... :)
- */ 
-    
+ */
+
 #include <stdint.h>
 #include <zero/cdefs.h>
-    
+
 struct _tickval {
     union {
         uint64_t u64;
         uint32_t u32v[2];
     } u;
 };
-    
+
 #if defined(_MSC_VER)
 
-static __inline__ uint64_t    
+static __inline__ uint64_t
 _rdtsc(struct _tickval *tp)
 {
     uint64_t ret;
@@ -35,10 +35,10 @@ _rdtsc(struct _tickval *tp)
     if (tp) {
         tp->u.u64 = ret;
     }
-    
+
     return ret;
 }
-    
+
 static __inline__ uint64_t
 _rdpmc(struct _tickval *tp)
 {
@@ -59,7 +59,7 @@ static __inline__ uint64_t
 _rdtsc(struct _tickval *tp)
 {
     uint64_t ret;
-    
+
     m_membar();
     __asm__ __volatile__ ("rdtsc\n"
                           : "=A" (ret));
@@ -98,7 +98,7 @@ _rdpmc(struct _tickval *tp, int id)
     uint64_t ret;
     uint32_t lo;
     uint32_t hi;
-    
+
     __asm__ __volatile__ ("movl %2, %%ecx\n"
                           "rdpmc\n"
                           "mov %%eax, %0\n"

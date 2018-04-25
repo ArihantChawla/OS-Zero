@@ -157,6 +157,16 @@ vasinitops(void)
     return;
 }
 
+void
+vasdisasm(struct v0 *vm, struct v0op *op, v0reg pc)
+{
+    fprintf(stderr, "%p:%p\t%s @ 0x%x\t", vm, op, v0opnametab[op->code], pc);
+    fprintf(stderr, "r1 = %x, r2 = %x, a = %x, p = %x, v = %x\n",
+            op->reg1, op->reg2, op->adr, op->parm, op->val);
+
+    return;
+}
+
 struct vastoken *
 vasprocop(struct vastoken *token, v0memadr adr,
           v0memadr *retadr)
@@ -196,8 +206,8 @@ vasprocop(struct vastoken *token, v0memadr adr,
         adr += sizeof(struct v0op);
     } else if (!narg) {
         /* FIXME: failure? */
-        *(uint32_t *)op = 0;
         retval = token->next;
+        adr += sizeof(struct v0op);
     } else {
         token1 = token->next;
         vasfreetoken(token);
@@ -209,9 +219,11 @@ vasprocop(struct vastoken *token, v0memadr adr,
                     if (vasopbits[op->code] & V0_I_ARG) {
                         op->adr = V0_IMM_ADR;
                         op->val = val;
+                        adr += sizeof(struct v0op);
                     } else {
                         op->adr = V0_DIR_ADR;
                         havearg = 1;
+                        adr += sizeof(struct v0op) + sizeof(union v0oparg);
                         switch (token->data.value.size) {
                             case 1:
                                 op->arg[0].i32 = val;

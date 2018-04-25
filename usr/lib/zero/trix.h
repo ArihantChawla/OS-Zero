@@ -17,9 +17,11 @@
  * http://www.inwap.com/pdp10/hbaker/hakmem/hakmem.html
  */
 
-#define ZEROABS 1
+#define ZEROABS        1
+#define ZERO_TRIX_TEST 1
 
 #include <limits.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <endian.h>
 #include <zero/param.h>
@@ -51,11 +53,20 @@
 
 /* FIXME: test min2() and max2() */
 
-#define min(a, b) ((a) <= (b) ? (a) : (b))
-#define max(a, b) ((a) >= (b) ? (a) : (b))
+#define _min(a, b) min(a, b)
+#define _max(a, b) max(a, b)
+
+#define min(a, b)  ((a) <= (b) ? (a) : (b))
+#define max(a, b)  ((a) >= (b) ? (a) : (b))
 
 #define min2(a, b) ((b) ^ (((a) ^ (b)) & -((a) < (b))))
 #define max2(a, b) ((a) ^ (((a) ^ (b)) & -((a) < (b))))
+
+/* compute minimum and maximum of a and b without branching */
+#define min3(a, b)                                                      \
+    ((b) + (((a) - (b)) & -((a) < (b))))
+#define max3(a, b)                                                      \
+    ((a) - (((a) - (b)) & -((a) < (b))))
 
 #define sign(x, nb)                                                     \
     ((x) = (x) & ((1U < (nb)) - 1),                                     \
@@ -63,19 +74,14 @@
 #define sign2(x, nb)                                                    \
     (((x) << (CHAR_BIT * sizeof(x) - (nb))) >> (CHAR_BIT * sizeof(x) - (nb)))
 
-#if 0
-/* compute minimum and maximum of a and b without branching */
-#define min(a, b)                                                       \
-    ((b) + (((a) - (b)) & -((a) < (b))))
-#define max(a, b)                                                       \
-    ((a) - (((a) - (b)) & -((a) < (b))))
-#endif
-
+#define _gtpow2 (u, p2)  ((u) > (p2))
+#define _gtepow2 (u, p2) ((u) >= (p2))
 /* compare with power-of-two p2 */
 #define gtpow2(u, p2)  /* true if u > p2 */                             \
     ((u) & ~(p2))
 #define gtepow2(u, p2) /* true if u >= p2 */                            \
     ((u) & -(p2))
+#define swapi(a, b)      ((a) ^= (b), (b) ^= (a), (a) ^= (b))
 /* swap a and b without a temporary variable */
 #define swap(a, b)     ((a) ^= (b), (b) ^= (a), (a) ^= (b))
 #define swap32(a, b)                                                    \
@@ -124,9 +130,9 @@ long long llabs(long long x);
 #define powerof2(x)     (!((x) & ((x) - 1)))
 #endif
 /* align a to boundary of (the power of two) b2. */
-//#define align(a, b2)   ((a) & ~((b2) - 1))
-//#define align(a, b2)    ((a) & -(b2))
-#define modpow2(a, b2)     ((a) & ((b2) - 1))
+#define align1(a, b2)   ((a) & ~((b2) - 1))
+#define align2(a, b2)   ((a) & -(b2))
+#define modpow2(a, b2)  ((a) & ((b2) - 1))
 
 /* round a up to the next multiple of (the power of two) b2. */
 //#define rounduppow2(a, b2) (((a) + ((b2) - 0x01)) & ~((b2) + 0x01))
@@ -152,8 +158,8 @@ long long llabs(long long x);
 #define divceil(a, b)   (((a) + (b) - 1) / (b))
 #define divround(a, b)  (((a) + ((b) / 2)) / (b))
 
-#define haszero_2(a)    (~(a))
-#define haszero_32(a)   (((a) - 0x01010101) & ~(a) & 0x80808080)
+#define haszero2(a)     (~(a))
+#define haszero32(a)    (((a) - 0x01010101) & ~(a) & 0x80808080)
 
 /* count population of 1 bits in u32; store into r */
 #define onebits_32(u32, r)                                              \
@@ -192,10 +198,10 @@ long long llabs(long long x);
     } while (0)
 #define bytepar3(b) ((0x6996 >> (((b) ^ ((b) >> 4)) & 0x0f)) & 0x01)
 
-#if !defined(__GNUC__)
+#if !defined(__GNUC__) || defined(ZERO_TRIX_TEST)
 
 /* count number of trailing zero-bits in u32 */
-#define tzero32(u32, r)                                                 \
+#define tzero32b(u32, r)                                                \
     do {                                                                \
         uint32_t __tmp;                                                 \
         uint32_t __mask;                                                \
@@ -235,7 +241,55 @@ long long llabs(long long x);
         }                                                               \
     } while (0)
 
-#define lzero32(u32, r)                                                 \
+/*
+ * Here's one that minimizes the use of constants.
+ */
+#define tzero32c(u32, r) \
+do { \
+    uint32_t __tmp; \
+    uint32_t __mask; \
+    uint32_t __width; \
+    uint32_t __one; \
+\
+    (r) = 0; \
+    __tmp = (u32); \
+    __one = 0x01; \
+    __mask = 0xffff; \
+    __width = 16; \
+    if (!(__tmp & __one)) { \
+        if (!(__tmp & __mask)) { \
+            __tmp >>= __width; \
+            (r) += __width; \
+        } \
+        __width >>= __one; \
+        __mask >>= __width; \
+        if (!(__tmp & __mask)) { \
+            __tmp >>= __width; \
+            (r) += __width; \
+        } \
+        __width >>= __one; \
+        __mask >>= __width; \
+        if (!(__tmp & __mask)) { \
+            __tmp >>= __width; \
+            (r) += __width; \
+        } \
+        __width >>= __one; \
+        __mask >>= __width; \
+        if (!(__tmp & __mask)) { \
+            __tmp >>= __width; \
+            (r) += __width; \
+            __tmp >>= __width; \
+        } \
+        __width >>= __one; \
+        __mask >>= __width; \
+        if (!(__tmp & __mask)) { \
+            __tmp >>= __width; \
+            (r) += __width; \
+        } \
+    } \
+} while (FALSE)
+
+#define lzero32b(u32, r)                                                \
     do {                                                                \
         uint32_t __tmp;                                                 \
         uint32_t __mask;                                                \
@@ -279,7 +333,7 @@ long long llabs(long long x);
 
 /* 64-bit versions */
 
-#define tzero64(u64, r)                                                 \
+#define tzero64b(u64, r)                                                \
     do {                                                                \
         uint64_t __tmp;                                                 \
         uint64_t __mask;                                                \
@@ -324,7 +378,7 @@ long long llabs(long long x);
         }                                                               \
     } while (0)
 
-#define lzero64(u64, r)                                                 \
+#define lzero64b(u64, r)                                                \
     do {                                                                \
         uint64_t __tmp;                                                 \
         uint64_t __mask;                                                \
@@ -408,22 +462,26 @@ long long llabs(long long x);
 #define lzeroll(u)    (!(u)                                             \
                        ? (LONGLONGSIZE * CHAR_BIT)                      \
                        : (__builtin_clzll(u)))
-#define lzero32(u, r) (!(u)                                             \
+#define _lzero32(u, r) (!(u)                                            \
                        ? ((r) = 32)                                     \
                        : ((r) = (__builtin_clz(u))))
-#if (LONGSIZE == 4)
-#define lzero64(u, r) (!(u)                                             \
+#if ((defined(__i386__) || defined(__x86_64__) || defined(__amd64__))   \
+     || LONGSIZE == 4)
+#define _lzero64(u, r) (!(u)                                            \
                        ? ((r) = 64)                                     \
                        : ((r) = (__builtin_clzll(u))))
+#endif
 #elif (LONGSIZE == 8)
-#define lzero64(u, r) (!(u)                                             \
+#define _lzero64(u, r) (!(u)                                            \
                        ? ((r) = 64)                                     \
                        : ((r) = (__builtin_clzl(u))))
-#endif
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define lzerol(u) (!(u)                                                 \
                    ? (LONGSIZE * CHAR_BIT)                              \
                    : (LONGSIZE * CHAR_BIT - m_scanhi1bit(u)))
+#define _lzero64(u, r) (!(u)                                            \
+                       ? ((r) = 64)                                     \
+                       : ((r) = (__builtin_clzll(u))))
 #endif
 
 /*
@@ -568,7 +626,13 @@ union __ieee754d { uint64_t u64; double d; };
     } while (0)
 #endif
 
-#if 0
+/* internal macros. */
+#define _ftoi32(f)     (*((int32_t *)&(f)))
+#define _ftou32(f)     (*((uint32_t *)&(f)))
+#define _dtoi64(d)     (*((int64_t *)&(d)))
+#define _dtou64(d)     (*((uint64_t *)&(d)))
+/* FIXME: little-endian. */
+#define _dtohi32(d)    (*(((uint32_t *)&(d)) + 1))
 /* sign bit 0x8000000000000000. */
 #define ifabs(d)                                                        \
     (_dtou64(d) & UINT64_C(0x7fffffffffffffff))
@@ -577,7 +641,6 @@ union __ieee754d { uint64_t u64; double d; };
 /* sign bit 0x80000000. */
 #define ifabsf(f)                                                       \
     (_ftou32(f) & 0x7fffffff)
-#endif /* 0 */
 
 /*
  * TODO: IEEE 128-bit
@@ -605,22 +668,18 @@ union __ieee754d { uint64_t u64; double d; };
     ((x) <= 0xffff ? (x) : 0xffff)
 #define satu32(x)                                                       \
     ((x) <= 0xffffffff ? (x) : 0xffffffff)
-#if 0
-#define satu8(x16)                                                      \
+#define satu8b(x16)                                                     \
     ((x16) | (!((x16) >> 8) - 1))
-#define satu16(x32)                                                     \
+#define satu16b(x32)                                                    \
     ((x32) | (!((x32) >> 16) - 1))
-#define satu32(x64)                                                     \
+#define satu32b(x64)                                                    \
     ((x64) | (!((x64) >> 32) - 1))
 #define sat8b(x)                                                        \
-    condset(x, 0xff, x, 0xff)
-#endif
+    condltset(x, 0xff, x, 0xff)
 
 #define haszero(a) (~(a))
-#if 0
-#define haszero_32(a)                                                   \
+#define haszero32b(a)                                                   \
     (~(((((a) & 0x7f7f7f7f) + 0x7f7f7f7f) | (a)) | 0x7f7f7f7f))
-#endif
 
 /* calculate modulus u % 10 */
 #if 0
@@ -1063,7 +1122,8 @@ mod65535u32(uint32_t a)
  */
 
 /* compute a + b with 32-bit unsigned saturation */
-#define sataddu32t(a, b, tmp) ((tmp) = (a) + (b), (tmp) | -((tmp) < (a)))
+#define _sataddu32t(a, b, tmp) sataddu32t(a, b, tmp)
+#define sataddu32t(a, b, tmp)  ((tmp) = (a) + (b), (tmp) | -((tmp) < (a)))
 static __inline__ uint32_t
 sataddu32(uint32_t a, uint32_t b)
 {
@@ -1075,7 +1135,8 @@ sataddu32(uint32_t a, uint32_t b)
 }
 
 /* compute a - b with 32-bit unsigned saturation */
-#define satsubu32t(a, b, tmp) ((tmp) = (a) - (b), (tmp) & - ((tmp) <= (a)))
+#define _satsubu32t(a, b, tmp) satsubu32t(a, b, tmp)
+#define satsubu32t(a, b, tmp)  ((tmp) = (a) - (b), (tmp) & - ((tmp) <= (a)))
 static __inline__ uint32_t
 satsubu32(uint32_t a, uint32_t b)
 {
@@ -1087,6 +1148,7 @@ satsubu32(uint32_t a, uint32_t b)
 }
 
 /* compute a * b with 32-bit unsigned saturation */
+#define _satmulu32(a, b, tmp) satmulu32(a, b, tmp)
 static __inline__ uint32_t
 satmulu32(uint32_t a, uint32_t b)
 {
@@ -1101,6 +1163,7 @@ satmulu32(uint32_t a, uint32_t b)
 }
 
 /* compute a / b; no under- or overflow possible */
+#define _satdivu32(a, b, tmp) satdivu32(a, b, tmp)
 static __inline__ uint32_t
 satdivu32(uint32_t a, uint32_t b)
 {
@@ -1140,9 +1203,9 @@ chkmulrng32(int32_t a, int32_t b, int32_t res)
     }
     a = zeroabs(a);
     b = zeroabs(b);
-    lzero32(a, tmp);
+    _lzero32(a, tmp);
     nsigbit = 32 - tmp;
-    lzero32(b, tmp);
+    _lzero32(b, tmp);
     nsigbit += 32 - tmp;
     if (nsigbit == 32) {
         /* need slow division */
@@ -1180,9 +1243,9 @@ chkmulrng64(int64_t a, int64_t b, int64_t res)
     }
     a = zeroabs(a);
     b = zeroabs(b);
-    lzero64(a, tmp);
+    _lzero64(a, tmp);
     nsigbit = 64 - tmp;
-    lzero64(b, tmp);
+    _lzero64(b, tmp);
     nsigbit += 64 - tmp;
     if (nsigbit == 64) {
         ret = (a > INT_MAX / b);

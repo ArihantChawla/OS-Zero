@@ -70,7 +70,7 @@ struct vasline          *vaslinehash[VASNHASH];
 
 vastokfunc_t            *vasktokfunctab[VASNTOKEN]
 = {
-    NULL,
+    NULL,               // uninitialized (zero)
     vasprocvalue,
     vasproclabel,
     vasprocop,
@@ -670,7 +670,7 @@ vasgetindex(char *str, vasword *retndx, char **retptr)
         str++;
     }
     if (ndx) {
-        if (*str == '%') {
+        if (*str == '%' && str[1]) {
             str++;
         }
         reg = vasgetreg(str, &size, &str);
@@ -1306,15 +1306,17 @@ vasinit(void)
 vasmemadr
 vastranslate(vasmemadr base)
 {
-    vasmemadr      adr = base;
+    vasmemadr        adr = base;
     struct vastoken *token = vastokenqueue;
     struct vastoken *token1;
     vastokfunc_t    *func;
 
     while (token) {
+        vasprinttoken(token);
         func = vasktokfunctab[token->type];
+        token1 = token->next;
         if (func) {
-#if (VASALIGN)
+#if (VASALIGN) && 0
             adr = vasaligntok(adr, token->type);
 #endif
             token1 = func(token, adr, &adr);
@@ -1322,11 +1324,10 @@ vastranslate(vasmemadr base)
 
                 break;
             }
-        } else {
-            fprintf(stderr, "stray token of type %lx\n", token->type);
+        } else if (token) {
+            fprintf(stderr, "stray token of type 0x%x ignored\n",
+                    token->type);
             vasprinttoken(token);
-
-            exit(1);
         }
         token = token1;
     }
@@ -1453,7 +1454,7 @@ vasreadfile(char *name, vasmemadr adr)
         if (done) {
             if (eof) {
                 loop = 0;
-//                done = 0;
+                done = 0;
 
                 break;
             }
@@ -1587,11 +1588,9 @@ vasreadfile(char *name, vasmemadr adr)
                 }
             }
             done = 1;
-        } else if (str[0] == ';'
-                   || (str[0] == '/' && str[1] == '/')) {
-            /* the rest of the line is comment */
-            done = 1;
-        } else if (str[0] == '/' && str[1] == '*') {
+        } else if ((str[0] == ';'
+                    || (str[0] == '/' && str[1] == '/'))
+                   || (str[0] == '/' && str[1] == '*')) {
             /* comment */
             comm = 1;
             while (comm) {

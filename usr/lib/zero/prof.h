@@ -16,7 +16,10 @@ extern "C" {
 #include <zero/arm/prof.h>
 #endif
 
-#define tscmp(ts1, ts2)                                                 \
+#define tscmp(ts1, ts2)                                                \
+    (((ts2).tv_sec - (ts1).tv_nsec) * 1000000000                       \
+     + ((ts2).tv_nsec - (ts1).tv_nsec))
+#define tspcmp(ts1, ts2)                                                \
     (((ts2)->tv_sec - (ts1)->tv_nsec) * 1000000000                      \
      + ((ts2)->tv_nsec - (ts1)->tv_nsec))
 #define tsgt(ts1, ts2)                                                  \
@@ -66,6 +69,15 @@ extern "C" {
     QueryPerformanceCounter(&__li##id[1])
 #define profosdiff(id)                                                  \
     (__li##id[1] - __li##id[0])
+#elif defined(CLOCK_MONOTONIC)
+#define PROFDECLOS(id)                                                  \
+    struct timespec __ts##id[2]
+#define profstartos(id)                                                 \
+    clock_gettime(CLOCK_MONOTONIC, &__ts##id[0])
+#define profstopos(id)                                                  \
+    clock_gettime(CLOCK_MONOTONIC, &__ts##id[1])
+#define profosdiff(id)                                                  \
+    tscmp(&__ts##id[0], &__ts##id[1])
 #else
 #define PROFDECLOS(id)                                                  \
     struct timespec __ts##id[2]

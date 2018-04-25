@@ -20,6 +20,7 @@ static long long        v0speedcnt;
 #if defined(V0_DEBUG_TABS)
 static struct v0opinfo  v0opinfotab[V0_NINST_MAX];
 #endif
+char                   *v0opnametab[V0_NINST_MAX];
 
 void
 v0printop(struct v0op *op)
