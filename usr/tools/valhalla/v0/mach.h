@@ -111,12 +111,12 @@
  * Mnemo   Opcode  S & D   Brief                           Arguments
  * -----   ------  -----   -----                           ---------
  */
-#define V0_LDR //  0x20    rim, r  load register
-#define V0_STR //    0x21    ri, rm  store register
-#define V0_PSH //    0x22    ri      push register
-#define V0_PSM //    0x23    ri      push many registers             register bitmap
-#define V0_POP //    0x24    ri      pop register
-#define V0_POM //    0x25    ri      pop many registers              register bitmap
+#define V0_LDR 0x20 //    rim, r  load register
+#define V0_STR 0x21 //    ri, rm  store register
+#define V0_PSH 0x22 //   ri      push register
+#define V0_PSM 0x23 //   ri      push many registers             register bitmap
+#define V0_POP 0x24 //   ri      pop register
+#define V0_POM 0x25 //   ri      pop many registers              register bitmap
 
 /* BRANCH OPERATIONS
  * -----------------

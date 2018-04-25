@@ -74,7 +74,7 @@ vastokfunc_t            *vasktokfunctab[VASNTOKEN]
     NULL,
     vasprocvalue,
     vasproclabel,
-    vasprocinst,
+    vasprocop,
     NULL,               // VASTOKENREG
     NULL,               // VASTOKENVAREG
     NULL,               // VASTOKENVLREG

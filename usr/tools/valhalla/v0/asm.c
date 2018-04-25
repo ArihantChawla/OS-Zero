@@ -393,14 +393,19 @@ vasprocop(struct vastoken *token, v0memadr adr,
     }
     op->parm = len;
 #if (V032BIT)
+    len <<= 2;
     *retadr = adr + (len << 2);
 #else
+    len <<= 3;
     *retadr = adr + (len << 3);
 #endif
+    adr += len;
+    retadr = len;
 
     return retval;
 }
 
+#if 0
 static struct vastoken *
 vasprocinst(struct vastoken *token, vasmemadr adr,
             vasmemadr *retadr)
@@ -584,4 +589,5 @@ vasprocinst(struct vastoken *token, vasmemadr adr,
 
     return retval;
 }
+#endif
 
