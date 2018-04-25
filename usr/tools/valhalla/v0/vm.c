@@ -30,7 +30,7 @@ v0printop(struct v0op *op)
             val, v0getunit(val), v0getinst(val));
 }
 
-#define v0opisvalid(vm, pc) ((vm)->membits[(pc) / V0_PAGE_SIZE] & V0_MEM_EXEC)
+//#define v0opisvalid(vm, pc) ((vm)->membits[(pc) / V0_PAGE_SIZE] & V0_MEM_EXEC)
 
 void
 v0initseg(struct v0 *vm, v0memadr base, size_t npage, v0memflg flg)
@@ -177,7 +177,7 @@ v0loop(struct v0 *vm)
 
             opjmp(vm, pc);
         v0opsbb:
-            v0sbb(vm, op);
+            pc = v0sbb(vm, op);
 
             opjmp(vm, pc);
         v0opshl:
@@ -212,8 +212,16 @@ v0loop(struct v0 *vm)
             pc = v0lor(vm, op);
 
             opjmp(vm, pc);
+        v0oparp:
+            pc = v0arp(vm, op);
+
+            opjmp(vm, pc);
         v0opmul:
             pc = v0mul(vm, op);
+
+            opjmp(vm, pc);
+        v0opmuh:
+            pc = v0muh(vm, op);
 
             opjmp(vm, pc);
         v0opldr:
@@ -240,89 +248,12 @@ v0loop(struct v0 *vm)
             pc = v0pom(vm, op);
 
             opjmp(vm, pc);
-        v0opjm1:
-            pc = v0jm1(vm, op);
+        v0opjmp:
+            pc = v0jmp(vm, op);
 
             opjmp(vm, pc);
-        v0opjm2:
-            pc = v0jm2(vm, op);
-
-            opjmp(vm, pc);
-        v0opbiz:
-            pc = v0bz(vm, op);
-
-            opjmp(vm, pc);
-        v0opbnz:
-            pc = v0bnz(vm, op);
-
-            opjmp(vm, pc);
-        v0opblt:
-            pc = v0blt(vm, op);
-
-            opjmp(vm, pc);
-        v0opble:
-            pc = v0ble(vm, op);
-
-            opjmp(vm, pc);
-        v0opbgt:
-            pc = v0bgt(vm, op);
-
-            opjmp(vm, pc);
-        v0opbge:
-            pc = v0bge(vm, op);
-
-            opjmp(vm, pc);
-        v0opbio:
-            pc = v0bo(vm, op);
-
-            opjmp(vm, pc);
-        v0opbno:
-            pc = v0bno(vm, op);
-
-            opjmp(vm, pc);
-        v0opbic:
-            pc = v0bc(vm, op);
-
-            opjmp(vm, pc);
-        v0opbnc:
-            pc = v0bnc(vm, op);
-
-            opjmp(vm, pc);
-
-        v0opcpl:
-            pc = v0cpl(vm, op);
-
-            opjmp(vm, pc);
-        v0opcall:
-            pc = v0call(vm, op);
-
-            opjmp(vm, pc);
-        v0openter:
-            pc = v0enter(vm, op);
-
-            opjmp(vm, pc);
-        v0opleave:
-            pc = v0leave(vm, op);
-
-            opjmp(vm, pc);
-        v0oprt0:
-            pc = v0rt0(vm, op);
-
-            opjmp(vm, pc);
-        v0oprt1:
-            pc = v0rt1(vm, op);
-
-            opjmp(vm, pc);
-        v0opcsr:
-            pc = v0csr(vm, op);
-
-            opjmp(vm, pc);
-        v0opbeg:
-            pc = v0beg(vm, op);
-
-            opjmp(vm, pc);
-        v0opfin:
-            pc = v0fin(vm, op);
+        v0opjmr:
+            pc = v0jmr(vm, op);
 
             opjmp(vm, pc);
     } while (1);
@@ -357,6 +288,8 @@ main(int argc, char *argv[])
     if (vm) {
         v0getopt(vm, argc, argv);
         vasinit();
+        vasreadfile(argv[1]);
+        vastranslate(V0_TEXT_ADR);
         if (!vm->regs[V0_PC_REG]) {
             vm->regs[V0_PC_REG] = V0_TEXT_ADR;
         }

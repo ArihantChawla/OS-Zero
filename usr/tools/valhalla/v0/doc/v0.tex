@@ -176,39 +176,34 @@
         \hline
 \end{tabular}
 
-\subsection{Scalar Reciprocal}
+\subsection{Floating-Point Reciprocal}
 
         \textbf{Brief}
 
-        Unsigned and signed reciprocal are used for unsigned and signed division
-        by ``reverse multiplication'', respectively.
-
-        \textbf{0x01 - signed operation}
+        Reciprocals are used for division by ``reverse multiplication.''
 
 \begin{tabular}{ | l | l | l | }
         Mnemonic & Opcode & Brief \\
         \hline
-        CRU      & 0x10 & Unsigned Reciprocal \\
-        \hline
-        CRS      & 0x11 & Signed Reciprocal \\
+        ARP      & 0x10   & Approximate Reciprocal
         \hline
 \end{tabular}
 
-\subsection{Scalar Multiplication}
+\subsection{Floating-Point Multiplication}
 
         \textbf{Brief}
 
-        Unsigned and signed multiplication or ``division'' by multiplying with
-        a precalculated reciprocal value.
+        Multiplication; ``division'' is achieved by multiplying with a
+        precalculated reciprocal approximation
 
-        \textbf{0x01 - signed operation}
+        \textbf{0x02 - shift high 32-bit word into low one}
 
 \begin{tabular}{ | l | l | l | }
         Mnemonic & Opcode & Brief \\
         \hline
-        MLU      & 0x12 & Unsigned Multiplication \\
+        MUL      & 0x11 & Unsigned Multiplication (low 32 bits) \\
         \hline
-        MLS      & 0x13 & Signed Multiplication \\
+        MUH      & 0x12 & Signed Multiplication (high 32 bits) \\
         \hline
 \end{tabular}
 
@@ -288,9 +283,9 @@
  \begin{tabular}{ | l | l | l | }
         Mnemonic & Opcode & Brief \\
         \hline
-        JMP      & 0x31 & Branch Unconditionally; Absolute \\
+        JMP      & 0x30 & Branch Unconditionally; Absolute \\
         \hline
-        JMP      & 0x30 & Branch Unconditionally; Relative \\
+        JMR      & 0x31 & Branch Unconditionally; Relative \\
         \hline
         BIZ      & 0x32 & Branch If Zero \\
         \hline

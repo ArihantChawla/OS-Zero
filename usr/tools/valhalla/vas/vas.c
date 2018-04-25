@@ -29,11 +29,10 @@
 #endif
 
 extern struct v0       *v0vm;
-struct vasop           *v0optab[256];
 
-extern long            * vasgetinst(char *str, char **retptr);
-
-extern vasuword          v0getreg(char *str, vasword *retsize,
+/* vasgetop() is machine-specific */
+struct vasop           * vasgetop(char *str, char **retptr);
+extern vasuword          vasgetreg(char *str, vasword *retsize,
                                    char **retptr);
 extern struct vasop    * vasfindop(const char *str);
 static char            * vasgetlabel(char *str, char **retptr);
@@ -783,7 +782,7 @@ vasgettoken(char *str, char **retptr)
     char            *buf = vasstrbuf;
     struct vastoken *token1 = malloc(sizeof(struct vastoken));
     struct vastoken *token2;
-    struct vasinst  *op = NULL;
+    struct vasop    *op = NULL;
     char            *name = str;
     vasword          val = VASRESOLVE;
     vasword          size = 0;
@@ -1655,7 +1654,7 @@ vasreadfile(char *name, vasmemadr adr)
             }
         }
     }
-#if (VASBUF)
+#if (VASBUF) || (VASMMAP)
     close(fd);
 #else
     fclose(fp);

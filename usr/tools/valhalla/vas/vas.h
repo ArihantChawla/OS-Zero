@@ -41,18 +41,18 @@
 #define VASNTOKEN      0x20
 
 struct vasop {
-    const char    *name;
-    uint8_t        code;
-    uint8_t        narg;
-    uint8_t        len;
-    struct vasop **tab;
+    const char   *name;
+    uint8_t       code;
+    uint8_t       narg;
+    uint8_t       len;
+    struct vasop *next;
 };
 
 struct vasinst {
-    const char    *name;
-    uint8_t        code;
-    uint8_t        narg;
-    uint8_t        len;
+    const char *name;
+    uint8_t     code;
+    uint8_t     narg;
+    uint8_t     len;
 };
 
 struct vaslabel {
@@ -63,7 +63,7 @@ struct vaslabel {
 
 struct vasvalue {
     vasword val;
-    uint8_t   size;
+    uint8_t size;
 };
 
 struct vassymrec {

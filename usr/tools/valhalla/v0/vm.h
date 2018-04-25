@@ -12,9 +12,10 @@
 
 struct v0;
 
-typedef int32_t  v0reg;
-typedef uint32_t v0ureg;
-typedef v0ureg   v0memadr;
+typedef int64_t  v0wreg; // full-width register (temporary values)
+typedef int32_t  v0reg;  // signed user-register type
+typedef uint32_t v0ureg; // unsigned user-register type
+typedef v0ureg   v0memadr; // memory address
 typedef uint8_t  v0memflg;
 typedef void     v0iofunc_t(struct v0 *vm, uint16_t port, uint8_t reg);
 
@@ -117,7 +118,7 @@ struct v0seg {
 };
 
 struct v0 {
-    v0reg             regs[V0_GEN_REGS + V0_SYS_REGS];
+    v0wreg            regs[V0_GEN_REGS + V0_SYS_REGS];
     struct v0seg      segs[V0_SEGS];
     long              flg;
     v0memflg         *membits;
@@ -127,6 +128,13 @@ struct v0 {
     char             *vtdpath;
     struct divuf16   *divu16tab;
 };
+
+/* OPCODES */
+
+/*
+ * 32-bit little-endian argument parcel
+ * - declared as union for 32-bit alignment of all arguments
+ */
 
 union v0oparg {
     v0ureg   adr;
@@ -141,13 +149,6 @@ union v0oparg {
     uint8_t  u8;
 };
 
-/* OPCODES */
-
-/*
- * 32-bit little-endian argument parcel
- * - declared as union for 32-bit alignment of all arguments
- */
-
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #define v0mkopid(unit, inst) ((uint8_t)((unit) | ((inst) << 4)))
 #define v0getunit(code)      ((code) & 0x0f)
@@ -157,6 +158,19 @@ union v0oparg {
 #define v0getunit(code)      ((code) >> 4)
 #define v0getop(code)        ((code) & 0x0f)
 #endif
+#define v0adrtoptr(vm, adr)  ((void *)(&(vm)->mem[(adr)]))
+#define v0regtoptr(vm, reg)  ((void *)(&(vm)->regs[(reg)]))
+
+#define V0_REG_BIT       (1 << V0_REG_ADR)
+#define V0_IMM_BIT       (1 << V0_IMM_ADR)
+#define V0_DIR_BIT       (1 << V0_DIR_ADR)
+#define V0_NDX_BIT       (1 << V0_NDX_ADR)
+#define V0_R_ARG         V0_REG_BIT
+#define V0_I_ARG         (V0_IMM_BIT | V0_DIR_BIT)
+#define V0_M_ARG         V0_NDX_BIT
+#define V0_RI_ARG        (V0_R_ARG | V0_I_ARG)
+#define V0_RIM_ARG       (V0_R_ARG | V0_I_ARG | V0_M_ARG)
+#define V0_RM_ARG        (V0_R_ARG | V0_M_ARG)
 
 /* addressing modes */
 #define V0_REG_ADR       0x00 // %reg, argument in register
@@ -170,8 +184,8 @@ union v0oparg {
 #define V0_IMM_VAL_MAX   0x3ff
 #define V0_IMM_VAL_MIN   (-0x1ff - 1)
 
-/* NOP is declared as all 0-bits */
-#define V0_NOP_CODE      UINT32_C(0)
+/* NOP is declared as all 1-bits */
+#define V0_NOP_CODE      (~UINT32_C(0))
 #define v0opisnop(op)    (*(uint32_t *)(op) == V0_NOP)
 #define V0_SIGNED_BIT    (1 << 9)
 #define v0opissigned(op) ((op)->val & V0_SIGNED_BIT)
@@ -181,9 +195,8 @@ struct v0op {
     unsigned int   code : 8; // unit and instruction IDs
     unsigned int   reg1 : 4; // register argument #1 ID
     unsigned int   reg2 : 4; // register argument #2 ID
-    unsigned int   adr1 : 2; // addressing mode
-    unsigned int   adr2 : 2; // addressing mode
-    unsigned int   parm : 2; // parameter such as address scale shift count
+    unsigned int   adr  : 2; // addressing mode
+    unsigned int   parm : 4; // parameter such as address scale shift count
     unsigned int   val  : 10; // immediate value such as shift count or offset
     union v0oparg  arg[EMPTY]; // possible argument value
 };

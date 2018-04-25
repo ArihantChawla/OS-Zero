@@ -7,12 +7,12 @@
 
 /* Valhalla 0 (V0) processor machine interface */
 
-/* bits for FR0 feature register */
-#define V0_FR0_MMU (1U << 0) // memory management unit present
-#define V0_FR0_FPU (1U << 1) // floating-point processor present
-#define V0_FR0_GPU (1U << 2) // graphics processor present
-#define V0_FR0_DSP (1U << 3) // digital signal processor present
-#define V0_FR0_FPM (1U << 4) // fixed-point processor present
+/* bits for MFR feature register */
+#define V0_MFR_MMU (1U << 0) // memory management unit present
+#define V0_MFR_FPU (1U << 1) // floating-point processor present
+#define V0_MFR_GPU (1U << 2) // graphics processor present
+#define V0_MFR_DSP (1U << 3) // digital signal processor present
+#define V0_MFR_FPM (1U << 4) // fixed-point processor present
 
 /* V0 Instruction Set
  * ------------------
@@ -57,28 +57,26 @@
  * ---------------------------
  *
  * NOTE: division is done by computing a reciprocal and multiplying the dividend
- * with it.
+ * with it EDIT: IF feasible... This needs to be done with floating-point
+ * operations.
  *
- * Opcode Notes
- * ------------
- * CRU/CRS                 - 0x01 denotes signed reciprocal
- * MLU/MLS                 - 0x01 denotes signed division
- *
- * Mnemo   Opcode  S & D   Brief                           Arguments
- * -----   ------  -----   -----                           ---------
+ * Mnemo   Opcode         S & D   Brief                           Arguments
+ * -----   ------         -----   -----                           ---------
  */
-#define V0_CRU 0x10 //    ri, r   compute unsigned reciprocal
-#define V0_CRS 0x11 //   ri, r   compute signed reciprocal
+#define V0_ARP   0x10 //  ri, r   Multiplication
+#define V0_MUL   0x11 //  ri, r   Multiplication, get high word
+#define V0_MUH   0x12 //  ri, r
+//#define V0_CRU 0x10 //   ri, r   compute unsigned reciprocal
+//#define V0_CRS 0x11 //   ri, r   compute signed reciprocal
 /* TODO: MLU/MLS? */
-// #define V0_MLU 0x12 //   ri, r   unsigned multiplication
+// #define V0_MLU 0x12 //  ri, r   unsigned multiplication
 //#define V0_MLS 0x13 //   ri, r   signed multiplication
-#define V0_MUL 0x12
+//#define V0_MUL 0x12
 
 /* Bit Operations
  * --------------
  * NOTE: The instructions in this section are optional; indicated with the BO-
- * bit
- * in MFW.
+ * bit in MSW.
  *
  *
  * Opcode Notes
@@ -95,10 +93,10 @@
 #define V0_BTC 0x16 //   rv, m   bit test and complement         bit ID, address
 #define V0_BHW 0x17 //   r, r    Hamming weight / bit population
 #define V0_BLZ 0x18 //   r, r    leading zero count
-#define V0_BLS 0x19 //   r, r    leading sign-bit count
+//#define V0_BLS 0x19 //   r, r    leading sign-bit count
 #define V0_BSH 0x20 //   r, r    16-bit byte swap
 #define V0_BSW 0x21 //   r, r    32-bit byte swap
-#define V0_BWL 0x22 //   r, r    64-bit byte swap
+#define V0_BSL 0x22 //   r, r    64-bit byte swap
 
 /* LOAD-STORE OPERATIONS
  * ---------------------
@@ -111,12 +109,12 @@
  * Mnemo   Opcode  S & D   Brief                           Arguments
  * -----   ------  -----   -----                           ---------
  */
-#define V0_LDR 0x20 //    rim, r  load register
-#define V0_STR 0x21 //    ri, rm  store register
-#define V0_PSH 0x22 //   ri      push register
-#define V0_PSM 0x23 //   ri      push many registers             register bitmap
-#define V0_POP 0x24 //   ri      pop register
-#define V0_POM 0x25 //   ri      pop many registers              register bitmap
+#define V0_LDR 0x20 //     rim, r  load register
+#define V0_STR 0x21 //     ri, rm  store register
+#define V0_PSH 0x22 //     ri      push register
+#define V0_PSM 0x23 //     i       push many registers      register bitmap
+#define V0_POP 0x24 //     r       pop register
+#define V0_POM 0x25 //     i       pop many registers       register bitmap
 
 /* BRANCH OPERATIONS
  * -----------------
@@ -131,8 +129,8 @@
  * Mnemo   Opcode  S & D   Brief                           Arguments
  * -----   ------  -----   -----                           ---------
  */
-#define V0_JM1 0x30 //    rim     absolute jump                   offset or address
-#define V0_JM2 0x31 //   riv, rm relative jump                   offset, register ID
+#define V0_JMP 0x30 //    rim     absolute jump                   offset or address
+#define V0_JMR 0x31 //    riv, rm relative jump                   offset, register ID
 #define V0_BIZ 0x32 //   r, m    branch if zero
 #define V0_BEQ 0x32 //   r, m    BZ
 #define V0_BNZ 0x33 //   r, m    branch if not zero
