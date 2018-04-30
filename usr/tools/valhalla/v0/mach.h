@@ -19,33 +19,48 @@
  *
  * Argument Descriptions
  * ---------------------
- * r       register                vm->regs[(op)->reg]
- * v       value                   (op)->val
- * i       immediate               (op)->arg[0]
- * m       memory [address]        v0getarg1(vm, op), v0getarg2(vm, op)
+ * r    register                vm->regs[op->reg]
+ * i	immediate               op->val
+ * d    immediate               op->arg[0].i32
+ * m    memory [address]	v0getarg1(vm, op), v0getarg2(vm, op)
+ *
+ * Notes
+ * -----
  *
  * ARITHMETIC-LOGICAL OPERATIONS
  *-----------------------------
  *
+ * Instructions
+ * ------------
+ *
+ * Mnemo Opcode  Src    Dest	Brief
+ * ----- ------  ---    ----    -----
+ * INC	 0x01           r       increment by one
+ * DEC   0x02           r       decrement by one
+ * CMP   0x03    ri     r	compare (subtract + set MSW-flags)
+ * ADD   0x04    rid	r	addition (ignore over and underflows)
+ * ADC   0x05    rid    r       addition with carry-flag
+ * SUB   0x06    rid	r	subtract; ignore underflow
+ * SBB   0x07    rid    r       subtract with carry-flag
+ *
  * Opcode Notes
  * ------------
- * ADD/ADC                 - 0x01 denotes carry
- * SUB/SBB                 - 0x01 denotes borrow (carry-bit)
- * SHL/SAL, SHR/SAR        - 0x01 denotes arithmetic shift
+ * ADD/ADC, SUB/SBB     - 0x01 denotes carry/borrow-bit, 0x03 mean set flags
+ * SHL/SAL, SHR/SAR     - 0x01 denotes arithmetic right shift, 0x02 is right
  *
- * Mnemo   Opcode  S & D   Brief                           Arguments
- * -----   ------  -----   -----                           ---------
+ * Macros
+ * ------
  */
-#define V0_NOP 0x00 //   none  no operation                    possibly system ops
+//#define V0_NOP 0xff //   none  no operation                possibly system ops
 #define V0_INC 0x01 //   r     increment by one
 #define V0_DEC 0x02 //   r     decrement by one
-#define V0_CMP 0x03 //   r, ri   compare (subtract + set flags)
+#define V0_CMP 0x03 //   r, r   compare (subtract + set flags)
 #define V0_ADD 0x04 //   ri, r   addition
 #define V0_ADC 0x05 //   ri, r   addition with carry
 #define V0_SUB 0x06 //   ri, r   subtraction
 #define V0_SBB 0x07 //   ri, r   subraction with borrow
 #define V0_SHL 0x08 //   ri, r   shift left logical
-#define V0_SAL 0x09 //   ri, r   shift left arithmetical
+//#define V0_SAL 0x09 //   ri, r   shift left arithmetical
 #define V0_SHR 0x0a //   ri, r   shift right logical
 #define V0_SAR 0x0b //   ri, r   shift right arithmetic
 #define V0_NOT 0x0c //   r       reverse all bits
@@ -207,8 +222,8 @@
  *
  * Opcode Notes
  * ------------
- * RDB, WRB, FMB           - bits 0-1: 0 - read, 1 - write, 2 - both
- * LCL, LDL, STC, RCL      - bits 0-1: 0 - lock, 1 - load, 2 - store, 3 - release
+ * RDB, WRB, FMB        - bits 0-1: 0 - read, 1 - write, 2 - both
+ * LCK, LDL, STC, ULK	- bits 0-1: 0 - lock, 1 - load, 2 - store, 3 - release
  *
  *
  * Mnemo   Opcode  S & D           Brief                           Arguments
@@ -216,14 +231,14 @@
  */
 #define V0_RDB 0x60 //   NONE            memory read barrier
 #define V0_WRB 0x61 //   NONE            memory write barrier
-#define V0_FMB 0x62 //   NONE            full memory barrier
-#define V0_CPF 0x63 //   m               cache prefetch                  byte address
-#define V0_FPG 0x64 //   m               flush TLB entry                 byte address
-#define V0_FCM 0x65 //   NONE            flush cache memory
-#define V0_LCL 0x66 //   rm              cacheline lock                  byte address
-#define V0_LDL 0x67 //   rm              linked load
+#define V0_BAR 0x62 //   NONE            full memory barrier
+#define V0_CPF 0x63 //   m               cache prefetch            byte address
+#define V0_FPG 0x64 //   m               flush TLB entry           byte address
+#define V0_FLF 0x65 //   m               flush cachelines
+#define V0_LCK 0x66 //   m               cacheline lock            byte address
+#define V0_LDL 0x67 //   m               linked load
 #define V0_STC 0x68 //   ri, m           conditional store
-#define V0_RCL 0x69 //   m               cacheline release               byte address
+#define V0_ULK 0x69 //   m               cacheline unlock          byte address
 
 /* Atomic Operations
  * -----------------
@@ -232,8 +247,8 @@
  * ------------
  */
 
-#define V0_CAS 0x6a    m, ri, ri       compare and swap
-#define V0_CS2 0x6b    m, ri, ri       double-word compare and swap
+#define V0_CAS 0x6a //   m, ri, ri       compare and swap
+#define V0_CS2 0x6b //   m, ri, ri       double-word compare and swap
 
 #endif /* __VPU_V0_MACH_H__ */
 

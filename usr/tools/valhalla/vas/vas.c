@@ -392,7 +392,7 @@ vasfindsym(char *name)
 }
 
 void
-vasremovesyms(void)
+vasfreesyms(void)
 {
     struct vassymrec *sym1;
     struct vassymrec *sym2;
@@ -1034,6 +1034,8 @@ vasgettoken(char *str, char **retptr)
         }
     }
     *retptr = str;
+    fprintf(stderr, "READ: ");
+    vasprinttoken(token1);
 
     return token1;
 }
@@ -1042,7 +1044,7 @@ static struct vastoken *
 vasprocvalue(struct vastoken *token, vasmemadr adr,
              vasmemadr *retadr)
 {
-    vasmemadr      ret = adr + token->data.value.size;
+    vasmemadr        ret = adr + token->data.value.size;
     char            *valptr = vasadrtoptr(adr);
     struct vastoken *retval;
 
@@ -1082,9 +1084,11 @@ vasproclabel(struct vastoken *token, vasmemadr adr,
 #if (WPMTRACE)
         fprintf(stderr, "_start == 0x%08x\n", adr);
 #endif
+#if 0
         if (adr & (sizeof(vasop_t) - 1)) {
             adr = rounduppow2(adr, sizeof(vasop_t));
         }
+#endif
         _startadr = adr;
         _startset = 1;
     }
@@ -1125,7 +1129,7 @@ vasprocdata(struct vastoken *token, vasmemadr adr,
             vasmemadr *retadr)
 {
     struct vastoken *token1 = token->next;
-    vasmemadr      valadr = adr;
+    vasmemadr        valadr = adr;
 
     while ((token1) && token1->type == VASTOKENVALUE) {
         token1->data.value.size = token->data.size;
@@ -1320,19 +1324,19 @@ vastranslate(vasmemadr base)
             adr = vasaligntok(adr, token->type);
 #endif
             token1 = func(token, adr, &adr);
-            if (!token) {
+            if (!token1) {
 
                 break;
             }
         } else if (token) {
-            fprintf(stderr, "stray token of type 0x%x ignored\n",
+            fprintf(stderr, "stray token of type 0x%lx ignored\n",
                     token->type);
             vasprinttoken(token);
         }
         token = token1;
     }
 
-    return adr;
+    return base;
 }
 
 void
@@ -1388,11 +1392,10 @@ vasreadfile(char *name, vasmemadr adr)
     struct vasmap    map;
     struct stat      statbuf;
     int              sysret;
-    int              fd;
     uint8_t         *base;
 #endif
     long             buflen = VASLINELEN;
-#if (VASBUF)
+#if (VASBUF) || (VASMMAP)
     int              fd = -1;
 #else
     FILE            *fp = fopen(name, "r");
@@ -1407,13 +1410,14 @@ vasreadfile(char *name, vasmemadr adr)
     long             loop = 1;
     int              ch;
     long             comm = 0;
-    long             done = 1;
+    long             done = 0;
     long             len = 0;
 #if (VASDB)
     unsigned long    line = 0;
 #endif
     vasword        val = 0;
 
+    fprintf(stderr, "translating file to %x", adr);
 #if (VASBUF) || (VASMMAP)
     do {
         fd = open((const char *)name, O_RDONLY);
@@ -1444,17 +1448,12 @@ vasreadfile(char *name, vasmemadr adr)
     map.sz = statbuf.st_size;
     map.lim = base + map.sz;
 #endif
+    fprintf(stderr, "reading file: %s @ %x (%p)\n", name, adr, base);
     while (loop) {
-#if (VASMMAP)
-        if (map.cur > map.adr + map.sz) {
-
-            break;
-        }
-#endif
-        if (done) {
+        if (!done) {
             if (eof) {
                 loop = 0;
-                done = 0;
+                done = 1;
 
                 break;
             }
@@ -1550,7 +1549,7 @@ vasreadfile(char *name, vasmemadr adr)
                     vasreadfile(fname, adr);
 #endif
                     vasresolve(adr);
-                    vasremovesyms();
+                    vasfreesyms();
                 } else {
                     fprintf(stderr, "invalid .include directive %s\n",
                             str);
@@ -1579,7 +1578,7 @@ vasreadfile(char *name, vasmemadr adr)
                     vasreadfile(fname, adr);
 #endif
                     vasresolve(adr);
-                    vasremovesyms();
+                    vasfreesyms();
                 } else {
                     fprintf(stderr, "invalid .import directive %s\n",
                             vasstrbuf);
@@ -1628,31 +1627,30 @@ vasreadfile(char *name, vasmemadr adr)
                 }
             }
             done = 1;
-        } else {
-            if (*str) {
+        } else if (*str) {
 #if (VASMMAP)
-                token = vasgettoken(str, &str, &map);
+            token = vasgettoken(str, &str, &map);
 #else
-                token = vasgettoken(str, &str);
+            token = vasgettoken(str, &str);
 #endif
-                if (token) {
+            if (token) {
 #if (VASDB)
-                    token->file = strdup(name);
-                    token->line = line;
+                token->file = strdup(name);
+                token->line = line;
 #endif
-                    vasqueuetoken(token);
-                }
-                while (isspace(*str)) {
+                vasqueuetoken(token);
+            }
+            while (isspace(*str)) {
                     str++;
-                }
+            }
                 if (str >= lim) {
                     done = 1;
                 }
-            } else {
-                done = 1;
-            }
+        } else {
+            done = 1;
         }
     }
+    fprintf(stderr, "translation: 0x%lx bytes emitted\n", map.cur - map.adr);
 #if (VASBUF) || (VASMMAP)
     close(fd);
 #else

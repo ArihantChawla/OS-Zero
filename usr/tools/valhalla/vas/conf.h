@@ -3,7 +3,8 @@
 #ifndef __VAS_CONF_H__
 #define __VAS_CONF_H__
 
-#define V0          1
+#define V0               1
+#define VAS_LINE_BUFSIZE 65536
 
 #if defined(V0)
 #include <v0/mach.h>

@@ -18,12 +18,12 @@ vasinitbuf(void)
     long l;
 #endif
 
-    vaslinebuf = malloc(VASLINELEN);
-    vasstrbuf = malloc(VASLINELEN);
+    vaslinebuf = malloc(VAS_LINE_BUFSIZE);
+    vasstrbuf = malloc(VAS_LINE_BUFSIZE);
 #if (VASBUF)
     vasreadbuftab = malloc(vasnreadbuf * sizeof(struct readbuf));
     for (l = 0 ; l < vasnreadbuf ; l++) {
-        vasreadbuftab[l].data = malloc(VASBUFSIZE);
+        vasreadbuftab[l].data = malloc(VAS_LINE_BUFSIZE);
     }
 #endif
 

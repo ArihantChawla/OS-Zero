@@ -71,27 +71,27 @@ v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
 #define v0opisvalid(vm, pc) (vm)
 #if defined(__GNUC__)
 #define opjmp(vm, pc)                                                   \
-    do {                                                                \
-        struct v0op *_op = v0adrtoptr(vm, pc);                          \
-                                                                        \
-        while (v0opisnop(_op)) {                                        \
-            v0traceop(vm, _op, pc);                                     \
-            (pc) += sizeof(struct v0op);                                \
-        }                                                               \
-        if (v0opisvalid(_op, pc)) {                                     \
-            v0traceop(vm, _op, pc);                                     \
-            if (_op->adr == V0_DIR_ADR || _op->adr == V0_NDX_ADR) {     \
-                (pc) += sizeof(struct v0op) + sizeof(union v0oparg);    \
-            } else {                                                    \
-                (pc) += sizeof(struct v0op);                            \
-            }                                                           \
-            goto *jmptab[(_op)->code];                                  \
-        } else {                                                        \
-            v0doxcpt(V0_TEXT_FAULT);                                    \
-                                                                        \
-            return V0_TEXT_FAULT;                                       \
-        }                                                               \
-        vm->regs[V0_PC_REG] = (pc);                                     \
+    do {								\
+        struct v0op *_op = v0adrtoptr(vm, pc);				\
+									\
+	while (v0opisnop(_op)) {					\
+	    v0traceop(vm, _op, pc);					\
+	    (pc) += sizeof(struct v0op);				\
+	}								\
+	if (v0opisvalid(_op, pc)) {					\
+	    v0traceop(vm, _op, pc);					\
+	    if (_op->adr == V0_DIR_ADR || _op->adr == V0_NDX_ADR) {	\
+	      (pc) += sizeof(struct v0op) + sizeof(union v0oparg);	\
+	    } else {							\
+	      (pc) += sizeof(struct v0op);				\
+	    }								\
+	    goto *jmptab[(_op)->code];					\
+	    vm->regs[V0_PC_REG] = (pc);					\
+	} else {							\
+	    v0doxcpt(V0_TEXT_FAULT);					\
+	  								\
+	    return V0_TEXT_FAULT;					\
+	}								\
     } while (0)
 #endif /* defined(__GNUC__) */
 #define v0setop(op, str, narg, tab)                                     \

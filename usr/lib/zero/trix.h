@@ -53,9 +53,6 @@
 
 /* FIXME: test min2() and max2() */
 
-#define _min(a, b) min(a, b)
-#define _max(a, b) max(a, b)
-
 #define min(a, b)  ((a) <= (b) ? (a) : (b))
 #define max(a, b)  ((a) >= (b) ? (a) : (b))
 
@@ -74,8 +71,6 @@
 #define sign2(x, nb)                                                    \
     (((x) << (CHAR_BIT * sizeof(x) - (nb))) >> (CHAR_BIT * sizeof(x) - (nb)))
 
-#define _gtpow2 (u, p2)  ((u) > (p2))
-#define _gtepow2 (u, p2) ((u) >= (p2))
 /* compare with power-of-two p2 */
 #define gtpow2(u, p2)  /* true if u > p2 */                             \
     ((u) & ~(p2))
@@ -140,17 +135,15 @@ long long llabs(long long x);
 /* round down to the previous multiple of (the power of two) b2 */
 #define rounddownpow2(a, b2) ((a) & ~((b2) - 0x01))
 
-#if !defined(roundup)
 #if defined(__GNUC__)
-#define roundup(a, b)                                                   \
-    ((__builtin_constant_p(b) && powerof2(b))                           \
+#define _rounduppow2(a, b)                                              \
+    ((__builtin_constant_p(b))                                          \
      ? rounduppow2(a, b)                                                \
      : ((((a) + ((b) - 1)) / (b)) * b))
-#else
-#define roundup(a, b)                                                   \
+#elif 0
+#define rounduppow2b(a, b)                                              \
     ((((a) + ((b) - 1)) / (b)) * (b))
-#endif
-#endif /* !defined(roundup) */
+#endif /* !defined(__GNUC__) */
 
 /* compute the average of a and b without division */
 #define uavg(a, b)      (((a) & (b)) + (((a) ^ (b)) >> 1))
@@ -462,24 +455,24 @@ do { \
 #define lzeroll(u)    (!(u)                                             \
                        ? (LONGLONGSIZE * CHAR_BIT)                      \
                        : (__builtin_clzll(u)))
-#define _lzero32(u, r) (!(u)                                            \
+#define lzero32(u, r) (!(u)                                             \
                        ? ((r) = 32)                                     \
                        : ((r) = (__builtin_clz(u))))
 #if ((defined(__i386__) || defined(__x86_64__) || defined(__amd64__))   \
      || LONGSIZE == 4)
-#define _lzero64(u, r) (!(u)                                            \
+#define lzero64(u, r) (!(u)                                             \
                        ? ((r) = 64)                                     \
                        : ((r) = (__builtin_clzll(u))))
 #endif
 #elif (LONGSIZE == 8)
-#define _lzero64(u, r) (!(u)                                            \
+#define lzero64(u, r) (!(u)                                             \
                        ? ((r) = 64)                                     \
                        : ((r) = (__builtin_clzl(u))))
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define lzerol(u) (!(u)                                                 \
                    ? (LONGSIZE * CHAR_BIT)                              \
                    : (LONGSIZE * CHAR_BIT - m_scanhi1bit(u)))
-#define _lzero64(u, r) (!(u)                                            \
+#define lzero64(u, r) (!(u)                                             \
                        ? ((r) = 64)                                     \
                        : ((r) = (__builtin_clzll(u))))
 #endif
@@ -1203,9 +1196,9 @@ chkmulrng32(int32_t a, int32_t b, int32_t res)
     }
     a = zeroabs(a);
     b = zeroabs(b);
-    _lzero32(a, tmp);
+    lzero32(a, tmp);
     nsigbit = 32 - tmp;
-    _lzero32(b, tmp);
+    lzero32(b, tmp);
     nsigbit += 32 - tmp;
     if (nsigbit == 32) {
         /* need slow division */
@@ -1243,9 +1236,9 @@ chkmulrng64(int64_t a, int64_t b, int64_t res)
     }
     a = zeroabs(a);
     b = zeroabs(b);
-    _lzero64(a, tmp);
+    lzero64(a, tmp);
     nsigbit = 64 - tmp;
-    _lzero64(b, tmp);
+    lzero64(b, tmp);
     nsigbit += 64 - tmp;
     if (nsigbit == 64) {
         ret = (a > INT_MAX / b);

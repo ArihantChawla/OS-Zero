@@ -22,24 +22,24 @@ static __inline__ unsigned char
 inb(unsigned short port)
 {
     unsigned char ret = 0;
-    
+
     __asm__ __volatile__ ("inb %1, %b0\n" : "=a" (ret) : "Nd" (port));
-    
+
     return ret;
-    
+
 }
 
 static __inline__ unsigned char
 inb_p(unsigned short port)
 {
     unsigned char ret = 0;
-    
+
     __asm__ __volatile__ ("inb %1, %b0\n"
                           __iodelay()
                           : "=a" (ret) : "Nd" (port));
 
     return ret;
-    
+
 }
 
 static __inline__ unsigned short
@@ -50,7 +50,7 @@ inw(unsigned short port)
     __asm__ __volatile__ ("inw %1, %w0\n" : "=a" (ret) : "Nd" (port));
 
     return ret;
-    
+
 }
 
 static __inline__ unsigned short
@@ -63,7 +63,7 @@ inw_p(unsigned short port)
                           : "=a" (ret) : "Nd" (port));
 
     return ret;
-    
+
 }
 
 static __inline__ unsigned int
@@ -74,7 +74,7 @@ inl(unsigned short port)
     __asm__ __volatile__ ("inl %1, %0\n" : "=a" (ret) : "Nd" (port));
 
     return ret;
-    
+
 }
 
 static __inline__ unsigned int
@@ -87,7 +87,7 @@ inl_p(unsigned short port)
                           : "=a" (ret) : "Nd" (port));
 
     return ret;
-    
+
 }
 
 static __inline__ void

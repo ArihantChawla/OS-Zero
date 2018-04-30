@@ -22,6 +22,7 @@
 #define THREADLOCAL _Thread_local
 #endif
 #endif
+#include <zero/pack.h>
 
 #if defined(__GNUC__) || defined(__clang__)
 

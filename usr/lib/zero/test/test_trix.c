@@ -404,7 +404,7 @@ profalign2(void)
 #define roundup2(a, b2) (((a) + ((b2) - 0x01)) & -(b2))
 
 void
-profroundup1(void)
+profroundupow2(void)
 {
     int i1, i2;
     PROFDECLCLK(clk);
@@ -415,11 +415,11 @@ profroundup1(void)
     profstartclk(clk);
     profstarttick(tick);
     for (i1 = 0 ; i1 < PROF_ITERATIONS ; i1++) {
-        table1[i1] = roundup1(i1, i2);
+        table1[i1] = _rounduppow2(i1, i2);
     }
     profstoptick(tick);
     profstopclk(clk);
-    fprintf(stderr, "roundup1\t%Lf\t%Lf\n",
+    fprintf(stderr, "_rounduppow2\t%Lf\t%Lf\n",
             (long double)proftickdiff(tick) / (long double)PROF_ITERATIONS,
             (long double)profclkdiff(clk) / (long double)PROF_ITERATIONS);
 
@@ -427,7 +427,7 @@ profroundup1(void)
 }
 
 void
-profroundup2(void)
+profrounduppow2b(void)
 {
     int i1, i2;
     PROFDECLCLK(clk);
@@ -438,11 +438,11 @@ profroundup2(void)
     profstartclk(clk);
     profstarttick(tick);
     for (i1 = 0 ; i1 < PROF_ITERATIONS ; i1++) {
-        table1[i1] = roundup2(i1, i2);
+        table1[i1] = roundup2pow2b(i1, i2);
     }
     profstoptick(tick);
     profstopclk(clk);
-    fprintf(stderr, "roundup2\t%Lf\t%Lf\n",
+    fprintf(stderr, "rounduppow2b2\t%Lf\t%Lf\n",
             (long double)proftickdiff(tick) / (long double)PROF_ITERATIONS,
             (long double)profclkdiff(clk) / (long double)PROF_ITERATIONS);
 
@@ -819,7 +819,7 @@ proflzero64(void)
     }
     profstoptick(tick);
     profstopclk(clk);
-    fprintf(stderr, "lzero32\t\t%Lf\t%Lf\n",
+    fprintf(stderr, "_lzero64\t\t%Lf\t%Lf\n",
             (long double)proftickdiff(tick) / (long double)PROF_ITERATIONS,
             (long double)profclkdiff(clk) / (long double)PROF_ITERATIONS);
 
