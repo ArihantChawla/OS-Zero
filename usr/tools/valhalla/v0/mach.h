@@ -8,6 +8,16 @@
 /* Valhalla 0 (V0) processor machine interface */
 
 /*
+ * V0 Instruction Set
+ * ------------------
+ *
+ * Argument Descriptions
+ * ---------------------
+ * r    register                vm->regs[op->reg]
+ * i	immediate               op->val
+ * d    immediate               op->arg[0].i32 etc.
+ * m    memory [address]	v0getarg1(vm, op), v0getarg2(vm, op)
+ *
  * Instruction Prefixes
  * --------------------
  *
@@ -28,18 +38,6 @@
 #define V0_MFR_FPM (1U << 4) // fixed-point processor present
 
 /*
- * V0 Instruction Set
- * ------------------
- *
- * Argument Descriptions
- * ---------------------
- * r    register                vm->regs[op->reg]
- * i	immediate               op->val
- * d    immediate               op->arg[0].i32
- * m    memory [address]	v0getarg1(vm, op), v0getarg2(vm, op)
- */
-
-/*
  * ARITHMETIC-LOGICAL OPERATIONS
  * -----------------------------
  *
@@ -50,13 +48,14 @@
  * ----- ------  ---    ----    -----
  * INC	 0x01           r       increment by one
  * DEC   0x02           r       decrement by one
- * CMP   0x03    ri     r	compare (subtract + set MSW-flags)
+ * CMP   0x03    rid    r	compare (subtract + set MSW-flags)
  * ADD   0x04    rid	r	addition (ignore over and underflows)
  * ADC   0x05    rid    r       addition with carry-flag
  * SUB   0x06    rid	r	subtract; ignore underflow
  * SBB   0x07    rid    r       subtract with carry-flag
- * SHR   0x0a    rid    r       shift right logical (fill with zero)
- * SAR   0x0b    rid    r       shift right arithmetic (fill with sign-bit)
+ * SHL   0x08    ri     r       shift left [logical/fill with zero]
+ * SHR   0x0a    ri     r       shift right logical (fill with zero)
+ * SAR   0x0b    ri     r       shift right arithmetic (fill with sign-bit)
  * NOT   0x0c           r       bitwise inverse
  * AND   0x0d    rid    r       logical AND
  * XOR   0x0e    rid    r       logical XOR
@@ -127,8 +126,8 @@
  *
  * Mnemo   Opcode  Src	Dest	Brief
  * -----   ------  ---  ----    -----
- * HAM	   0x13    rid	r	Hamming weight/bit population (count of 1-bits)
- * CLZ     0x14    rid  r       count leading zero bits
+ * CLZ	   0x13    rid	r	Hamming weight/bit population (count of 1-bits)
+ * HAM     0x14    rid  r       count leading zero bits
  * BTR     0x15    rid  r       bit test and reset; original bit in VF
  * BTS     0x16    rid  r       bit test and set; original bit in VF
  * BTC     0x17    rid  r       bit test and complement; original bit in VF
@@ -141,8 +140,8 @@
  * SWP                  - parm - size shift count
  * - type width in bits: b - 8, h - 16, w - 32, q - 64, o - 128, h - 256
  */
-#define V0_HAM 0x13
-#define V0_CLZ 0x14
+#define V0_CLZ 0x13
+#define V0_HAM 0x14
 #define V0_BTR 0x15
 #define V0_BTS 0x16
 #define V0_BTC 0x17
@@ -159,24 +158,28 @@
  * -----   ------  ---  ----    -----
  * LDR     0x20    rid  r       load register
  * STR     0x21    rid  rm      store register
- * PSH     0x22    rid  rm      store register
- * PSM     0x23    rid  rm      store register
- * POP     0x24    rid  rm      store register
- * POM     0x25    rid  rm      store register
+ * STx     0x22    rid  rm      store register with sign-extension
+ * PSH     0x23    rid  rm      push register
+ * PSM     0x24    rid  rm      push many registers
+ * POP     0x25    rid  rm      pop register
+ * POM     0x26    rid  rm      pop many registers
  *
  * Opcode Notes
  * ------------
- * LDR/STR              - 0x01 denotes memory write, parm - size shift count
+ * LDR/STR/STX          - 0x01 denotes memory write, 0x02 means sign-extend,
+ *                        parm - size shift count
  * - type width in bits: b - 8, h - 16, w - 32, q - 64, o - 128, h - 256
- * PSH/PSM, POP/POM     - 0x01 denotes many-register operation
+ * - corresponding parm: b - 0, h - 1, w - 2, q - 3, o - 4, h - 5
+ * PSH/PSM, POP/POM     - 0x02 denotes many-register operation
  *                      - dest is a register-bitmap (v0_R0_REG..v0_NREGS)
  */
 #define V0_LDR 0x20
 #define V0_STR 0x21
-#define V0_PSH 0x22
-#define V0_PSM 0x23
+#define V0_STX 0x22
+#define V0_PSH 0x23
 #define V0_POP 0x24
-#define V0_POM 0x25
+#define V0_PSM 0x25
+#define V0_POM 0x26
 
 /*
  * BRANCH OPERATIONS
@@ -184,6 +187,7 @@
  *
  * Instructions
  * ------------
+ *
  * Mnemo   Opcode  Src	Dest	Brief                           Arguments
  * -----   ------  ---  ----    -----                           ---------
  * JMP     0x30         rdm     jump; branch unconditionally
@@ -215,37 +219,43 @@
  */
 #define V0_JMP 0x30
 #define V0_JMR 0x31
-#define V0_BIZ 0x32 //   r, m    branch if zero
-#define V0_BEQ 0x32 // same as BIZ
+#define V0_BIZ 0x32
+#define V0_BEQ 0x32
 #define V0_BNZ 0x33
-#define V0_BNE 0x33 // same as BNZ
-#define V0_BLT 0x34 //   r, m    branch if less than
-#define V0_BLE 0x35 //   r, m    branch if less or equal
-#define V0_BGT 0x36 //   r, m    branch if greater than
-#define V0_BGE 0x37 //   r, m    branch if greater or equal
-#define V0_BIO 0x38 //   r, m    branch if overflow
-#define V0_BNO 0x39 //   r, m    branch if no overflow
-#define V0_BIC 0x3a //   r, m    branch if carry/borrow
-#define V0_BNC 0x3b //   r, m    branch if no carry/borrow
+#define V0_BNE 0x33
+#define V0_BLT 0x34
+#define V0_BLE 0x35
+#define V0_BGT 0x36
+#define V0_BGE 0x37
+#define V0_BIO 0x38
+#define V0_BNO 0x39
+#define V0_BIC 0x3a
+#define V0_BNC 0x3b
 #define V0_CSR 0x3c
-#define V0_BEG 0x3d //   ridm    subroutine prologue
-#define V0_FIN 0x3e //   ridm    prepare for return from subroutine
-#define V0_RET 0x3f //   NONE    return from subroutine    stack byte count
+#define V0_BEG 0x3d
+#define V0_FIN 0x3e
+#define V0_RET 0x3f
 
 /* INPUT-OUTPUT OPERATIONS
  * -----------------------
  *
+ * Instructions
+ * ------------
+ *
+ * Mnemo   Opcode  Src	Dest	Brief                           Arguments
+ * -----   ------  ---  ----    -----                           ---------
+ * IRD     0x40    rd   r       read from I/O port              port, source
+ * IWR     0x41    r    rd      write to I/O port               port, source
+ * ICF     0x42    r    rd      configure I/O port              port, value
+ *
  * Opcode Notes
  * ------------
- * V0_IRD       - bits 0-2 of parm are shift count for operation size
- * V0_IWR       - bits 0-2 of parm are shift count for operation size
- *
- * Mnemo   Opcode  S & D   Brief                           Arguments
- * -----   ------  -----   -----                           ---------
+ * V0_IRD       - bits 0-3 of parm are shift count for operation size
+ * V0_IWR       - bits 0-3 of parm are shift count for operation size
  */
-#define V0_IRD 0x40 // read
-#define V0_IWR 0x41 // write
-#define V0_ICF 0x42 // configure I/O; set/clear user-permissions, ...
+#define V0_IRD 0x40
+#define V0_IWR 0x41
+#define V0_ICF 0x42
 
 /* MULTIPROCESSOR OPERATIONS
  * -------------------------
@@ -253,36 +263,51 @@
  * NOTE: the instructions in this section are optional; indicated with MP-bit in
  * MFW.
  *
- * Mnemo   Opcode  S & D           Brief                           Arguments
- * -----   ------  -----           -----                           ---------
+ * Mnemo   Opcode  Src  Dest        Brief                           Arguments
+ * -----   ------  ---  ----        -----                           ---------
  */
 #define V0_WFI 0x50 //   NONE            wait for event (e.g. interrupt)
 #define V0_SEV 0x51 //   NONE            signal event
 
-/* Memory Operations
- * -----------------
+/* Memory Management & Synchronisation
+ * -----------------------------------
+ *
+ * Instructions
+ * ------------
+ *
+ * Mnemo   Opcode  Src  Dest        Brief                           Arguments
+ * -----   ------  ---  ----        -----                           ---------
+ * BRD     0x60                     full memory barrier
+ * BWR     0x61                     memory read barrier
+ * BAR     0x62                     memory write barrier
+ * CPF     0x63    m                cache prefetch
+ * CUL     0x64    m                cacheline unlock
+ * CLK     0x65    m                cacheline lock
+ * CLL     0x66    m    r           load linked
+ * CST     0x67    r    m           store conditional (if cacheline clean)
+ * FPG     0x68    m                flush memory TLB-entry
+ * FLS     0x69    m    ri          flush cachelines
+ * CAS     0x6a    r, d, m         compare and swap                val/want/adr
+ * CS2     0x6a    r, d, m         dual-word compare and swap      val/want/adr
  *
  * Opcode Notes
  * ------------
- * RDB, WRB, FMB        - bits 0-1: 0 - read, 1 - write, 2 - both
- * LCK, LDL, STC, ULK	- bits 0-1: 0 - lock, 1 - load, 2 - store, 3 - release
- *
- *
- * Mnemo   Opcode  S & D           Brief                           Arguments
- * -----   ------  -----           -----                           ---------
+ * BAR, BRD, BWR        - bits 0-1: 0 - read, 1 - write, 2 - both
+ * CLK/CUL/CLL/CST      - 0x04 - locked operation
+ *                        - 0x00 unlock, 0x01 lock, 0x02 load, 0x03 store
  */
-#define V0_BAR 0x60 //   NONE            full memory barrier
-#define V0_BRD 0x61 //   NONE            memory read barrier
-#define V0_BWR 0x62 //   NONE            memory write barrier
-#define V0_CPF 0x63 //   m               cache prefetch            byte address
-#define V0_CLK 0x64 //   m               cacheline lock            byte address
-#define V0_ULK 0x65 //   m               cacheline unlock          byte address
-#define V0_CLL 0x66 //   m               linked load
-#define V0_CST 0x67 //   ri, m           conditional store
-#define V0_FPG 0x68 //   m               flush TLB entry           byte address
-#define V0_FLS 0x69 //   m               flush cachelines
-#define V0_CAS 0x6a //   m, ri, ri       compare and swap
-#define V0_CS2 0x6b //   m, ri, ri       double-word compare and swap
+#define V0_BAR 0x60
+#define V0_BRD 0x61
+#define V0_BWR 0x62
+#define V0_CPF 0x63
+#define V0_CUL 0x64
+#define V0_CLK 0x65
+#define V0_CLL 0x66
+#define V0_CST 0x67
+#define V0_FPG 0x68
+#define V0_FLS 0x69
+#define V0_CAS 0x6a
+#define V0_CS2 0x6b
 
 /* SYSTEM OPERATIONS
  * -----------------
@@ -291,8 +316,8 @@
  * -----   ------  -----   -----                           ---------
  */
 #define V0_NOP 0xff
-#define V0_HLT 0xfe //   NONE    halt processor
-#define V0_RST 0xfd //   NONE    reset processor
+#define V0_HLT 0xfe
+#define V0_RST 0xfd
 
 #endif /* __VPU_V0_MACH_H__ */
 

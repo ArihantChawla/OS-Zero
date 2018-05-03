@@ -10,6 +10,7 @@
 #define GFX_RGB888    2
 #define GFX_RGB555    3
 #define GFX_RGB565    4
+#define GFX_RGB444    5
 
 #define GFX_BLACK     0x00000000
 #define GFX_WHITE     0xffffffff
@@ -133,6 +134,14 @@ typedef int16_t gfxpix565;
 #define GFX_RGB565_GREEN_SHIFT     3
 #define GFX_RGB565_BLUE_SHIFT     -3
 
+#define GFX_RGB444_RED_MASK        0x0f00
+#define GFX_RGB444_GREEN_MASK      0x00f0
+#define GFX_RGB444_BLUE_MASK       0x000f
+
+#define GFX_RGB444_RED_SHIFT       4
+#define GFX_RGB444_GREEN_SHIFT     4
+#define GFX_RGB444_BLUE_SHIFT      4
+
 #define gfxtopix(dst, pix) (gfxto##dst(pix))
 #define gfxtopix32(pix)   (pix)
 
@@ -158,11 +167,22 @@ typedef int16_t gfxpix565;
               GFX_RGB565_BLUE_MASK,                                     \
               GFX_RGB565_BLUE_SHIFT))
 
+#define gfxtorgb444(pix)                                                \
+    (gfxtoc(gfxgetred(pix),                                             \
+            GFX_RGB444_RED_MASK,                                        \
+            GFX_RGB444_RED_SHIFT)                                       \
+     | gfxtoc(gfxgetgreen(pix),                                         \
+              GFX_RGB444_GREEN_MASK,                                    \
+              GFX_RGB444_GREEN_SHIFT)                                   \
+     | gfxtoc(gfxgetblue(pix),                                          \
+              GFX_RGB444_BLUE_MASK,                                     \
+              GFX_RGB444_BLUE_SHIFT))
+
 #define gfxsetpix32_p(pix, ptr, aval)                                   \
     do {                                                                \
-        gfxpix32          _pix = (pix);                                 \
-        struct gfxpix32 *_src = (struct gfxpix32 *)&_pix;             \
-        struct gfxpix32 *_dest = (struct gfxpix32 *)(ptr);            \
+        gfxpix32         _pix = (pix);                                  \
+        struct gfxpix32 *_src = (struct gfxpix32 *)&_pix;               \
+        struct gfxpix32 *_dest = (struct gfxpix32 *)(ptr);              \
                                                                         \
         _dest->red = gfxgetred_p(_src);                                 \
         _dest->green = gfxgetgreen_p(_src);                             \

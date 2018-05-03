@@ -1,6 +1,6 @@
 /* REFERENCE: https://bisqwit.iki.fi/story/howto/bitmath/ */
 
-#define v0issigned(i) ((i) & 0x80000000)
+#define v0hassign(i) ((i) & 0x80000000)
 
 #define V0_CHAR_BIT   8
 #define V0_SIGN_BIT   0x80000000
@@ -185,7 +185,7 @@ _v0hamopb(uint32_t a)
     uint32_t mask2 = 0x33333333;
     uint32_t mask3 = 0x0f0f0f0f;
     uint32_t mask4 = 0x00ff00ff;
-    
+
     a = ((a >> 1) & mask1) + (a & mask1);
     /* each 2-bit chunk sums 2 bits */
     a = ((a >> 2) & mask2) + (a & mask2);
@@ -207,3 +207,25 @@ _v0hamopb(uint32_t a)
         _ures = _v0hamopb(_udest);                                      \
         (res) = _ures;                                                  \
     } while (0)
+
+// sign-extend src
+#define v0sexop(src, dest, res, flg)                                    \
+    do {                                                                \
+        uint32_t _udest = (src);                                        \
+        uint32_t _sign = (src) & 0x80000000;                            \
+        uint32_t _clz;                                                  \
+        uint32_t _cnt;                                                  \
+                                                                        \
+        if (_sign) {                                                    \
+            _cnt = 31;                                                  \
+            v0clzop(src, dest, _clz, 0);                                \
+            _sign--;                                                    \
+            if (_clz) {                                                 \
+                _cnt -= clz;                                            \
+                _sign <<= _cnt;                                         \
+                _udest |= _sign;                                        \
+            }                                                           \
+        }                                                               \
+        (res) = _udest;                                                 \
+    } while (0)
+

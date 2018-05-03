@@ -42,9 +42,11 @@ struct memarn {
 #define memgetblkbkt(nfo)                                               \
     (((nfo) >> MEM_BLK_ID_BITS) & ((1L << MEM_BLK_ID_BITS) - 1))
 #define memlkblk(blk)                                                   \
-    (!m_cmpsetbit((m_atomic_t *)&blk->ptr, MEM_LK_BIT_POS))
-#define memunlkblk(blk)                                                 \
-    (m_clrbit((m_atomic_t *)&blk->ptr, MEM_LK_BIT_POS)))
+    (!m_cmpsetbit((m_atomic_t *)&((void *)(blk)[-1]), MEM_LK_BIT_POS))
+#define memlkblk(blk)                                                   \
+    (m_clrbit((m_atomic_t *)&((void *)(blk)[-1]), MEM_LK_BIT_POS))
+#define memgetinfo(blk)                                                 \
+    (*((uintptr_t *)(blk)[-2]))
 struct memblk {
     uintptr_t  info;
     void      *ptr;
@@ -63,6 +65,7 @@ struct memhashtab {
     struct memhash     queue[31];
 };
 
+/* global allocator data */
 struct mem {
     uintptr_t          flg;
     uintptr_t          nbused;

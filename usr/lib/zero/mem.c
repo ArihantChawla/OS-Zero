@@ -66,31 +66,35 @@ memgetbig(size_t sz)
     size_t           bkt;
     struct memslab **slot;
     struct memslab  *slab;
+    struct memslab  *next;
     size_t           ndx;
     size_t           n;
 
     _memcalcbigbkt(sz, bkt);
     slot = &g_mem.bigtab[bkt];
     do {
-        slab = *slot;
-        if ((slab)
-            && !m_cmpsetbit((m_atomic_t *)slot, MEM_LK_BIT_OFS)) {
-            ndx = m_fetchadd(&slab->ndx, 1);
-            n = slab->n;
-            if (ndx < n - 1) {
-                ptr = slab->stk[ndx];
-            } else if (ndx == n - 1) {
-                && m_cmpswap(&slab->ndx, n, SIZE_MAX)) {
-                if (slab->next) {
-                    slab->next->prev = NULL;
+        if (!m_cmpsetbit((m_atomic_t *)slot, MEM_LK_BIT_OFS)) {
+            slab = *slot;
+            slab = (void *)((uintptr_t)slab & ~MEM_LK_BIT);
+            if (slab) {
+                ndx = m_fetchadd(&slab->ndx, 1);
+                n = slab->n;
+                if (ndx < n - 1) {
+                    ptr = slab->stk[ndx];
+                } else if (ndx == n - 1
+                           && m_cmpswap(&slab->ndx, n, SIZE_MAX)) {
+                    next = slab->next;
+                    ptr = slab->stk[n];
+                    if (next) {
+                        next->prev = NULL;
+                    }
+                    if (slab->prev) {
+                        slab->prev->next = NULL;
+                    }
+                    *slab = slab->next;
+                } else {
+                    m_fetchadd(&slab->ndx, -1);
                 }
-                ptr = slab->stk[n];
-                *slab = slab->next;
-                if (slab->prev) {
-                    slab->prev->next = NULL;
-                }
-            } else {
-                m_fetchadd(&slab->ndx, -1);
             }
             m_clrbit((m_atomic_t *)slot, MEM_LK_BIT_POS);
         }
