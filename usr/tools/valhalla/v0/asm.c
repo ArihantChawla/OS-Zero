@@ -17,7 +17,7 @@ struct vasop     *v0optab[256];
 static long       vasopbits[V0_NINST_MAX];
 static long       vasinitflg;
 
-#define vasopisnop(op)    (*((uint32_t *)(op)) == V0_NOP)
+#define vasopisnop(op)    (*((uint32_t *)(op)) == V0_NOP_CODE)
 //#define vasophasval(code) (bitset(v0valbits, code))
 
 #define vassetnop(adr)    (*((uint32_t *)(op)) = V0_NOP)

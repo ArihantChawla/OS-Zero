@@ -104,28 +104,27 @@ v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
 
 #define v0initopbits(tab)                                               \
     do {                                                                \
-        v0setopbits(V0_NOP, 0, 0, tab);                                 \
-        v0setopbits(V0_INC, V0_R_ARG, 0, tab);                          \
-        v0setopbits(V0_DEC, V0_R_ARG, 0, tab);                          \
-        v0setopbits(V0_CMP, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_ADD, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_ADC, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_SUB, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_SBB, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_SHL, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_SAL, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_SHR, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_SAR, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_NOT, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_AND, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_XOR, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_LOR, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_ARP, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_MUL, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_MUL, V0_RI_ARG, V0_R_ARG, tab);                  \
-        v0setopbits(V0_LDR, V0_RIM_ARG, V0_R_ARG, tab);                 \
-        v0setopbits(V0_STR, V0_RI_ARG, V0_RM_ARG, tab);                 \
-        v0setopbits(V0_PSH, V0_RI_ARG, V0_R_ARG, tab);                  \
+        (((v0reg *)(tab))[V0_NOP] = V0_NOP_CODE);			\
+	v0setopbits(V0_INC, V0_R_ARG, 0, tab);				\
+	v0setopbits(V0_DEC, V0_R_ARG, 0, tab);				\
+	v0setopbits(V0_CMP, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_ADD, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_ADC, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_SUB, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_SBB, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_SHL, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_SHR, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_SAR, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_NOT, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_AND, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_XOR, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_LOR, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_CRP, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_MUL, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_MUL, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_LDR, V0_RIM_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_STR, V0_RI_ARG, V0_RM_ARG, tab);			\
+	v0setopbits(V0_PSH, V0_RI_ARG, V0_R_ARG, tab);			\
         v0setopbits(V0_PSM, V0_RI_ARG, V0_R_ARG, tab);                  \
         v0setopbits(V0_POP, V0_RI_ARG, V0_R_ARG, tab);                  \
         v0setopbits(V0_POM, V0_RI_ARG, V0_R_ARG, tab);                  \
@@ -135,7 +134,6 @@ v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
 
 #define v0initops(tab)                                                  \
     do {                                                                \
-        v0setop(V0_NOP, nop, 0, tab);                                   \
         v0setop(V0_INC, inc, 1, tab);                                   \
         v0setop(V0_DEC, dec, 1, tab);                                   \
         v0setop(V0_CMP, cmp, 2, tab);                                   \
@@ -144,14 +142,13 @@ v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
         v0setop(V0_SUB, sub, 2, tab);                                   \
         v0setop(V0_SBB, sbb, 2, tab);                                   \
         v0setop(V0_SHL, shl, 2, tab);                                   \
-        v0setop(V0_SAL, sal, 2, tab);                                   \
         v0setop(V0_SHR, shr, 2, tab);                                   \
         v0setop(V0_SAR, sar, 2, tab);                                   \
         v0setop(V0_NOT, not, 1, tab);                                   \
         v0setop(V0_AND, and, 2, tab);                                   \
         v0setop(V0_XOR, xor, 2, tab);                                   \
         v0setop(V0_LOR, lor, 2, tab);                                   \
-        v0setop(V0_ARP, arp, 1, tab);                                   \
+        v0setop(V0_CRP, crp, 1, tab);                                   \
         v0setop(V0_MUL, mul, 2, tab);                                   \
         v0setop(V0_MUL, muh, 2, tab);                                   \
         v0setop(V0_LDR, ldr, 2, tab);                                   \
@@ -412,27 +409,6 @@ v0shl(struct v0 *vm, struct v0op *op)
 }
 
 static _V0OPFUNC_T
-v0sal(struct v0 *vm, struct v0op *op)
-{
-    v0ureg pc = vm->regs[V0_PC_REG];
-    v0reg *dptr = v0getadr2(vm, op);
-    v0reg  src = v0getarg1(vm, op);
-    v0reg  dest = *dptr;
-
-    if (op->adr == V0_REG_ADR || op->adr == V0_IMM_ADR) {
-        pc += sizeof(struct v0op);
-    } else {
-        pc += sizeof(struct v0op) + sizeof(union v0oparg);
-    }
-    dest <<= src;
-    v0addspeedcnt(4);
-    vm->regs[V0_PC_REG] = pc;
-    *dptr = dest;
-
-    return pc;
-}
-
-static _V0OPFUNC_T
 v0shr(struct v0 *vm, struct v0op *op)
 {
     v0ureg pc = vm->regs[V0_PC_REG];
@@ -571,10 +547,10 @@ v0lor(struct v0 *vm, struct v0op *op)
     return pc;
 }
 
-/* ARP */
+/* CRP */
 
 static _V0OPFUNC_T
-v0arp(struct v0 *vm, struct v0op *op)
+v0crp(struct v0 *vm, struct v0op *op)
 {
     v0ureg  pc = vm->regs[V0_PC_REG];
     v0wreg  src = v0getarg1(vm, op);

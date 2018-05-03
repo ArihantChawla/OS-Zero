@@ -66,8 +66,14 @@ struct v0iofuncs {
 #define V0_R13_REG       0x0d
 #define V0_R14_REG       0x0e
 #define V0_R15_REG       0x0f
-#define V0_GEN_REGS      16 // number of registers in group (general, system)
+#define V0_INT_REGS      16 // # of integer/scalar registers
 #define V0_SAVE_REGS     8  // caller saves r0..r7, callee r8..r15
+#define V0_PC_REG        (V0_MAX_REGS + 0x00) // program counter
+#define V0_FP_REG        (V0_MAX_REGS + 0x01) // frame pointer
+#define V0_SP_REG        (V0_MAX_REGS + 0x02) // stack pointer
+#define V0_MSW_REG       (V0_MAX_REGS + 0x03) // machine status word
+#define V0_MFW_REG       (V0_MAX_REGS + 0x04) // machine feature word
+#define V0_SYS_REGS      16
 /* system register IDs */
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #define V0_RET_LO        0x00 // [dual-word] return value register, low word
@@ -76,19 +82,7 @@ struct v0iofuncs {
 #define V0_RET_HI        0x00 // [dual-word] return value register, high word
 #define V0_RET_LO        0x01 // [dual-word] return value register, low word
 #endif
-#define V0_PC_REG        (V0_GEN_REGS + 0x00) // program counter i.e. instruction pointer
-#define V0_FP_REG        (V0_GEN_REGS + 0x01) // frame pointer
-#define V0_SP_REG        (V0_GEN_REGS + 0x02) // stack pointer
-#define V0_MSW_REG       (V0_GEN_REGS + 0x03) // machine status word
-#define V0_MFW_REG       (V0_GEN_REGS + 0x04) // machine feature word
-#if 0
-#define V0_IHT_REG       0x08 // interrupt handler table base address
-#define V0_PDB_REG       0x09 // page directory base address register
-#define V0_TID_REG       0x0a // task ID register
-#define V0_TLS_REG       0x0b // thread-local storage base address register
-#define V0_TSR_REG       0x0c // task-structure/state base address
-#endif
-#define V0_SYS_REGS      16
+#define V0_MAX_REGS      32     // # of bits in register maps
 /* values for regs[V0_MSW] */
 #define V0_MSW_DEF_BITS  (V0_TF_BIT)
 #define V0_MSW_ZF_BIT    (1 << 0)  // zero-flag
@@ -118,7 +112,7 @@ struct v0seg {
 };
 
 struct v0 {
-    v0wreg            regs[V0_GEN_REGS + V0_SYS_REGS];
+    v0wreg            regs[V0_INT_REGS + V0_SYS_REGS];
     struct v0seg      segs[V0_SEGS];
     long              flg;
     v0memflg         *membits;
@@ -186,7 +180,7 @@ union v0oparg {
 
 /* NOP is declared as all 1-bits */
 #define V0_NOP_CODE      (~UINT32_C(0))
-#define v0opisnop(op)    (*(uint32_t *)(op) == V0_NOP)
+#define v0opisnop(op)    (*(uint32_t *)(op) == V0_NOP_CODE)
 #define V0_SIGNED_BIT    (1 << 9)
 #define v0opissigned(op) ((op)->val & V0_SIGNED_BIT)
 

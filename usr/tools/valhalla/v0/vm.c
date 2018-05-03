@@ -221,8 +221,8 @@ v0loop(struct v0 *vm)
               pc = v0lor(vm, op);
 
               opjmp(vm, pc);
-          v0oparp:
-              pc = v0arp(vm, op);
+          v0opcrp:
+              pc = v0crp(vm, op);
 
               opjmp(vm, pc);
           v0opmul:
