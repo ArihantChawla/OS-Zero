@@ -110,8 +110,8 @@
  * MUL/MUH		- 0x2 denotes high word return
  */
 #define V0_CRP   0x10 //  ri, r   Multiplication
-#define V0_MUL   0x11 //  ri, r   Multiplication, get high word
-#define V0_MUH   0x12 //  ri, r
+#define V0_MUL   0x11 //  ri, r   Multiplication, get low word of results
+#define V0_MUH   0x12 //  ri, r   Multiplication, get high word of results
 
 /*
  * BIT OPERATIONS
