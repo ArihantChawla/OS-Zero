@@ -1075,37 +1075,39 @@ bitcnt1u64nomul(uint64_t a)
     return a;
 }
 
-static __inline__ uint32_t
-mod15u32(uint32_t a)
-{
-    a = (a >> 16) + (a & 0xffff); /* sum base 2**16 digits */
-    a = (a >>  8) + (a & 0xff);   /* sum base 2**8 digits */
-    a = (a >>  4) + (a & 0xf);    /* sum base 2**4 digits */
-    if (a < 15) return a;
-    if (a < (2 * 15)) return a - 15;
+/* found at http://homepage.cs.uiowa.edu/~jones/bcd/mod.shtml */
 
-    return a - (2 * 15);
+static __inline__ uint32_t
+mod15u32(uint32_t u32)
+{
+    u32 = (u32 >> 16) + (u32 & 0xffff); /* sum base 2**16 digits */
+    u32 = (u32 >>  8) + (u32 & 0xff);   /* sum base 2**8 digits */
+    u32 = (u32 >>  4) + (u32 & 0xf);    /* sum base 2**4 digits */
+    if (u32 < 15) return u32;
+    if (u32 < (2 * 15)) return u32 - 15;
+
+    return u32 - (2 * 15);
 }
 
 static __inline__ uint32_t
-mod255u32(uint32_t a)
+mod255u32(uint32_t u32)
 {
-    a = (a >> 16) + (a & 0xffff); /* sum base 2**16 digits */
-    a = (a >>  8) + (a & 0xff);   /* sum base 2**8 digits */
-    if (a < 255) return a;
-    if (a < (2 * 255)) return a - 255;
+    u32 = (u32 >> 16) + (u32 & 0xffff); /* sum base 2**16 digits */
+    u32 = (u32 >>  8) + (u32 & 0xff);   /* sum base 2**8 digits */
+    if (u32 < 255) return u32;
+    if (u32 < (2 * 255)) return u32 - 255;
 
-    return a - (2 * 255);
+    return u32 - (2 * 255);
 }
 
 static __inline__ uint32_t
-mod65535u32(uint32_t a)
+mod65535u32(uint32_t u32)
 {
-    a = (a >> 16) + (a & 0xffff); /* sum base 2**16 digits */
-    if (a < 65535) return a;
-    if (a < (2 * 65535)) return a - 65535;
+    u32 = (u32 >> 16) + (u32 & 0xffff); /* sum base 2**16 digits */
+    if (u32 < 65535) return u32;
+    if (u32 < (2 * 65535)) return u32 - 65535;
 
-    return a - (2 * 65535);
+    return u32 - (2 * 65535);
 }
 
 /*

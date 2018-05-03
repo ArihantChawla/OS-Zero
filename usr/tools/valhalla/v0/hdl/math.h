@@ -2,6 +2,10 @@
 
 #define v0issigned(i) ((i) & 0x80000000)
 
+#define V0_CHAR_BIT   8
+#define V0_SIGN_BIT   0x80000000
+#define v0getsign(i)  ((i) & V0_SIGN_BIT)
+
 // dest -= -src;
 #define v0addop(src, dest, res, flg)                                    \
     do {                                                                \
@@ -110,3 +114,96 @@
         (res) = _utmp1;                                                 \
     } while (0)
 
+// count leading zero bits in dest
+#define v0clzop(src, dest, res, flg)                                    \
+    do {                                                                \
+        uint32_t _ucnt = 32;                                            \
+        uint32_t _ures = 32;                                            \
+        uint32_t _utmp = (dest);                                        \
+        uint32_t _umask;                                                \
+                                                                        \
+        if (dest) {                                                     \
+            _ures = 0;                                                  \
+            _utmp = (dest);                                             \
+            _umask = 0x01;                                              \
+            _ucnt >>= 1;                                                \
+            _umask <<= V0_CHAR_BIT * sizeof(uint32_t) - 1;              \
+            if (!(_utmp & _umask)) {                                    \
+                _umask = 0xffffffff;                                    \
+                _umask <<= _ucnt;                                       \
+                if (!(_utmp & _umask)) {                                \
+                    _utmp <<= _ucnt;                                    \
+                    _ures += _ucnt;                                     \
+                    _ucnt >>= 1;                                        \
+                }                                                       \
+                _umask <<= _ucnt;                                       \
+                if (!(_utmp & _umask)) {                                \
+                    _utmp <<= _ucnt;                                    \
+                    _ures += _ucnt;                                     \
+                    _ucnt >>= 1;                                        \
+                }                                                       \
+                _umask <<= _ucnt;                                       \
+                if (!(_utmp & _umask)) {                                \
+                    _utmp <<= _ucnt;                                    \
+                    _ures += _ucnt;                                     \
+                    _ucnt >>= 1;                                        \
+                }                                                       \
+                _umask <<= _ucnt;                                       \
+                if (!(_utmp & _umask)) {                                \
+                    _utmp <<= _ucnt;                                    \
+                    _ures += _ucnt;                                     \
+                    _ucnt >>= 1;                                        \
+                }                                                       \
+                _umask <<= _ucnt;                                       \
+                if (!(_utmp & _umask)) {                                \
+                    _ures++;                                            \
+                }                                                       \
+            }                                                           \
+        }                                                               \
+        (r) = _ures;                                                    \
+    } while (0)
+
+static __inline__ uint32_t
+_v0hamopa(uint32_t a)
+{
+    a = ((a >> 1) & 0x55555555) + (a & 0x55555555);
+    /* each 2-bit chunk sums 2 bits */
+    a = ((a >> 2) & 0x33333333) + (a & 0x33333333);
+    /* each 4-bit chunk sums 4 bits */
+    a = ((a >> 4) & 0x0F0F0F0F) + (a & 0x0F0F0F0F);
+    /* each 8-bit chunk sums 8 bits */
+    a = ((a >> 8) & 0x00FF00FF) + (a & 0x00FF00FF);
+    /* each 16-bit chunk sums 16 bits */
+
+    return (a >> 16) + (a & 0x0000FFFF);
+}
+
+static __inline__ uint32_t
+_v0hamopb(uint32_t a)
+{
+    uint32_t mask1 = 0x55555555;
+    uint32_t mask2 = 0x33333333;
+    uint32_t mask3 = 0x0f0f0f0f;
+    uint32_t mask4 = 0x00ff00ff;
+    
+    a = ((a >> 1) & mask1) + (a & mask1);
+    /* each 2-bit chunk sums 2 bits */
+    a = ((a >> 2) & mask2) + (a & mask2);
+    /* each 4-bit chunk sums 4 bits */
+    a = ((a >> 4) & mask3) + (a & mask3);
+    /* each 8-bit chunk sums 8 bits */
+    a = ((a >> 8) & mask4) + (a & mask4);
+    /* each 16-bit chunk sums 16 bits */
+
+    return (a >> 16) + (a & 0x0000FFFF);
+}
+
+// Hamming Weight, i.e. calculate the number of 1-bits in a
+#define v0hamop(src, dest, res, flg)                                    \
+    do {                                                                \
+        uint32_t _udest = (dest);                                       \
+        uint32_t _ures;                                                 \
+                                                                        \
+        _ures = _v0hamopb(_udest);                                      \
+        (res) = _ures;                                                  \
+    } while (0)
