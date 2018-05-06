@@ -19,7 +19,7 @@ void ioapicinit(long unit);
 #define __STRUCT_IOAPIC_SIZE                                            \
     (5 * sizeof(int32_t))
 #define __STRUCT_IOAPIC_PAD                                             \
-    (roundup(__STRUCT_IOAPIC_SIZE, CLSIZE) - __STRUCT_IOAPIC_SIZE)
+    (rounduppow2(__STRUCT_IOAPIC_SIZE, CLSIZE) - __STRUCT_IOAPIC_SIZE)
 struct ioapic {
     uint32_t reg;
     uint32_t _pad1[3];

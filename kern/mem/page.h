@@ -52,7 +52,7 @@ struct virtpage {
 #define __STRUCT_PHYSLRUQUEUE_SIZE                                      \
     (sizeof(long) + sizeof(void *))
 #define __STRUCT_PHYSLRUQUEUE_PAD                                       \
-    (roundup(__STRUCT_PHYSLRUQUEUE_SIZE, CLSIZE) - __STRUCT_PHYSLRUQUEUE_SIZE)
+    (rounduppow2(__STRUCT_PHYSLRUQUEUE_SIZE, CLSIZE) - __STRUCT_PHYSLRUQUEUE_SIZE)
 struct physlruqueue {
     VM_LK_T          lk;
     struct page *list;
@@ -62,7 +62,7 @@ struct physlruqueue {
 #define __STRUCT_PHYSPAGE_SIZE                                          \
     (sizeof(long) + 3 * sizeof(void *) + 4 * sizeof(m_ureg_t))
 #define __STRUCT_PHYSPAGE_PAD                                           \
-    (roundup(__STRUCT_PHYSPAGE_SIZE, CLSIZE) - __STRUCT_PHYSPAGE_SIZE)
+    (rounduppow2(__STRUCT_PHYSPAGE_SIZE, CLSIZE) - __STRUCT_PHYSPAGE_SIZE)
 struct page {
     VM_LK_T      lk;        // mutual exclusion lock
     m_ureg_t     nref;      // reference count
@@ -85,7 +85,7 @@ typedef uint64_t swapoff_t;
 #define __STRUCT_SWAPDEV_SIZE                                           \
     (sizeof(long) + 2 * sizeof(void *) + sizeof(swapoff_t))
 #define __STRUCT_SWAPDEV_PAD                                            \
-    (roundup(__STRUCT_SWAPDEV_SIZE, CLSIZE) - __STRUCT_SWAPDEV_SIZE)
+    (rounduppow2(__STRUCT_SWAPDEV_SIZE, CLSIZE) - __STRUCT_SWAPDEV_SIZE)
 struct swapdev {
     m_atomic_t   lk;
     swapoff_t    npg;

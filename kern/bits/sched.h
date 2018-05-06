@@ -1,6 +1,9 @@
 #ifndef __KERN_BITS_SCHED_H__
 #define __KERN_BITS_SCHED_H__
 
+#define _roundup16b(a, b)                                               \
+    ((fastu16divu16((a) + (b) - 1, (b), fastu16divu16tab)) * (b))
+
 #include <kern/conf.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
@@ -89,7 +92,7 @@ extern void schedsetsleep(struct task *task);
 #define __STRUCT_SCHEDQUEUESET_SIZE                                     \
     (sizeof(m_atomic_t) + 7 * sizeof(void *))
 #define __STRUCT_SCHEDQUEUESET_PAD                                      \
-    (roundup(__STRUCT_SCHEDQUEUESET_SIZE, CLSIZE) - __STRUCT_SCHEDQUEUESET_SIZE)
+    (rounduppow2(__STRUCT_SCHEDQUEUESET_SIZE, CLSIZE) - __STRUCT_SCHEDQUEUESET_SIZE)
 struct schedqueueset {
     m_atomic_t    lk;
     long         *curmap;
@@ -439,7 +442,8 @@ schedcalcintparm(struct task *task, long *retscore)
             res = SCHEDUSERPRIOMIN - SCHEDNICEHALF;
             total = max(total, kgethz());
             range = diff - res + 1;
-            tmp = roundup(total, range);
+            //            tmp = roundup(total, range);
+            tmp = _roundup16b(total, range);
             res += nice;
             div = fastu16divu16(total, tmp, fastu16divu16tab);
             range--;

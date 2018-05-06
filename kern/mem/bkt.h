@@ -13,7 +13,7 @@
 #define __STRUCT_MEMBKT_SIZE                                         \
     (sizeof(long) + sizeof(void *))
 #define __STRUCT_MEMBKT_PAD                                          \
-    (roundup(__STRUCT_MEMBKT_SIZE, CLSIZE) - __STRUCT_MEMBKT_SIZE)
+    (rounduppow2(__STRUCT_MEMBKT_SIZE, CLSIZE) - __STRUCT_MEMBKT_SIZE)
 struct membkt {
     m_atomic_t  lk;
     void       *list;

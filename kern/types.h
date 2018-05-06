@@ -39,7 +39,7 @@ struct stkhdr {
 #define __STRUCT_WAITHDR_SIZE                                           \
     (2 * sizeof(long) + sizeof(void *) + sizeof(time_t))
 #define __STRUCT_WAITHDR_PAD                                            \
-    (roundup(__STRUCT_WAITHDR_SIZE, CLSIZE) - __STRUCT_WAITHDR_SIZE)
+    (rounduppow2(__STRUCT_WAITHDR_SIZE, CLSIZE) - __STRUCT_WAITHDR_SIZE)
 struct waithdr {
     volatile long  lk;          // mutex for modifying the queue
     long           cnt;         // # of items in queue

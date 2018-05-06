@@ -1,7 +1,5 @@
 /* REFERENCE: https://bisqwit.iki.fi/story/howto/bitmath/ */
 
-#define v0hassign(i) ((i) & 0x80000000)
-
 #define V0_CHAR_BIT   8
 #define V0_SIGN_BIT   0x80000000
 #define v0getsign(i)  ((i) & V0_SIGN_BIT)

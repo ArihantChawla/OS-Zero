@@ -101,7 +101,7 @@ typedef int32_t bufval_t;
     (sizeof(long) + 5 * sizeof(void *)                                  \
      + sizeof(bufval_t) + sizeof(int32_t) + 2 * sizeof(int16_t))
 #define __STRUCT_BUFBLK_PAD                                             \
-    (roundup(__STRUCT_BUFBLK_SIZE, CLSIZE) - __STRUCT_BUFBLK_SIZE)
+    (rounduppow2(__STRUCT_BUFBLK_SIZE, CLSIZE) - __STRUCT_BUFBLK_SIZE)
 struct bufblk {
     const void    *data;        // buffer address + flags in low bits
     long           flg;         // shift count for size + flags as above
@@ -134,7 +134,7 @@ struct bufblk {
 #define __STRUCT_BUFDEV_SIZE                                            \
     (6 * sizeof(long))
 #define __STRUCT_BUFDEV_PAD                                             \
-    (roundup(__STRUCT_BUFDEV_SIZE, CLSIZE) - __STRUCT_BUFDEV_SIZE)
+    (rounduppow2(__STRUCT_BUFDEV_SIZE, CLSIZE) - __STRUCT_BUFDEV_SIZE)
 struct bufdev {
     m_atomic_t lk;              // lock
     long       id;              // system descriptor
@@ -148,7 +148,7 @@ struct bufdev {
 #define __STRUCT_BUFCHAIN_SIZE                                          \
     (2 * sizeof(long) + sizeof(void *))
 #define __STRUCT_BUFCHAIN_PAD                                           \
-    (roundup(__STRUCT_BUFCHAIN_SIZE, CLSIZE) - __STRUCT_BUFCHAIN_SIZE)
+    (rounduppow2(__STRUCT_BUFCHAIN_SIZE, CLSIZE) - __STRUCT_BUFCHAIN_SIZE)
 struct bufchain {
     m_atomic_t     lk;
     long           nitem;
@@ -159,7 +159,7 @@ struct bufchain {
 #define __STRUCT_BUFBLKQUEUE_SIZE                                       \
     (sizeof(long) + sizeof(void *))
 #define __STRUCT_BUFBLKQUEUE_PAD                                        \
-    (roundup(__STRUCT_BUFBLKQUEUE_SIZE, CLSIZE) - __STRUCT_BUFBLKQUEUE_SIZE)
+    (rounduppow2(__STRUCT_BUFBLKQUEUE_SIZE, CLSIZE) - __STRUCT_BUFBLKQUEUE_SIZE)
 struct bufblkqueue {
     m_atomic_t     lk;
     struct bufblk *head;
