@@ -17,7 +17,7 @@ srandklc32(uint32_t seed)
 uint32_t
 randklc32(void)
 {
-    uint32_t val = i_randklfc32();
+    uint32_t val = i_randklc32();
 
     return val;
 }
@@ -33,7 +33,7 @@ srandklc64(uint64_t seed)
 uint64_t
 randklc64(void)
 {
-    uint64_t val = i_randklfc64();
+    uint64_t val = i_randklc64();
 
     return val;
 }

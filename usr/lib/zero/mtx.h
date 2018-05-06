@@ -1,7 +1,6 @@
 #ifndef __ZERO_MTX_H__
 #define __ZERO_MTX_H__
 
-#if !defined(ZEROMTX)
 #define ZEROMTX  1
 #if !defined(ZEROFMTX)
 #define ZEROFMTX 1
@@ -31,22 +30,54 @@
 #endif
 
 #if defined(PTHREAD) && defined(ZEROPTHREAD)
-typedef pthread_mutex_t zerofmtx;
+typedef pthread_mutex_t     zerofmtx;
 #else
-typedef volatile m_atomic_t      zerofmtx;
+typedef volatile m_atomic_t zerofmtx;
 #endif
 
 #if (defined(ZERO_THREADS) || defined(ZERO_MUTEX)                       \
      || defined(__KERNEL__) || defined(ZEROFMTX))
-#define FMTXINITVAL 0
-#define FMTXLKVAL   1
+#define FMTXINITVAL MTXINITVAL
+#define FMTXLKVAL   MTXLKVAL
 #if defined(ZERONEWFMTX)
-#define FMTXCONTVAL 2
+#define FMTXCONTVAL MTXCONTVAL
 #endif
 #endif
 
 #define fmtxinit(lp) (*(lp) = FMTXINITVAL)
 #define fmtxfree(lp) /* no-op */
+
+#if (ZEROMTX)
+
+#define MTXINITVAL            0
+#define MTXLKVAL              1
+#define MTXCONTVAL            2
+
+/* initializer for non-dynamic attributes */
+#define ZEROMTXATR_DEFVAL     { 0L }
+/* flags for attribute flg-field */
+#define ZEROMTX_RECURSIVE     (1L << 0)
+#define ZEROMTX_DETACHED      (1L << 1)
+/* private flg-bits */
+#define __ZEROMTXATR_DYNAMIC  (1L << 30)
+#define __ZEROMTXATR_INIT     (1L << 31)
+/* error codes */
+#define ZEROMTXATR_NOTDYNAMIC 1
+typedef struct zeromtxatr {
+    long flg;           // feature flag-bits
+} zeromtxatr;
+
+/* initializer for non-dynamic mutexes */
+#define ZEROMTX_INITVAL { ZEROMTXFREE, 0, 0, ZEROMTXATRDEFVAL }
+/* thr for unlocked mutexes */
+#define ZEROMTX_FREE    0
+typedef struct zeromtx {
+    m_atomic_t val;     // owner for recursive mutexes, 0 if unlocked
+    m_atomic_t cnt;     // access counter
+    m_atomic_t rec;     // recursion depth
+    zeromtxatr atr;
+    uint8_t    _pad[CLSIZE - 3 * sizeof(long) - sizeof(zeromtxatr)];
+} zeromtx;
 
 #if (ZERONEWFMTX)
 
@@ -178,36 +209,6 @@ fmtxunlk(m_atomic_t *lp)
 #define pthread_mutex_trylock(mp)   mtxtrylk(mp)
 #define pthread_mutex_lock(mp)      mtxlk(mp)
 #define pthread_mutex_unlock(mp)    mtxunlk(mp)
-
-#elif defined(ZEROMTX)
-
-#define FMTXINITVAL           MTXINITVAL
-
-/* initializer for non-dynamic attributes */
-#define ZEROMTXATR_DEFVAL     { 0L }
-/* flags for attribute flg-field */
-#define ZEROMTX_RECURSIVE     (1L << 0)
-#define ZEROMTX_DETACHED      (1L << 1)
-/* private flg-bits */
-#define __ZEROMTXATR_DYNAMIC  (1L << 30)
-#define __ZEROMTXATR_INIT     (1L << 31)
-/* error codes */
-#define ZEROMTXATR_NOTDYNAMIC 1
-typedef struct zeromtxatr {
-    long flg;           // feature flag-bits
-} zeromtxatr;
-
-/* initializer for non-dynamic mutexes */
-#define ZEROMTX_INITVAL { ZEROMTXFREE, 0, 0, ZEROMTXATRDEFVAL }
-/* thr for unlocked mutexes */
-#define ZEROMTX_FREE    0
-typedef struct zeromtx {
-    m_atomic_t val;     // owner for recursive mutexes, 0 if unlocked
-    m_atomic_t cnt;     // access counter
-    m_atomic_t rec;     // recursion depth
-    zeromtxatr atr;
-    uint8_t    _pad[CLSIZE - 3 * sizeof(long) - sizeof(zeromtxatr)];
-} zeromtx;
 
 #endif
 

@@ -29,7 +29,7 @@ k_getcurcpu(void)
     struct cpu *cpu;
 
     __asm__ __volatile__ ("movl %%gs:0, %0\n"
-                          : "=rm" (cpu));
+                          : "=r" (cpu));
 
     return cpu;
 }
@@ -40,7 +40,7 @@ k_getcurunit(void)
     long unit;
 
     __asm__ __volatile__ ("movl %%gs:0, %0\n"
-                          : "=rm" (unit));
+                          : "=r" (unit));
 
     return unit;
 }
@@ -51,7 +51,7 @@ k_getcurtask(void)
     struct task *task;
 
     __asm__ __volatile__ ("movl %%gs:0, %0\n"
-                          : "=rm" (task));
+                          : "=r" (task));
 
     return task;
 }
@@ -62,7 +62,7 @@ k_getcurpid(void)
     long pid;
 
     __asm__ __volatile__ ("movl %%gs:0, %0\n"
-                          : "=rm" (pid));
+                          : "=r" (pid));
 
     return pid;
 }
@@ -72,7 +72,7 @@ k_setcurcpu(struct cpu *cpu)
 {
     __asm__ __volatile__ ("movl %0, %%gs:0\n"
                           :
-                          : "rm" (cpu));
+                          : "r" (cpu));
 
     return;
 }
@@ -82,7 +82,7 @@ k_setcurunit(long unit)
 {
     __asm__ __volatile__ ("movl %0, %%gs:4\n"
                           :
-                          : "rm" (unit));
+                          : "r" (unit));
 
     return;
 }
@@ -92,7 +92,7 @@ k_setcurtask(struct task *task)
 {
     __asm__ __volatile__ ("movl %0, %%gs:8\n"
                           :
-                          : "rm" (task));
+                          : "r" (task));
 
     return;
 }
@@ -102,7 +102,7 @@ k_setcurpid(long pid)
 {
     __asm__ __volatile__ ("movl %0, %%gs:12\n"
                           :
-                          : "rm" (pid));
+                          : "r" (pid));
 
     return;
 }

@@ -6,5 +6,7 @@ Thanks to Craig 'Zeno' Robbins for the animated plasma effects.
 Thanks to Chris 'dducks' de Jong for some x86 APIC code I fine-tuned to suit my
 style.
 
-Thanks to Umair "Snake2k" Chachar for testing the build stuff for GRUB.
+Thanks to Umair 'Snake2k' Chachar for testing the build stuff for GRUB.
+
+Thanks to 'pecorade' for a cleaner GRUB build and motivation.
 
