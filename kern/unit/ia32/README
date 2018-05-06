@@ -9,7 +9,7 @@ Zero tree:
 
 To build a CD-ROM image (cd.iso), do the following:
 
-1. ./mkcdimg2.sh
+1. ./mkiso.sh
 
 test
 ----
