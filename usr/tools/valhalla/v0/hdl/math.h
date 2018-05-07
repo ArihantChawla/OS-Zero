@@ -5,18 +5,18 @@
 #define v0getsign(i)  ((i) & V0_SIGN_BIT)
 
 // dest -= -src;
-#define v0addop(src, dest, res, flg)                                    \
+#define v0addop(src, dest)                                              \
     do {                                                                \
         v0ureg _usrc = (src);                                           \
         v0ureg _udest = (dest);                                         \
                                                                         \
         _usrc = -_usrc;                                                 \
         _udest -= _usrc;                                                \
-        (res) = _udest;                                                 \
+        (dest) = _udest;                                                \
     } while (0)
 
 // dest -= -src, set carry-bit
-#define v0adcop(src, dest, res, flg)                                    \
+#define v0adcop(src, dest, flg)                                         \
     do {                                                                \
         v0ureg _usrc = (src);                                           \
         v0ureg _udest = (_udest);                                       \
@@ -26,52 +26,55 @@
         if (_udest < _usrc) {                                           \
             (flg) |= V0_MSW_CF_BIT;                                     \
         }                                                               \
-        (res) = _udest;                                                 \
+        (dest) = _udest;                                                \
     } while (0)
 
 // dest += -src;
-#define v0subop(src, dest, res, flg)                                    \
+#define v0subop(src, dest)                                              \
     do {                                                                \
         v0ureg _usrc = (src);                                           \
         v0ureg _udest = (dest);                                         \
                                                                         \
         _usrc = -_usrc;                                                 \
         _udest += _usrc;                                                \
-        (res) = _udest;                                                 \
+        (dest) = _udest;                                                \
     } while (0)
 
 // dest -= src, set carry-bit
-#define v0sbbop(src, dest, res, flg)                                    \
+#define v0sbcop(src, dest, flg)                                         \
     do {                                                                \
         v0ureg _usrc = (src);                                           \
         v0ureg _udest = (dest);                                         \
                                                                         \
-        _udest += _usrc;                                                \
-        (res) = _udest;                                                 \
+        _udest -= _usrc;                                                \
+        if ((dest) < _udest) {                                          \
+            (flg) |= V0_MSW_CF_BIT;                                     \
+        }                                                               \
+        (dest) = _udest;                                                \
     } while (0)
 
 // dest = ~dest + 1, arithmetic negation, 2's complement
-#define v0negop(src, dest, res, flg)                                    \
+#define v0negop(src, dest, flg)                                         \
     do {                                                                \
         v0ureg _udest = (dest);                                         \
         v0ureg _utmp = ~_udest;                                         \
                                                                         \
         _utmp++;                                                        \
-        (res) = _utmp;                                                  \
+        (dest) = _utmp;                                                 \
     } while (0)
 
 // dest ^= 0xffffffff, logical negation
-#define v0notop(src, dest, res, flg)                                    \
+#define v0notop(src, dest, flg)                                         \
     do {                                                                \
         v0ureg _udest = (dest);                                         \
         v0ureg _umask = 0xffffffffU;                                    \
                                                                         \
         _udest ^= _umask;                                               \
-        (res) = _udest;                                                 \
+        (dest) = _udest;                                                \
     } while (0)
 
 // a & b = ~(~a | ~b);
-#define v0andop(src, dest, res, flg)                                    \
+#define v0andop(src, dest, flg)                                         \
     do {                                                                \
         v0ureg _usrc = (src);                                           \
         v0ureg _udest = (dest);                                         \
@@ -82,11 +85,11 @@
         _utmp = _usrc;                                                  \
         _utmp |= _udest;                                                \
         _utmp ~= _utmp;                                                 \
-        (res) = _utmp;                                                  \
+        (dest) = _utmp;                                                 \
     } while (0)
 
 // a | b = ~(~a & ~b)
-#define v0xorop(src, dest, res, flg)                                    \
+#define v0xorop(src, dest, flg)                                         \
     do {                                                                \
         v0ureg _usrc = (src);                                           \
         v0ureg _udest = (dest);                                         \
@@ -94,11 +97,11 @@
         _usrc = ~_usrc;                                                 \
         _udest = ~_udest;                                               \
         _udest &= _usrc;                                                \
-        (res) = _udest;                                                 \
+        (dest) = _udest;                                                \
     } while (0)
 
 // a | b = ~(~a & ~b)
-#define v0lorop(src, dest, res, flg)                                    \
+#define v0lorop(src, dest, flg)                                         \
     do {                                                                \
         v0ureg _usrc = (src);                                           \
         v0ureg _udest = (dest);                                         \
@@ -109,11 +112,11 @@
         _utmp1 |= (dest);                                               \
         _utmp2 = ~_utmp2;                                               \
         _utmp1 &= _utmp2;                                               \
-        (res) = _utmp1;                                                 \
+        (dest) = _utmp1;                                                \
     } while (0)
 
 // count leading zero bits in dest
-#define v0clzop(src, dest, res, flg)                                    \
+#define v0clzop(src, dest, flg)                                         \
     do {                                                                \
         uint32_t _ucnt = 32;                                            \
         uint32_t _ures = 32;                                            \
@@ -161,6 +164,8 @@
         (r) = _ures;                                                    \
     } while (0)
 
+/* compute the Hamming weight, i.e. the number of 1-bits in a */
+
 static __inline__ uint32_t
 _v0hamopa(uint32_t a)
 {
@@ -196,21 +201,20 @@ _v0hamopb(uint32_t a)
     return (a >> 16) + (a & 0x0000FFFF);
 }
 
-// Hamming Weight, i.e. calculate the number of 1-bits in a
-#define v0hamop(src, dest, res, flg)                                    \
+#define v0hamop(src, dest, flg)                                         \
     do {                                                                \
         uint32_t _udest = (dest);                                       \
         uint32_t _ures;                                                 \
                                                                         \
         _ures = _v0hamopb(_udest);                                      \
-        (res) = _ures;                                                  \
+        (dest) = _ures;                                                 \
     } while (0)
 
-// sign-extend src
-#define v0sexop(src, dest, res, flg)                                    \
+// sign-extend dest
+#define v0sexop(src, dest, flg)                                         \
     do {                                                                \
-        uint32_t _udest = (src);                                        \
-        uint32_t _sign = (src) & 0x80000000;                            \
+        uint32_t _udest = (dest);                                       \
+        uint32_t _sign = (dest) & 0x80000000;                           \
         uint32_t _clz;                                                  \
         uint32_t _cnt;                                                  \
                                                                         \
@@ -224,6 +228,6 @@ _v0hamopb(uint32_t a)
                 _udest |= _sign;                                        \
             }                                                           \
         }                                                               \
-        (res) = _udest;                                                 \
+        (dest) = _udest;                                                \
     } while (0)
 

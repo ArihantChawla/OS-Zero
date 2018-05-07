@@ -4,6 +4,9 @@
 ISO_DIRECTORY="zero_iso"
 KERN_IMAGE="zero"
 
+echo "Building GRUB2"
+./mkgrub.sh
+
 echo "Building kernel"
 ./build.sh
 
@@ -25,6 +28,6 @@ echo "}" >> $ISO_DIRECTORY/boot/grub/grub.cfg
 echo "Copying kernel image..."
 cp $KERN_IMAGE ./$ISO_DIRECTORY
 
-echo "Building boot disk..."
+echo "Building boot disc..."
 ./build/bin/grub-mkrescue -o cd.iso $ISO_DIRECTORY > /dev/null
 

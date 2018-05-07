@@ -84,9 +84,9 @@ SECTIONS {
 	vbe.o(.text)
 	vbe.o(.text.*)
 	vbe.o(.data)
+	vbe.o(.bss)
         test.o(.text)
         test.o(.text.*)
-/*	vbe.o(.bss) */
 /*
 	bmfonts.o(.text)
 	bmfonts.o(.data)

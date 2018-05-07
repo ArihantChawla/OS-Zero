@@ -185,8 +185,8 @@ v0loop(struct v0 *vm)
               pc = v0sub(vm, op);
 
               opjmp(vm, pc);
-          v0opsbb:
-              pc = v0sbb(vm, op);
+          v0opsbc:
+              pc = v0sbc(vm, op);
 
               opjmp(vm, pc);
           v0opshl:

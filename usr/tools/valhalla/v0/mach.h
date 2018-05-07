@@ -23,7 +23,7 @@
  *
  * 0xff    - memory bus lock
  * The MLK-prefix may be used to lock the memory bus for a single operation of
- * - INC, DEC, ADD, SDC, SUB, SBB, NOT, AND, XOR, OR, BTR, BTS, BTC, LDR, STR
+ * - INC, DEC, ADD, SDC, SUB, SBC, NOT, AND, XOR, OR, BTR, BTS, BTC, LDR, STR
  *
  */
 
@@ -52,7 +52,7 @@
  * ADD   0x04    rid	r	addition (ignore over and underflows)
  * ADC   0x05    rid    r       addition with carry-flag
  * SUB   0x06    rid	r	subtract; ignore underflow
- * SBB   0x07    rid    r       subtract with carry-flag
+ * SBC   0x07    rid    r       subtract with carry-flag
  * SHL   0x08    ri     r       shift left [logical/fill with zero]
  * SHR   0x0a    ri     r       shift right logical (fill with zero)
  * SAR   0x0b    ri     r       shift right arithmetic (fill with sign-bit)
@@ -63,7 +63,7 @@
  *
  * Opcode Notes
  * ------------
- * ADD/ADC, SUB/SBB     - 0x01 denotes carry/borrow-bit, 0x03 mean set flags
+ * ADD/ADC, SUB/SBC     - 0x01 denotes carry/borrow-bit, 0x03 mean set flags
  * SHL      SHR/SAR     - 0x01 denotes arithmetic right shift, 0x02 is right
  *
  * Macros
@@ -75,7 +75,7 @@
 #define V0_ADD 0x04 //   ri, r   addition
 #define V0_ADC 0x05 //   ri, r   addition with carry
 #define V0_SUB 0x06 //   ri, r   subtraction
-#define V0_SBB 0x07 //   ri, r   subraction with borrow
+#define V0_SBC 0x07 //   ri, r   subraction with borrow
 #define V0_SHL 0x08 //   ri, r   shift left logical
 #define V0_SHR 0x0a //   ri, r   shift right logical
 #define V0_SAR 0x0b //   ri, r   shift right arithmetic

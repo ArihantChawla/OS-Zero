@@ -154,7 +154,7 @@ pcireg(void)
 
     return;
 }
-    
+
 void
 pciinit(void)
 {
@@ -205,7 +205,7 @@ pcifinddrv(uint16_t vendor, uint16_t devid)
         {
             long  ndx;
             long *lptr = ptr;
-            
+
             for (ndx = 0 ; ndx < 1024 ; ndx++) {
                 if (*lptr) {
                     kprintf("%ld: %ld\n", ndx, *lptr);
@@ -242,7 +242,7 @@ pciregdrv(uint16_t vendor, uint16_t devid, char *str, pciinitfunc_t *initfunc)
     uint16_t          key1;
     uint16_t          key2;
     uint16_t          key3;
-    
+
     vd = vendor;
     vd <<= 16;
     vd |= devid;
@@ -488,7 +488,7 @@ pciwriteconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
               uint16_t regid, uint8_t len, uint8_t val)
 {
     int okay = 0;
-    
+
     if (!(slotid & 0x10)) {
         outb((uint8_t)(0xf0 | (funcid << 1)), PCICONFADR1);
         outb(busid, 0xcfa);
@@ -496,7 +496,7 @@ pciwriteconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
             case 4:
                 outl(val, pciconfadr2(slotid, regid));
                 okay = 1;
-                
+
                 break;
             case 2:
                 outw(val, pciconfadr2(slotid, regid));
@@ -509,7 +509,7 @@ pciwriteconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
 
                 break;
             default:
-                
+
                 break;
         }
         if (okay) {

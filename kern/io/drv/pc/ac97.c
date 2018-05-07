@@ -1,6 +1,6 @@
 #include <kern/conf.h>
 
-#if (AC97)
+#if (AC97) && (PCI)
 
 #include <stdint.h>
 #include <sys/io.h>

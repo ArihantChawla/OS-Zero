@@ -87,17 +87,14 @@ kinitprot(unsigned long pmemsz)
     tssinit(0);
 #if (VBE)
     vbeinitscr();
+#if (PLASMA)
+    plasmainit();
+#endif
 #endif
 #if (VBE) && (NEWFONT)
     consinit(768 / vbefontw, 1024 / vbefonth);
 #elif (VBE)
     consinit(768 >> 3, 1024 >> 3);
-#endif
-#if (PLASMA)
-    plasmainit();
-#if (!PLASMAFOREVER)
-    plasmaloop(1);
-#endif
 #endif
 #if (PS2DRV)
     ps2init();
@@ -144,7 +141,7 @@ kinitprot(unsigned long pmemsz)
     /* initialise PCI bus driver */
     pciinit();
 #endif
-#if (AC97)
+#if (AC97) && (PCI)
     /* initialise AC97 audio driver */
     ac97init();
 #endif
@@ -156,7 +153,7 @@ kinitprot(unsigned long pmemsz)
     /* initialise ACPI subsystem */
     acpiinit();
 #endif
-#if (IOBUF)
+#if (IOBUF) && 0
     /* initialise block I/O buffer cache */
     if (!ioinitbuf()) {
         kprintf("failed to allocate buffer cache\n");

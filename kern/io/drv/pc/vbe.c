@@ -278,8 +278,16 @@ vbeclrscr(gfxpix32 pix)
 
     if (nbpp == 24) {
         while (n) {
-            lim = min(n, 4);
+            lim = min(n, 8);
             switch (lim) {
+                case 8:
+                    vbeputpix(pix, &ptr[7 * incr]);
+                case 7:
+                    vbeputpix(pix, &ptr[6 * incr]);
+                case 6:
+                    vbeputpix(pix, &ptr[5 * incr]);
+                case 5:
+                    vbeputpix(pix, &ptr[4 * incr]);
                 case 4:
                     vbeputpix(pix, &ptr[3 * incr]);
                 case 3:

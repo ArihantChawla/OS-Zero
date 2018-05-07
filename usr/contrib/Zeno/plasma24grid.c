@@ -176,7 +176,7 @@ plasmaloop(long nsec)
     long        nfrm = PLASMAFPS * nsec;
 
 //    plasmainit();
-    vbeclrscr(GFX_BLACK);
+    //    vbeclrscr(GFX_BLACK);
     if (nfrm < 0) {
         for ( ; ; ) {
             plasmadraw();

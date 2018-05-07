@@ -111,7 +111,7 @@ v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
 	v0setopbits(V0_ADD, V0_RI_ARG, V0_R_ARG, tab);			\
 	v0setopbits(V0_ADC, V0_RI_ARG, V0_R_ARG, tab);			\
 	v0setopbits(V0_SUB, V0_RI_ARG, V0_R_ARG, tab);			\
-	v0setopbits(V0_SBB, V0_RI_ARG, V0_R_ARG, tab);			\
+	v0setopbits(V0_SBC, V0_RI_ARG, V0_R_ARG, tab);			\
 	v0setopbits(V0_SHL, V0_RI_ARG, V0_R_ARG, tab);			\
 	v0setopbits(V0_SHR, V0_RI_ARG, V0_R_ARG, tab);			\
 	v0setopbits(V0_SAR, V0_RI_ARG, V0_R_ARG, tab);			\
@@ -140,7 +140,7 @@ v0procxcpt(const int xcpt, const char *file, const char *func, const int line)
         v0setop(V0_ADD, add, 2, tab);                                   \
         v0setop(V0_ADC, adc, 2, tab);                                   \
         v0setop(V0_SUB, sub, 2, tab);                                   \
-        v0setop(V0_SBB, sbb, 2, tab);                                   \
+        v0setop(V0_SBC, sbc, 2, tab);                                   \
         v0setop(V0_SHL, shl, 2, tab);                                   \
         v0setop(V0_SHR, shr, 2, tab);                                   \
         v0setop(V0_SAR, sar, 2, tab);                                   \
@@ -367,7 +367,7 @@ v0sub(struct v0 *vm, struct v0op *op)
 }
 
 static _V0OPFUNC_T
-v0sbb(struct v0 *vm, struct v0op *op)
+v0sbc(struct v0 *vm, struct v0op *op)
 {
     v0ureg pc = vm->regs[V0_PC_REG];
     v0reg *dptr = v0getadr2(vm, op);
