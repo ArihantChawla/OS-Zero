@@ -54,7 +54,7 @@
     } while (0)
 
 // dest = ~dest + 1, arithmetic negation, 2's complement
-#define v0negop(src, dest, flg)                                         \
+#define v0negop(src, dest)                                              \
     do {                                                                \
         v0ureg _udest = (dest);                                         \
         v0ureg _utmp = ~_udest;                                         \
@@ -64,7 +64,7 @@
     } while (0)
 
 // dest ^= 0xffffffff, logical negation
-#define v0notop(src, dest, flg)                                         \
+#define v0notop(src, dest)                                              \
     do {                                                                \
         v0ureg _udest = (dest);                                         \
         v0ureg _umask = 0xffffffffU;                                    \
@@ -74,7 +74,7 @@
     } while (0)
 
 // a & b = ~(~a | ~b);
-#define v0andop(src, dest, flg)                                         \
+#define v0andop(src, dest)                                              \
     do {                                                                \
         v0ureg _usrc = (src);                                           \
         v0ureg _udest = (dest);                                         \
@@ -89,7 +89,7 @@
     } while (0)
 
 // a | b = ~(~a & ~b)
-#define v0xorop(src, dest, flg)                                         \
+#define v0xorop(src, dest)                                              \
     do {                                                                \
         v0ureg _usrc = (src);                                           \
         v0ureg _udest = (dest);                                         \
@@ -101,7 +101,7 @@
     } while (0)
 
 // a | b = ~(~a & ~b)
-#define v0lorop(src, dest, flg)                                         \
+#define v0lorop(src, dest)                                              \
     do {                                                                \
         v0ureg _usrc = (src);                                           \
         v0ureg _udest = (dest);                                         \
@@ -116,7 +116,7 @@
     } while (0)
 
 // count leading zero bits in dest
-#define v0clzop(src, dest, flg)                                         \
+#define v0clzop(src, dest)                                              \
     do {                                                                \
         uint32_t _ucnt = 32;                                            \
         uint32_t _ures = 32;                                            \
@@ -201,7 +201,7 @@ _v0hamopb(uint32_t a)
     return (a >> 16) + (a & 0x0000FFFF);
 }
 
-#define v0hamop(src, dest, flg)                                         \
+#define v0hamop(src, dest)                                              \
     do {                                                                \
         uint32_t _udest = (dest);                                       \
         uint32_t _ures;                                                 \
@@ -211,7 +211,7 @@ _v0hamopb(uint32_t a)
     } while (0)
 
 // sign-extend dest
-#define v0sexop(src, dest, flg)                                         \
+#define v0sexop(src, dest)                                              \
     do {                                                                \
         uint32_t _udest = (dest);                                       \
         uint32_t _sign = (dest) & 0x80000000;                           \
