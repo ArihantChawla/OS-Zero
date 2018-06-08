@@ -28,14 +28,13 @@
 #endif
 //#define panic(pid, trap, err)
 
-extern struct memzone memphyszone;
-struct memzone        memvirtzone;
+extern struct memzone memzonetab[MEM_ZONES];
 
 void *
 memalloc(size_t nb, long flg)
 {
-    struct memzone *physzone = &memphyszone;
-    struct memzone *virtzone = &memvirtzone;
+    struct memzone *physzone = &memzonetab[MEM_PHYS_ZONE];
+    struct memzone *virtzone = &memzonetab[MEM_VIRT_ZONE];
     void           *ptr = NULL;
     size_t          sz = max(MEMMINSIZE, nb);
     size_t          bsz;
@@ -163,8 +162,8 @@ memwtalloc(size_t nb, long flg, long spin)
 void
 kfree(void *ptr)
 {
-    struct memzone *physzone = &memphyszone;
-    struct memzone *virtzone = &memvirtzone;
+    struct memzone *physzone = &memzonetab[MEM_PHYS_ZONE];
+    struct memzone *virtzone = &memzonetab[MEM_VIRT_ZONE];
     struct memmag  *mag = memgetmag(ptr, virtzone);
     unsigned long   bktid = (mag) ? memmaggetbkt(mag) : 0;
 #if defined(MEMPARANOIA)

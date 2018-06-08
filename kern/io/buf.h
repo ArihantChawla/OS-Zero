@@ -97,23 +97,17 @@ typedef int32_t bufval_t;
 #define BUFDOINGIO   (1 << 29)   // kernel is reading or writing data
 #if (NEWBUFBLK)
 /* this structure has been carefully crafted to fit a cacheline or two */
-#define __STRUCT_BUFBLK_SIZE                                            \
-    (sizeof(long) + 5 * sizeof(void *)                                  \
-     + sizeof(bufval_t) + sizeof(int32_t) + 2 * sizeof(int16_t))
-#define __STRUCT_BUFBLK_PAD                                             \
-    (rounduppow2(__STRUCT_BUFBLK_SIZE, CLSIZE) - __STRUCT_BUFBLK_SIZE)
 struct bufblk {
     const void    *data;        // buffer address + flags in low bits
     long           flg;         // shift count for size + flags as above
+    m_atomic_t     nref;        // # of references
     bufval_t       num;         // per-device block ID
-    int32_t        nref;        // # of references
     int16_t        chksum;      // checksum such as IPv4
     int16_t        dev;         // buffer-subsystem device ID
     struct bufblk *prev;        // previous block on free-list or LRU
     struct bufblk *next;        // next block on free-list or LRU
     struct bufblk *tabprev;     // previous block in table chain
     struct bufblk *tabnext;     // next block in table chain
-    uint8_t        _pad[__STRUCT_BUFBLK_PAD];
 };
 #else
 struct bufblk {
@@ -131,10 +125,6 @@ struct bufblk {
 };
 #endif
 
-#define __STRUCT_BUFDEV_SIZE                                            \
-    (6 * sizeof(long))
-#define __STRUCT_BUFDEV_PAD                                             \
-    (rounduppow2(__STRUCT_BUFDEV_SIZE, CLSIZE) - __STRUCT_BUFDEV_SIZE)
 struct bufdev {
     m_atomic_t lk;              // lock
     long       id;              // system descriptor
@@ -142,28 +132,17 @@ struct bufdev {
     long       type;            // DISK, NET, OPT, TAPE, ...
     long       prio;            // device priority for I/O scheduling
     long       timelim;         // time-limit (e.g. to wait before seek)
-    uint8_t    _pad[__STRUCT_BUFDEV_PAD];
 };
 
-#define __STRUCT_BUFCHAIN_SIZE                                          \
-    (2 * sizeof(long) + sizeof(void *))
-#define __STRUCT_BUFCHAIN_PAD                                           \
-    (rounduppow2(__STRUCT_BUFCHAIN_SIZE, CLSIZE) - __STRUCT_BUFCHAIN_SIZE)
 struct bufchain {
     m_atomic_t     lk;
     long           nitem;
     struct bufblk *list;
-    uint8_t        _pad[__STRUCT_BUFCHAIN_PAD];
 };
 
-#define __STRUCT_BUFBLKQUEUE_SIZE                                       \
-    (sizeof(long) + sizeof(void *))
-#define __STRUCT_BUFBLKQUEUE_PAD                                        \
-    (rounduppow2(__STRUCT_BUFBLKQUEUE_SIZE, CLSIZE) - __STRUCT_BUFBLKQUEUE_SIZE)
 struct bufblkqueue {
     m_atomic_t     lk;
     struct bufblk *head;
-    uint8_t        _pad[__STRUCT_BUFBLKQUEUE_PAD];
 };
 
 long            bufinit(void);

@@ -61,26 +61,26 @@ tktlkspin(union zerotktlk *tp)
 {
     volatile unsigned short val = m_fetchaddu16(&tp->s.nref, 1);
     long                    nspin = TKTLKNSPIN;
-    
+
     do {
         nspin--;
     } while ((nspin) && tp->s.val != val);
     while (tp->s.val != val) {
         m_waitspin();
     }
-        
+
     return;
 }
-    
+
 static INLINE void
 tktlk(union zerotktlk *tp)
 {
     volatile unsigned short val = m_fetchaddu16(&tp->s.nref, 1);
-    
+
     while (tp->s.val != val) {
         m_waitspin();
     }
-    
+
     return;
 }
 
@@ -90,7 +90,7 @@ tktunlk(union zerotktlk *tp)
     m_membar();
     tp->s.val++;
     m_endspin();
-    
+
     return;
 }
 
@@ -103,11 +103,11 @@ tkttrylk(union zerotktlk *tp)
     unsigned int            cmp = (val << 16) | val;
     unsigned int            cmpnew = (next << 16) | val;
     long                    res = 0;
-    
+
     if (m_cmpswapu32(&tp->uval, cmp, cmpnew)) {
         res++;
     }
-    
+
     return res;
 }
 
@@ -118,7 +118,7 @@ tktlkspin(union zerotktlk *tp)
 {
     volatile unsigned long val = m_fetchaddu32(&tp->s.nref, 1);
     long                   nspin = TKTLKNSPIN;
-    
+
     do {
         nspin--;
     } while ((nspin) && tp->s.val != val);

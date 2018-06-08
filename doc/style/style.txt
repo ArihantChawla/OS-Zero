@@ -13,6 +13,7 @@ general conventions
 
 objects/identifiers
 -------------------
+- m_-prefix stands for machine-specific [routine]
 - object and other names should be brief
   - global and function argument names should be longer
   - for example, number of bytes could be
@@ -29,7 +30,7 @@ objects/identifiers
     - modwinattrib or modwinparam
     - attrib, param
     - atr, parm
-- volatile-qualifier should be used for cross-thread variables such as mutexes
+- FIXME: volatile-qualifier should be used for cross-thread variables such as mutexes
 - static-qualifier is good for locally visible values
   - may let the compiler do more aggressive optimisations
   - static names can be shorter;
@@ -47,6 +48,7 @@ objects/identifiers
   - e.g. ptrtab, symhash
   - structure and union members may have shorter names
     - e.g. stk (stack), tab (table/array)
+  - it feels natural _not_ to typedef structs and so hide their aggregate nature
 - it is good to put all per-module globals into a single global structure, e.g.
   struct g_malloc g_malloc
 

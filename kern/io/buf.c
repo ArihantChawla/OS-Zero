@@ -29,6 +29,8 @@
 #include <kern/io/buf.h>
 #include <kern/unit/x86/link.h>
 
+#undef  DEQ_ITEM_TYPE
+#undef  DEQ_TYPE
 #define DEQ_ITEM_TYPE struct bufblk
 #define DEQ_TYPE      struct bufblk
 #include <zero/deq.h>
@@ -186,7 +188,7 @@ bufevict(void)
             bufclr(blk);
         }
     } while (!blk);
-    
+
     return blk;
 }
 
@@ -202,7 +204,7 @@ bufalloc(void)
     if (!blk) {
         blk = bufevict();
     }
-    
+
     return blk;
 }
 
@@ -354,7 +356,7 @@ bufaddblk(struct bufblk *blk)
             ((struct bufblk **)tab1)[bkey1] = tab2;
         }
         if (tab2) {
-            ptr->nref++;
+            m_atominc(ptr->nref);
             /* block table level #2 */
             ptr = tab2;
             stk[1] = ptr;
@@ -365,13 +367,13 @@ bufaddblk(struct bufblk *blk)
                 ((struct bufblk **)tab2)[bkey2] = tab1;
             }
             if (tab1) {
-                ptr->nref++;
+                m_atominc(ptr->nref);
                 ptr = tab1;
                 stk[2] = ptr;
                 /* block table level #3 */
                 btab = ((struct bufblk **)tab1)[bkey3];
                 if (btab) {
-                    ptr->nref++;
+                    m_atominc(ptr->nref);
                     /* add to beginning of chain */
                     bptr = btab;
                     if (bptr) {
@@ -407,7 +409,7 @@ bufaddblk(struct bufblk *blk)
     if (!fail) {
         deqappend(blk, &buflruqueue.head);
     }
-    
+
     return;
 }
 
@@ -472,7 +474,7 @@ buffindblk(long dev, off_t num, long rel)
                                 }
                             }
                         }
-                        
+
                         break;
                     }
                     blk = blk->tabnext;

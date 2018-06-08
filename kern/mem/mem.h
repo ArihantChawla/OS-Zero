@@ -10,6 +10,16 @@
 #include <zero/param.h>
 #include <zero/trix.h>
 
+/* memory zones */
+#define MEM_LOW_ZONE    0 // low-memory (x86: boot)
+#define MEM_IO_ZONE     1 // I/O zone (x86: DMA)
+#define MEM_SYS_ZONE    2 // system zone (page-tables and such)
+#define MEM_VIRT_ZONE   3 // virtual memory zone
+#define MEM_PHYS_ZONE   4 // physical memory zone
+#define MEM_DEV_ZONE    5 // memory-mapped device zone
+#define MEM_BUF_ZONE    6 // buffer cache zone
+#define MEM_ZONES       8
+
 /* memory caching type */
 #define MEMWRBIT     0x01
 #define MEMCACHEBIT  0x02
@@ -25,38 +35,42 @@
 #define MEMWRBACK    (MEMWRBIT | MEMCACHEBIT | MEMWRBUFBIT)
 
 /* allocator parameters */
-#define MEMNHDRHASH    (512 * 1024)     // # of entries in header hash table
+#define MEMNHDRHASH   (512 * 1024)     // # of entries in header hash table
 //#define MEMNHDRBUF     (roundup(__STRUCT_MEMBLK_SIZE, CLSIZE))
-#define MEMMINSIZE     (1U << MEMMINSHIFT)
-#define MEMSLABSIZE    (1U << MEMSLABSHIFT)
-#define MEMMINSHIFT    8 // minimum allocation of 256 bytes
-#define MEMSLABSHIFT   16
-#define MEMNBKTBIT     8 // 8 low bits of info used for bucket ID (max 255)
-#define MEMNTYPEBIT    8 // up to 256 object types
-#define MEMBKTMASK     ((1UL << (MEMNBKTBIT - 1)) - 1)
+#define MEMMINSIZE    (1U << MEMMINSHIFT)
+#define MEMSLABSIZE   (1U << MEMSLABSHIFT)
+#define MEMMINSHIFT   CLSIZELOG2 // minimum allocation of 256 bytes
+#define MEMSLABSHIFT  16
+#define MEMBKTBITS    8 // 8 low bits of info used for bucket ID (max 255)
+#define MEMNTYPEBIT   8 // up to 256 object types
+#define MEMBKTMASK    ((1UL << (MEMBKTBITS - 1)) - 1)
+#define MEMLKBIT      (1ULL << (WORDSIZE * CHAR_BIT - 1))
 /* allocation flags */
-#define MEMFREE        0x00000001UL
-#define MEMZERO        0x00000002UL
-#define MEMWIRE        0x00000004UL
-#define MEMDIRTY       0x00000008UL
-#define MEMFLGBITS     (MEMFREE | MEMZERO | MEMWIRE | MEMDIRTY)
-#define MEMNFLGBIT     4
+#define MEMFREE       0x00000001UL
+#define MEMZERO       0x00000002UL
+#define MEMWIRE       0x00000004UL
+#define MEMDIRTY      0x00000008UL
+#define MEMFLGBITS    (MEMFREE | MEMZERO | MEMWIRE | MEMDIRTY)
+#define MEMNFLGBIT    4
 #define memslabsize(bkt)                                                \
     (1UL << (bkt))
 #define memtrylkhdr(hdr)                                                \
-    (!m_cmpsetbit(&hdr->info, MEMLOCKBIT))
+    (!m_cmpsetbit(&hdr->info, MEMLKBIT))
 #define memlkhdr(hdr)                                                   \
     do {                                                                \
         volatile long res;                                              \
                                                                         \
         do {                                                            \
-            res =  !m_cmpsetbit(&hdr->info, MEMLOCKBIT);                \
+            while (hdr->info & MEMLKBIT) {                              \
+                m_waitspin();                                           \
+            }                                                           \
+            res =  !m_cmpsetbit(&hdr->info, MEMLKBIT);                  \
         } while (!res);                                                 \
     } while (0)
 #define memunlkhdr(hdr)                                                 \
-    (m_unlkbit(&(hdr)->info, MEMLOCKBIT))
+    (m_clrbit(&(hdr)->info, MEMLKBIT))
 #define memgetbkt(hdr)                                                  \
-    (&(hdr)->info & ((1 << MEMNBKTBIT) - 1))
+    (&(hdr)->info & ((1 << MEMBKTBITS) - 1))
 
 #include <kern/mem/slab.h>
 #include <kern/mem/mag.h>

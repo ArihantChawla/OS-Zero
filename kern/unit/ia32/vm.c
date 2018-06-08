@@ -11,12 +11,9 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-//#include <kern/io/dev.h>
 #include <kern/util.h>
-#include <kern/mem/vm.h>
 #include <kern/mem/page.h>
-//#include <kern/proc/task.h>
-// #include <kern/io/buf.h>
+#include <kern/mem/vm.h>
 #include <kern/io/drv/pc/dma.h>
 #include <kern/unit/x86/link.h>
 #include <kern/unit/ia32/seg.h>
@@ -28,25 +25,25 @@
 
 void pginit(void);
 
-extern uint8_t       kernsysstktab[NCPU * KERNSTKSIZE];
-extern uint8_t       kernusrstktab[NCPU * KERNSTKSIZE];
-extern pde_t         kernpagedir[NPDE];
-extern pde_t         usrpagedir[NPDE];
+extern uint8_t     kernsysstktab[NCPU * KERNSTKSIZE];
+extern uint8_t     kernusrstktab[NCPU * KERNSTKSIZE];
+extern pde_t       kernpagedir[NPDE];
+extern pde_t       usrpagedir[NPDE];
 #if (VMFLATPHYSTAB)
-struct page          vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
+struct vmpage      vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
 #endif
 //m_atomic_t         vmlrulktab[PTRBITS];
-struct physlruqueue  vmlrutab[PTRBITS];
+struct vmpage      vmlrutab[PTRBITS];
 
 //static struct vmpage  vmpagetab[NPAGEMAX] ALIGNED(PAGESIZE);
 #if (PAGEDEV)
-static struct dev    vmdevtab[NPAGEDEV];
-static m_atomic_t    vmdevlktab[NPAGEDEV];
+static struct dev  vmdevtab[NPAGEDEV];
+static m_atomic_t  vmdevlktab[NPAGEDEV];
 #endif
-VM_LK_T              vmphyslk;
-struct page         *vmphysqueue;
-struct page         *vmshmqueue;
-struct vmpagestat    vmpagestat;
+VM_LK_T            vmphyslk;
+struct vmpage     *vmphysqueue;
+struct vmpage     *vmshmqueue;
+struct vmpagestat  vmpagestat;
 
 /*
  * 32-bit page directory is flat 4-megabyte table of page-tables.
@@ -226,7 +223,7 @@ vmfreephys(void *virt, uint32_t size)
     pte_t    *pte;
     long      n;
 //    long          nref;
-//    struct page  *pg;
+//    struct vmpage  *pg;
 
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
     pte = (pte_t *)&_pagetab + vmpagenum(virt);
@@ -264,7 +261,7 @@ vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
 {
     pte_t         *pte = (pte_t *)&_pagetab + vmpagenum(adr);
     uint32_t       flg = (uint32_t)*pte & (PAGEFLTFLGMASK | PAGESYSFLAGS);
-    struct page   *page = NULL;
+    struct vmpage   *page = NULL;
     unsigned long  qid;
 
     kprintf("PAGEFAULT: pid == %lx, adr == %lx, error == %lx\n",
@@ -278,15 +275,15 @@ vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
                 vmpagestat.nwire++;
             } else {
                 vmpagestat.nmap++;
-                page->nflt++;
+                page->nmap++;
                 if (!(adr & PAGEWIRED)) {
                     qid = pagecalcqid(page);
                     vmspinlk(&vmlrutab[qid].lk);
-                    deqpush(page, &vmlrutab[qid].list);
-                    vmrellk(&vmlrutab[qid].lk);
+                    deqpush(page, &vmlrutab[qid].next);
+                    vmunlkpage(&vmlrutab[qid].lk);
                 }
             }
-            vmrellk(&page->lk);
+            vmunlkpage(&page->lk);
             *pte = adr | flg | PAGEPRES;
         }
 #if (PAGEDEV)
@@ -295,12 +292,12 @@ vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
         page = vmpagein(page);
         if (page) {
             vmspinlk(&page->lk);
-            page->nflt++;
+            page->nmap++;
             qid = pagecalcqid(page);
             vmspinlk(&vmlrutab[qid].lk);
-            deqpush(page, &vmlrutab[qid].list);
-            vmrellk(&vmlrutab[qid].lk);
-            vmrellk(&page->lk);
+            deqpush(page, &vmlrutab[qid].next);
+            vmunlkpage(&vmlrutab[qid].lk);
+            vmunlkpage(&page->lk);
         }
 #endif
     }
@@ -325,14 +322,14 @@ vmpagein(uint32_t adr)
 {
     uint32_t     pageid = vmpagenum(adr);
     uint32_t     blk = vmblkid(pageid);
-    struct page *page = pagefind(adr);
+    struct vmpage *page = pagefind(adr);
     void        *data;
 
-    vmgetlk(&vmdevlktab[dev], MEMPID);
+    fmtxlk(&vmdevlktab[dev], MEMPID);
     vmseekdev(dev, blk * PAGESIZE);
-    page->nflt++;
+    page->nmap++;
 //    data = pageread(dev, PAGESIZE);
-    vmrellk(&vmdevlktab[pagedev], MEMPID);
+    fmtxunlk(&vmdevlktab[pagedev], MEMPID);
 }
 
 void

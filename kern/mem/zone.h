@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 #include <zero/param.h>
+#include <kern/types.h>
+#include <kern/mem/bkt.h>
 
 /* flags for creating memzones */
 #define MEMZONE_ZERO    0x00000001 // initialize with zeroes
@@ -19,17 +21,12 @@
 #define MEMZONE_REFCNT  0x00000800 // keep allocation reference counts
 
 struct memzone {
-    struct membkt        tab[PTRBITS];
-    volatile m_atomic_t  lk;
-    long                 flg;
-    uintptr_t            base;
-    unsigned long       nblk;
-    void               *hdrtab;
-    uint8_t             _pad[CLSIZE
-                             - sizeof(uintptr_t)
-                             - sizeof(unsigned long)
-                             - sizeof(void *)
-                             - sizeof(m_atomic_t)];
+    struct membkt  tab[PTRBITS];
+    m_atomic_t     lk;
+    m_ureg_t       flg;
+    uintptr_t      base;
+    unsigned long  nblk;
+    void          *hdrtab;
 };
 
 void * slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg);

@@ -6,7 +6,7 @@
 #include <zero/param.h>
 
 #define USYSINFO      0
-#define VMTKTLK       1
+#define VMPAGETKTLK   1
 
 //#define REENTRANTGDTINIT 1
 #define LONGMODE      0

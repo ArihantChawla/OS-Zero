@@ -13,6 +13,10 @@
 #include <kern/cpu.h>
 #include <kern/mem/vm.h>
 
+#define DEQ_SINGLE_TYPE
+#define DEQ_TYPE struct vmpage
+#include <zero/deq.h>
+
 #define PAGENODEV (-1)
 #define PAGENOOFS (-1)
 
@@ -23,7 +27,11 @@
     ((!(pg)) ? NULL : ((void *)(((pg) - (pt)) << PAGESIZELOG2)))
 
 /* index into table of LRU-queues */
-#define pagecalcqid(pg)   max(PTRBITS - 1, lzerol(pg->nflt))
+#if (WORDSIZE == LONGSIZE)
+#define pagecalcqid(pg)   max(PTRBITS - 1, lzerol(pg->nmap))
+#elif (WORDSIZE == 8)
+#define pagecalcqid(pg)   max(PTRBITS - 1, lzeroll(pg->nmap))
+#endif
 
 /* working sets */
 #if 0
@@ -35,46 +43,6 @@ extern pid_t           vmsetmap[NPAGEPHYS];
 #define pageaddset(pg) setbit(vmsetbitmap, pagenum((pg)->adr))
 #define pageclrset(pg) clrbit(vmsetbitmap, pagenum((pg)->adr))
 
-#if 0
-#define PAGEWIREBIT 0x00000001
-#define PAGEBUFBIT  0x00000002
-struct virtpage {
-    void            *adr;     // virtual or physical address
-    uintptr_t        link;    // prev XOR next
-#if 0
-    unsigned long    flg;
-    struct virtpage *prev;
-    struct virtpage *next;
-#endif
-};
-#endif
-
-#define __STRUCT_PHYSLRUQUEUE_SIZE                                      \
-    (sizeof(long) + sizeof(void *))
-#define __STRUCT_PHYSLRUQUEUE_PAD                                       \
-    (rounduppow2(__STRUCT_PHYSLRUQUEUE_SIZE, CLSIZE) - __STRUCT_PHYSLRUQUEUE_SIZE)
-struct physlruqueue {
-    VM_LK_T          lk;
-    struct page *list;
-    uint8_t          _pad[__STRUCT_PHYSLRUQUEUE_PAD];
-};
-
-#define __STRUCT_PHYSPAGE_SIZE                                          \
-    (sizeof(long) + 3 * sizeof(void *) + 4 * sizeof(m_ureg_t))
-#define __STRUCT_PHYSPAGE_PAD                                           \
-    (rounduppow2(__STRUCT_PHYSPAGE_SIZE, CLSIZE) - __STRUCT_PHYSPAGE_SIZE)
-struct page {
-    VM_LK_T      lk;        // mutual exclusion lock
-    m_ureg_t     nref;      // reference count
-    m_ureg_t     pid;       // owner process ID
-    m_ureg_t     adr;       // page address
-    struct perm *perm;      // permissions
-    m_ureg_t     nflt;      // # of page-fault exceptions triggered
-    struct page *prev;      // previous on queue
-    struct page *next;      // next on queue
-    uint8_t          _pad[__STRUCT_PHYSPAGE_PAD];
-};
-
 typedef uint64_t swapoff_t;
 
 #define PAGEDEVMASK        ((UINT64_C(1) << PAGESIZELOG2) - 1)
@@ -82,25 +50,16 @@ typedef uint64_t swapoff_t;
 #define swapsetdev(u, dev) ((u) |= (dev))
 #define swapblkid(adr)     ((adr) >> PAGESIZELOG2)
 #define swapdevid(adr)     ((adr) & PAGEDEVMASK)
-#define __STRUCT_SWAPDEV_SIZE                                           \
-    (sizeof(long) + 2 * sizeof(void *) + sizeof(swapoff_t))
-#define __STRUCT_SWAPDEV_PAD                                            \
-    (rounduppow2(__STRUCT_SWAPDEV_SIZE, CLSIZE) - __STRUCT_SWAPDEV_SIZE)
 struct swapdev {
-    m_atomic_t   lk;
-    swapoff_t    npg;
-    swapoff_t   *pgmap;
-    struct page *pgtab;
-    struct page *freeq;
-    uint8_t      _pad[__STRUCT_SWAPDEV_PAD];
+    m_atomic_t     lk;
+    swapoff_t      npg;
+    swapoff_t     *pgmap;
+    struct vmpage *pgtab;
+    struct vmpage *freeq;
 };
 
-#define DEQ_SINGLE_TYPE
-#define DEQ_TYPE struct page
-#include <zero/deq.h>
-
 unsigned long     pageinitphys(uintptr_t base, unsigned long nb);
-struct page *     pageallocphys(void);
+struct vmpage *   pageallocphys(void);
 void              pagefreephys(void *adr);
 #if 0
 void              pagefree(void *adr);

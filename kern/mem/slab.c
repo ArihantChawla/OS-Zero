@@ -13,10 +13,9 @@
 #define MEMDIAG 0
 
 extern size_t         npagefree;
-extern struct memzone memvirtzone;
 
-struct memzone        memphyszone ALIGNED(PAGESIZE);
-static volatile long  memphyszonelk;
+struct memzone        memzonetab[MEM_ZONES];
+//struct memzone        memphyszone ALIGNED(PAGESIZE);
 /*
  * zero slab allocator
  * -------------------

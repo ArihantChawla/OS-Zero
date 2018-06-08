@@ -6,16 +6,11 @@
 #include <zero/param.h>
 #include <kern/types.h>
 
-#define __STRUCT_MEMSLAB_PAD                                            \
-    (CLSIZE - 3 * PTRSIZE - WORDSIZE)
 struct memslab {
     void           *adr;
     m_ureg_t        info;
     struct memslab *prev;
     struct memslab *next;
-#if (__STRUCT_MEMSLAB_PAD)
-    uint8_t         _pad[__STRUCT_MEMSLAB_PAD];
-#endif
 };
 
 #define memgethdrnum(hdr, zone)                                         \
