@@ -57,7 +57,6 @@ extern volatile struct acpidesc *acpidesc;
 extern struct pageq              vmphysq;
 extern struct pageq              vmshmq;
 
-FASTCALL
 void
 kinitprot(unsigned long pmemsz)
 {
@@ -67,7 +66,7 @@ kinitprot(unsigned long pmemsz)
     /* initialise virtual memory */
     //    vminit((uint32_t *)&_pagetab);
     vminit((uint32_t *)&_pagetab);
-//    schedinit();
+    //    schedinit();
     /* zero kernel BSS segment */
     kbzero(&_bssvirt, (uint32_t)&_ebssvirt - (uint32_t)&_bssvirt);
     /* set kernel I/O permission bitmap to all 1-bits */

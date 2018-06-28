@@ -11,7 +11,7 @@
 #if defined(__KERNEL__)
 extern void schedinit(void);
 #endif
-extern void schedyield();
+extern void schedyield(void);
 
 #if defined(ZEROSCHED)
 
