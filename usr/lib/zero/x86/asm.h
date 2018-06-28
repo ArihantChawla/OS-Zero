@@ -7,10 +7,11 @@
 #include <zero/param.h>
 #include <zero/cdefs.h>
 
-typedef volatile int8_t  m_atomic8_t;
-typedef volatile int16_t m_atomic16_t;
-typedef volatile int32_t m_atomic32_t;
-typedef volatile int64_t m_atomic64_t;
+typedef volatile int8_t   m_atomic8_t;
+typedef volatile int16_t  m_atomic16_t;
+typedef volatile int32_t  m_atomic32_t;
+typedef volatile int64_t  m_atomic64_t;
+typedef volatile void    *m_atomicptr_t;
 
 /* memory barrier */
 #define m_membar()   __asm__ __volatile__ ("mfence\n" : : : "memory")

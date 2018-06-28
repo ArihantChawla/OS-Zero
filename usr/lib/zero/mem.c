@@ -2,12 +2,14 @@
 #include <stdint.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
+#include <zero/asm.h>
 #include <zero/mem.h>
 
-THREADLOCAL memtlsdata *g_memtlsdata;
+static struct mem          g_mem;
+THREADLOCAL struct memtls *g_memtls;
 
-#define MEM_SMALL_TRIES 16
-#define MEM_RUN_TRIES   32
+#define MEM_THR_TRIES  8
+#define MEM_PROC_TRIES 16
 
 #define memszistls(sz, aln)                                             \
     ((sz) + (aln) - 1 <= MEM_MAX_RUN_PAGES * PAGESIZE)
@@ -17,34 +19,37 @@ void *
 memgettls(size_t sz)
 {
     void            *ptr = NULL;
-    size_t           bkt;
+    size_t           pool;
     struct memslab **slot;
     struct memslab  *slab;
     size_t           ndx;
     size_t           n;
-    long             ntry = MEM_SMALL_TRIES;
+    long             ntry = MEM_THR_TRIES;
 
     if (sz <= MEM_MAX_SMALL_SIZE) {
-        _memcalcsmallbkt(sz, bkt);
-        slot = &g_memtlsdata->smalltab[bkt];
+        _memcalcsmallpool(sz, pool);
+        slot = &g_memtls->smalltab[pool];
     } else {
-        _memcalcrunbkt(sz, bkt);
-        slot = &g_memtlsdata->runtab[bkt];
+        _memcalcrunpool(sz, pool);
+        slot = &g_memtls->runtab[pool];
     }
     do {
         slab = *slot;
+        if (!slab) {
+            /* TODO: acquire global slab or allocate slab */
+        }
         if (slab) {
             ndx = m_fetchadd(&slab->ndx, 1);
-            n = slab->n;
+            n = slab->nblk;
             if (ndx < n - 1) {
                 ptr = slab->stk[ndx];
-            } else if (ndx == n - 1) {
-                && m_cmpswap(&slab->ndx, n, SIZE_MAX)) {
+            } else if (ndx == n - 1
+                       && m_cmpswap(&slab->ndx, n, ~(uintptr_t)0)) {
                 if (slab->next) {
                     slab->next->prev = NULL;
                 }
                 ptr = slab->stk[n];
-                *slab = slab->next;
+                slab = slab->next;
                 if (slab->prev) {
                     slab->prev->next = NULL;
                 }
@@ -60,29 +65,38 @@ memgettls(size_t sz)
 
 /* allocate MEM_MAX_RUN..N bytes in a single global block */
 void *
-memgetbig(size_t sz)
+memgetglob(size_t sz)
 {
     void            *ptr = NULL;
-    size_t           bkt;
+    size_t           pool;
     struct memslab **slot;
     struct memslab  *slab;
     struct memslab  *next;
     size_t           ndx;
     size_t           n;
+    long             ntry = MEM_PROC_TRIES;
 
-    _memcalcbigbkt(sz, bkt);
-    slot = &g_mem.bigtab[bkt];
+    if (sz <= MEM_MAX_MID_SIZE) {
+        _memcalcmidpool(sz, pool);
+        slot = &g_mem.midtab[pool];
+    } else {
+        _memcalcbigpool(sz, pool);
+        slot = &g_mem.bigtab[pool];
+    }
     do {
-        if (!m_cmpsetbit((m_atomic_t *)slot, MEM_LK_BIT_OFS)) {
+        if (!m_cmpsetbit((m_atomic_t *)slot, MEM_ADR_LK_BIT_POS)) {
             slab = *slot;
-            slab = (void *)((uintptr_t)slab & ~MEM_LK_BIT);
+            slab = (void *)((uintptr_t)slab & ~MEM_ADR_LK_BIT);
+            if (!slab) {
+                /* TODO: allocate slab */
+            }
             if (slab) {
                 ndx = m_fetchadd(&slab->ndx, 1);
-                n = slab->n;
+                n = slab->nblk;
                 if (ndx < n - 1) {
                     ptr = slab->stk[ndx];
                 } else if (ndx == n - 1
-                           && m_cmpswap(&slab->ndx, n, SIZE_MAX)) {
+                           && m_cmpswap(&slab->ndx, n, ~(uintptr_t)0)) {
                     next = slab->next;
                     ptr = slab->stk[n];
                     if (next) {
@@ -91,12 +105,12 @@ memgetbig(size_t sz)
                     if (slab->prev) {
                         slab->prev->next = NULL;
                     }
-                    *slab = slab->next;
+                    slab = slab->next;
                 } else {
                     m_fetchadd(&slab->ndx, -1);
                 }
             }
-            m_clrbit((m_atomic_t *)slot, MEM_LK_BIT_POS);
+            m_clrbit((m_atomic_t *)slot, MEM_ADR_LK_BIT_POS);
         }
         if (!ptr) {
             m_spinwait();
@@ -104,10 +118,5 @@ memgetbig(size_t sz)
     } while (!ptr && (--ntry));
 
     return ptr;
-}
-
-int
-main(int argc, char *argv[])
-{
 }
 

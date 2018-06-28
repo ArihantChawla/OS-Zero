@@ -41,7 +41,7 @@ void * _fmemmove(void *__dest, const void *__src,
 void * _fmemset(void *__s, int c, size_t __n);
 void   _fmovmem(const void *__src, void *__dest,
                 unsigned __length);
-void   _fsetmem(void *__dest,unsigned __length, 
+void   _fsetmem(void *__dest,unsigned __length,
                 char __value);
 #endif
 
