@@ -103,7 +103,7 @@ memgetglob(size_t size, size_t align)
                 if (ndx < nblk - 1) {
                     ptr = slab->stk[ndx];
                 } else if (ndx == nblk - 1
-                           && m_cmpswap(&slab->ndx, n, ~(uintptr_t)0)) {
+                           && m_cmpswap(&slab->ndx, nblk, ~(uintptr_t)0)) {
                     next = slab->next;
                     ptr = slab->stk[ndx];
                     if (next) {
