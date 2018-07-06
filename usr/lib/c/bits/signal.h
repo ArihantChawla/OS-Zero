@@ -6,7 +6,7 @@
 #include <features.h>
 #include <stdint.h>
 #include <errno.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #if (USEBSD) && (!USEPOSIX)
 #include <ucontext.h>
 #include <zero/types.h>
@@ -94,7 +94,7 @@ typedef __sighandler_t sig_t;
 typedef __sighandler_t sighandler_t;
 #endif
 
-/* sigaction() definitions */ 
+/* sigaction() definitions */
 #define SA_NOCLDSTOP SIG_NOCLDSTOP
 #define SA_NOCLDWAIT SIG_NOCLDWAIT
 #define SA_NODEFER   SIG_NODEFER

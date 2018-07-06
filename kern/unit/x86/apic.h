@@ -8,7 +8,7 @@
 #if !defined(__ASSEMBLER__)
 
 #include <stdint.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/cdefs.h>
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/link.h>

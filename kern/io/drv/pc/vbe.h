@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <gfx/rgb.h>
 #include <kern/unit/x86/boot.h>
 
@@ -173,7 +173,7 @@ struct vbescreen {
 #endif
 
 extern struct vbescreen vbescreen;
-        
+
 #endif /* !defined(__ASSEMBLER__) */
 
 #endif /* __KERN_IO_DRV_PC_VBE_H__ */

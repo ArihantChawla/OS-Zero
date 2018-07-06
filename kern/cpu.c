@@ -1,6 +1,6 @@
 #include <kern/conf.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <kern/cpu.h>
 
 extern void    taskinittls(long unit);

@@ -6,7 +6,7 @@
 //#include <zero/cdecl.h>
 //#include <sys/types.h>
 #if defined(__KERNEL__)
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/mtx.h>
 #include <kern/cpu.h>
 #include <kern/types.h>
@@ -45,7 +45,7 @@ extern struct m_cacheinfo cpuidcacheinfo[16];
 
 #define cpuid(op, buf)                                                  \
     do {                                                                \
-        __asm__ __volatile__ ("movl %4, %%eax\n"                        \
+        __asm__ __volatile__ ("movl %c4, %%eax\n"                       \
                               "cpuid\n"                                 \
                               "movl %%eax, %0\n"                        \
                               "movl %%ebx, %1\n"                        \
@@ -55,7 +55,7 @@ extern struct m_cacheinfo cpuidcacheinfo[16];
                                 "=m" ((buf)->ebx),                      \
                                 "=m" ((buf)->ecx),                      \
                                 "=m" ((buf)->edx)                       \
-                              : "rm" (op)                               \
+                              : "i" (op)                                \
                               : "eax", "ebx", "ecx", "edx");            \
     } while (0)
 

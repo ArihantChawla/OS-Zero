@@ -5,9 +5,9 @@
 
 #include <stdint.h>
 #include <endian.h>
-#include <zero/param.h>
 #include <zero/cdefs.h>
-#include <zero/asm.h>
+#include <mach/param.h>
+#include <mach/asm.h>
 #define PTHREAD 1
 #include <zero/thr.h>
 

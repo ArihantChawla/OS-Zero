@@ -2,7 +2,7 @@
 #define __STDINT_H__
 
 //#include <limits.h>
-#include <zero/param.h>
+#include <mach/param.h>
 
 #define INT8_C(c)    c
 #define INT16_C(s)   s

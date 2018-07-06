@@ -7,9 +7,9 @@
 #include <stddef.h>
 #include <sys/io.h>
 #include <zero/trix.h>
-#include <zero/asm.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/asm.h>
+#include <mach/param.h>
 #include <zero/types.h>
 #include <kern/asm.h>
 #include <kern/util.h>

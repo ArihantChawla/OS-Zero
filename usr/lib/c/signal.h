@@ -11,14 +11,11 @@
 #include <share/time.h>
 #endif
 #include <bits/signal.h>
-//#include <sys/types.h>
-//#include <zero/param.h>
-//#include <unistd.h>
 #if (_POSIX_SOURCE) && (USEPOSIX199309)
 struct timespec;
 #include <time.h>
 #endif
-#include <zero/param.h>
+#include <mach/param.h>
 #if defined(__ZEROKERNEL__)
 #include <kern/signal.h>
 #endif

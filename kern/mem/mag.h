@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 
 #define mempop(mp)       ((mp)->ptab[((mp)->ndx)++])
 #define mempush(mp, ptr) ((mp)->ptab[--((mp)->ndx)] = (ptr))

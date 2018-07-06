@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 #include <sys/shm.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <kern/syscallnum.h>
 #include <kern/perm.h>
 #include <kern/signal.h>
@@ -392,7 +392,7 @@ struct syswait {
 #define SIG_SETSTK    0x05      // sigaltstack(), sigstack()
 #define SIG_SUSPEND   0x06      // sigsuspend(), sigpause()
 /* sigop() parm-argument bits */
-/* sigaction() definitions */ 
+/* sigaction() definitions */
 #define SIG_NOCLDSTOP  0x00000001
 #define SIG_NOCLDWAIT  0x00000002
 #define SIG_NODEFER    0x00000004
@@ -545,7 +545,7 @@ struct sysop {
     sysreg_t arg3;                      // third argument
 #if (LONGSIZE == 4)
     int64_t  arg64;                     // 64-bit argument
-#endif    
+#endif
 };
 
 /* structure for restarting interrupted system calls */

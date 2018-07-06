@@ -1,7 +1,7 @@
 #ifndef __ZERO_SPIN_H__
 #define __ZERO_SPIN_H__
 
-#include <zero/asm.h>
+#include <mach/asm.h>
 
 #if !defined(ZERONEWSPIN)
 #define ZERONEWSPIN 1
@@ -28,7 +28,7 @@ spintrylk(m_atomic_t *sp)
     if (res == ZEROSPININITVAL) {
         res = m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL);
     }
-    
+
     return res;
 }
 
@@ -39,7 +39,7 @@ static __inline__ void
 spinlk(m_atomic_t *sp)
 {
     m_atomic_t res;
-    
+
     do {
         res = *sp;
         if (res == ZEROSPININITVAL) {
@@ -83,7 +83,7 @@ spintrylk(m_atomic_t *sp)
     if (res == ZEROSPININITVAL) {
         res++;
     }
-    
+
     return res;
 }
 

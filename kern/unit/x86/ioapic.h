@@ -2,7 +2,7 @@
 #define __KERN_UNIT_X86_IOAPIC_H__
 
 #include <stdint.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/trix.h>
 
 void ioapicinit(long unit);

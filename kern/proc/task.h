@@ -6,7 +6,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/types.h>
 #include <zero/trix.h>
 //#include <zero/list.h>

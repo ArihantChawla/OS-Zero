@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <signal.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/types.h>
 #include <kern/util.h>
 #include <kern/cpu.h>

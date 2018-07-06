@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/ipc.h>
-#include <zero/param.h>
+#include <mach/param.h>
 
 /* permissions for shmget() */
 #define SHM_R      0x00000100

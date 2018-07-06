@@ -4,7 +4,7 @@
 #include <kern/conf.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/trix.h>
 #include <kern/perm.h>
 #if (!BUFMULTITAB) && (BUFNEWHASH)

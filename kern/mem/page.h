@@ -3,9 +3,9 @@
 
 #include <kern/conf.h>
 #include <stdint.h>
-#include <zero/param.h>
+#include <mach/param.h>
+#include <mach/asm.h>
 #include <zero/trix.h>
-#include <zero/asm.h>
 #include <zero/tktlk.h>
 #include <kern/types.h>
 #include <kern/perm.h>

@@ -4,7 +4,7 @@
 #include <kern/conf.h>
 #include <stdint.h>
 #include <sys/param.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/mtx.h>
 //#include <zero/spinrw.h>
 

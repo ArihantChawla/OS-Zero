@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <endian.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 
 #define GFX_ARGB32    1
 #define GFX_RGB888    2

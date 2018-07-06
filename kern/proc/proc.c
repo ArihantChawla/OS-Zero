@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <signal.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <kern/conf.h>
 #include <kern/util.h>
 #include <kern/obj.h>

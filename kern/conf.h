@@ -3,7 +3,7 @@
 
 #define ZERO_KERNEL (defined(__KERNEL__))
 
-#include <zero/param.h>
+#include <mach/param.h>
 
 #define USYSINFO      0
 #define VMPAGETKTLK   1

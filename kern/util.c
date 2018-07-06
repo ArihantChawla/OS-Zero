@@ -3,7 +3,7 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/trix.h>
 #include <kern/io/drv/chr/cons.h>
 #include <kern/io/drv/pc/vga.h>

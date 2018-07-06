@@ -6,7 +6,7 @@
 
 #include <kern/conf.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/trix.h>
 #include <zero/fastudiv.h>
 #include <zero/spin.h>

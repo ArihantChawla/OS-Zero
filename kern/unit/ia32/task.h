@@ -4,7 +4,7 @@
 #if !defined(__ASSEMBLER__)
 
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/types.h>
 #include <kern/unit/x86/cpu.h>
 

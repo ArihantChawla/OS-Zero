@@ -11,7 +11,7 @@
 #define MEM_WAIT        (1 << 2)        // wait for allocation to succeed
 #define MEM_USE_RESERVE (1 << 31)       // use reserved memory with MEM_NOWAIT
 
-#include <zero/param.h>
+#include <mach/param.h>
 #include <kern/mem/mem.h>
 #define  kwalloc(nb)            memalloc(nb, MEMWIRE)
 #define  kmalloc(nb)            memalloc(nb, 0)

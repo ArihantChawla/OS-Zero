@@ -2,7 +2,7 @@
 #define __SHARE_PTRDIFF_T_H__
 
 #if defined(_ZERO_SOURCE)
-#include <zero/param.h>
+#include <mach/param.h>
 #include <stdint.h>
 #include <share/null.h>
 #if (PTRSIZE == 8)

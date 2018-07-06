@@ -2,7 +2,7 @@
 #include <signal.h>
 #include <sys/io.h>
 #include <kern/conf.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/types.h>
 //#include <kern/syscall.h>
 #include <kern/asm.h>
@@ -53,7 +53,7 @@ extern struct m_farptr idtptr;
 long                   trappriotab[NINTR];
 long                   trapsigmap[TRAPNCPU]
 = {
-    SIGFPE, 
+    SIGFPE,
     0,
     0,
     SIGTRAP,

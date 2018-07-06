@@ -20,7 +20,7 @@ typedef __gnuc_va_list __stdio_va_list;
 #include <fcntl.h>
 //#include <sys/types.h>
 #if (_ZERO_SOURCE)
-#include <zero/param.h>
+#include <mach/param.h>
 //#include <kern/io.h>
 //#include <kern/io/buf.h>
 #endif
@@ -215,7 +215,7 @@ extern int fsetpos(FILE *stream, const fpos_t *pos);
 #define fsetpos64(s, p) fsetpos(s, p)
 #else
 extern int fgetpos64(FILE *__restrict stream, fpos64_t *__restrict pos);
-extern int fsetpos64(FILE *__restrict stream, fpos64_t *__restrict pos); 
+extern int fsetpos64(FILE *__restrict stream, fpos64_t *__restrict pos);
 #endif
 
 /* errors and file attributes */

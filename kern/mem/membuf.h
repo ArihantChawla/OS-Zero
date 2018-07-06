@@ -5,10 +5,10 @@
 #include <stdint.h>
 #include <stddef.h>
 #if (SMP)
-#include <zero/asm.h>
+#include <mach/asm.h>
 #endif
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/trix.h>
 #include <kern/types.h>
 

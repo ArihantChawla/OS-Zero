@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 
 /* base addresses */
 #define HPET0BASE     0xfed00000
@@ -72,7 +72,7 @@
 #define HPETVENDORMASK  0xffff0000
 #define HPETCNTRPERIOD  UINT64_C(0xffffffff00000000)
 /* all except the ID register are read-write */
-#define HPETCONFREG     0x0010  
+#define HPETCONFREG     0x0010
 #define HPETINTSTATREG  0x0020
 #define HPETMAINCNTREG  0x00f0
 #define HPETTMR0CONFREG 0x0100

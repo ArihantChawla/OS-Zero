@@ -3,7 +3,7 @@
 
 #if !defined(__wchar_t_defined)
 
-#include <zero/param.h>
+#include <mach/param.h>
 
 #if defined(__STDC_ISO_10646__) || defined(_ZERO_SOURCE)
 /* full ISO10646 character */

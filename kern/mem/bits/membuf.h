@@ -10,7 +10,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <zero/asm.h>
+#include <mach/asm.h>
 #include <zero/trix.h>
 #include <kern/malloc.h>
 #include <kern/util.h>

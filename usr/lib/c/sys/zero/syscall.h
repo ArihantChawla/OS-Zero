@@ -4,7 +4,7 @@
 #if defined(__KERNEL__)
 
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <kern/syscall.h>
 
 ASMLINK
