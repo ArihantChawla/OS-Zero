@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #if defined(__KERNEL__)
 #include <kern/util.h>
 #include <kern/cpu.h>

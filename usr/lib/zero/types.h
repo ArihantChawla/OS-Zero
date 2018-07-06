@@ -7,13 +7,13 @@
  * - other machine-specific declarations
  */
 #if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__)
-#include <zero/ia32/types.h>
+#include <mach/ia32/types.h>
 #elif defined(__x86_64__) || defined(__amd64__)
-#include <zero/x86-64/types.h>
+#include <mach/x86-64/types.h>
 #elif defined(__arm__)
-#include <zero/arm/types.h>
+#include <mach/arm/types.h>
 #elif defined(__ppc__)
-#include <zero/ppc/types.h>
+#include <mach/ppc/types.h>
 #endif
 
 #endif /* __ZERO_TYPES_H__ */

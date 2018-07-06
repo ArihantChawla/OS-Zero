@@ -1,5 +1,5 @@
-#ifndef __ZERO_ASM_H__
-#define __ZERO_ASM_H__
+#ifndef __MACH_ASM_H__
+#define __MACH_ASM_H__
 
 #include <stddef.h>
 
@@ -30,19 +30,19 @@
 #include <zero/msc/win32.h>
 #endif
 #elif defined(__x86_64__) || defined(__amd64__)
-#include <zero/x86-64/asm.h>
-#include <zero/x86/asm.h>
+#include <mach/x86-64/asm.h>
+#include <mach/x86/asm.h>
 #elif (defined(__i386__) || defined(__i486__)                           \
        || defined(__i586__) || defined(__i686__))
-#include <zero/ia32/asm.h>
-#include <zero/x86/asm.h>
+#include <mach/ia32/asm.h>
+#include <mach/x86/asm.h>
 #elif defined(__arm__)
-#include <zero/arm/asm.h>
+#include <mach/arm/asm.h>
 #elif defined(__ppc__)
-#include <zero/ppc/asm.h>
+#include <mach/ppc/asm.h>
 #endif
 
-/* for systems without GNU C, we define these in e.g. <zero/ia32/asm.h> */
+/* for systems without GNU C, we define these in e.g. <mach/ia32/asm.h> */
 #if defined(__GNUC__)
 /* stack frames */
 #define m_setretadr(p)                                                  \
@@ -66,5 +66,5 @@
     } while (0)
 #endif
 
-#endif /* __ZERO_ASM_H__ */
+#endif /* __MACH_ASM_H__ */
 

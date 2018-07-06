@@ -35,7 +35,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/trix.h>
 #if (RANDMT32TEST)
 #include <stdio.h>

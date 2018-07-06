@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <zero/trix.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/randk.h>
 
 struct _randkglobal _randkglobal ALIGNED(CLSIZE);

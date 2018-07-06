@@ -2,7 +2,7 @@
 #define __ZERO_BITS_MEM_H__
 
 #include <stdint.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/cdefs.h>
 #include <zero/trix.h>
 #include <zero/randklc.h>
@@ -40,23 +40,6 @@
 /* align pointer to aln-byte boundary */
 #define memalignptr(ptr, aln)   ((void *)((uintptr)(ptr) & ((align) - 1)))
 #define memptraligned(ptr, aln) (!(MEMADR_T(ptr) & ((aln) - 1)))
-
-/* lowest-order bit lock for pointers */
-#define memtrylkptr(ptr)                                                \
-    (!m_cmpsetbit((m_atomic_t *)(ptr), MEM_ADR_LK_BIT_POS))
-static __inline__
-memlkptr(m_atomicptr_t *ptr)
-{
-    do {
-        while (*(m_atomic_t *)ptr & MEM_ADR_LK_BIT) {
-            m_spinwait();
-        }
-        if (memtrylkptr(ptr)) {
-
-            return;
-        }
-    } while (1);
-}
 
 /* simple randomization of block addresses for cache-coloring */
 #define memgenadr(adr, aln, mul)                                        \

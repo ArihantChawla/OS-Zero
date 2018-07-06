@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/bits/shuntc.h>
 
 #define SHUNT_NOPER      SHUNTCNOPER

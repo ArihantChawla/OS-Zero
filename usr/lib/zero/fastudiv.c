@@ -25,7 +25,7 @@
  */
 
 #include <stdint.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/trix.h>
 #include <zero/fastudiv.h>
 

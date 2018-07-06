@@ -9,7 +9,7 @@
 #include <stddef.h>
 #include <limits.h>
 #include <stdint.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/mtx.h>
 
 #if !defined(HAZPTR_T)
@@ -37,7 +37,7 @@ static __inline__ void
 hazptrpush(struct hazptrbin *bin, HAZPTR_T ptr)
 {
     long ndx;
-    
+
     do {
         ndx = m_fetchadd(&bin->cur, -1);
         if (ndx > 0) {
@@ -98,5 +98,4 @@ hazptrpoll(struct hazptrbin *bin)
 #endif /* 0 */
 
 #endif /* __ZERO_HAZPTR_H__ */
-
 

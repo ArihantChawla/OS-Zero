@@ -1,5 +1,5 @@
-#ifndef __ZERO_X86_SATMATH_H__
-#define __ZERO_X86_SATMATH_H__
+#ifndef __MACH_X86_SATMATH_H__
+#define __MACH_X86_SATMATH_H__
 
 static __inline__ satu8_t
 _saddu8(satu8_t u1, satu8_t u2)
@@ -79,5 +79,5 @@ _sdivu8(satu8_t u1, satu8_t u2)
     return res;
 }
 
-#endif /* __ZERO_X86_SATMATH_H__ */
+#endif /* __MACH_X86_SATMATH_H__ */
 

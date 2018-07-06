@@ -1,12 +1,12 @@
-#ifndef __ZERO_IA32_TYPES_H__
-#define __ZERO_IA32_TYPES_H__
+#ifndef __MACH_IA32_TYPES_H__
+#define __MACH_IA32_TYPES_H__
 
 #include <kern/conf.h>
 #include <stdint.h>
 #include <signal.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
-#include <zero/x86/types.h>
+#include <mach/param.h>
+#include <mach/x86/types.h>
 
 /* C call frame - 8 bytes */
 struct m_stkframe {
@@ -147,5 +147,5 @@ struct m_task {
     struct m_fpstate fpstate;   //  X bytes @ 128; FPU state
 };
 
-#endif /* __ZERO_IA32_TYPES_H__ */
+#endif /* __MACH_IA32_TYPES_H__ */
 

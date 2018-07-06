@@ -1,5 +1,5 @@
-#ifndef __ZERO_ARM_PROF_H__
-#define __ZERO_ARM_PROF_H__
+#ifndef __MACH_ARM_PROF_H__
+#define __MACH_ARM_PROF_H__
 
 /* TODO: fix this to work and find out which versions of ARM it may work with */
 
@@ -19,7 +19,7 @@
     __tv##id[1] = _getccnt();                                           \
     /* disable cycle counter */
     __asm__ __volatile__ ("mcr p15, 0, %0, c9, c12, 2\n" : : "r" (1 << 31))
-    
+
 #define proftickdiff(id)                                                \
     (__tv##id[1] - __tv##id[0])
 
@@ -33,5 +33,5 @@ _getccnt(void)
 
     return val;
 }
-#endif /* __ZERO_ARM_PROF_H__ */
+#endif /* __MACH_ARM_PROF_H__ */
 

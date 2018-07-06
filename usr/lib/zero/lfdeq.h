@@ -1,15 +1,15 @@
 #ifndef __ZERO_LFDEQ_H__
 #define __ZERO_LFDEQ_H__
 
-#include <zero/param.h>
+#include <mach/param.h>
+#include <mach/op128.h>
 #include <zero/trix.h>
-#include <zero/op128.h>
 
 #define LFDEQMAPBUF   1
 #if (LFDEQMAPBUF)
 #define LFDEQLKBITPOS 0
 #define LFDEQLKBIT    (1UL << LFDEQLKBITPOS)
-#include <zero/asm.h>
+#include <mach/asm.h>
 #define _lfdeqtrylkchain(ptr)                                           \
     (!m_cmpsetbit((volatile long *)(ptr), LFDEQLKBITPOS))
 #define _lfdequnlkchain(ptr)                                            \
@@ -27,8 +27,8 @@
 #define LFDEQ_VAL_T    uintptr_t
 #define LFDEQ_VAL_NONE 0
 #endif
-#include <zero/param.h>
-#include <zero/tagptr.h>
+#include <mach/param.h>
+#include <mach/tagptr.h>
 
 struct lfdeqnode {
     TAGPTR_T          prev;

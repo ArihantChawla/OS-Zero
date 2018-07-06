@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <zero/cdefs.h>
-#include <zero/asm.h>
+#include <mach/asm.h>
 #include <zero/priolk.h>
 
 /* <vendu> eliminated the giant mutex */
@@ -56,7 +56,7 @@ priolkinit(struct priolkdata *data, unsigned long val)
         }
         if (!ptr) {
             fprintf(stderr, "PRIOLK: failed to initialise priority\n");
-            
+
             exit(1);
         }
     }
@@ -145,7 +145,7 @@ priolkfin(void)
 {
     struct priolkdata *ptr = t_priolkptr;
     struct priolkdata *head;
-    
+
     do {
         head = (struct priolkdata *)g_priofree;
         ptr->next = head;
@@ -153,11 +153,11 @@ priolkfin(void)
                          (long *)head,
                          (long *)ptr)) {
             t_priolkptr = NULL;
-            
+
             break;
         }
     } while (1);
-            
+
     return;
 }
 

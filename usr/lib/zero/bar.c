@@ -1,7 +1,7 @@
 /* REFERENCE: http://locklessinc.com/articles/barriers/ */
 
 #include <zero/sys.h>
-#include <zero/asm.h>
+#include <mach/asm.h>
 #include <zero/mtx.h>
 #include <zero/cond.h>
 #include <zero/bar.h>

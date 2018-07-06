@@ -1,9 +1,9 @@
 #ifndef __ZERO_MAPLK_H__
 #define __ZERO_MAPLK_H__
 
-#include <zero/asm.h>
+#include <mach/asm.h>
 #include <limits.h>
-#include <zero/param.h>
+#include <mach/param.h>
 
 typedef struct {
     unsigned long  nbit;

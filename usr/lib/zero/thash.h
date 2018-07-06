@@ -1,10 +1,8 @@
-#ifndef __ZERO_THASH_H__
-#define __ZERO_THASH_H__
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <zero/asm.h>
+#include <mach/asm.h>
+#include <zero/trix.h>
 
 #if !defined(THASH_ITEM_T)
 #define THASH_ITEM_T struct thashitem
@@ -195,12 +193,11 @@ thashchk(struct thashtab **tab, uintptr_t adr, long del)
             }
         } while (slot);
         thashunlklist(&tab[hkey]);
+    }
 
     return val;
 }
 
 #define thashfind(tab, adr) thashchk(tab, adr, 0)
 #define thashdel(tab, adr)  thashchk(tab, adr, 1)
-
-#endif /* __ZERO_THASH_H__ */
 

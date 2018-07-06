@@ -4,7 +4,7 @@
 #define ZEROFMTX 1
 
 #include <stdint.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/mtx.h>
 #include <zero/cond.h>
 

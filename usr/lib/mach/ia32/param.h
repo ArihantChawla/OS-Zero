@@ -1,5 +1,5 @@
-#ifndef __ZERO_IA32_PARAM_H__
-#define __ZERO_IA32_PARAM_H__
+#ifndef __MACH_IA32_PARAM_H__
+#define __MACH_IA32_PARAM_H__
 
 /* # of I/O ports */
 #define NIOPORT        65536
@@ -23,5 +23,5 @@
 
 #define LONGDOUBLESIZE 80
 
-#endif /* __ZERO_IA32_PARAM_H__ */
+#endif /* __MACH_IA32_PARAM_H__ */
 

@@ -1,11 +1,11 @@
-#ifndef __ZERO_X86_64_TYPES_H__
-#define __ZERO_X86_64_TYPES_H__
+#ifndef __MACH_X86_64_TYPES_H__
+#define __MACH_X86_64_TYPES_H__
 
 #include <stdint.h>
 #include <signal.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
-#include <zero/x86/types.h>
+#include <mach/param.h>
+#include <mach/x86/types.h>
 
 /* C call frame */
 struct m_stkframe {
@@ -104,5 +104,5 @@ struct m_task {
     struct m_fpstate fpstate;   // X bytes @ 256; FPU state
 };
 
-#endif /* __ZERO_X86_64_TYPES_H__ */
+#endif /* __MACH_X86_64_TYPES_H__ */
 

@@ -1,5 +1,5 @@
-#ifndef __ZERO_ARM_ASM_H__
-#define __ZERO_ARM_ASM_H__
+#ifndef __MACH_ARM_ASM_H__
+#define __MACH_ARM_ASM_H__
 
 /* API declarations */
 #define m_membar()   __asm__ __volatile__ ("" : : : "memory")
@@ -25,7 +25,7 @@ m_cmpswap_armv6(volatile long *p, long want, long val)
                           "0: ldrex r2, [%2]\n"         // r2 = *p;
                           "cmp r2, r1\n"                // is *p == want?
                           "bne 1f\n"                    // if not, wait
-                          "strexne r2, r1, [%3]\n"      // r2 
+                          "strexne r2, r1, [%3]\n"      // r2
                           "cmpne r2, %3\n"
                           "beq 0b\n"
                           "dmb\n"
@@ -63,5 +63,5 @@ m_cmpswap(volatile long *p, long want, long val)
     return res;
 }
 
-#endif /* __ZERO_ARM_ASM_H__ */
+#endif /* __MACH_ARM_ASM_H__ */
 

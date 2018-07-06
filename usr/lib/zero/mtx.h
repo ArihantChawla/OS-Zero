@@ -10,8 +10,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
-#include <zero/asm.h>
+#include <mach/param.h>
+#include <mach/asm.h>
 #include <zero/thr.h>
 
 /*

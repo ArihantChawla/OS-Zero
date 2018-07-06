@@ -14,7 +14,7 @@
 #include <pthread.h>
 #endif
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/trix.h>
 
 #define RANDMT64NSTATE      312

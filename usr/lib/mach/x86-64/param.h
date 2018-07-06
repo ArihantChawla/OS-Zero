@@ -1,5 +1,5 @@
-#ifndef __ZERO_X86_64_PARAM_H__
-#define __ZERO_X86_64_PARAM_H__
+#ifndef __MACH_X86_64_PARAM_H__
+#define __MACH_X86_64_PARAM_H__
 
 /* # of I/O ports */
 #define NIOPORT        65536
@@ -27,7 +27,7 @@
 #define PTRBITS        64
 #define ADRBITS        48 // # of significant bytes in phys and virt addresses
 #define ADRHIBITCOPY   1
-#undef  ADRHIBITZERO
+#undef  ADRHIBITMACH
 #define PAGESIZELOG2   12 // 4-kilobyte pages
 
 #define CLSIZE         64
@@ -36,5 +36,5 @@
 
 #define LONGDOUBLESIZE 80
 
-#endif /* __ZERO_X86_64_PARAM_H__ */
+#endif /* __MACH_X86_64_PARAM_H__ */
 

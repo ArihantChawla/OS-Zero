@@ -1,4 +1,4 @@
-#include <zero/asm.h>
+#include <mach/asm.h>
 #include <zero/lwlk.h>
 #include <zero/waitq.h>
 
@@ -8,7 +8,7 @@ static void
 lwlklk(struct lwlk *lk, long wrlk)
 {
     struct waitq *wq = waitqget();
-    
+
     if (!lwlkasync(lk, wrlk)) {
         wq->wait();
     }
@@ -87,7 +87,7 @@ lwlklkasync(struct lwlk *lk, long wrlk)
 
         return LWLK_FAILURE;
     }
-    
+
     return LWLK_SUCCESS;
 }
 

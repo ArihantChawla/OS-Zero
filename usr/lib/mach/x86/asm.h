@@ -1,10 +1,10 @@
-#ifndef __ZERO_X86_ASM_H__
-#define __ZERO_X86_ASM_H__
+#ifndef __MACH_X86_ASM_H__
+#define __MACH_X86_ASM_H__
 
 //#define frameisusr(tcb) ((tcb)->frame.cs == UTEXTSEL)
 
 #include <stdint.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/cdefs.h>
 
 typedef volatile int8_t   m_atomic8_t;
@@ -319,5 +319,5 @@ m_bsr32(uint32_t val)
     return ret;
 }
 
-#endif /* __ZERO_X86_ASM_H__ */
+#endif /* __MACH_X86_ASM_H__ */
 

@@ -1,12 +1,10 @@
 #ifndef __ZERO_MEM_H__
 #define __ZERO_MEM_H__
 
-#include <zero/param.h>
-#include <zero/hash.h>
-#define THASH_VAL_NONE  (~(uintptr_t)0)
-#define THASH_FUNC(key) (tmhash32(key))
-#include <zero/thash.h>
+#include <mach/param.h>
+#include <mach/asm.h>
 #include <zero/bits/mem.h>
+#include <zero/hash.h>
 
 /*
  * allocation anatomy
@@ -46,6 +44,26 @@
 #define MEM_MAX_MID_SIZE    (MEM_MAX_MID_PAGES * PAGESIZE)
 #define MEM_BIG_POOLS       PTRBITS
 
+/* lowest-order bit lock for pointers */
+#define memtrylkptr(ptr)                                                \
+    (!m_cmpsetbit((m_atomic_t *)(ptr), MEM_ADR_LK_BIT_POS))
+
+static __inline__ void
+memlkptr(m_atomicptr_t *ptr)
+{
+    do {
+        while (*(m_atomic_t *)ptr & MEM_ADR_LK_BIT) {
+            m_waitspin();
+        }
+        if (memtrylkptr(ptr)) {
+
+            break;
+        }
+    } while (1);
+
+    return;
+}
+
 /* memory slab with buffer-stack */
 struct memslab {
     struct memslab  *prev;      // pointer to previous in list
@@ -75,7 +93,7 @@ struct memtlsqueue {
     (((nfo) >> MEM_BLK_ID_BITS) & ((1L << MEM_BLK_ID_BITS) - 1))
 #define memlkblk(blk)                                                   \
     (!m_cmpsetbit((m_atomic_t *)&((void *)(blk)[-1]), MEM_ADR_LK_BIT_POS))
-#define memlkblk(blk)                                                   \
+#define memunlkblk(blk)                                                 \
     (m_clrbit((m_atomic_t *)&((void *)(blk)[-1]), MEM_ADR_LK_BIT_POS))
 #define memgetinfo(blk)                                                 \
     (*((uintptr_t *)(blk)[-2]))

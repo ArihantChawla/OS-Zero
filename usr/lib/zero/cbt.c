@@ -14,7 +14,7 @@ cbtfind(struct cbt *tree, uintptr_t key)
             node = node->left;
             if (node) {
                 if (key == node->key) {
-                    
+
                     return node;
                 } else if (key < node->key) {
                     node = node->left;
@@ -28,7 +28,7 @@ cbtfind(struct cbt *tree, uintptr_t key)
             node = node->right;
             if (node) {
                 if (key == node->key) {
-                    
+
                     return node;
                 } else if (key < node->key) {
                     node = node->left;

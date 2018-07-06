@@ -1,5 +1,5 @@
-#ifndef __ZERO_X86_64_BIGNUM_H__
-#define __ZERO_X86_64_BIGNUM_H__
+#ifndef __MACH_X86_64_BIGNUM_H__
+#define __MACH_X86_64_BIGNUM_H__
 
 #define __USE_BIGNUM128 1
 
@@ -20,5 +20,5 @@ typedef __float128        f128;
 typedef Quad              f128;
 #endif
 
-#endif /* __ZERO_X86_64_BIGNUM_H__ */
+#endif /* __MACH_X86_64_BIGNUM_H__ */
 

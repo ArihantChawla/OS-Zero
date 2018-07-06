@@ -41,11 +41,11 @@ shuntparse(SHUNT_TOKEN *tokqueue)
                 tok2 = shuntpop(&stack);
             }
             if ((tok2) && tok2->type == SHUNT_LEFTPAREN) {
-                
+
                 continue;
             } else {
                 fprintf(stderr, "mismatched parentheses: %s\n", tok2->str);
-                
+
                 return NULL;
             }
         } else if (shuntcisop(tok)) {
@@ -79,7 +79,7 @@ shuntparse(SHUNT_TOKEN *tokqueue)
                     fprintf(stderr, "mismatched parentheses: %s\n",
                             tok2->str);
                 }
-                
+
                 return NULL;
             }
             if (shuntcisfunc(stack)) {
@@ -128,7 +128,7 @@ shunteval(SHUNT_TOKEN *tokqueue)
         } else if (shuntcisop(tok)) {
             if (!tok1) {
                 fprintf(stderr, "missing argument 1\n");
-                
+
                 return NULL;
             }
             arg2 = NULL;

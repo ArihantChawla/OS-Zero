@@ -1,11 +1,11 @@
-#ifndef __ZERO_X86_64_ASM_H__
-#define __ZERO_X86_64_ASM_H__
+#ifndef __MACH_X86_64_ASM_H__
+#define __MACH_X86_64_ASM_H__
 
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
 #include <zero/types.h>
-#include <zero/x86/asm.h>
+#include <mach/x86/asm.h>
 
 extern uint64_t asmgetpc(void);
 
@@ -398,5 +398,5 @@ m_bsr64(uint64_t val)
     return ret;
 }
 
-#endif /* __ZERO_X86_64_ASM_H__ */
+#endif /* __MACH_X86_64_ASM_H__ */
 

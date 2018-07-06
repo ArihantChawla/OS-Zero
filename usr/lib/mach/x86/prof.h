@@ -1,7 +1,7 @@
-#ifndef __ZERO_X86_PROF_H__
-#define __ZERO_X86_PROF_H__
+#ifndef __MACH_X86_PROF_H__
+#define __MACH_X86_PROF_H__
 
-#include <zero/asm.h>
+#include <mach/asm.h>
 
 #if defined(__cplusplus)
 extern "C" {
@@ -134,5 +134,5 @@ _rdpmc(struct _tickval *tp, int id)
 }
 #endif
 
-#endif /* __ZERO_X86_PROF_H__ */
+#endif /* __MACH_X86_PROF_H__ */
 

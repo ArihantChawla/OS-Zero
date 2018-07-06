@@ -11,9 +11,9 @@ extern "C" {
 #include <zero/cdefs.h>
 
 #if defined(_MSC_VER) || defined(__x86_64__) || defined(__amd64__) || defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
-#include <zero/x86/prof.h>
+#include <mach/x86/prof.h>
 #elif defined(__arm__)
-#include <zero/arm/prof.h>
+#include <mach/arm/prof.h>
 #endif
 
 #define tscmp(ts1, ts2)                                                \

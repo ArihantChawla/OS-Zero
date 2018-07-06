@@ -1,10 +1,10 @@
-#ifndef __ZERO_OP128_H__
-#define __ZERO_OP128_H__
+#ifndef __MACH_OP128_H__
+#define __MACH_OP128_H__
 
 #if defined(__x86_64__) || defined(__amd64__)
 
 #include <stdint.h>
-#include <zero/param.h>
+#include <mach/param.h>
 
 #if (defined(__clang__)                                                 \
      && ((__clang_major__ > 3)                                          \
@@ -38,5 +38,5 @@ typedef struct {
 
 #endif /* __x86_64__ || __amd64__ */
 
-#endif /* __ZERO_OP128_H__ */
+#endif /* __MACH_OP128_H__ */
 

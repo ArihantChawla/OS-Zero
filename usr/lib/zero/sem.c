@@ -4,7 +4,7 @@
 #else
 #include <zero/mtx.h>
 #endif
-#include <zero/asm.h>
+#include <mach/asm.h>
 #include <zero/sem.h>
 //#include <zero/thr.h>
 
@@ -113,7 +113,7 @@ sempost(zerosem *sem)
 #if defined(EOVERFLOW)
             errno = EOVERFLOW;
 #endif
-            
+
             return -1;
         }
     } while (1);

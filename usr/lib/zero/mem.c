@@ -1,12 +1,15 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
-#include <zero/asm.h>
+#include <mach/param.h>
+#include <mach/asm.h>
 #include <zero/mem.h>
+#define THASH_VAL_NONE  (~(uintptr_t)0)
+#define THASH_FUNC(key) (tmhash32(key))
+#include <zero/thash.h>
 
-static struct mem         g_mem;
-THREADLOCAL struct memtls g_memtls;
+static struct mem          g_mem;
+THREADLOCAL struct memtls *g_memtls;
 
 #define MEM_TLS_TRIES     8
 #define MEM_GLOB_TRIES    32
@@ -27,10 +30,10 @@ memgettls(size_t size, size_t align)
 
     if (sz <= MEM_MAX_SMALL_SIZE) {
         _memcalcsmallpool(sz, pool);
-        slot = &g_memtls->smalltab[pool];
+        slot = g_memtls->smalltab[pool];
     } else {
         _memcalcrunpool(sz, pool);
-        slot = &g_memtls->runtab[pool];
+        slot = g_memtls->runtab[pool];
     }
     do {
         slab = *slot;
@@ -62,7 +65,7 @@ memgettls(size_t size, size_t align)
             }
         }
         if (!ptr) {
-            m_spinwait();
+            m_waitspin();
         }
     } while (!ptr && (--ntry));
 
@@ -102,7 +105,7 @@ memgetglob(size_t size, size_t align)
                 } else if (ndx == nblk - 1
                            && m_cmpswap(&slab->ndx, n, ~(uintptr_t)0)) {
                     next = slab->next;
-                    ptr = slab->stk[n];
+                    ptr = slab->stk[ndx];
                     if (next) {
                         next->prev = NULL;
                     }
@@ -127,14 +130,14 @@ memgetglob(size_t size, size_t align)
             }
         }
         if (!ptr) {
-            m_spinwait();
+            m_waitspin();
         }
     } while (!ptr && (--ntry));
 
     return ptr;
 }
 
-static __inline__ void *
+static void *
 memgetblk(size_t size, size_t align, long zero)
 {
     void   *ptr;

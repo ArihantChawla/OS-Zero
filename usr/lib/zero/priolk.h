@@ -2,7 +2,7 @@
 #define __ZERO_PRIOLK_H__
 
 #include <stdint.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #if defined(PRIOLKUSEMMAP)
 #define PRIOLKALLOCFAILED MAP_FAILED
 #define PRIOLKALLOC(sz)   mapanon(0, sz)

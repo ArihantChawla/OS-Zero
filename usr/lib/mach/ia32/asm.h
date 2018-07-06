@@ -1,11 +1,11 @@
-#ifndef __ZERO_IA32_ASM_H__
-#define __ZERO_IA32_ASM_H__
+#ifndef __MACH_IA32_ASM_H__
+#define __MACH_IA32_ASM_H__
 
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
 #include <zero/types.h>
-#include <zero/x86/asm.h>
+#include <mach/x86/asm.h>
 
 extern uint32_t asmgetpc(void);
 
@@ -173,5 +173,5 @@ m_cmpxchg64(m_atomic64_t *p32,
 
 #endif
 
-#endif /* __ZERO_IA32_ASM_H__ */
+#endif /* __MACH_IA32_ASM_H__ */
 

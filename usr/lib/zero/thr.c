@@ -1,7 +1,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <zero/cdefs.h>
-#include <zero/asm.h>
+#include <mach/asm.h>
 #include <zero/time.h>
 #include <zero/thr.h>
 #include <zero/cond.h>
@@ -28,7 +28,7 @@ thrwait1(zerothrqueue *queue)
     while (m_atomread(&thr->sleep)) {
         thryield();
     }
-             
+
     return;
 }
 
@@ -50,13 +50,13 @@ thrsleep2(zerothrqueue *queue, const struct timespec *absts)
 #if defined(USECLOCKNANOSLEEP)
     while (clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, absts, &tsrem)) {
         if (errno == EINTR) {
-            
+
             continue;
         } else {
             if (m_atomread(&thr->sleep)) {
                 htlistrm(queue, thr);
             }
-            
+
             return -1;
         }
     }
@@ -71,7 +71,7 @@ thrsleep2(zerothrqueue *queue, const struct timespec *absts)
             if (m_atomread(&thr->sleep)) {
                 htlistrm(queue, thr);
             }
-            
+
             return 0;
         }
         thryield();

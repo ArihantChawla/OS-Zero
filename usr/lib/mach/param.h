@@ -1,5 +1,5 @@
-#ifndef __ZERO_PARAM_H__
-#define __ZERO_PARAM_H__
+#ifndef __MACH_PARAM_H__
+#define __MACH_PARAM_H__
 
 /*
  * machine-specific param.h headers should declare the following:
@@ -15,15 +15,15 @@
  * PAGESIZE     - virtual memory page size
  */
 #if defined(__x86_64__) || defined(__amd64__)
-#include <zero/x86-64/param.h>
+#include <mach/x86-64/param.h>
 #elif (defined(__i386__) || defined(__i486__)                           \
        || defined(__i586__) || defined(__i686__))
-#include <zero/ia32/param.h>
+#include <mach/ia32/param.h>
 #elif defined(__arm__)
-#include <zero/arm/param.h>
+#include <mach/arm/param.h>
 #elif defined(__ppc__)
-#include <zero/ppc/param.h>
+#include <mach/ppc/param.h>
 #endif
 
-#endif /* __ZERO_PARAM_H__ */
+#endif /* __MACH_PARAM_H__ */
 

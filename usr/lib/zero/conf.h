@@ -4,7 +4,7 @@
 #define ZERO_THREADS    0
 #define ZERO_MUTEX      1
 #if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
-#include <zero/asm.h>
+#include <mach/asm.h>
 #include <zero/mtx.h>
 #define ZERO_MUTEX_TYPE zerofmtx
 #elif defined(PTHREAD_MUTEX)

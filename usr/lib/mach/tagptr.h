@@ -1,22 +1,22 @@
-#ifndef __ZERO_TAGPTR_H__
-#define __ZERO_TAGPTR_H__
+#ifndef __MACH_TAGPTR_H__
+#define __MACH_TAGPTR_H__
 
-/* tagged pointers for libzero */
+/* tagged pointers for libmach */
 
 #include <stdint.h>
-#include <zero/bignum.h>
+#include <mach/bignum.h>
 
 #if ((defined(__i386__) || defined(__i486__)                            \
       || defined(__i586__) || defined(__i686__))                        \
      && (!defined(__x86_64__) && !defined(__amd64__) && !defined(SSE)))
 
-#include <zero/ia32/tagptr.h>
+#include <mach/ia32/tagptr.h>
 
 #elif defined(__x86_64__) || defined(__amd64__)
 
-#include <zero/x86-64/tagptr.h>
+#include <mach/x86-64/tagptr.h>
 
 #endif
 
-#endif /* __ZERO_TAGPTR_H__ */
+#endif /* __MACH_TAGPTR_H__ */
 

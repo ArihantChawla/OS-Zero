@@ -1,13 +1,13 @@
 #include <stdlib.h>
 #include <stdint.h>
-#include <zero/asm.h>
-#include <zero/atomic.h>
-#include <zero/tagptr.h>
+#include <mach/asm.h>
+#include <mach/atomic.h>
+#include <mach/tagptr.h>
 #include <zero/lfdeq.h>
 #if (LFDEQMAPBUF)
 #define MMAP_DEV_ZERO 0
 #include <unistd.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/unix.h>
 #endif
 
@@ -66,7 +66,7 @@ _lfdeqalloc(void)
 {
     struct lfdeqnode *buf = NULL;
     uintptr_t         up;
-    
+
     do {
         if (_lfdeqtrylkchain(&lfdeqbufchain)) {
             up = (uintptr_t)lfdeqbufchain;
@@ -220,7 +220,7 @@ lfdeqdequeue(struct lfdeq *lfdeq)
             } else {
                 dummy = _lfdeqalloc();
                 if (!dummy) {
-                    
+
                     return LFDEQ_VAL_NONE;
                 }
                 tpptr1 = (struct tagptr *)&tail;
@@ -255,7 +255,7 @@ lfdeqdequeue(struct lfdeq *lfdeq)
                 return val;
             }
         } else if (tpptr2->adr != tpptr1->adr) {
-            
+
             return LFDEQ_VAL_NONE;
         } else {
             tpptr2 = (struct tagptr *)&prev;

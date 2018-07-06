@@ -177,7 +177,7 @@ mltfindprev(void **tab,
     long       lvl;
     long       lim;
     long       ndxstk[MLTNTREELVL];
-    
+
     val--;
     ndxstk[0] = (val >> ofs) & MLTKEYMASK0;
     for (lvl = 1 ; lvl < MLTNTREELVL ; lvl++) {
@@ -199,7 +199,7 @@ mltfindprev(void **tab,
                         lvl--;
                         ndxstk[lvl]--;
                     } else {
-                        
+
                         return retval;
                     }
                 } else {
@@ -247,7 +247,7 @@ mltfindnext(void **tab,
     long       lvl;
     long       lim;
     long       ndxstk[MLTNTREELVL];
-    
+
     val++;
     ndxstk[0] = (val >> ofs) & MLTKEYMASK0;
     for (lvl = 1 ; lvl < MLTNTREELVL ; lvl++) {
@@ -292,7 +292,7 @@ mltfindnext(void **tab,
             }
             if ((ptr) && lvl == MLTNTREELVL - 1) {
                 retval = *(MLTVAL_T *)tptr;
-                
+
                 return retval;
             } else if (ptr) {
                 tptr = ptr;
@@ -328,7 +328,6 @@ mltfindnext(void **tab,
 
     return retval;
 }
-
 
 #if defined(MLTTEST)
 int

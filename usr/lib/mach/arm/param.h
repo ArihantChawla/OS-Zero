@@ -1,5 +1,5 @@
-#ifndef __ZERO_ARM_PARAM_H__
-#define __ZERO_ARM_PARAM_H__
+#ifndef __MACH_ARM_PARAM_H__
+#define __MACH_ARM_PARAM_H__
 
 #if !defined(__arm64__) && !defined(__aarch64__)
 #define WORDSIZE     4
@@ -21,5 +21,5 @@
 #define CLSIZELOG2   5
 #define PAGESIZE     4096
 
-#endif /* __ZERO_ARM_PARAM_H__ */
+#endif /* __MACH_ARM_PARAM_H__ */
 

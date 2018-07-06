@@ -1,9 +1,9 @@
-#ifndef __ZERO_IA32_TAGPTR_H__
-#define __ZERO_IA32_TAGPTR_H__
+#ifndef __MACH_IA32_TAGPTR_H__
+#define __MACH_IA32_TAGPTR_H__
 
 #include <stddef.h>
 #include <stdint.h>
-#include <zero/asm.h>
+#include <mach/asm.h>
 
 /* pointer in the high-order 64 bits, tag [counter] in the low */
 #define TAGPTR_T     uint64_t
@@ -42,5 +42,5 @@ tagptrcmp(TAGPTR_T *tp1, TAGPTR_T *tp2)
     return (diff == 0);
 }
 
-#endif /* __ZERO_IA32_TAGPTR_H__ */
+#endif /* __MACH_IA32_TAGPTR_H__ */
 

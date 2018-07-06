@@ -24,9 +24,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <endian.h>
-#include <zero/param.h>
+#include <mach/param.h>
 //#include <zero/mtx.h>
-#include <zero/asm.h>
+#include <mach/asm.h>
 
 /* get the lowest 1-bit in a */
 #define lo1bit(a)           ((a) & -(a))
