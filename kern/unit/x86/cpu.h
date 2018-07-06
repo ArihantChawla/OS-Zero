@@ -45,7 +45,7 @@ extern struct m_cacheinfo cpuidcacheinfo[16];
 
 #define cpuid(op, buf)                                                  \
     do {                                                                \
-        __asm__ __volatile__ ("movl %c4, %%eax\n"                       \
+        __asm__ __volatile__ ("movl %4, %%eax\n"                        \
                               "cpuid\n"                                 \
                               "movl %%eax, %0\n"                        \
                               "movl %%ebx, %1\n"                        \

@@ -3,10 +3,10 @@
 # clang doesn't support everything it would need to for the kernel to build
 #CC="clang -no-integrated-as"
 #AS="clang -integrated-as"
-#CC=gcc
-#AS=gcc
-CC="clang -integrated-as"
-AS="clang -integrated-as"
+CC=gcc
+AS=gcc
+#CC="clang -integrated-as"
+#AS="clang -integrated-as"
 LD=ld
 
 #CFLAGS="-save-temps /tmp/zero-tmp -m32 -fno-stack-protector -mno-red-zone -DZERONEWFMTX=1"
