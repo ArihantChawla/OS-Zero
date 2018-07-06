@@ -55,7 +55,7 @@ extern struct m_cacheinfo cpuidcacheinfo[16];
                                 "=m" ((buf)->ebx),                      \
                                 "=m" ((buf)->ecx),                      \
                                 "=m" ((buf)->edx)                       \
-                              : "i" (op)                                \
+                              : "r" (op)                                \
                               : "eax", "ebx", "ecx", "edx");            \
     } while (0)
 
