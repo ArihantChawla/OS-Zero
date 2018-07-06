@@ -2,6 +2,10 @@
 #define __ZERO_MEM_H__
 
 #include <zero/param.h>
+#include <zero/hash.h>
+#define THASH_VAL_NONE  (~(uintptr_t)0)
+#define THASH_FUNC(key) (tmhash32(key))
+#include <zero/thash.h>
 #include <zero/bits/mem.h>
 
 /*
@@ -79,9 +83,6 @@ struct memblk {
     uintptr_t  info;
     void      *ptr;
 };
-
-#define THASH_VAL_NONE (~(uintptr_t)0)
-#include <zero/thash.h>
 
 /* global allocator data */
 #define MEM_HASH_ITEMS 16384

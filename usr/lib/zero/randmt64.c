@@ -60,6 +60,7 @@ pthread_mutexattr_t  randmt64mtxatr;
 volatile long        randmt64init;
 #endif
 
+#if defined(_REENTRANT)
 void
 _randmt64init(pthread_mutex_t *mtx, pthread_mutexattr_t *atr)
 {
@@ -69,6 +70,7 @@ _randmt64init(pthread_mutex_t *mtx, pthread_mutexattr_t *atr)
 
     return;
 }
+#endif
 
 #define _randmt64mtxinit(imptr, mptr, aptr, iptr)                       \
     do {                                                                \
@@ -87,12 +89,14 @@ srandmt64(uint64_t seed)
     uint64_t      val;
     unsigned long ndx;
     uint64_t      tmp;
-    
+
+#if defined(_REENTRANT)
     if (!randmt64init) {
         _randmt64mtxinit(&randmt64initmtx, &randmt64mtx,
                          &randmt64mtxatr, &randmt64init);
     }
     pthread_mutex_lock(&randmt64mtx);
+#endif
     randmt64state[0] = seed;
     tmp = seed;
     for (ndx = 1 ; ndx < RANDMT64NSTATE ; ndx++) {
@@ -101,7 +105,9 @@ srandmt64(uint64_t seed)
         tmp = val;
     }
     randmt64curndx = ndx;
+#if defined(_REENTRANT)
     pthread_mutex_unlock(&randmt64mtx);
+#endif
 
     return;
 }
@@ -115,11 +121,13 @@ srandmt64tab(uint64_t *key, uint64_t keylen)
     uint64_t val;
     uint64_t tmp;
 
+#if defined(_REENTRANT)
     if (!randmt64init) {
         _randmt64mtxinit(&randmt64initmtx, &randmt64mtx,
                          &randmt64mtxatr, &randmt64init);
     }
     pthread_mutex_lock(&randmt64mtx);
+#endif
     srandmt64(RANDMT64TABSEED);
     ndx = max(keylen, RANDMT64NSTATE);
     tmp = randmt64state[0];
@@ -155,7 +163,9 @@ srandmt64tab(uint64_t *key, uint64_t keylen)
         tmp = val;
     }
     randmt64state[0] = UINT64_C(1) << 63;
+#if defined(_REENTRANT)
     pthread_mutex_unlock(&randmt64mtx);
+#endif
 
     return;
 }
@@ -201,11 +211,13 @@ randmt64(void)
     uint64_t      val;
     unsigned long cur;
 
+#if defined(_REENTRANT)
     if (!randmt64init) {
         _randmt64mtxinit(&randmt64initmtx, &randmt64mtx,
                          &randmt64mtxatr, &randmt64init);
     }
     pthread_mutex_lock(&randmt64mtx);
+#endif
     if (randmt64curndx >= RANDMT64NSTATE) {
         if (randmt64curndx == RANDMT64NSTATE + 1) {
             srandmt64(RANDMT64DEFSEED);
@@ -220,7 +232,9 @@ randmt64(void)
     val ^= (val << RANDMT64SHIFT3) & RANDMT64MASK3;
     val ^= (val >> RANDMT64SHIFT4);
     randmt64curndx = cur;
+#if defined(_REENTRANT)
     pthread_mutex_unlock(&randmt64mtx);
+#endif
 
     return val;
 }

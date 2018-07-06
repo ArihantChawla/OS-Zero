@@ -62,9 +62,9 @@ thashlklist(struct thashtab **cptr)
 #define thashalloctab() calloc(1, sizeof(struct thashtab))
 
 static __inline__ void
-thashadd(struct thashtab **tab, void *ptr, uintptr_t val)
+thashadd(struct thashtab **tab, uintptr_t adr, uintptr_t val)
 {
-    unsigned long    hkey = THASH_FUNC(ptr);
+    unsigned long    hkey = THASH_FUNC(adr);
     long             ndx;
     struct thashtab *slot;
     THASH_ITEM_T    *item;
@@ -83,7 +83,7 @@ thashadd(struct thashtab **tab, void *ptr, uintptr_t val)
         ndx = m_fetchadd((m_atomic_t *)&slot->hdr.n, 1);
         if (ndx < THASH_TAB_ITEMS) {
             item = &slot->list[ndx];
-            item->key = ptr;
+            item->key = adr;
             item->val = val;
 
             break;
@@ -100,49 +100,107 @@ thashadd(struct thashtab **tab, void *ptr, uintptr_t val)
 }
 
 static __inline__ uintptr_t
-thashchk(struct thashtab **tab, uintptr_t ptr, long del)
+thashchk(struct thashtab **tab, uintptr_t adr, long del)
 {
-    unsigned long    hkey = THASH_FUNC(ptr);
+    unsigned long    hkey = THASH_FUNC(adr);
     uintptr_t        val = THASH_VAL_NONE;
     struct thashtab *slot;
     THASH_ITEM_T    *item;
+    uintptr_t        mask;
     long             n;
+    long             ni;
     long             ndx;
     long             src;
 
     slot = thashlklist(&tab[hkey]);
     if (slot) {
+        n = slot->hdr.n;
         do {
-            ndx = 0;
-            n = slot->hdr.n;
-            while (ndx < n) {
-                item = &slot->list[ndx];
-                if (item->key == ptr) {
-                    val = item->val;
+            ni = min(n, 8);
+            if (ni) {
+                /*
+                 * - if item found, the mask will be -1; all 1-bits), and val
+                 *   will be the item address
+                 * - if not found, the mask will be 0 and so will val/slot
+                 */
+                val = 0;
+                switch (ni) {
+                    case 8:
+                        item = &slot->list[7];
+                        mask = -(item->key == adr);
+                        mask &= (uintptr_t)item;
+                        val |= mask;
+                    case 7:
+                        item = &slot->list[6];
+                        mask = -(item->key == adr);
+                        mask &= (uintptr_t)item;
+                        val |= mask;
+                    case 6:
+                        item = &slot->list[5];
+                        mask = -(item->key == adr);
+                        mask &= (uintptr_t)item;
+                        val |= mask;
+                    case 5:
+                        item = &slot->list[4];
+                        mask = -(item->key == adr);
+                        mask &= (uintptr_t)item;
+                        val |= mask;
+                    case 4:
+                        item = &slot->list[3];
+                        mask = -(item->key == adr);
+                        mask &= (uintptr_t)item;
+                        val |= mask;
+                    case 3:
+                        item = &slot->list[2];
+                        mask = -(item->key == adr);
+                        mask &= (uintptr_t)item;
+                        val |= mask;
+                    case 2:
+                        item = &slot->list[1];
+                        mask = -(item->key == adr);
+                        mask &= (uintptr_t)item;
+                        val |= mask;
+                    case 1:
+                        item = &slot->list[0];
+                        mask = -(item->key == adr);
+                        mask &= (uintptr_t)item;
+                        val |= mask;
+                    default:
+
+                        break;
+                }
+                if (val) {
+                    item = (THASH_ITEM_T *)val;
                     if (del) {
-                        src = m_fetchadd(&slot->hdr.n, -1);
-                        if (!src) {
+                        n--;
+                        ndx = item - &slot->list[0];
+                        if (!n) {
                             /* TODO: deallocate table */
                         } else {
                             slot->list[ndx] = slot->list[src];
-                            slot->list[src].key = ptr;
+                            slot->list[src].key = adr;
                             slot->list[src].val = THASH_VAL_NONE;
+                            slot->hdr.n = n;
                         }
                     }
 
                     return val;
+                } else {
+                    slot += ni;
+                    n -= ni;
                 }
+            } else {
+                ndx = 0;
+                slot = slot->hdr.next;
             }
-            slot = slot->hdr.next;
         } while (slot);
-    }
-    thashunlklist(&tab[hkey]);
+        thashunlklist(&tab[hkey]);
 
     return val;
 }
 
-#define thashfind(tab, ptr) thashchk(tab, ptr, 0)
-#define thashdel(tab, ptr)  thashchk(tab, ptr, 1)
+#define thashfind(tab, adr) thashchk(tab, adr, 0)
+#define thashdel(tab, adr)  thashchk(tab, adr, 1)
 
 #endif /* __ZERO_THASH_H__ */
 

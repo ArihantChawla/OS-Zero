@@ -8,12 +8,8 @@
 #include <zero/randklc.h>
 
 /* minimum allocation block size */
-#if defined(__BIGGEST_ALIGNMENT__)
-#define MEMMINALIGN    max(__BIGGEST_ALIGNMENT__, CLSIZE)
-#else
 #define MEMMINALIGN    CLSIZE
-#endif
-#define MEMMINBLKSIZE  MEMMINALIGN
+#define MEM_MIN_SIZE   MEMMINALIGN
 
 /* custom allocator types */
 /* size of machine word/integer */

@@ -5,26 +5,25 @@
 #include <zero/asm.h>
 #include <zero/mem.h>
 
-static struct mem          g_mem;
-THREADLOCAL struct memtls *g_memtls;
+static struct mem         g_mem;
+THREADLOCAL struct memtls g_memtls;
 
-#define MEM_THR_TRIES  8
-#define MEM_PROC_TRIES 16
+#define MEM_TLS_TRIES     8
+#define MEM_GLOB_TRIES    32
+#define memistls(sz, aln) ((sz) + (aln) - 1 <= MEM_MAX_RUN_PAGES * PAGESIZE)
 
-#define memszistls(sz, aln)                                             \
-    ((sz) + (aln) - 1 <= MEM_MAX_RUN_PAGES * PAGESIZE)
-
-/* allocate a block or run from thread-local buffer */
+/* allocate thread-local memory */
 void *
-memgettls(size_t sz)
+memgettls(size_t size, size_t align)
 {
     void            *ptr = NULL;
-    size_t           pool;
     struct memslab **slot;
     struct memslab  *slab;
+    size_t           pool;
+    size_t           sz;
     size_t           ndx;
     size_t           n;
-    long             ntry = MEM_THR_TRIES;
+    long             ntry = MEM_TLS_TRIES;
 
     if (sz <= MEM_MAX_SMALL_SIZE) {
         _memcalcsmallpool(sz, pool);
@@ -35,9 +34,6 @@ memgettls(size_t sz)
     }
     do {
         slab = *slot;
-        if (!slab) {
-            /* TODO: acquire global slab or allocate slab */
-        }
         if (slab) {
             ndx = m_fetchadd(&slab->ndx, 1);
             n = slab->nblk;
@@ -54,6 +50,16 @@ memgettls(size_t sz)
                     slab->prev->next = NULL;
                 }
             }
+        } else {
+            if (sz <= MEM_MAX_MID_SIZE) {
+                slab = memallocsmall(pool);
+            } else {
+                slab = memallocrun(pool);
+            }
+            if (slab) {
+                ptr = mempopblk(slab);
+                *slot = slab;
+            }
         }
         if (!ptr) {
             m_spinwait();
@@ -63,18 +69,19 @@ memgettls(size_t sz)
     return ptr;
 }
 
-/* allocate MEM_MAX_RUN..N bytes in a single global block */
+/* allocate process-global memory */
 void *
-memgetglob(size_t sz)
+memgetglob(size_t size, size_t align)
 {
     void            *ptr = NULL;
-    size_t           pool;
     struct memslab **slot;
     struct memslab  *slab;
     struct memslab  *next;
+    size_t           pool;
+    size_t           sz;
     size_t           ndx;
-    size_t           n;
-    long             ntry = MEM_PROC_TRIES;
+    size_t           nblk;
+    long             ntry = MEM_GLOB_TRIES;
 
     if (sz <= MEM_MAX_MID_SIZE) {
         _memcalcmidpool(sz, pool);
@@ -87,15 +94,12 @@ memgetglob(size_t sz)
         if (!m_cmpsetbit((m_atomic_t *)slot, MEM_ADR_LK_BIT_POS)) {
             slab = *slot;
             slab = (void *)((uintptr_t)slab & ~MEM_ADR_LK_BIT);
-            if (!slab) {
-                /* TODO: allocate slab */
-            }
             if (slab) {
                 ndx = m_fetchadd(&slab->ndx, 1);
-                n = slab->nblk;
-                if (ndx < n - 1) {
+                nblk = slab->nblk;
+                if (ndx < nblk - 1) {
                     ptr = slab->stk[ndx];
-                } else if (ndx == n - 1
+                } else if (ndx == nblk - 1
                            && m_cmpswap(&slab->ndx, n, ~(uintptr_t)0)) {
                     next = slab->next;
                     ptr = slab->stk[n];
@@ -109,8 +113,18 @@ memgetglob(size_t sz)
                 } else {
                     m_fetchadd(&slab->ndx, -1);
                 }
+                m_clrbit((m_atomic_t *)slot, MEM_ADR_LK_BIT_POS);
+            } else {
+                if (sz <= MEM_MAX_MID_SIZE) {
+                    slab = memallocmid(pool);
+                } else {
+                    slab = memallocbig(pool);
+                }
+                if (slab) {
+                    ptr = mempopblk(slab);
+                    *slot = slab;
+                }
             }
-            m_clrbit((m_atomic_t *)slot, MEM_ADR_LK_BIT_POS);
         }
         if (!ptr) {
             m_spinwait();
@@ -118,5 +132,22 @@ memgetglob(size_t sz)
     } while (!ptr && (--ntry));
 
     return ptr;
+}
+
+static __inline__ void *
+memgetblk(size_t size, size_t align, long zero)
+{
+    void   *ptr;
+    size_t  sz = max(size, MEM_MIN_SIZE);
+    size_t  aln = max(align, MEMMINALIGN);
+
+    if (memblkistls(sz, aln)) {
+        ptr = memgettls(sz, aln);
+    } else {
+        ptr = memgetglob(sz, aln);
+    }
+    if (zero) {
+        memzeroblk(ptr, size);
+    }
 }
 
