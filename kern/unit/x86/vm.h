@@ -1,12 +1,7 @@
 #ifndef __KERN_UNIT_X86_VM_H__
 #define __KERN_UNIT_X86_VM_H__
 
-#define PAGEPATNOCACHE  0       // uncached
-#define PAGEPATWRCOMB   1       // write-combining
-#define PAGEPATWRTHRU   4       // write-through
-#define PAGEPATWRPROT   5       // write-protected
-#define PAGEPATWRBACK   6       // write-back
-#define PAGEPATUCMINUS  7       // uncached, but can be MTRR-overridden
+#include <zero/cdefs.h>
 
 #define VM_USER_ZONE    0       // default pages
 #define VM_ISADMA_ZONE  1       // pages below 16 megs for ISA DMA

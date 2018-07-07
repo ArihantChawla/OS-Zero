@@ -28,7 +28,7 @@ ioapicinit(long id)
     }
     ioapic = (volatile struct ioapic *)mpioapic;
     if (cpu == mpbootcpu) {
-        vmmapseg((uint32_t *)&_pagetab, (uint32_t)mpioapic, (uint32_t)mpioapic,
+        vmmapseg((uint32_t)mpioapic, (uint32_t)mpioapic,
                  (uint32_t)((uint8_t *)mpioapic + PAGESIZE),
                  PAGEPRES | PAGEWRITE);
     }

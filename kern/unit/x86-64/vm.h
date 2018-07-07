@@ -29,6 +29,15 @@
 #include <zero/mtx.h>
 #include <kern/unit/ia32/vm.h>
 
+#if 0
+#define PAGEPATNOCACHE 0 // uncached
+#define PAGEPATWRCOMB  1 // write-combining
+#define PAGEPATWRTHRU  2 // write-through
+#define PAGEPATWRPROT  3 // write-protected
+#define PAGEPATWRBACK  4 // write-back
+#define PAGEPATUCMINUS 5 // uncached, but can be MTRR-overridden
+#endif
+
 extern uint64_t kernpagemapl4tab[512];
 
 #define NADRBIT ADRBITS
@@ -50,7 +59,7 @@ vmsignadr(void *adr)
 #define vmpgdnum(adr)  (((uint64_t)(adr) >> 39) & 0x1ff)
 #define vmpmdnum(adr)  (((uint64_t)(adr) >> 30) & 0x1ff)
 #define vmptenum(adr)  (((uint64_t)(adr) >> 21) & 0x1ff)
-#define vmpagenum(adr) (((uint64_t)(adr) >> 12) & 0x1ff) 
+#define vmpagenum(adr) (((uint64_t)(adr) >> 12) & 0x1ff)
 #define vmpageofs(adr) ((uint64_t)(adr) & (PAGESIZE - 1))
 
 #if !defined(__ASSEMBLER__)

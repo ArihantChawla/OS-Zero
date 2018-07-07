@@ -13,7 +13,7 @@
 #include <sys/io.h>
 #include <sys/zero/ps2.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/mtx.h>
 //#define VAL(x)        (x)
 #define NOP(x)        ((void)0)
@@ -109,7 +109,7 @@ ps2kbdintr(void)
 {
     uint32_t keysym;
     uint8_t  u8;
-    
+
     ps2readkbd(u8);
     if (u8 == PS2KBD_PREFIX_BYTE) {
         /* u8 == 0xe0 prefix */
@@ -186,7 +186,7 @@ ps2kbdintr(void)
 {
     uint32_t keysym;
     uint8_t  u8;
-    
+
     ps2readkbd(u8);
     keysym = u8;
     if (u8 == PS2KBD_PREFIX_BYTE) {

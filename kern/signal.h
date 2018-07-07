@@ -45,29 +45,29 @@
  *
  * default actions
  * ---------------
- * 
+ *
  * 1
  *
  * Abnormal termination of the process. The process is terminated with all the
  * consequences of _exit() except that the status made available to wait() and
- * waitpid() indicates abnormal termination by the specified signal. 
- * 
+ * waitpid() indicates abnormal termination by the specified signal.
+ *
  * 2
  *
  * Abnormal termination of the process. Additionally, implementation-dependent
- * abnormal termination actions, such as creation of a core file, may occur. 
+ * abnormal termination actions, such as creation of a core file, may occur.
  *
  * 3
  *
- * Ignore the signal. 
+ * Ignore the signal.
  *
  * 4
  *
- * Stop the process. 
+ * Stop the process.
  *
  * 5
  *
- * Continue the process, if it is stopped; otherwise ignore the signal. 
+ * Continue the process, if it is stopped; otherwise ignore the signal.
  */
 
 /* constants; signal names */

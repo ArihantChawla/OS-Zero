@@ -30,30 +30,30 @@ typedef uint64_t   vmblkbits;
 #include <kern/unit/x86/vm.h>
 #endif
 
-#define VM_LK_T        zerofmtx
-#define vmlk(lp)       fmtxlk(lp)
-#define vmunlk(lp)     fmtxunlk(lp)
+#define VM_LK_T         zerofmtx
+#define vmlk(lp)        fmtxlk(lp)
+#define vmunlk(lp)      fmtxunlk(lp)
 
-#define VM_PROT_NONE       0
-#define VM_PROT_EXECUTE    (1 << 0)
-#define VM_PROT_WRITE      (1 << 1)
-#define VM_PROT_READ       (1 << 2)
-#define VM_PROT_COPY       (1 << 3)
+#define VM_PROT_NONE    0
+#define VM_PROT_EXECUTE (1 << 0)
+#define VM_PROT_WRITE   (1 << 1)
+#define VM_PROT_READ    (1 << 2)
+#define VM_PROT_COPY    (1 << 3)
 
-#define VM_PROT_ALL        (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
-#define VM_PROT_RW         (VM_PROT_READ | VM_PROT_WRITE)
-#define VM_PROT_DEFAULT    VM_PROT_ALL
+#define VM_PROT_ALL     (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
+#define VM_PROT_RW      (VM_PROT_READ | VM_PROT_WRITE)
+#define VM_PROT_DEFAULT VM_PROT_ALL
 
 #if (VMPAGETKTLK)
 #include <zero/tktlk.h>
-#define VMPAGE_LK_T    union zerotktlk
-#define vmspinlk(tp)   tktlkspin(tp)
-#define vmlkpage(tp)   tktlk(tp)
-#define vmunlkpage(tp) tktunlk(tp)
+#define VMPAGE_LK_T     union zerotktlk
+//#define vmspinlk(tp)    tktlkspin(tp)
+#define vmlkpage(tp)    tktlk(tp)
+#define vmunlkpage(tp)  tktunlk(tp)
 #else
-#define VmPAGE_LK_T    zerofmtx
-#define vmlkpage(lp)   fmtxlk(lp)
-#define vmunlkpage(lp) fmtxunlk(lp)
+#define VMPAGE_LK_T     zerofmtx
+#define vmlkpage(lp)    fmtxlk(lp)
+#define vmunlkpage(lp)  fmtxunlk(lp)
 #include <zero/mtx.h>
 #endif
 

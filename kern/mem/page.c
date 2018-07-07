@@ -7,6 +7,7 @@
 #include <zero/cdefs.h>
 #include <mach/param.h>
 #include <zero/trix.h>
+#include <zero/mtx.h>
 #include <kern/util.h>
 #include <kern/malloc.h>
 #include <kern/time.h>
@@ -135,7 +136,7 @@ pageallocphys(void)
     long            qid;
     long            q;
 
-    vmspinlk(&vmphyslk);
+    vmlk(&vmphyslk);
     page = deqpop(&vmphysqueue);
     vmunlk(&vmphyslk);
     if (!page) {
@@ -178,10 +179,10 @@ pagefreephys(void *adr)
     struct vmpage *page;
 
     /* free physical page */
-    vmspinlk(&vmphyslk);
+    vmlk(&vmphyslk);
     id = vmpagenum(adr);
     page = &vmphystab[id];
-    vmspinlk(&page->lk);
+    vmlkpage(&page->lk);
     if (!--page->nref) {
         vmflushtlb(adr);
         deqpush(page, &vmphysqueue);

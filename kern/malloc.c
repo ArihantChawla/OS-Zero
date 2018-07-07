@@ -60,7 +60,7 @@ memalloc(size_t nb, long flg)
         ptr = slaballoc(virtzone, sz, flg);
         if (ptr) {
 #if (!MEMTEST)
-            vminitvirt(&_pagetab, ptr, sz, vmflg);
+            vminitvirt(ptr, sz, vmflg);
 #endif
             slab++;
             mag = memgetmag(ptr, virtzone);
@@ -85,7 +85,7 @@ memalloc(size_t nb, long flg)
             ptr = slaballoc(virtzone, sz, flg);
             if (ptr) {
 #if (!MEMTEST)
-                vminitvirt(&_pagetab, ptr, sz, vmflg);
+                vminitvirt(ptr, sz, vmflg);
 #endif
                 u8ptr = ptr;
                 slab++;

@@ -154,13 +154,11 @@ sb16init(void)
     sb16drv.outbuf16 = kwalloc(SB16DATA16BUFSIZE);
     kbzero(sb16drv.outbuf16, SB16DATA16BUFSIZE);
 #endif
-    vmmapseg((uint32_t *)&_pagetab,
-             (uint32_t)dmabufadr(sb16drv.dma8),
+    vmmapseg((uint32_t)dmabufadr(sb16drv.dma8),
              (uint32_t)dmabufadr(sb16drv.dma8),
              (uint32_t)dmabufadr(sb16drv.dma8) + SB16DATA8BUFSIZE,
              PAGEPRES | PAGEWRITE | PAGENOCACHE);
-    vmmapseg((uint32_t *)&_pagetab,
-             (uint32_t)dmabufadr(sb16drv.dma16),
+    vmmapseg((uint32_t)dmabufadr(sb16drv.dma16),
              (uint32_t)dmabufadr(sb16drv.dma16),
              (uint32_t)dmabufadr(sb16drv.dma16) + SB16DATA16BUFSIZE,
              PAGEPRES | PAGEWRITE | PAGENOCACHE);

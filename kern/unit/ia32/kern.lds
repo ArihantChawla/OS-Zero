@@ -73,6 +73,10 @@ SECTIONS {
 	vm.o(.text)
 	vm.o(.text.*)
 	vm.o(.data)
+	sig.o(.text)
+	sig.o(.text.*)
+	sig.o(.data)
+	sig.o(.bss)
 /* 	vm.o(.bss) */
 	util.o(.text)
 	util.o(.text.*)
@@ -98,8 +102,8 @@ SECTIONS {
 	debug.o(.data)
 	debug.o(.bss)
 */
-        _eboot = .;
 	. = ALIGN(PAGESIZE);
+        _eboot = .;
     }
 
 /*

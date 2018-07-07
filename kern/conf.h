@@ -5,6 +5,8 @@
 
 #include <mach/param.h>
 
+#define PLASMA        1
+#define PLASMAFOREVER 1
 #define USYSINFO      0
 #define VMPAGETKTLK   1
 
@@ -27,8 +29,6 @@
 
 #define VMFLATPHYSTAB 1
 #define USERMODE      0
-#define PLASMA        1
-#define PLASMAFOREVER 1
 
 #define IOBUF         1
 #define NEWFONT       1
@@ -83,24 +83,24 @@
 #define BOCHS         1
 #define DEVEL         0         // debugging
 
+#define APIC          1         // local [per-CPU] APIC support
+#define HPET          0         // high precision event timer support
 /* planned and developed drivers */
 #define VBE           1         // VBE2 graphics driver
 #define VBEMTRR       1         // map graphics framebuffer write-combining
 #define PIC           1
 #define IOAPIC        0         // enable I/O APIC support
 #define SMBIOS        0         // SMBIOS (system management) support
-#define APIC          1         // local [per-CPU] APIC support
-#define PCI           0         // PCI bus driver
+#define PCI           1         // PCI bus driver
 #define ATA           0         // ATA/ATAPI/SATA/SATAPI
 #define ACPI          0         // ACPI
 #define ACPICA        0         // ACPICA
-#define HPET          1         // high precision event timer support
 #define PS2DRV        0         // enable PS/2 mouse and keyboard drivers
 #define KBDUS         0         // PS/2 keyboard with US keymap
 #define PS2KBDSET2    0
 #define VGAGFX        0         // VGA graphics driver
 #define SB16          0         // Soundblaster 16 audio driver
-#define AC97          1         // AC97 audio drivers
+#define AC97          0         // AC97 audio drivers
 #define ENS1370       0         // Ensoniq 1370 audio driver
 
 #endif /* __KERN_CONF_H__ */

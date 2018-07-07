@@ -11,6 +11,7 @@
 #include <zero/cdefs.h>
 #include <mach/param.h>
 #include <zero/trix.h>
+#include <zero/mtx.h>
 #include <kern/util.h>
 #include <kern/mem/page.h>
 #include <kern/mem/vm.h>
@@ -52,14 +53,14 @@ struct vmpagestat  vmpagestat;
  *     vmphysadr = pagetab[vmpagenum(virt)]; // physical address
  */
 void
-vmmapseg(void *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
+vmmapseg(uint32_t virt, uint32_t phys, uint32_t lim,
          uint32_t flg)
 {
     pte_t *pte;
     long   n;
 
     n = rounduppow2(lim - virt, PAGESIZE) >> PAGESIZELOG2;
-    pte = (pte_t *)pagetab + vmpagenum(virt);
+    pte = (pte_t *)&_pagetab + vmpagenum(virt);
     vmpagestat.nmap += n;
     while (n--) {
         *pte = phys | flg;
@@ -80,7 +81,7 @@ vmmapseg(void *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
  * - initialise paging
  */
 void
-vminit(void *pagetab)
+vminit(void)
 {
     pde_t    *pde;
     pte_t    *pte;
@@ -91,7 +92,7 @@ vminit(void *pagetab)
 
     /* initialize page directory index page */
     pde = kernpagedir;
-    adr = (uint32_t)pagetab;
+    adr = (uint32_t)&_pagetab;
     n = NPDE;
     while (n--) {
         *pde = adr | PAGEPRES | PAGEWRITE;
@@ -100,12 +101,12 @@ vminit(void *pagetab)
     }
 
     /* map page directory index page */
-    pde = (pde_t *)pagetab + vmpagenum(kernpagedir);
+    pde = (pde_t *)&_pagetab + vmpagenum(kernpagedir);
     adr = (uint32_t)&kernpagedir;
     *pde = adr | PAGEUSER | PAGEPRES | PAGEWRITE;
 
     /* zero page tables */
-    kbzero(pagetab, PAGETABSIZE);
+    kbzero((void *)&_pagetab, PAGETABSIZE);
 
     /* zero stacks */
 #if 0
@@ -113,13 +114,11 @@ vminit(void *pagetab)
     kbzero(kernusrstktab, NCPU * KERNSTKSIZE);
 #endif
     /* map kernel-mode stacks */
-    vmmapseg(pagetab,
-             (uint32_t)kernsysstktab, (uint32_t)kernsysstktab,
+    vmmapseg((uint32_t)kernsysstktab, (uint32_t)kernsysstktab,
              (uint32_t)kernsysstktab + NCPU * KERNSTKSIZE,
              PAGEPRES | PAGEWRITE);
     /* map user-mode stacks */
-    vmmapseg(pagetab,
-             (uint32_t)kernusrstktab, (uint32_t)kernusrstktab,
+    vmmapseg((uint32_t)kernusrstktab, (uint32_t)kernusrstktab,
              (uint32_t)kernusrstktab + NCPU * KERNSTKSIZE,
              PAGEUSER | PAGEPRES | PAGEWRITE);
 #if defined(__x86_64__) || defined(__amd64__)
@@ -128,39 +127,40 @@ vminit(void *pagetab)
 #endif
 
     /* identity-map 0..1M */
-    vmmapseg(pagetab, 0, 0,
+    vmmapseg(0, 0,
              HICORE,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
 #if (SMP)
-    vmmapseg(pagetab, (uint32_t)MPENTRY, (uint32_t)MPENTRY,
+    vmmapseg((uint32_t)MPENTRY, (uint32_t)MPENTRY,
              (uint32_t)&mpend - (uint32_t)&mpentry + MPENTRY,
              PAGEPRES);
 #endif
 
     /* identity-map kernel low-half boot segment */
-    vmmapseg(pagetab, HICORE, HICORE,
-             (uint32_t)&_eboot,
+    vmmapseg(HICORE, HICORE,
+             (uint32_t)&_dmabuf,
              PAGEPRES | PAGEWRITE);
 
 #if (USYSINFO)
     /* identity-map USYSINFO */
-    vmmapseg(pagetab, (uint32_t)&_usysinfo, (uint32_t)&_usysinfo,
+    vmmapseg((uint32_t)&_usysinfo, (uint32_t)&_usysinfo,
              (uint32_t)&_eusysinfo,
              PAGEPRES | PAGEWRITE);
 #endif
 
     /* identity-map kernel DMA buffers */
-    vmmapseg(pagetab, (uint32_t)&_dmabuf, DMABUFBASE,
+    vmmapseg((uint32_t)&_dmabuf, DMABUFBASE,
              (uint32_t)&_dmabuf + DMABUFSIZE,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
 
     /* identity-map page tables */
-    vmmapseg(pagetab, (uint32_t)pagetab, (uint32_t)pagetab,
-             (uint32_t)pagetab + PAGETABSIZE,
+    vmmapseg((uint32_t)&_pagetab, (uint32_t)&_pagetab,
+             (uint32_t)&_pagetab + PAGETABSIZE,
              PAGEPRES | PAGEWRITE | PAGEWIRED);
 
     /* identity map free RAM */
-    vmmapseg(pagetab, (uint32_t)&_epagetab, (uint32_t)&_epagetab,
+    vmmapseg((uint32_t)&_epagetab,
+             (uint32_t)&_epagetab,
              KERNVIRTBASE - (uint32_t)&_epagetab,
              PAGEWRITE);
 
@@ -169,17 +169,17 @@ vminit(void *pagetab)
     /* VIRTUAL MEMORY */
 
     /* map kernel text/read-only segments */
-    vmmapseg(pagetab, (uint32_t)&_text, vmlinkadr((uint32_t)&_textvirt),
+    vmmapseg(vmvirtadr((uint32_t)&_textvirt), vmlinkadr((uint32_t)&_textvirt),
              (uint32_t)&_etextvirt,
              PAGEPRES);
 
     /* map kernel DATA and BSS segments */
-    vmmapseg(pagetab, (uint32_t)&_data, vmlinkadr((uint32_t)&_datavirt),
+    vmmapseg(vmvirtadr((uint32_t)&_datavirt), vmlinkadr((uint32_t)&_datavirt),
              (uint32_t)&_ebssvirt,
              PAGEPRES | PAGEWRITE);
 
     /* identity-map 3.5G..4G */
-// devmap(pagetab, DEVMEMBASE, 512 * 1024 * 1024);
+// devmap(&_pagetab, DEVMEMBASE, 512 * 1024 * 1024);
 
     /* initialize paging */
     pginit();
@@ -188,7 +188,7 @@ vminit(void *pagetab)
 }
 
 void
-vminitphys(uintptr_t base, unsigned long nbphys)
+vminitphys(uint32_t base, unsigned long nbphys)
 {
     unsigned long nb = min(nbphys, KERNVIRTBASE);
 
@@ -199,14 +199,14 @@ vminitphys(uintptr_t base, unsigned long nbphys)
 }
 
 void
-vminitvirt(void *pagetab, void *virt, uint32_t size, uint32_t flg)
+vminitvirt(void *virt, uint32_t size, uint32_t flg)
 {
     void  *adr;
     pte_t *pte;
     long   n;
 
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
-    pte = (pte_t *)pagetab + vmpagenum(virt);
+    pte = (pte_t *)&_pagetab + vmpagenum(virt);
     while (n--) {
         *pte = flg;
         pte++;
@@ -269,7 +269,7 @@ vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
     if (!(adr & ~(PAGEFLTADRMASK | PAGESYSFLAGS))) {
         page = pageallocphys();
         if (page) {
-            vmspinlk(&page->lk);
+            vmlkpage(&page->lk);
             page->nref++;
             if (flg & PAGEWIRED) {
                 vmpagestat.nwire++;
@@ -278,7 +278,7 @@ vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
                 page->nmap++;
                 if (!(adr & PAGEWIRED)) {
                     qid = pagecalcqid(page);
-                    vmspinlk(&vmlrutab[qid].lk);
+                    vmlkpage(&vmlrutab[qid].lk);
                     deqpush(page, &vmlrutab[qid].next);
                     vmunlkpage(&vmlrutab[qid].lk);
                 }
@@ -291,10 +291,10 @@ vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
         // pageout();
         page = vmpagein(page);
         if (page) {
-            vmspinlk(&page->lk);
+            vmlkpage(&page->lk);
             page->nmap++;
             qid = pagecalcqid(page);
-            vmspinlk(&vmlrutab[qid].lk);
+            vmlkpage(&vmlrutab[qid].lk);
             deqpush(page, &vmlrutab[qid].next);
             vmunlkpage(&vmlrutab[qid].lk);
             vmunlkpage(&page->lk);
@@ -325,11 +325,11 @@ vmpagein(uint32_t adr)
     struct vmpage *page = pagefind(adr);
     void        *data;
 
-    fmtxlk(&vmdevlktab[dev], MEMPID);
+    vmlkpage(&vmdevlktab[dev], MEMPID);
     vmseekdev(dev, blk * PAGESIZE);
     page->nmap++;
 //    data = pageread(dev, PAGESIZE);
-    fmtxunlk(&vmdevlktab[pagedev], MEMPID);
+    vmunlkpage(&vmdevlktab[pagedev], MEMPID);
 }
 
 void

@@ -2,10 +2,11 @@
 #define __UNIT_X86_KERN_H__
 
 #include <kern/conf.h>
+#include <stdint.h>
 
 extern void trapinit(void);
 extern void seginit(long core);
-extern void vminit(void *pagetab);
+extern void vminit(void);
 extern void picinit(void);
 extern void meminit(unsigned long nbphys, unsigned long nbvirt);
 extern void vgainitcon(int w, int h);

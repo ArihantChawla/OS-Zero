@@ -65,15 +65,16 @@ kinitprot(unsigned long pmemsz)
 
     /* initialise virtual memory */
     //    vminit((uint32_t *)&_pagetab);
-    vminit((uint32_t *)&_pagetab);
+    vminit();
     //    schedinit();
     /* zero kernel BSS segment */
-    kbzero(&_bssvirt, (uint32_t)&_ebssvirt - (uint32_t)&_bssvirt);
+    kbzero((void *)&_bssvirt,
+           (uintptr_t)&_ebssvirt - (uintptr_t)&_bssvirt);
     /* set kernel I/O permission bitmap to all 1-bits */
     kmemset(kerniomap, 0xff, sizeof(kerniomap));
     /* INITIALIZE CONSOLES AND SCREEN */
     /* TODO: use memory map from GRUB? */
-    vminitphys((uintptr_t)&_epagetab, lim - (unsigned long)&_epagetab);
+    vminitphys((uintptr_t)&_epagetab, lim - (uint32_t)&_epagetab);
     __asm__ __volatile__ ("movl %0, %%esp\n"
                           "pushl %%ebp\n"
                           "movl %%esp, %%ebp\n"
@@ -99,15 +100,15 @@ kinitprot(unsigned long pmemsz)
     ps2init();
 #endif
 #if (SMP) || (APIC)
-//#if (SMP)
+#if (SMP)
     /* multiprocessor initialisation */
     mpinit();
-//#endif
     if (mpncpu == 1) {
         kprintf("found %ld processor\n", mpncpu);
     } else {
         kprintf("found %ld processors\n", mpncpu);
     }
+#endif
 #if (APIC)
     apicinit(0);
 #endif

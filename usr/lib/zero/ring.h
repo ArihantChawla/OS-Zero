@@ -23,7 +23,7 @@
 #include <kern/mem/obj.h>
 #endif
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #if (!RINGATOMIC)
 #include <zero/mtx.h>
 #endif
@@ -100,7 +100,7 @@ struct ringbuf {
 static __inline__ long
 ringinit(void *ptr, void *base, long nitem)
 {
-    struct ringbuf *buf = ptr; 
+    struct ringbuf *buf = ptr;
     long            retval = 0;
 
     fmtxlk(&buf->lk);

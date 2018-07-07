@@ -143,7 +143,7 @@ apicinit(long id)
         /* identity-map MP APIC table */
         kprintf("APIC: map MP APIC (%l bytes) @ 0x%lx\n",
                 PAGESIZE, (long)mpapic);
-        vmmapseg((uint32_t *)&_pagetab, (uint32_t)mpapic, (uint32_t)mpapic,
+        vmmapseg((uint32_t)mpapic, (uint32_t)mpapic,
                  (uint32_t)((uint8_t *)mpapic + PAGESIZE),
                  PAGEPRES | PAGEWRITE | PAGENOCACHE);
         irqvec[IRQERROR] = irqerror;

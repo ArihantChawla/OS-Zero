@@ -24,7 +24,6 @@
 #include <kern/io/drv/pc/vga.h>
 #include <kern/io/drv/pc/vbe.h>
 #include <kern/unit/x86/boot.h>
-#include <kern/unit/x86/link.h>
 #include <kern/unit/ia32/real.h>
 
 extern void            realint10(void);
@@ -157,13 +156,11 @@ vbeinitscr(void)
     vbescreen.h = mode->yres;
 // TODO: set vbescreen->fmt
     /* identity-map VBE framebuffer */
-    vmmapseg(&_pagetab,
-             (uint32_t)0xa000,
+    vmmapseg((uint32_t)0xa000,
              (uint32_t)0xa000,
              (uint32_t)0xa000 + sizeof(struct vbeinfo),
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
-    vmmapseg(&_pagetab,
-             (uint32_t)vbescreen.fbuf,
+    vmmapseg((uint32_t)vbescreen.fbuf,
              (uint32_t)vbescreen.fbuf,
              (uint32_t)vbescreen.fbuf + vbescreen.fbufsize,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);

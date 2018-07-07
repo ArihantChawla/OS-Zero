@@ -38,8 +38,5 @@ extern char _eusrvirt;
 
 #endif /* !defined(__ASSEMBLER__) */
 
-#define KVIRTBASE 0xc0000000U
-#define KPHYSBASE 0x00100000U
-
 #endif /* __KERN_UNIT_IA32_LINK_H__ */
 

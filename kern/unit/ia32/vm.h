@@ -13,13 +13,15 @@
 
 extern long kernlongmode;
 
-void vminitphys(uintptr_t base, unsigned long nbphys);
-void vminitvirt(void *pagetab, void *virt, uint32_t size, uint32_t flg);
+void vminitphys(uint32_t base, unsigned long nbphys);
+void vminitvirt(void *virt, uint32_t size, uint32_t flg);
 void vmfreephys(void *virt, uint32_t size);
-void vmmapseg(void *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
+void vmmapseg(uint32_t virt, uint32_t phys, uint32_t lim,
               uint32_t flg);
 
 #define KERNVIRTBASE      0xc0000000U
+#define KERNLOADBASE      0x01400000U
+#define vmvirtadr(adr)    ((uint32_t)adr - KERNLOADBASE)
 #define vmlinkadr(adr)    ((uint32_t)(adr) - KERNVIRTBASE)
 #define vmphysadr(adr)    ((uintptr_t)(((uint32_t *)&_pagetab)[vmpagenum(adr)]) & VMPAGEMASK)
 #define vmpagedirnum(adr) ((uint32_t)(adr) >> PDSHIFT)

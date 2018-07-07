@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 
 long     pciprobe(void);
 uint16_t pcireadconfw(uint8_t busid, uint8_t slotid,

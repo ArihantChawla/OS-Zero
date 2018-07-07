@@ -3,7 +3,7 @@
 
 #include <kern/conf.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/ring.h>
 
 #define PS2KBD_NTAB                 128

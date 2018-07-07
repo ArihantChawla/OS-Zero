@@ -47,10 +47,10 @@ hpetinit(void)
 {
     unsigned long len = HPETREGSIZE64;
 
-    vmmapseg((uint32_t *)&_pagetab, HPET0BASE, HPET0BASE,
+    vmmapseg(HPET0BASE, HPET0BASE,
              HPET0BASE + len,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
-    vmmapseg((uint32_t *)&_pagetab, HPET1BASE, HPET1BASE,
+    vmmapseg(HPET1BASE, HPET1BASE,
              HPET1BASE + len,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
     hpetprobe(0);
