@@ -19,7 +19,7 @@ struct eth2frame {
     uint8_t  destmac[ETH_MAC_ADR_SIZE];
     uint8_t  srcmac[ETH_MAC_ADR_SIZE];
     uint16_t type;
-    uint16_t data[EMPTY];
+    uint16_t data[VLA];
 };
 
 #define ETH_MIN_FRAME_SIZE   64
@@ -31,7 +31,7 @@ struct ethframe {
     uint8_t  destmac[ETH_MAC_ADR_SIZE]; // destination MAC address
     uint8_t  srcmac[ETH_MAC_ADR_SIZE];  // source MAC address
     uint16_t len;                       // length of data in frame
-    uint8_t  data[EMPTY];
+    uint8_t  data[VLA];
     /* followed by dATA + 4-byte FCS; frame check sequence checksum */
 };
 
@@ -39,7 +39,7 @@ struct ethsnapframe {
     uint8_t  destmac[ETH_MAC_ADR_SIZE];
     uint8_t  srcmac[ETH_MAC_ADR_SIZE];
     uint16_t len;
-    uint8_t  data[EMPTY];
+    uint8_t  data[VLA];
 };
 
 #endif /* __KERN_IO_NET_ETH_H__ */

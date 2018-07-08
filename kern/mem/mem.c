@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 #include <zero/trix.h>
 #include <kern/mem/zone.h>
 #include <kern/mem/mem.h>
@@ -9,10 +10,11 @@
 extern struct memzone memzonetab[MEM_ZONES];
 
 struct page;
-unsigned long pageinitphyszone(uintptr_t base, struct page **zone,
-                               unsigned long nb);
-unsigned long pageaddphyszone(uintptr_t base, struct page **zone,
-                              unsigned long nb);
+extern unsigned long pageinitphyszone(uintptr_t base, struct page **zone,
+                                      unsigned long nb);
+extern unsigned long pageaddphyszone(uintptr_t base, struct page **zone,
+                                     unsigned long nb);
+extern unsigned long pageinitphys(uintptr_t base, size_t nbphys);
 
 void
 meminit(size_t nbphys, size_t nbvirt)

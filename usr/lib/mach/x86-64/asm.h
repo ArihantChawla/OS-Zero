@@ -212,11 +212,11 @@ m_cmpxchgu64(volatile uint64_t *p,
  * - return nonzero on success, zero on failure
  */
 static __inline__ void *
-m_cmpxchg64ptr(m_atomic64_t **p,
-               m_atomic64_t *want,
-               void *val)
+m_cmpxchg64ptr(m_atomicptr_t **p,
+               m_atomicptr_t *want,
+               m_atomicptr_t *val)
 {
-    void *res;
+    m_atomicptr_t *res;
 
     __asm__ __volatile__("lock cmpxchgq %1, %2\n"
                          : "=a" (res)

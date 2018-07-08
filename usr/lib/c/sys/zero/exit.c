@@ -18,7 +18,7 @@ struct exitcmd {
 };
 
 struct exit {
-    zerofmtx        lk;
+    m_atomic_t      lk;
     size_t          natexit;
     struct exitcmd *atexitq;
     size_t          non_exit;

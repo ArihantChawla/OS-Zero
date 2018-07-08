@@ -1,11 +1,11 @@
 #ifndef __ZERO_CDEFS_H__
 #define __ZERO_CDEFS_H__
 
-/* size for 'empty' array (placeholder) */
+/* size for 'empty' array (placeholder) (VLAs aka variable-length arrays) */
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
-#   define EMPTY
+#   define VLA
 #else
-#   define EMPTY   0
+#   define VLA 0
 #endif
 
 /* __func__ for non-C99 compilers; MSVC should do this, probably =) */

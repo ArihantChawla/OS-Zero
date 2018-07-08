@@ -7,7 +7,7 @@
 #include <alloca.h>
 #endif
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/trix.h>
 
 #if defined(__GLIBC__)

@@ -25,6 +25,8 @@
 
 #define __errnoloc() (&(k_getcurtask()->errnum))
 
+extern void taskinittls(long unit, long id);
+
 //extern struct m_cpuinfo cpuinfo;
 
 //#include <zero/mtx.h>

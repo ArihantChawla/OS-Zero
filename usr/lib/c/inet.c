@@ -2,7 +2,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/trix.h>
 
 char       _inaddrstr[16] ALIGNED(CLSIZE);
@@ -86,7 +86,7 @@ inet_aton(const char *cptr, struct in_addr *adr)
     uint8_t *aptr = (uint8_t *)adr;
     long     n = 0;
     long     val;
-    
+
     while (1) {
         val = 0;
         if (!isdigit(ptr[0])) {

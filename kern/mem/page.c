@@ -142,7 +142,7 @@ pageallocphys(void)
     if (!page) {
         do {
             for (q = 0 ; q < LONGSIZE * CHAR_BIT ; q++) {
-                vmlk(&vmlrutab[q].lk);
+                vmlkpage(&vmlrutab[q].lk);
                 queue = &vmlrutab[q].next;
                 page = deqgetlast(queue);
                 if (page) {
@@ -150,17 +150,17 @@ pageallocphys(void)
                     page->nmap++;
                     qid = pagecalcqid(page);
                     if (qid != q) {
-                        vmlk(&vmlrutab[q].lk);
+                        vmlkpage(&vmlrutab[q].lk);
                     }
                     queue = &vmlrutab[qid].next;
                     deqpush(page, queue);
                     if (qid != q) {
-                        vmunlk(&vmlrutab[qid].lk);
+                        vmunlkpage(&vmlrutab[qid].lk);
                     }
 
                     break;
                 }
-                vmunlk(&vmlrutab[q].lk);
+                vmunlkpage(&vmlrutab[q].lk);
             }
             if (found) {
 

@@ -3,7 +3,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #if defined(__ZEROLIBC__)
 #include <kern/conf.h>
 #include <bits/signal.h>

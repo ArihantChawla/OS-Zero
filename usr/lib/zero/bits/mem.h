@@ -38,7 +38,7 @@
 #define MEM_ADR_LK_BIT     ((uintptr_t)1 << MEM_ADR_LK_BIT_POS)
 
 /* align pointer to aln-byte boundary */
-#define memalignptr(ptr, aln)   ((void *)((uintptr)(ptr) & ((align) - 1)))
+#define memalignptr(ptr, aln)   ((void *)((uintptr_t)(ptr) & ~((align) - 1)))
 #define memptraligned(ptr, aln) (!(MEMADR_T(ptr) & ((aln) - 1)))
 
 /* simple randomization of block addresses for cache-coloring */

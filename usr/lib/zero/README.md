@@ -1,4 +1,6 @@
-Zero is a multi-purpose utility library for both the Zero kernel as well as
+# Zero Support Library libzero
+
+Zero is a multi-purpose utility library for both the Zero kernel as well as our
 user-land applications. Support has been worked on for several different pseudo-
 random number generators, some "generic" data structures such as linked lists
 and hash tables, exposing compiler and system features such as alignment,

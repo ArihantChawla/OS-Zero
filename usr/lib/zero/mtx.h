@@ -1,9 +1,12 @@
 #ifndef __ZERO_MTX_H__
 #define __ZERO_MTX_H__
 
-#define ZEROMTX  1
+#define ZEROMTX     1
 #if !defined(ZEROFMTX)
-#define ZEROFMTX 1
+#define ZEROFMTX    1
+#endif
+#if !defined(ZERONEWFMTX)
+#define ZERONEWFMTX 1
 #endif
 
 #include <zero/conf.h>
