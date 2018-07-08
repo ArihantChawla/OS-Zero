@@ -507,7 +507,7 @@ struct sysmsg {
     long        len;			// size of data field in bytes
 	struct msg *prev;
 	struct msg *next;
-    uint8_t     data[EMPTY];		// message data§
+    uint8_t     data[VLA];		// message data§
 };
 
 struct sysmq {
