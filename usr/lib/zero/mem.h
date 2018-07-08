@@ -165,14 +165,14 @@ mempopblk(struct memslab *slab, struct memslab **headret)
     } else if (ndx == n - 1) {
         *headret = slab->next;
     } else {
-        m_fetchadd((m_atomic_t *)slab->ndx, -1);
+        m_atomdec((m_atomic_t *)slab->ndx);
     }
 
     return ptr;
 }
 
 static __inline__ void
-mempushblk(struct memslab *slab, void *ptr, struct memslab **headret)
+mempushblk(struct memslab *slab, void *ptr, struct memslab **tailret)
 {
     m_atomic_t ndx = m_fetchadd(&slab->ndx, -1);
     intptr_t   n = slab->nblk;
@@ -181,10 +181,10 @@ mempushblk(struct memslab *slab, void *ptr, struct memslab **headret)
         ndx--;
         slab->tab[ndx] = ptr;
         if (ndx == n - 1) {
-            *headret = slab;
+            *tailret = slab;
         }
     } else {
-        m_fetchadd(&slab->ndx, 1);
+        m_atominc(&slab->ndx);
     }
 
     return;

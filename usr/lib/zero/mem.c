@@ -18,7 +18,7 @@ THREADLOCAL struct memtls *g_memtls;
 #define MEM_GLOB_TRIES     32
 #define memblkistls(sz)    ((sz) <= MEM_MAX_RUN_SIZE)
 
-struct memslab * memallocslab(size_t pool, size_t n, size_t bsz, uint8_t type);
+struct memslab * memmapslab(size_t pool, size_t n, size_t bsz, uint8_t type);
 
 void
 meminit(void)
@@ -58,13 +58,13 @@ memgettls(size_t size)
             }
         } else {
             if (size <= MEM_MAX_SMALL_SIZE) {
-                slab = memallocslab(pool,
-                                    memnumsmall(pool), memsmallsize(pool),
-                                    MEM_SMALL_SLAB);
+                slab = memmapslab(pool,
+                                  memnumsmall(pool), memsmallsize(pool),
+                                  MEM_SMALL_SLAB);
             } else {
-                slab = memallocslab(pool,
-                                    memnumrun(pool), memrunsize(pool),
-                                    MEM_RUN_SLAB);
+                slab = memmapslab(pool,
+                                  memnumrun(pool), memrunsize(pool),
+                                  MEM_RUN_SLAB);
             }
             if (slab) {
                 n = slab->nblk;
@@ -117,9 +117,9 @@ memgetglob(size_t size)
                     }
                 } else {
                     slab = NULL;
-                    slab = memallocslab(pool,
-                                        memnummid(pool), memmidsize(pool),
-                                        MEM_MID_SLAB);
+                    slab = memmapslab(pool,
+                                      memnummid(pool), memmidsize(pool),
+                                      MEM_MID_SLAB);
                     if (slab) {
                         n = slab->nblk;
                         ptr = slab->base;
@@ -215,7 +215,7 @@ memgetblk(size_t size, size_t align, long zero)
 }
 
 struct memslab *
-memallocslab(size_t pool, size_t n, size_t bsz, uint8_t type)
+memmapslab(size_t pool, size_t n, size_t bsz, uint8_t type)
 {
     struct memslab  *slab = mapanon(-1, MEM_SLAB_SIZE);
     uint8_t         *ptr = mapanon(-1, n * bsz);
