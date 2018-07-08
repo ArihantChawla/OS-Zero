@@ -7,11 +7,11 @@
 
 THREADLOCAL struct waitq *thrwaitq;
 
-static struct waitq     *waitqtab[WAITQ_MAX];
-static struct waitqitem  waitqitemtab[WAITQ_MAX];
-static volatile long     waitqlk;
-static long              waitqmaxid;
-static struct waitqitem *waitqstk;
+static struct waitq      *waitqtab[WAITQ_MAX];
+static struct waitqitem   waitqitemtab[WAITQ_MAX];
+static volatile long      waitqlk;
+static long               waitqmaxid;
+static struct waitqitem  *waitqstk;
 
 #if (ZEROFMTX)
 #define __waitqlk(lp)   fmtxlk(lp)
@@ -49,7 +49,7 @@ waitqgetid(void)
     long waitq;
 
     if (!thrwaitq) {
-        thrwaitq = waitqalloc();
+        thrwaitq = calloc(1, sizeof(struct waitq));
     }
     waitq = thrwaitq->id;
 

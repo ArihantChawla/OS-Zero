@@ -15,8 +15,8 @@
 #define WAITQ_NONE        (~0L)
 
 struct waitqitem {
-    struct waitq *wq;
-    struct waitq *next;
+    struct waitq     *wq;
+    struct waitqitem *next;
 };
 
 #define WAITQ_STATUS_NONE (~0L)
