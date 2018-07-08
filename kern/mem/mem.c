@@ -3,16 +3,14 @@
 #include <zero/trix.h>
 #include <kern/mem/zone.h>
 #include <kern/mem/mem.h>
-#include <kern/unit/ia32/vm.h>
+#include <kern/mem/vm.h>
+//#include <kern/unit/ia32/vm.h>
 
-//extern struct memzone memzonetab[MEM_PHYS_ZONE];
-//extern struct memzone memvirtzone;
 extern struct memzone memzonetab[MEM_ZONES];
 
-struct page;
-extern unsigned long pageinitphyszone(uintptr_t base, struct page **zone,
+extern unsigned long pageinitphyszone(uintptr_t base, struct vmpage **zone,
                                       unsigned long nb);
-extern unsigned long pageaddphyszone(uintptr_t base, struct page **zone,
+extern unsigned long pageaddphyszone(uintptr_t base, struct vmpage **zone,
                                      unsigned long nb);
 extern unsigned long pageinitphys(uintptr_t base, size_t nbphys);
 

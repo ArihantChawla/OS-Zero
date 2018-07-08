@@ -10,6 +10,9 @@
 #if (!BUFMULTITAB) && (BUFNEWHASH)
 #include <zero/hash.h>
 #endif
+#if (BUFTKTLK)
+#include <zero/tktlk.h>
+#endif
 
 #if (PTRSIZE == 8)
 #define BUFVAL(x) INT64_C(x)
@@ -25,6 +28,11 @@ typedef int64_t bufval_t;
 #define bufhashblk(dev, num)                                            \
     (tmhash32((uint32_t)bufmkhashkey(dev, num)) & ((1UL << BUFNHASHBIT) - 1))
 typedef int32_t bufval_t;
+#endif
+
+#if (BUFTKTLK)
+#define buflk(lp)   tktlk(lp)
+#define bufunlk(lp) tktunlk(lp)
 #endif
 
 #if (!BUFMULTITAB)
@@ -141,7 +149,11 @@ struct bufchain {
 };
 
 struct bufblkqueue {
-    m_atomic_t     lk;
+#if (BUFTKTLK)
+    union zerotktlk lk;
+#else
+    m_atomic_t       lk;
+#endif
     struct bufblk *head;
 };
 

@@ -7,8 +7,10 @@
 
 #define PLASMA        1
 #define PLASMAFOREVER 1
-#define USYSINFO      0
+#define USYSINFO      1
+#define VMTKTLK       1
 #define VMPAGETKTLK   1
+#define BUFTKTLK      1
 
 //#define REENTRANTGDTINIT 1
 #define LONGMODE      0

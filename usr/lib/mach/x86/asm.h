@@ -33,6 +33,7 @@ typedef volatile void    *m_atomicptr_t;
 #define m_fetchaddu32(p, val)      m_xaddu32(p, val)
 /* atomic compare and swap byte */
 #define m_cmpswapb(p, want, val)   (m_cmpxchg8(p, want, val) == want)
+#define m_cmpswap32(p, want, val)  (m_cmpxchg32(p, want, val) == want)
 #define m_cmpswapu32(p, want, val) (m_cmpxchgu32(p, want, val) == want)
 
 /* atomic increment operation */

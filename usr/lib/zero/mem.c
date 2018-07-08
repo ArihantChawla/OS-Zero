@@ -6,9 +6,11 @@
 #include <mach/asm.h>
 #include <zero/mem.h>
 #include <zero/unix.h>
-#define THASH_VAL_NONE  (~(uintptr_t)0)
-#define THASH_FUNC(key) (tmhash32(key))
+#define THASH_VAL_NONE     (~(uintptr_t)0)
+#define THASH_FUNC(key)    (tmhash32(key))
 #include <zero/thash.h>
+#define LFDEQ_DATA_T       struct memslab
+#include <zero/lfdeq.h>
 
 struct divu16              fastu16divu16tab[MEM_MAX_FAST_DIV];
 static struct mem          g_mem;

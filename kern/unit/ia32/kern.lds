@@ -106,13 +106,11 @@ SECTIONS {
         _eboot = .;
     }
 
-/*
     .usysinfo : {
         _usysinfo = .;
 	. += USYSINFOSIZE;
 	_eusysinfo = .;
     }
-*/
 
     . = DMABUF;
 

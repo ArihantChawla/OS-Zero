@@ -17,7 +17,11 @@
 #include <zero/cdefs.h>
 #include <mach/param.h>
 #include <zero/trix.h>
+#if (BUFTKTLK)
+#include <zero/tktlk.h>
+#else
 #include <zero/mtx.h>
+#endif
 #if (!BUFMULTITAB) && (BUFNEWHASH)
 #include <zero/hash.h>
 #endif
@@ -174,9 +178,9 @@ bufevict(void)
     struct bufblk *blk = NULL;
 
     do {
-        fmtxlk(&buflruqueue.lk);
+        buflk(&buflruqueue.lk);
         blk = deqpop(&buflruqueue.head);
-        fmtxunlk(&buflruqueue.lk);
+        bufunlk(&buflruqueue.lk);
         if (!blk) {
             /* TODO: wait for deqpop(&buflrudeq.head) */
         } else {
@@ -196,9 +200,9 @@ bufalloc(void)
 {
     struct bufblk *blk = NULL;
 
-    fmtxlk(&buffreelist.lk);
+    buflk(&buffreelist.lk);
     blk = deqpop(&buffreelist.head);
-    fmtxunlk(&buffreelist.lk);
+    bufunlk(&buffreelist.lk);
     if (!blk) {
         blk = bufevict();
     }
@@ -233,7 +237,7 @@ bufaddblk(struct bufblk *blk)
 #endif
 
 #if (BUFNEWHASH)
-    fmtxlk(&chain->lk);
+    buflk(&chain->lk);
     buf = chain->list;
     buf->tabprev = NULL;
     if (buf) {
@@ -241,15 +245,15 @@ bufaddblk(struct bufblk *blk)
     }
     blk->tabnext = buf;
     chain->list = buf;
-    fmtxunlk(&chain->lk);
+    bufunlk(&chain->lk);
 #else
-    fmtxlk(&buflktab[dkey]);
+    buflk(&buflktab[dkey]);
     buf = bufhash[dkey][key];
     if (buf) {
         buf->tabprev = blk;
     }
     bufhash[dkey][key] = blk;
-    fmtxunlk(&buflktab[dkey]);
+    bufunlk(&buflktab[dkey]);
 #endif
 
     return;
@@ -271,7 +275,7 @@ buffindblk(long dev, off_t num, long rel)
 #endif
 
 #if (BUFNEWHASH)
-    fmtxlk(&chain->lk);
+    buflk(&chain->lk);
     blk = chain->list;
     while ((blk) && blk->num != num) {
         blk = blk->tabnext;
@@ -290,7 +294,7 @@ buffindblk(long dev, off_t num, long rel)
 
     return blk;
 #else
-    fmtxlk(&buflktab[dkey]);
+    buflk(&buflktab[dkey]);
     blk = bufhash[dkey][key];
     while ((blk) && blk->num != num) {
         blk = blk->tabnext;
@@ -306,7 +310,7 @@ buffindblk(long dev, off_t num, long rel)
             blk->tabnext->tabprev = blk->tabprev;
         }
     }
-    fmtxunlk(&buflktab[dkey]);
+    bufunlk(&buflktab[dkey]);
 
     return blk;
 #endif
@@ -333,7 +337,7 @@ bufaddblk(struct bufblk *blk)
     struct bufblk *bptr;
     void          *stk[3];
 
-    fmtxlk(&buflktab[dkey]);
+    buflk(&buflktab[dkey]);
     /* device table */
     tab1 = buftab[dkey];
     if (!tab1) {
@@ -403,7 +407,7 @@ bufaddblk(struct bufblk *blk)
             }
         }
     }
-    fmtxunlk(&buflktab[dkey]);
+    bufunlk(&buflktab[dkey]);
     if (!fail) {
         deqappend(blk, &buflruqueue.head);
     }
@@ -430,7 +434,7 @@ buffindblk(long dev, off_t num, long rel)
     struct bufblk *next;
     struct bufblk *stk[3];
 
-    fmtxlk(&buflktab[dkey]);
+    buflk(&buflktab[dkey]);
     /* device table */
     tab1 = buftab[dkey];
     if (tab1) {
@@ -480,7 +484,7 @@ buffindblk(long dev, off_t num, long rel)
             }
         }
     }
-    fmtxunlk(&buflktab[dkey]);
+    bufunlk(&buflktab[dkey]);
 
     return blk;
 }
@@ -498,9 +502,9 @@ bufrel(long dev, bufval_t num, long flush)
             bufwrite(blk);
         }
 #endif
-        fmtxlk(&buffreelist.lk);
+        buflk(&buffreelist.lk);
         deqpush(blk, &buffreelist.head);
-        fmtxunlk(&buffreelist.lk);
+        bufunlk(&buffreelist.lk);
     }
 
     return;

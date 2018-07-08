@@ -234,3 +234,15 @@ mprimod(int k, int p, int s)
     return (i >= p) ? i - p : i;
 }
 
+uint32_t
+hashint32(uint32_t key)
+{
+    key ^= key >> 16;
+    key *= 0x85ebca6b;
+    key ^= key >> 13;
+    key *= 0xc2b2ae35;
+    key ^= key >> 16;
+
+    return key;
+}
+
