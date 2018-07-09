@@ -9,6 +9,7 @@
 
 /* minimum allocation block size */
 #define MEMMINALIGN    CLSIZE
+#define MEMALIGNSHIFT  CLSIZELOG2
 #define MEM_MIN_SIZE   MEMMINALIGN
 
 /* custom allocator types */
@@ -23,7 +24,7 @@
 #error WORDSIZE not supported in <zero/bits/mem.h>
 #endif
 /* byte-pointer for pointer-arithmetics */
-#define MEMPTR_T       uint8 *
+#define MEMPTR_T       uint8_t *
 /* integer type for pointer values */
 #define MEMADR_T       uintptr_t
 /* buffer block ID type */
@@ -42,7 +43,7 @@
 #define memptraligned(ptr, aln) (!(MEMADR_T(ptr) & ((aln) - 1)))
 
 /* simple randomization of block addresses for cache-coloring */
-#define memgenadr(adr, aln, mul)                                        \
+#define memcoloradr(adr, aln, mul)                                      \
     ((void *)((uint8_t *)(adr) + (mul) * (memrandofs() & ((aln) - 1))))
 #if (PTRSIZE == 8)
 #define memrandofs() i_randklc64(res)

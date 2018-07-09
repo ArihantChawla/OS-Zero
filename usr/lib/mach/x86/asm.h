@@ -132,7 +132,7 @@ m_xadd32(m_atomic32_t *p,
  * - return original *p
  */
 static __inline__ uint32_t
-m_xaddu32(m_atomic32_t *p,
+m_xaddu32(volatile uint32_t *p,
           uint32_t val)
 {
     __asm__ __volatile__ ("lock xaddl %1, %0\n"

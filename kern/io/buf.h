@@ -150,11 +150,11 @@ struct bufchain {
 
 struct bufblkqueue {
 #if (BUFTKTLK)
-    union zerotktlk lk;
+    union zerotktlk  lk;
 #else
     m_atomic_t       lk;
 #endif
-    struct bufblk *head;
+    struct bufblk   *head;
 };
 
 long            bufinit(void);
