@@ -11,7 +11,10 @@
 #include <zero/hash.h>
 #endif
 #if (BUFTKTLK)
+#define BUF_LK_T union zerotktlk
 #include <zero/tktlk.h>
+#else
+#define BUF_LK_T m_atomic_t
 #endif
 
 #if (PTRSIZE == 8)
@@ -134,27 +137,23 @@ struct bufblk {
 #endif
 
 struct bufdev {
-    m_atomic_t lk;              // lock
-    long       id;              // system descriptor
-    long       flg;             // flags such as DEVIOSEQ, DEVCANSEEK(?), ...
-    long       type;            // DISK, NET, OPT, TAPE, ...
-    long       prio;            // device priority for I/O scheduling
-    long       timelim;         // time-limit (e.g. to wait before seek)
+    BUF_LK_T lk;                // lock
+    long     id;                // system descriptor
+    long     flg;               // flags such as DEVIOSEQ, DEVCANSEEK(?), ...
+    long     type;              // DISK, NET, OPT, TAPE, ...
+    long     prio;              // device priority for I/O scheduling
+    long     timelim;           // time-limit (e.g. to wait before seek)
 };
 
 struct bufchain {
-    m_atomic_t     lk;
+    BUF_LK_T       lk;
     long           nitem;
     struct bufblk *list;
 };
 
 struct bufblkqueue {
-#if (BUFTKTLK)
-    union zerotktlk  lk;
-#else
-    m_atomic_t       lk;
-#endif
-    struct bufblk   *head;
+    BUF_LK_T       lk;
+    struct bufblk *head;
 };
 
 long            bufinit(void);

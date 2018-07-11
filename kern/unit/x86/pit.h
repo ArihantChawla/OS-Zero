@@ -30,9 +30,23 @@ void pitsleep(unsigned long msec);
 #define PITDUALBYTE 0x30
 #define PITREADBACK 0xc0
 
+static __inline__ unsigned long
+divu1193182(unsigned long uval)
+{
+        unsigned long long mul = UINT64_C(0xe1);
+        unsigned long long res = uval;
+        unsigned long      cnt = 20;
+
+        res *= mul;
+        res >>= cnt;
+        uval = (unsigned long)res;
+
+        return uval;
+}
+
 #define pitsethz(hz, chan)                                              \
     do {                                                                \
-        long _hz = 1193182L / (hz);                                     \
+        long _hz = divu1193182(hz);                                     \
                                                                         \
         outb(_hz & 0xff, (chan));                                       \
         inb(PITDELAY);                                                  \

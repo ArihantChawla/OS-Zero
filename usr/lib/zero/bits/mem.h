@@ -103,6 +103,7 @@
     } while (0)
 #endif
 
+/* generate an address in the range ptr + [0, 8 * CLSIZE] */
 static __inline__ MEMPTR_T
 memgenadr(MEMPTR_T ptr)
 {
