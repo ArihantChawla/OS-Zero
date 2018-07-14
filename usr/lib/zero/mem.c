@@ -10,7 +10,7 @@
 #define THASH_FUNC(key)    (tmhash32(key))
 #include <zero/thash.h>
 #define LFDEQ_DATA_T       struct memslab
-#include <zero/lfdeq.h>
+#include <mt/lfdeq.h>
 
 struct divu16              fastu16divu16tab[MEM_MAX_FAST_DIV];
 static struct mem          g_mem;
@@ -42,9 +42,9 @@ memgettls(size_t size)
     size_t           pool;
     intptr_t         n;
 
-    if (size <= MEM_MAX_SMALL_SIZE) {
+    if (size <= MEM_MAX_BLK_SIZE) {
         _memcalcsmallpool(size, pool);
-        slot = &g_memtls->smalltab[pool];
+        slot = &g_memtls->blktab[pool];
     } else {
         _memcalcrunpool(size, pool);
         slot = &g_memtls->runtab[pool];
@@ -59,10 +59,10 @@ memgettls(size_t size)
                 m_atomwrite((m_atomic_t *)slot, (m_atomic_t)head);
             }
         } else {
-            if (size <= MEM_MAX_SMALL_SIZE) {
+            if (size <= MEM_MAX_BLK_SIZE) {
                 slab = memmapslab(pool,
                                   memnumsmall(pool), memsmallsize(pool),
-                                  MEM_SMALL_SLAB);
+                                  MEM_BLK_SLAB);
             } else {
                 slab = memmapslab(pool,
                                   memnumrun(pool), memrunsize(pool),

@@ -2,6 +2,7 @@
 
 CC=gcc
 
+$CC -I../../usr/lib -g -Wall -O -ffast-math -o mandel mandel.c -lX11
 $CC -I../../usr/lib -g -Wall -O -ffast-math -o mandel1 mandel1.c -lX11 -pthread
 $CC -I../../usr/lib -g -Wall -O -ffast-math -o mandel2 mandel2.c -lX11 -pthread
 $CC -msse -m128bit-long-double -I../../usr/lib -g -Wall -O -ffast-math -o mandel3 mandel3.c mandel_sse.S -lX11 -pthread

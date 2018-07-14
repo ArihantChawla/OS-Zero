@@ -1,5 +1,5 @@
-#ifndef __ZERO_SPINWT_H__
-#define __ZERO_SPINWT_H__
+#ifndef __MT_SPINWT_H__
+#define __MT_SPINWT_H__
 
 /*
  * NOTES
@@ -28,7 +28,7 @@ spinwttrylk(volatile long *sp, long val, long niter)
     } else {
         res++;
     }
-    
+
     return res;
 }
 
@@ -64,5 +64,5 @@ spinwtunlk(volatile long *sp)
     return;
 }
 
-#endif /* __ZERO_SPINWT_H__ */
+#endif /* __MT_SPINWT_H__ */
 

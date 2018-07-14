@@ -3,8 +3,8 @@
  * - http://ticki.github.io/blog/fearless-concurrency-with-hazard-pointers/
  */
 
-#ifndef __ZERO_HAZ_H__
-#define __ZERO_HAZ_H__
+#ifndef __MT_HAZ_H__
+#define __MT_HAZ_H__
 
 #include <stdint.h>
 #include <zero/hash.h>
@@ -36,5 +36,5 @@ struct haznode {
     void           *tab[HAZ_NODE_TAB_ITEMS];
 };
 
-#endif /* __ZERO_HAZ_H__ */
+#endif /* __MT_HAZ_H__ */
 

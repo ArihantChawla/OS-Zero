@@ -79,7 +79,7 @@ static unsigned long randmt32key[4]
 #endif
 #if defined(_REENTRANT)
 #if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 ZERO_MUTEX_TYPE     randmt32initmtx = FMTXINITVAL;
 ZERO_MUTEX_TYPE     randmt32mtx = FMTXINITVAL;
 #else

@@ -4,7 +4,7 @@
 #include <mach/param.h>
 #include <mach/asm.h>
 #include <zero/bits/mem.h>
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 #include <zero/hash.h>
 #include <zero/fastudiv.h>
 

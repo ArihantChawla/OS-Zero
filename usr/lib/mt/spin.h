@@ -1,5 +1,5 @@
-#ifndef __ZERO_SPIN_H__
-#define __ZERO_SPIN_H__
+#ifndef __MT_SPIN_H__
+#define __MT_SPIN_H__
 
 #include <mach/asm.h>
 
@@ -115,5 +115,5 @@ spinunlk(m_atomic_t *sp)
 
 #endif /* ZERONEWSPIN */
 
-#endif /* __ZERO_SPIN_H__ */
+#endif /* __MT_SPIN_H__ */
 

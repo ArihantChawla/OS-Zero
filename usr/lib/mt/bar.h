@@ -1,5 +1,5 @@
-#ifndef __ZERO_BAR_H__
-#define __ZERO_BAR_H__
+#ifndef __MT_BAR_H__
+#define __MT_BAR_H__
 
 #define ZEROFMTX 1
 
@@ -41,5 +41,5 @@ typedef struct {
     } cnt;
 } zerobarpool;
 
-#endif /* __ZERO_BAR_H__ */
+#endif /* __MT_BAR_H__ */
 

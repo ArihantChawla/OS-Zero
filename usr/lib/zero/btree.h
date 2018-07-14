@@ -9,7 +9,7 @@
 #include <limits.h>
 #include <stdint.h>
 /* FIXME: use lock-free approach later on */
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 
 #define BTREE_NODE_LISTS 3
 #if !defined(BTREE_LIST_ITEMS)

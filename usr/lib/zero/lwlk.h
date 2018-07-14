@@ -11,7 +11,7 @@
 #include <zero/cdefs.h>
 #include <mach/param.h>
 #include <mach/asm.h>
-#include <zero/cond.h>
+#include <mt/cond.h>
 
 #define LWLK_FAILURE 0L
 #define LWLK_SUCCESS 1L

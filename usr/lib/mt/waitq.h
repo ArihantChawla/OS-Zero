@@ -1,12 +1,12 @@
-#ifndef __ZERO_WAITQ_H__
-#define __ZERO_WAITQ_H__
+#ifndef __MT_WAITQ_H__
+#define __MT_WAITQ_H__
 
 /* REFERENCE: https://arxiv.org/pdf/1112.1141.pdf */
 
 #include <stdlib.h>
 #include <zero/cdefs.h>
-#include <zero/mtx.h>
-#include <zero/cond.h>
+#include <mt/mtx.h>
+#include <mt/cond.h>
 #if !defined(COND_T)
 #define COND_T zerocond
 #endif
@@ -39,5 +39,5 @@ struct waitq {
     long     (*poll)(void);
 };
 
-#endif /* __ZERO_WAITQ_H__ */
+#endif /* __MT_WAITQ_H__ */
 

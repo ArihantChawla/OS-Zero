@@ -1,5 +1,5 @@
-#ifndef __ZERO_MTX_H__
-#define __ZERO_MTX_H__
+#ifndef __MT_MTX_H__
+#define __MT_MTX_H__
 
 #define ZEROMTX     1
 #if !defined(ZEROFMTX)
@@ -15,7 +15,7 @@
 #include <zero/cdefs.h>
 #include <mach/param.h>
 #include <mach/asm.h>
-#include <zero/thr.h>
+#include <mt/thr.h>
 
 /*
  * Special thanks to Matthew 'kinetik' Gregan for help with the mutex code.
@@ -215,5 +215,5 @@ fmtxunlk(m_atomic_t *lp)
 
 #endif
 
-#endif /* __ZERO_MTX_H__ */
+#endif /* __MT_MTX_H__ */
 

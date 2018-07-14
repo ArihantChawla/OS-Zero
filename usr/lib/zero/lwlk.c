@@ -1,6 +1,6 @@
 #include <mach/asm.h>
 #include <zero/lwlk.h>
-#include <zero/waitq.h>
+#include <mt/waitq.h>
 
 /* FIXME: the stuff here is broken :) */
 

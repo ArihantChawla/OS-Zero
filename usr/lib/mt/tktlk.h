@@ -1,5 +1,5 @@
-#ifndef __ZERO_TKTLK_H__
-#define __ZERO_TKTLK_H__
+#ifndef __MT_TKTLK_H__
+#define __MT_TKTLK_H__
 
 /* REFERENCE: http://locklessinc.com/articles/locks/ */
 
@@ -180,5 +180,5 @@ tktmaylk(union zerotktlk *tp)
     return (tu.s.val == tu.s.nref);
 }
 
-#endif /* __ZERO_TKTLK_H__ */
+#endif /* __MT_TKTLK_H__ */
 

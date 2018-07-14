@@ -1,5 +1,5 @@
-#ifndef __ZERO_MAPLK_H__
-#define __ZERO_MAPLK_H__
+#ifndef __MT_MAPLK_H__
+#define __MT_MAPLK_H__
 
 #include <mach/asm.h>
 #include <limits.h>
@@ -51,5 +51,5 @@ mapunlkbit(zeromaplk *maplk, long ndx)
     return;
 }
 
-#endif /* __ZERO_MAPLK_H__ */
+#endif /* __MT_MAPLK_H__ */
 

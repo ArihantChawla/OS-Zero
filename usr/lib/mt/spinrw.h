@@ -1,5 +1,5 @@
-#ifndef __ZERO_SPINRW_H__
-#define __ZERO_SPINRW_H__
+#ifndef __MT_SPINRW_H__
+#define __MT_SPINRW_H__
 
 /* REFERENCE: https://jfdube.wordpress.com/2014/01/03/implementing-a-recursive-read-write-spinlock/ */
 
@@ -120,5 +120,5 @@ zerounlkspinrwrecwr(zerospinrwrec *spin)
     }
 }
 
-#endif /* __ZERO_SPINRW_H__ */
+#endif /* __MT_SPINRW_H__ */
 

@@ -1,5 +1,5 @@
-#ifndef __ZERO_PRIOLK_H__
-#define __ZERO_PRIOLK_H__
+#ifndef __MT_PRIOLK_H__
+#define __MT_PRIOLK_H__
 
 #include <stdint.h>
 #include <mach/param.h>
@@ -35,5 +35,5 @@ void priolkfin(void);
 void priolkget(struct priolk *priolk);
 void priolkrel(struct priolk *priolk);
 
-#endif /* __ZERO_PRIOLK_H__ */
+#endif /* __MT_PRIOLK_H__ */
 

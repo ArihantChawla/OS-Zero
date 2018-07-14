@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #if defined(_REENTRANT)
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 #define hashlk(lp)   mtxlk(lp)
 #define hashunlk(lp) mtxunlk(lp)
 #else

@@ -1,8 +1,8 @@
 #ifndef __ZERO_COND_H__
 #define __ZERO_COND_H__
 
-#include <zero/mtx.h>
-#include <zero/thr.h>
+#include <mt/mtx.h>
+#include <mt/thr.h>
 #if defined(PTHREAD)
 #include <stddef.h>
 #include <time.h>

@@ -5,7 +5,7 @@
 #define ZERO_MUTEX      1
 #if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
 #include <mach/asm.h>
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 #define ZERO_MUTEX_TYPE zerofmtx
 #elif defined(PTHREAD_MUTEX)
 #define ZERO_MUTEX_TYPE pthread_mtx_t

@@ -1,5 +1,5 @@
-#ifndef __ZERO_SEM_H__
-#define __ZERO_SEM_H__
+#ifndef __MT_SEM_H__
+#define __MT_SEM_H__
 
 #include <limits.h>
 #include <zero/mtx.h>
@@ -12,5 +12,5 @@ typedef struct sem {
     unsigned long val;
 } zerosem;
 
-#endif /* __ZERO_SEM_H__ */
+#endif /* __MT_SEM_H__ */
 

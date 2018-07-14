@@ -1,5 +1,5 @@
-#ifndef __ZERO_THR_H__
-#define __ZERO_THR_H__
+#ifndef __MT_THR_H__
+#define __MT_THR_H__
 
 #include <stddef.h>
 #include <stdint.h>
@@ -20,7 +20,7 @@
 //#define thryield() /* FIXME */
 #endif
 
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 
 #if !defined(__KERNEL__)
 
@@ -89,5 +89,5 @@ extern void thrwakeall1(zerothrqueue *queue);
 
 #endif /* !defined(__KERNEL__) */
 
-#endif /* __ZERO_THR_H__ */
+#endif /* __MT_THR_H__ */
 

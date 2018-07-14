@@ -4,7 +4,7 @@
 #if defined(PTHREAD)
 #include <pthread.h>
 #endif
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 #include <zero/cond.h>
 #include <zero/thr.h>
 
