@@ -70,9 +70,9 @@ mjolgetopt(struct mjolgame *game, int argc, char *argv[])
 
                 exit(1);
             }
-#if (MJOL_VGA_TEXT)
+#if (MJOLNIR_VGA_TEXT)
             if (!strncmp(str, "vga", 3)) {
-                game->scrtype = MJOL_SCR_VGA_TEXT;
+                game->scrtype = MJOLNIR_SCR_VGA_TEXT;
             }
 #else
             if (!strncmp(str, "vga", 3)) {
@@ -82,9 +82,9 @@ mjolgetopt(struct mjolgame *game, int argc, char *argv[])
             }
 #endif
             if (!game->scrtype) {
-#if (MJOL_TTY)
+#if (MJOLNIR_TTY)
                 if (!strncmp(str, "tty", 3)) {
-                    game->scrtype = MJOL_SCR_TTY;
+                    game->scrtype = MJOLNIR_SCR_TTY;
                 }
 #else
                 if (!strncmp(str, "tty", 3)) {
@@ -94,9 +94,9 @@ mjolgetopt(struct mjolgame *game, int argc, char *argv[])
                 }
 #endif
                 if (!game->scrtype) {
-#if (MJOL_X11)
+#if (MJOLNIR_X11)
                     if (!strncmp(str, "x11", 3)) {
-                        game->scrtype = MJOL_SCR_X11;
+                        game->scrtype = MJOLNIR_SCR_X11;
                     }
 #else
                     if (!strncmp(str, "x11", 3)) {

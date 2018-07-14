@@ -1,0 +1,54 @@
+kern - zero kernel
+------------------
+
+    this document aims to teach you a thing or two about my operating system
+    project...
+
+    parts of this text do not reflect the current zero repository at
+
+          https://github.com/vendu/OS-Zero
+
+    because zero is under heavy development and is likely to be partially
+    refactored soon. :)
+
+    without further mumbo-jumbo, let me introduce you to the codebase.
+
+code modules
+------------
+
+    some of these code-modules are utilised by tools such as c standard library.
+
+    mach - machine-dependent features
+    ---------------------------------
+    - asm - assembly routines
+    - boot - machine/kernel bootstrap
+    - trap - interrupt and exception support
+    - cpu - processor support
+    - seg - memory segment interface where necessary
+    - vm - virtual memory abstraction (for page-daemon)
+    - llio - low-level input/output
+
+    task - processes/threads
+    ------------------------
+    - proc - process interface
+    - thr - multicore support
+
+    mem - memory management
+    -----------------------
+    - slab - memory buffers
+    - mag - cache layer
+    - shm - shared memory communications
+
+    io - input and output
+    ---------------------
+    - buf - buffer cache layer
+    - vfs - virtual filesystem support
+    - mq - message queue interface
+
+    mt - multithread support package
+    --------------------------------
+    - mtx - mutex implementation
+    - sem - semaphore support
+    - rwlk - read-write lock interface
+    - bar - thread barrier synchronization
+

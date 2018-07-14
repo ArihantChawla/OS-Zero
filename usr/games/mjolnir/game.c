@@ -60,7 +60,7 @@ mjolintro(void)
     printf("Good luck, adventurer, and beware of Fenris!\n");
     printf("\n");
     printf("Press a key to continue...\n");
-#if (MJOL_VT) || (MJOL_CURSES)
+#if (MJOLNIR_VT) || (MJOLNIR_CURSES)
     getchar();
 #endif
 
@@ -92,29 +92,29 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
         game->player = mjolmkplayer(game);
     }
     if (!game->nick) {
-        game->nick = MJOL_DEF_NICK;
+        game->nick = MJOLNIR_DEF_NICK;
     }
     if (!game->scrtype) {
-#if (MJOL_TTY)
-        game->scrtype = MJOL_SCR_TTY;
-#elif (MJOL_VGA_TEXT)
-        game->scrtype = MJOL_SCR_VGA_TEXT;
+#if (MJOLNIR_TTY)
+        game->scrtype = MJOLNIR_SCR_TTY;
+#elif (MJOLNIR_VGA_TEXT)
+        game->scrtype = MJOLNIR_SCR_VGA_TEXT;
 #endif
     }
     if (!game->scrtype) {
         fprintf(stderr, "no supported screen type found\n");
-        
+
         exit(1);
     }
     mjolintro();
     if (!game->nlvl) {
-        game->nlvl = MJOL_DEF_NLVL;
+        game->nlvl = MJOLNIR_DEF_NLVL;
     }
     if (!game->width) {
-        game->width = MJOL_DEF_WIDTH;
+        game->width = MJOLNIR_DEF_WIDTH;
     }
     if (!game->height) {
-        game->height = MJOL_DEF_HEIGHT;
+        game->height = MJOLNIR_DEF_HEIGHT;
     }
     objtab = calloc(game->nlvl, sizeof(struct mjolobj ***));
     chrtab = calloc(game->nlvl, sizeof(struct mjolchr ***));
@@ -123,7 +123,7 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
         objtab[y] = calloc(game->width, sizeof(struct mjolobj *));
         if (!objtab[y]) {
             fprintf(stderr, "memory allocation failure\n");
-            
+
             exit(1);
         }
     }
@@ -155,7 +155,7 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
 //    mjolprintlvl(game, 0);
 //    sleep(5);
 #endif
-    
+
     return;
 }
 

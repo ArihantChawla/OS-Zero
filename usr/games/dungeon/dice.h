@@ -1,6 +1,7 @@
 #ifndef __GAMES_DICE_H__
 #define __GAMES_DICE_H__
 
+#include <dungeon/conf.h>
 #if !defined(DICE_SRAND_TIME)
 #define DICE_SRAND_TIME 0 /* timestamp-seed every roll */
 #endif

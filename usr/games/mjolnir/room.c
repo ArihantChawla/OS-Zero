@@ -1,30 +1,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mjolnir/conf.h>
-#if (MJOL_HASH)
+#if (MJOLNIR_HASH)
 #include <zero/hash.h>
 #include <zero/trix.h>
 #endif
-#if (MJOL_USE_ZERO_RANDMT32)
+#if (MJOLNIR_USE_ZERO_RANDMT32)
 #include <zero/randmt32.h>
 #endif
 #include <zero/trix.h>
 #include <mjolnir/mjol.h>
 
-#define MJOLTEST             0
-#define MJOL_ROOM_MIN_WIDTH  8
-#define MJOL_ROOM_MIN_HEIGHT 6
-#define MJOL_ROOM_MAX_WIDTH  16
-#define MJOL_ROOM_MAX_HEIGHT 12
-#define MJOL_MIN_ROOMS       2
-#define MJOL_MAX_ROOMS       6
+#define MJOLTEST                0
+#define MJOLNIR_ROOM_MIN_WIDTH  8
+#define MJOLNIR_ROOM_MIN_HEIGHT 6
+#define MJOLNIR_ROOM_MAX_WIDTH  16
+#define MJOLNIR_ROOM_MAX_HEIGHT 12
+#define MJOLNIR_MIN_ROOMS       2
+#define MJOLNIR_MAX_ROOMS       6
 
 extern struct mjolobj * mjolmkcorridor(void);
 extern struct mjolobj * mjolmkdoor(void);
 extern struct mjolobj * mjolmkhorizwall(void);
 extern struct mjolobj * mjolmkvertwall(void);
 
-#if (MJOL_ROOM_IDS)
+#if (MJOLNIR_ROOM_IDS)
 const char roomidtab[16] =
 {
     '0',
@@ -78,25 +78,25 @@ mjolmkroom(struct mjolroom *room)
     long              lim2;
 
     x = mjolrand() % max(room->width >> 2, 2);
-    x = min(x, room->width - MJOL_ROOM_MIN_WIDTH - 2);
+    x = min(x, room->width - MJOLNIR_ROOM_MIN_WIDTH - 2);
     x = max(x, 1);
     y = mjolrand() % max(room->height >> 2, 2);
-    y = min(y, room->height - MJOL_ROOM_MIN_HEIGHT - 2);
+    y = min(y, room->height - MJOLNIR_ROOM_MIN_HEIGHT - 2);
     y = max(y, 1);
 #if 0
-    x = mjolrand() % max(room->width - MJOL_ROOM_MIN_WIDTH - 1, 1);
+    x = mjolrand() % max(room->width - MJOLNIR_ROOM_MIN_WIDTH - 1, 1);
     x = max(x, 1);
-    y = mjolrand() % max(room->height - MJOL_ROOM_MIN_HEIGHT - 1, 1);
+    y = mjolrand() % max(room->height - MJOLNIR_ROOM_MIN_HEIGHT - 1, 1);
     y = max(y, 1);
 #endif
-    w = MJOL_ROOM_MIN_WIDTH + (mjolrand() % max(room->width - 2, 1));
-    w = max(w, MJOL_ROOM_MIN_WIDTH);
+    w = MJOLNIR_ROOM_MIN_WIDTH + (mjolrand() % max(room->width - 2, 1));
+    w = max(w, MJOLNIR_ROOM_MIN_WIDTH);
     w = min(w, room->width - x - 2);
-    w = min(w, MJOL_ROOM_MAX_WIDTH);
-    h = MJOL_ROOM_MIN_HEIGHT + (mjolrand() % max(room->height - 2, 1));
-    h = max(h, MJOL_ROOM_MIN_HEIGHT);
+    w = min(w, MJOLNIR_ROOM_MAX_WIDTH);
+    h = MJOLNIR_ROOM_MIN_HEIGHT + (mjolrand() % max(room->height - 2, 1));
+    h = max(h, MJOLNIR_ROOM_MIN_HEIGHT);
     h = min(h, room->height - y - 2);
-    h = min(h, MJOL_ROOM_MAX_HEIGHT);
+    h = min(h, MJOLNIR_ROOM_MAX_HEIGHT);
     room->roomx += room->x + x;
     room->roomy += room->y + y;
     room->roomw = w;
@@ -104,7 +104,7 @@ mjolmkroom(struct mjolroom *room)
     /* draw top wall */
     y = room->roomy;
     lim1 = room->roomx + w;
-#if (MJOL_ROOM_IDS)
+#if (MJOLNIR_ROOM_IDS)
     for (x = room->roomx ; x < lim1 ; x++) {
         objtab[y][x] = mjolmkid(room);
     }
@@ -158,7 +158,7 @@ mjolmkroom(struct mjolroom *room)
         }
     }
 #endif
-    
+
     return;
 }
 
@@ -199,9 +199,9 @@ mjolconnrooms(struct mjolgame *game,
                     if (!objtab[y][x]) {
                         objtab[y][x] = mjolmkcorridor();
                     } else if (objtab[y][x]->data.type
-                               == MJOL_OBJ_VERTICAL_WALL
+                               == MJOLNIR_OBJ_VERTICAL_WALL
                                || objtab[y][x]->data.type
-                               == MJOL_OBJ_HORIZONTAL_WALL) {
+                               == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                         free(objtab[y][x]);
                         objtab[y][x] = mjolmkdoor();
 
@@ -230,9 +230,9 @@ mjolconnrooms(struct mjolgame *game,
                         if (!objtab[y][x]) {
                             objtab[y][x] = mjolmkcorridor();
                         } else if (objtab[y][x]->data.type
-                                   == MJOL_OBJ_VERTICAL_WALL
+                                   == MJOLNIR_OBJ_VERTICAL_WALL
                                    || objtab[y][x]->data.type
-                                   == MJOL_OBJ_HORIZONTAL_WALL) {
+                                   == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                             free(objtab[y][x]);
                             objtab[y][x] = mjolmkdoor();
 
@@ -256,9 +256,9 @@ mjolconnrooms(struct mjolgame *game,
                         if (!objtab[y][x]) {
                             objtab[y][x] = mjolmkcorridor();
                         } else if (objtab[y][x]->data.type
-                                   == MJOL_OBJ_VERTICAL_WALL
+                                   == MJOLNIR_OBJ_VERTICAL_WALL
                                    || objtab[y][x]->data.type
-                                   == MJOL_OBJ_HORIZONTAL_WALL) {
+                                   == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                             free(objtab[y][x]);
                             objtab[y][x] = mjolmkdoor();
 
@@ -274,9 +274,9 @@ mjolconnrooms(struct mjolgame *game,
                         if (!objtab[y][x]) {
                             objtab[y][x] = mjolmkcorridor();
                         } else if (objtab[y][x]->data.type
-                                   == MJOL_OBJ_VERTICAL_WALL
+                                   == MJOLNIR_OBJ_VERTICAL_WALL
                                    || objtab[y][x]->data.type
-                                   == MJOL_OBJ_HORIZONTAL_WALL) {
+                                   == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                             free(objtab[y][x]);
                             objtab[y][x] = mjolmkdoor();
 
@@ -305,9 +305,9 @@ mjolconnrooms(struct mjolgame *game,
                 if (!objtab[y][x]) {
                     objtab[y][x] = mjolmkcorridor();
                 } else if (objtab[y][x]->data.type
-                           == MJOL_OBJ_VERTICAL_WALL
+                           == MJOLNIR_OBJ_VERTICAL_WALL
                            || objtab[y][x]->data.type
-                           == MJOL_OBJ_HORIZONTAL_WALL) {
+                           == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                     free(objtab[y][x]);
                     objtab[y][x] = mjolmkdoor();
 
@@ -336,9 +336,9 @@ mjolconnrooms(struct mjolgame *game,
                     if (!objtab[y][x]) {
                         objtab[y][x] = mjolmkcorridor();
                     } else if (objtab[y][x]->data.type
-                               == MJOL_OBJ_VERTICAL_WALL
+                               == MJOLNIR_OBJ_VERTICAL_WALL
                                || objtab[y][x]->data.type
-                               == MJOL_OBJ_HORIZONTAL_WALL) {
+                               == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                         free(objtab[y][x]);
                         objtab[y][x] = mjolmkdoor();
 
@@ -361,9 +361,9 @@ mjolconnrooms(struct mjolgame *game,
                     if (!objtab[y][x]) {
                         objtab[y][x] = mjolmkcorridor();
                     } else if (objtab[y][x]->data.type
-                               == MJOL_OBJ_VERTICAL_WALL
+                               == MJOLNIR_OBJ_VERTICAL_WALL
                                || objtab[y][x]->data.type
-                               == MJOL_OBJ_HORIZONTAL_WALL) {
+                               == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                         free(objtab[y][x]);
                         objtab[y][x] = mjolmkdoor();
 
@@ -379,9 +379,9 @@ mjolconnrooms(struct mjolgame *game,
                     if (!objtab[y][x]) {
                         objtab[y][x] = mjolmkcorridor();
                     } else if (objtab[y][x]->data.type
-                               == MJOL_OBJ_VERTICAL_WALL
+                               == MJOLNIR_OBJ_VERTICAL_WALL
                                || objtab[y][x]->data.type
-                               == MJOL_OBJ_HORIZONTAL_WALL) {
+                               == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                         free(objtab[y][x]);
                         objtab[y][x] = mjolmkdoor();
 
@@ -413,9 +413,9 @@ mjolconnrooms(struct mjolgame *game,
                 if (!objtab[y][x]) {
                     objtab[y][x] = mjolmkcorridor();
                 } else if (objtab[y][x]->data.type
-                           == MJOL_OBJ_VERTICAL_WALL
+                           == MJOLNIR_OBJ_VERTICAL_WALL
                            || objtab[y][x]->data.type
-                           == MJOL_OBJ_HORIZONTAL_WALL) {
+                           == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                     free(objtab[y][x]);
                     objtab[y][x] = mjolmkdoor();
 
@@ -439,9 +439,9 @@ mjolconnrooms(struct mjolgame *game,
                 if (!objtab[y][x]) {
                     objtab[y][x] = mjolmkcorridor();
                 } else if (objtab[y][x]->data.type
-                           == MJOL_OBJ_VERTICAL_WALL
+                           == MJOLNIR_OBJ_VERTICAL_WALL
                            || objtab[y][x]->data.type
-                           == MJOL_OBJ_HORIZONTAL_WALL) {
+                           == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                     free(objtab[y][x]);
                     objtab[y][x] = mjolmkdoor();
 
@@ -475,9 +475,9 @@ mjolconnrooms(struct mjolgame *game,
                     if (!objtab[y][x]) {
                         objtab[y][x] = mjolmkcorridor();
                     } else if (objtab[y][x]->data.type
-                               == MJOL_OBJ_VERTICAL_WALL
+                               == MJOLNIR_OBJ_VERTICAL_WALL
                                || objtab[y][x]->data.type
-                               == MJOL_OBJ_HORIZONTAL_WALL) {
+                               == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                         free(objtab[y][x]);
                         objtab[y][x] = mjolmkdoor();
 
@@ -501,9 +501,9 @@ mjolconnrooms(struct mjolgame *game,
                     if (!objtab[y][x]) {
                         objtab[y][x] = mjolmkcorridor();
                     } else if (objtab[y][x]->data.type
-                               == MJOL_OBJ_VERTICAL_WALL
+                               == MJOLNIR_OBJ_VERTICAL_WALL
                                || objtab[y][x]->data.type
-                               == MJOL_OBJ_HORIZONTAL_WALL) {
+                               == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                         free(objtab[y][x]);
                         objtab[y][x] = mjolmkdoor();
 
@@ -522,9 +522,9 @@ mjolconnrooms(struct mjolgame *game,
                     if (!objtab[y][x]) {
                         objtab[y][x] = mjolmkcorridor();
                     } else if (objtab[y][x]->data.type
-                               == MJOL_OBJ_VERTICAL_WALL
+                               == MJOLNIR_OBJ_VERTICAL_WALL
                                || objtab[y][x]->data.type
-                               == MJOL_OBJ_HORIZONTAL_WALL) {
+                               == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                         free(objtab[y][x]);
                         objtab[y][x] = mjolmkdoor();
 
@@ -550,9 +550,9 @@ mjolconnrooms(struct mjolgame *game,
                 if (!objtab[y][x]) {
                     objtab[y][x] = mjolmkcorridor();
                 } else if (objtab[y][x]->data.type
-                           == MJOL_OBJ_VERTICAL_WALL
+                           == MJOLNIR_OBJ_VERTICAL_WALL
                            || objtab[y][x]->data.type
-                           == MJOL_OBJ_HORIZONTAL_WALL) {
+                           == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                     free(objtab[y][x]);
                     objtab[y][x] = mjolmkdoor();
 
@@ -576,9 +576,9 @@ mjolconnrooms(struct mjolgame *game,
                 if (!objtab[y][x]) {
                     objtab[y][x] = mjolmkcorridor();
                 } else if (objtab[y][x]->data.type
-                           == MJOL_OBJ_VERTICAL_WALL
+                           == MJOLNIR_OBJ_VERTICAL_WALL
                            || objtab[y][x]->data.type
-                           == MJOL_OBJ_HORIZONTAL_WALL) {
+                           == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                     free(objtab[y][x]);
                     objtab[y][x] = mjolmkdoor();
 
@@ -593,9 +593,9 @@ mjolconnrooms(struct mjolgame *game,
                 if (!objtab[y][x]) {
                     objtab[y][x] = mjolmkcorridor();
                 } else if (objtab[y][x]->data.type
-                           == MJOL_OBJ_VERTICAL_WALL
+                           == MJOLNIR_OBJ_VERTICAL_WALL
                            || objtab[y][x]->data.type
-                           == MJOL_OBJ_HORIZONTAL_WALL) {
+                           == MJOLNIR_OBJ_HORIZONTAL_WALL) {
                     free(objtab[y][x]);
                     objtab[y][x] = mjolmkdoor();
 
@@ -606,8 +606,8 @@ mjolconnrooms(struct mjolgame *game,
             objtab[y][x] = mjolmkdoor();
         }
     }
-    src->flg |= MJOL_ROOM_CONNECTED;
-    dest->flg |= MJOL_ROOM_CONNECTED;
+    src->flg |= MJOLNIR_ROOM_CONNECTED;
+    dest->flg |= MJOLNIR_ROOM_CONNECTED;
 
     return;
 }
@@ -666,27 +666,27 @@ void
 mjolsplitroom(struct mjolroom *room)
 {
     long pos;
-    
+
     if (!room) {
         fprintf(stderr, "memory allocation failure\n");
-        
+
         exit(1);
     }
-    if (room->flg & MJOL_DIR_VERTICAL) {
-      //        pos = MJOL_ROOM_MIN_WIDTH + (mjolrand() % max(room->width, MJOL_ROOM_MIN_WIDTH));
+    if (room->flg & MJOLNIR_DIR_VERTICAL) {
+      //        pos = MJOLNIR_ROOM_MIN_WIDTH + (mjolrand() % max(room->width, MJOLNIR_ROOM_MIN_WIDTH));
       //        pos = min(pos, room->width >> 1);
 #if 0
         pos = mjolrand() % room->width;
-        pos = max(pos, room->width - MJOL_ROOM_MIN_WIDTH - 2);
+        pos = max(pos, room->width - MJOLNIR_ROOM_MIN_WIDTH - 2);
 #endif
         pos = room->width >> 1;
 //        pos = room->width >> 1;
-//        pos = max(pos, MJOL_ROOM_MIN_WIDTH);
+//        pos = max(pos, MJOLNIR_ROOM_MIN_WIDTH);
         room->part1 = calloc(1, sizeof(struct mjolroom));
         room->part2 = calloc(1, sizeof(struct mjolroom));
         if (!room->part1 || !room->part2) {
             fprintf(stderr, "memory allocation failure\n");
-            
+
             exit(1);
         }
         room->part1->x = room->x;
@@ -700,27 +700,27 @@ mjolsplitroom(struct mjolroom *room)
     } else {
 #if 0
         pos = mjolrand() % room->height;
-        pos = max(pos, room->height - MJOL_ROOM_MIN_HEIGHT - 2);
+        pos = max(pos, room->height - MJOLNIR_ROOM_MIN_HEIGHT - 2);
 #endif
         pos = room->height >> 1;
-//        pos = max(pos, MJOL_ROOM_MIN_HEIGHT);
+//        pos = max(pos, MJOLNIR_ROOM_MIN_HEIGHT);
         room->part1 = calloc(1, sizeof(struct mjolroom));
         room->part2 = calloc(1, sizeof(struct mjolroom));
         if (!room->part1 || !room->part2) {
             fprintf(stderr, "memory allocation failure\n");
-            
+
             exit(1);
         }
         room->part1->x = room->x;
         room->part1->y = room->y;
         room->part1->width = room->width;
         room->part1->height = pos;
-        room->part1->flg |= MJOL_DIR_VERTICAL;
+        room->part1->flg |= MJOLNIR_DIR_VERTICAL;
         room->part2->x = room->x;
         room->part2->y = room->y + pos;
         room->part2->width = room->width;
         room->part2->height = room->height - pos;
-        room->part2->flg |= MJOL_DIR_VERTICAL;
+        room->part2->flg |= MJOLNIR_DIR_VERTICAL;
     }
 
     return;
@@ -730,7 +730,7 @@ struct mjolroom **
 mjolinitrooms(struct mjolgame *game, long *nret)
 {
 //    struct mjolroom  *tree = calloc(1, sizeof(struct mjolroom));
-//    struct mjolroom  *tab[MJOL_MAX_ROOMS << 1];
+//    struct mjolroom  *tab[MJOLNIR_MAX_ROOMS << 1];
     struct mjolroom  *room1 = calloc(1, sizeof(struct mjolroom));
     struct mjolroom  *room2;
     struct mjolroom  *room3;
@@ -761,7 +761,7 @@ mjolinitrooms(struct mjolgame *game, long *nret)
     room1->width = game->width;
     room1->height = game->height;
     room1->flg |= mjolrand() & 0x01;
-#if (MJOL_ROOM_IDS)
+#if (MJOLNIR_ROOM_IDS)
     room1->id = roomidtab[0];
 #endif
     tab[0] = room1;
@@ -778,7 +778,7 @@ mjolinitrooms(struct mjolgame *game, long *nret)
         room3 = room1->part2;
         tab[ndx1] = room2;
         tab[ndx2] = room3;
-#if (MJOL_ROOM_IDS)
+#if (MJOLNIR_ROOM_IDS)
         room1->part1->id = roomidtab[ndx1];
         room1->part2->id = roomidtab[ndx2];
 #endif

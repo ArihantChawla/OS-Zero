@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <mjolnir/conf.h>
 
-#if (MJOL_TTY)
+#if (MJOLNIR_TTY)
 
 #include <mjolnir/mjol.h>
 #include <mjolnir/scr.h>
@@ -12,7 +12,7 @@ mjolgetchtty(void)
 {
     int retval = EOF;
 
-#if (MJOL_VT)
+#if (MJOLNIR_VT)
     printf("READ\n");
     retval = getchar();
     if (retval == EOF) {
@@ -20,7 +20,7 @@ mjolgetchtty(void)
 
         exit(0);
     }
-#elif (MJOL_CURSES)
+#elif (MJOLNIR_CURSES)
     retval = getch();
 #endif
 
@@ -30,14 +30,14 @@ mjolgetchtty(void)
 void
 mjolmovetotty(int x, int y)
 {
-#if (MJOL_VT)
+#if (MJOLNIR_VT)
     char esc[] = "\033[";
 #endif
 
-#if (MJOL_VT)
+#if (MJOLNIR_VT)
     printf("%s", esc);
     printf("%d:%dH", y, x);
-#elif (MJOL_CURSES)
+#elif (MJOLNIR_CURSES)
     /* TODO */
 #endif
 }
@@ -53,9 +53,9 @@ mjoldrawchrtty(struct mjolgame *game, struct mjolchr *chr)
     if (x != scr->x || y != scr->y) {
         scr->moveto(x, y);
     }
-#if (MJOL_VT)
+#if (MJOLNIR_VT)
     printf("%c", game->objtab[lvl][x][y]->id);
-#elif (MJOL_CURSES)
+#elif (MJOLNIR_CURSES)
     printw("%c", game->objtab[lvl][x][y]->id);
 #endif
 }
@@ -69,7 +69,7 @@ mjolrefreshtty(void)
 void
 mjolclosetty(void)
 {
-#if (MJOL_CURSES)
+#if (MJOLNIR_CURSES)
     endwin();
 #endif
 
@@ -80,18 +80,18 @@ void
 mjolmkscrtty(struct mjolgame *game)
 {
     struct mjolwindatatty *data = calloc(1, sizeof(struct mjolwindatatty));
-#if (MJOL_CURSES)
+#if (MJOLNIR_CURSES)
     WINDOW                *win;
 #endif
 
-#if (MJOL_VT)
-#elif (MJOL_CURSES)
+#if (MJOLNIR_VT)
+#elif (MJOLNIR_CURSES)
     /* create main window */
     win = newwin(game->height, game->width, 0, 0);
     if (!win) {
         mjolclosetty();
         fprintf(stderr, "window creation failure\n");
-        
+
         exit(1);
     }
     data->mainwin = win;
@@ -101,7 +101,7 @@ mjolmkscrtty(struct mjolgame *game)
     if (!win) {
         mjolclosetty();
         fprintf(stderr, "window creation failure\n");
-        
+
         exit(1);
     }
     data->gamewin = win;
@@ -110,7 +110,7 @@ mjolmkscrtty(struct mjolgame *game)
     if (!win) {
         mjolclosetty();
         fprintf(stderr, "window creation failure\n");
-        
+
         exit(1);
     }
     data->msgwin = win;
@@ -119,7 +119,7 @@ mjolmkscrtty(struct mjolgame *game)
     if (!win) {
         mjolclosetty();
         fprintf(stderr, "window creation failure\n");
-        
+
         exit(1);
     }
     data->statwin = win;
@@ -127,17 +127,17 @@ mjolmkscrtty(struct mjolgame *game)
     game->scr = calloc(1, sizeof(struct mjolscr));
     if (game->scr) {
         game->scr->data = data;
-#if (MJOL_VT)
+#if (MJOLNIR_VT)
         game->scr->getch = mjolgetchtty;
-#elif (MJOL_CURSES)
+#elif (MJOLNIR_CURSES)
         game->scr->getch = getch;
 #endif
         game->scr->moveto = mjolmovetotty;
         game->scr->drawchr = mjoldrawchrtty;
-#if (MJOL_VT)
+#if (MJOLNIR_VT)
         game->scr->printmsg = printf;
         game->scr->refresh = mjolrefreshtty;
-#elif (MJOL_CURSES)
+#elif (MJOLNIR_CURSES)
         game->scr->printmsg = printw;
         game->scr->refresh = refresh;
 #endif
@@ -145,7 +145,7 @@ mjolmkscrtty(struct mjolgame *game)
     } else {
         mjolclosetty();
         fprintf(stderr, "memory allocation failure\n");
-        
+
         exit(1);
     }
 
@@ -155,9 +155,9 @@ mjolmkscrtty(struct mjolgame *game)
 void
 mjolopentty(struct mjolgame *game)
 {
-#if (MJOL_VT)
+#if (MJOLNIR_VT)
     setvbuf(stdin, NULL, _IONBF, BUFSIZ);
-#elif (MJOL_CURSES)
+#elif (MJOLNIR_CURSES)
     initscr();
     cbreak();
     keypad(stdscr, TRUE);
@@ -170,9 +170,9 @@ mjolopentty(struct mjolgame *game)
     game->scr->drawchr = mjoldrawchrtty;
     game->scr->printmsg = printf;
 #endif
-        
+
     return;
 }
 
-#endif /* MJOL_TTY */
+#endif /* MJOLNIR_TTY */
 

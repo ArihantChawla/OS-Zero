@@ -1,5 +1,5 @@
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <asm/param.h>
 #include <mjolnir/mjol.h>
 
 extern void mjolbeep(void);
@@ -94,53 +94,53 @@ mjolmovedownright(struct mjolgame *game, struct mjolchr *chr)
 void
 mjolinitcmd(void)
 {
-    mjolcmdmovefunctab[MJOL_CMD_MOVE_LEFT] = mjolmoveleft;
-    mjolcmdmovefunctab[MJOL_CMD_MOVE_DOWN] = mjolmovedown;
-    mjolcmdmovefunctab[MJOL_CMD_MOVE_UP] = mjolmoveup;
-    mjolcmdmovefunctab[MJOL_CMD_MOVE_RIGHT] = mjolmoveright;
-#if (MJOL_CURSES)
-    mjolcmdmovefunctab[MJOL_CMD_LEFT] = mjolmoveleft;
-    mjolcmdmovefunctab[MJOL_CMD_DOWN] = mjolmovedown;
-    mjolcmdmovefunctab[MJOL_CMD_UP] = mjolmoveup;
-    mjolcmdmovefunctab[MJOL_CMD_RIGHT] = mjolmoveright;
+    mjolcmdmovefunctab[MJOLNIR_CMD_MOVE_LEFT] = mjolmoveleft;
+    mjolcmdmovefunctab[MJOLNIR_CMD_MOVE_DOWN] = mjolmovedown;
+    mjolcmdmovefunctab[MJOLNIR_CMD_MOVE_UP] = mjolmoveup;
+    mjolcmdmovefunctab[MJOLNIR_CMD_MOVE_RIGHT] = mjolmoveright;
+#if (MJOLNIR_CURSES)
+    mjolcmdmovefunctab[MJOLNIR_CMD_LEFT] = mjolmoveleft;
+    mjolcmdmovefunctab[MJOLNIR_CMD_DOWN] = mjolmovedown;
+    mjolcmdmovefunctab[MJOLNIR_CMD_UP] = mjolmoveup;
+    mjolcmdmovefunctab[MJOLNIR_CMD_RIGHT] = mjolmoveright;
 #endif
-    mjolcmdmovefunctab[MJOL_CMD_MOVE_UPLEFT] = mjolmoveupleft;
-    mjolcmdmovefunctab[MJOL_CMD_MOVE_UPRIGHT] = mjolmoveupright;
-    mjolcmdmovefunctab[MJOL_CMD_MOVE_DOWNLEFT] = mjolmovedownleft;
-    mjolcmdmovefunctab[MJOL_CMD_MOVE_DOWNRIGHT] = mjolmovedownright;
-    mjolsetmove(MJOL_CMD_MOVE_LEFT);
-    mjolsetmove(MJOL_CMD_MOVE_DOWN);
-    mjolsetmove(MJOL_CMD_MOVE_UP);
-    mjolsetmove(MJOL_CMD_MOVE_RIGHT);
-#if (MJOL_CURSES)
-    mjolsetmove(MJOL_CMD_LEFT);
-    mjolsetmove(MJOL_CMD_DOWN);
-    mjolsetmove(MJOL_CMD_UP);
-    mjolsetmove(MJOL_CMD_RIGHT);
+    mjolcmdmovefunctab[MJOLNIR_CMD_MOVE_UPLEFT] = mjolmoveupleft;
+    mjolcmdmovefunctab[MJOLNIR_CMD_MOVE_UPRIGHT] = mjolmoveupright;
+    mjolcmdmovefunctab[MJOLNIR_CMD_MOVE_DOWNLEFT] = mjolmovedownleft;
+    mjolcmdmovefunctab[MJOLNIR_CMD_MOVE_DOWNRIGHT] = mjolmovedownright;
+    mjolsetmove(MJOLNIR_CMD_MOVE_LEFT);
+    mjolsetmove(MJOLNIR_CMD_MOVE_DOWN);
+    mjolsetmove(MJOLNIR_CMD_MOVE_UP);
+    mjolsetmove(MJOLNIR_CMD_MOVE_RIGHT);
+#if (MJOLNIR_CURSES)
+    mjolsetmove(MJOLNIR_CMD_LEFT);
+    mjolsetmove(MJOLNIR_CMD_DOWN);
+    mjolsetmove(MJOLNIR_CMD_UP);
+    mjolsetmove(MJOLNIR_CMD_RIGHT);
 #endif
-    mjolsetmove(MJOL_CMD_MOVE_UPLEFT);
-    mjolsetmove(MJOL_CMD_MOVE_UPRIGHT);
-    mjolsetmove(MJOL_CMD_MOVE_DOWNLEFT);
-    mjolsetmove(MJOL_CMD_MOVE_DOWNRIGHT);
+    mjolsetmove(MJOLNIR_CMD_MOVE_UPLEFT);
+    mjolsetmove(MJOLNIR_CMD_MOVE_UPRIGHT);
+    mjolsetmove(MJOLNIR_CMD_MOVE_DOWNLEFT);
+    mjolsetmove(MJOLNIR_CMD_MOVE_DOWNRIGHT);
 
-    mjolsetdir(MJOL_CMD_FIGHT);
-    mjolsetdir(MJOL_CMD_THROW);
-    mjolsetdir(MJOL_CMD_MOVE);
-    mjolsetdir(MJOL_CMD_ZAP);
-    mjolsetdir(MJOL_CMD_IDENTIFY_TRAP);
+    mjolsetdir(MJOLNIR_CMD_FIGHT);
+    mjolsetdir(MJOLNIR_CMD_THROW);
+    mjolsetdir(MJOLNIR_CMD_MOVE);
+    mjolsetdir(MJOLNIR_CMD_ZAP);
+    mjolsetdir(MJOLNIR_CMD_IDENTIFY_TRAP);
 
-    mjolsetarg(MJOL_CMD_IDENTIFY);
-    mjolsetarg(MJOL_CMD_THROW);
-    mjolsetarg(MJOL_CMD_ZAP);
-    mjolsetarg(MJOL_CMD_QUAFF);
-    mjolsetarg(MJOL_CMD_READ);
-    mjolsetarg(MJOL_CMD_EAT);
-    mjolsetarg(MJOL_CMD_WIELD);
-    mjolsetarg(MJOL_CMD_TAKE_OFF);
-    mjolsetarg(MJOL_CMD_PUT_RING_ON);
-    mjolsetarg(MJOL_CMD_REMOVE_RING);
-    mjolsetarg(MJOL_CMD_DROP);
-    mjolsetarg(MJOL_CMD_CALL);
+    mjolsetarg(MJOLNIR_CMD_IDENTIFY);
+    mjolsetarg(MJOLNIR_CMD_THROW);
+    mjolsetarg(MJOLNIR_CMD_ZAP);
+    mjolsetarg(MJOLNIR_CMD_QUAFF);
+    mjolsetarg(MJOLNIR_CMD_READ);
+    mjolsetarg(MJOLNIR_CMD_EAT);
+    mjolsetarg(MJOLNIR_CMD_WIELD);
+    mjolsetarg(MJOLNIR_CMD_TAKE_OFF);
+    mjolsetarg(MJOLNIR_CMD_PUT_RING_ON);
+    mjolsetarg(MJOLNIR_CMD_REMOVE_RING);
+    mjolsetarg(MJOLNIR_CMD_DROP);
+    mjolsetarg(MJOLNIR_CMD_CALL);
 
     return;
 }

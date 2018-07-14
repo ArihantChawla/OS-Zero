@@ -12,72 +12,72 @@ void
 dnginitobjmjol(void)
 {
 /* objects */
-    dnginitobjtab[MJOL_OBJ_FLOOR] = mjolmkfloor;
-    dnginitobjtab[MJOL_OBJ_CORRIDOR] = mjolmkcorridor;
-    dnginitobjtab[MJOL_OBJ_HORIZONTAL_WALL] = mjolmkhorizwall;
-    dnginitobjtab[MJOL_OBJ_VERTICAL_WALL] = mjolmkvertwall;
-    dnginitobjtab[MJOL_OBJ_DOOR] = mjolmkdoor;
-    dnginitobjtab[MJOL_OBJ_FOOD] = NULL;
-    dnginitobjtab[MJOL_OBJ_WATER] = NULL;
-    dnginitobjtab[MJOL_OBJ_FOUNTAIN] = NULL;
-    dnginitobjtab[MJOL_OBJ_GOLD] = NULL;
-    dnginitobjtab[MJOL_OBJ_POTION] = NULL;
-    dnginitobjtab[MJOL_OBJ_PLANT] = NULL;
-    dnginitobjtab[MJOL_OBJ_PUNCHCARD] = NULL;
-    dnginitobjtab[MJOL_OBJ_TAPE] = NULL;
-    dnginitobjtab[MJOL_OBJ_STAIR_DOWN] = NULL;
-    dnginitobjtab[MJOL_OBJ_STAIR_UP] = NULL;
-    dnginitobjtab[MJOL_OBJ_STATUE] = NULL;
-    dnginitobjtab[MJOL_OBJ_TRAP] = NULL;
-    dnginitobjtab[MJOL_OBJ_WAND] = NULL;
-    dnginitobjtab[MJOL_OBJ_SCROLL] = NULL;
-    dnginitobjtab[MJOL_OBJ_RING] = NULL;
-    dnginitobjtab[MJOL_OBJ_WHIP] = NULL;
-    dnginitobjtab[MJOL_OBJ_ARMOR] = NULL;
-    dnginitobjtab[MJOL_OBJ_CHAIN] = NULL;
-    dnginitobjtab[MJOL_OBJ_CHEST] = NULL;
-    dnginitobjtab[MJOL_OBJ_SUBMACHINE_GUN] = NULL;
-    dnginitobjtab[MJOL_OBJ_HONEY] = NULL;
-    dnginitobjtab[MJOL_OBJ_KNIFE] = NULL;
-    dnginitobjtab[MJOL_OBJ_LOCKPICK] = NULL;
-    dnginitobjtab[MJOL_OBJ_LASER] = NULL;
-    dnginitobjtab[MJOL_OBJ_MACE] = NULL;
-    dnginitobjtab[MJOL_OBJ_MAINFRAME] = NULL;
-    dnginitobjtab[MJOL_OBJ_PIPE] = NULL;
-    dnginitobjtab[MJOL_OBJ_PISTOL] = NULL;
-    dnginitobjtab[MJOL_OBJ_SWORD] = NULL;
-    dnginitobjtab[MJOL_OBJ_TELEPORT] = NULL;
-    dnginitobjtab[MJOL_OBJ_WELL] = NULL;
-    dnginitobjtab[MJOL_OBJ_CROSS] = NULL;
-    dnginitobjtab[MJOL_OBJ_ALTAR] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_FLOOR] = mjolmkfloor;
+    dnginitobjtab[MJOLNIR_OBJ_CORRIDOR] = mjolmkcorridor;
+    dnginitobjtab[MJOLNIR_OBJ_HORIZONTAL_WALL] = mjolmkhorizwall;
+    dnginitobjtab[MJOLNIR_OBJ_VERTICAL_WALL] = mjolmkvertwall;
+    dnginitobjtab[MJOLNIR_OBJ_DOOR] = mjolmkdoor;
+    dnginitobjtab[MJOLNIR_OBJ_FOOD] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_WATER] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_FOUNTAIN] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_GOLD] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_POTION] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_PLANT] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_PUNCHCARD] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_TAPE] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_STAIR_DOWN] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_STAIR_UP] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_STATUE] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_TRAP] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_WAND] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_SCROLL] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_RING] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_WHIP] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_ARMOR] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_CHAIN] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_CHEST] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_SUBMACHINE_GUN] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_HONEY] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_KNIFE] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_LOCKPICK] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_LASER] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_MACE] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_MAINFRAME] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_PIPE] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_PISTOL] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_SWORD] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_TELEPORT] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_WELL] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_CROSS] = NULL;
+    dnginitobjtab[MJOLNIR_OBJ_ALTAR] = NULL;
 /* characters */
-    dnginitobjtab[MJOL_CHAR_PLAYER] = NULL;
-    dnginitobjtab[MJOL_CHAR_ANT] = NULL;
-    dnginitobjtab[MJOL_CHAR_ALIEN] = NULL;
-    dnginitobjtab[MJOL_CHAR_BEE] = NULL;
-    dnginitobjtab[MJOL_CHAR_BEE_QUEEN] = NULL;
-    dnginitobjtab[MJOL_CHAR_DOG] = NULL;
-    dnginitobjtab[MJOL_CHAR_DEITY] = NULL;
-    dnginitobjtab[MJOL_CHAR_GHOUL] = NULL;
-    dnginitobjtab[MJOL_CHAR_HUMAN] = NULL;
-    dnginitobjtab[MJOL_CHAR_ORACLE] = NULL;
-    dnginitobjtab[MJOL_CHAR_REMNANTS] = NULL;
-    dnginitobjtab[MJOL_CHAR_UNICORN] = NULL;
-    dnginitobjtab[MJOL_CHAR_THOR] = NULL;
-    dnginitobjtab[MJOL_CHAR_VAMPIRE] = NULL;
-    dnginitobjtab[MJOL_CHAR_DRACULA] = NULL;
-    dnginitobjtab[MJOL_CHAR_WOLF] = NULL;
-    dnginitobjtab[MJOL_CHAR_ZOMBIE] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_PLAYER] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_ANT] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_ALIEN] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_BEE] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_BEE_QUEEN] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_DOG] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_DEITY] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_GHOUL] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_HUMAN] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_ORACLE] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_REMNANTS] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_UNICORN] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_THOR] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_VAMPIRE] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_DRACULA] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_WOLF] = NULL;
+    dnginitobjtab[MJOLNIR_CHAR_ZOMBIE] = NULL;
     /* special items */
-    dnginitobjtab[MJOL_ITEM_DEMON_WHIP] = NULL;
-    dnginitobjtab[MJOL_ITEM_JATIMATIC] = NULL;
-    dnginitobjtab[MJOL_ITEM_MJOLNIR] = NULL;
-    dnginitobjtab[MJOL_ITEM_PLEIGNIR] = NULL;
-    dnginitobjtab[MJOL_ITEM_STORMBRINGER] = NULL;
-    dnginitobjtab[MJOL_ITEM_EXCALIBUR] = NULL;
-    dnginitobjtab[MJOL_ITEM_HOLY_CROSS] = NULL;
-    dnginitobjtab[MJOL_ITEM_HOLY_WATER] = NULL;
-    dnginitobjtab[MJOL_ITEM_SILVER_BULLET ] = NULL;
+    dnginitobjtab[MJOLNIR_ITEM_DEMON_WHIP] = NULL;
+    dnginitobjtab[MJOLNIR_ITEM_JATIMATIC] = NULL;
+    dnginitobjtab[MJOLNIR_ITEM_MJOLNIR] = NULL;
+    dnginitobjtab[MJOLNIR_ITEM_PLEIGNIR] = NULL;
+    dnginitobjtab[MJOLNIR_ITEM_STORMBRINGER] = NULL;
+    dnginitobjtab[MJOLNIR_ITEM_EXCALIBUR] = NULL;
+    dnginitobjtab[MJOLNIR_ITEM_HOLY_CROSS] = NULL;
+    dnginitobjtab[MJOLNIR_ITEM_HOLY_WATER] = NULL;
+    dnginitobjtab[MJOLNIR_ITEM_SILVER_BULLET ] = NULL;
 
     return;
 }
@@ -86,13 +86,13 @@ struct mjolobj *
 dngmkobjmjol(struct celldng *dng, long type, long flg, struct dngobj *data)
 {
     mjolmkfunc     *mkfunc = dnginitobjtab[type];
-    struct mjolobj *obj = (mkfunc) ? mkfunc(flg, data) : NULL;
+    struct mjolobj *obj = (mkfunc) ? mkfunc() : NULL;
 
     if (obj) {
         obj->data.flg = flg;
         memcpy(&obj->data, data, sizeof(struct dngobj));
     }
-        
+
     return obj;
 }
 

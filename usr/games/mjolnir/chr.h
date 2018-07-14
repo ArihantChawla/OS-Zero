@@ -5,34 +5,34 @@
 #include <mjolnir/obj.h>
 
 /* characters */
-#define MJOL_CHAR_PLAYER          '@'
-#define MJOL_CHAR_ANT             'a'
-#define MJOL_CHAR_ALIEN           'A'
-#define MJOL_CHAR_BEE             'b'
-#define MJOL_CHAR_BEE_QUEEN       'B'
-#define MJOL_CHAR_DOG             'd'
-#define MJOL_CHAR_DEITY           'D'
-#define MJOL_CHAR_GHOUL           'G'
-#define MJOL_CHAR_HUMAN           'H'
-#define MJOL_CHAR_ORACLE          'O'
-#define MJOL_CHAR_REMNANTS        'R'
-#define MJOL_CHAR_UNICORN         'u'
-#define MJOL_CHAR_THOR            'T'
-#define MJOL_CHAR_VAMPIRE         'v'
-#define MJOL_CHAR_DRACULA         'V'
-#define MJOL_CHAR_WOLF            'w'
-#define MJOL_CHAR_ZOMBIE          'Z'
+#define MJOLNIR_CHAR_PLAYER          '@'
+#define MJOLNIR_CHAR_ANT             'a'
+#define MJOLNIR_CHAR_ALIEN           'A'
+#define MJOLNIR_CHAR_BEE             'b'
+#define MJOLNIR_CHAR_BEE_QUEEN       'B'
+#define MJOLNIR_CHAR_DOG             'd'
+#define MJOLNIR_CHAR_DEITY           'D'
+#define MJOLNIR_CHAR_GHOUL           'G'
+#define MJOLNIR_CHAR_HUMAN           'H'
+#define MJOLNIR_CHAR_ORACLE          'O'
+#define MJOLNIR_CHAR_REMNANTS        'R'
+#define MJOLNIR_CHAR_UNICORN         'u'
+#define MJOLNIR_CHAR_THOR            'T'
+#define MJOLNIR_CHAR_VAMPIRE         'v'
+#define MJOLNIR_CHAR_DRACULA         'V'
+#define MJOLNIR_CHAR_WOLF            'w'
+#define MJOLNIR_CHAR_ZOMBIE          'Z'
 
 /* character flags */
-#define MJOL_CHR_NO_PICK   0x00000001U // do not pick object up automatically
-#define MJOL_CHR_BLIND     0x00000020U // character is blind
-#define MJOL_CHR_LEVITATES 0x00000040U // character is levitating
+#define MJOLNIR_CHAR_NO_PICK   0x00000001U // don't pick object up automatically
+#define MJOLNIR_CHAR_BLIND     0x00000020U // character is blind
+#define MJOLNIR_CHAR_LEVITATES 0x00000040U // character is levitating
 /* speed values */
 
-#define MJOL_CHR_FAST      2           // character is moving faster
-#define MJOL_CHR_NORMAL    1           // normal speed
-#define MJOL_CHR_FROZEN    0           // character can't move
-#define MJOL_CHR_SLOW      (-1)        // slow speed
+#define MJOLNIR_CHAR_FAST      2           // character is moving faster
+#define MJOLNIR_CHAR_NORMAL    1           // normal speed
+#define MJOLNIR_CHAR_FROZEN    0           // character can't move
+#define MJOLNIR_CHAR_SLOW      (-1)        // slow speed
 struct mjolchr {
     struct dngobj      data;            // common character data
     struct mjolobjfunc func;

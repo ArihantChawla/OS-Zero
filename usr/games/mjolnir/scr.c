@@ -4,31 +4,31 @@
 #include <mjolnir/mjol.h>
 #include <mjolnir/scr.h>
 
-#if (MJOL_VGA_TEXT)
+#if (MJOLNIR_VGA_TEXT)
 extern void mjolopenvga(struct mjolgame *game);
-#define MJOL_VGA_TEXT_OPEN mjolopenvga
+#define MJOLNIR_VGA_TEXT_OPEN mjolopenvga
 #else
-#define MJOL_VGA_TEXT_OPEN NULL
+#define MJOLNIR_VGA_TEXT_OPEN NULL
 #endif
-#if (MJOL_TTY)
+#if (MJOLNIR_TTY)
 extern void mjolopentty(struct mjolgame *game);
-#define MJOL_TTY_OPEN      mjolopentty
+#define MJOLNIR_TTY_OPEN      mjolopentty
 #else
-#define MJOL_TTY_OPEN      NULL
+#define MJOLNIR_TTY_OPEN      NULL
 #endif
-#if (MJOL_X11)
+#if (MJOLNIR_X11)
 extern void mjolopenx11(struct mjolgame *game);
-#define MJOL_X11_OPEN      mjolopenx11
+#define MJOLNIR_X11_OPEN      mjolopenx11
 #else
-#define MJOL_X11_OPEN      NULL
+#define MJOLNIR_X11_OPEN      NULL
 #endif
 
 typedef void mjolopenscrfunc(struct mjolgame *);
 static mjolopenscrfunc *mjolopenscrfunctab[4] = {
     NULL,
-    MJOL_VGA_TEXT_OPEN,
-    MJOL_TTY_OPEN,
-    MJOL_X11_OPEN
+    MJOLNIR_VGA_TEXT_OPEN,
+    MJOLNIR_TTY_OPEN,
+    MJOLNIR_X11_OPEN
 };
 
 void

@@ -5,6 +5,7 @@
  * - vendu
  */
 
+#include <dungeon/conf.h>
 #if !defined(TEST_DICE)
 #define TEST_DICE 0
 #endif
@@ -14,7 +15,7 @@
 #include <string.h>
 #include <time.h>
 #if (DNG_RANDMT32)
-#include <zero/randmt32.h>
+include <zero/randmt32.h>
 #endif
 #include "dice.h"
 
@@ -22,7 +23,7 @@ void
 diceparsecmd(struct diced20 *buf, int argc, char *argv[])
 {
     long l;
-    
+
     for (l = 1 ; l < argc ; l++) {
         if (!strcmp(argv[l], "-d4")) {
             buf->nd4 = atol(argv[++l]);
@@ -47,7 +48,7 @@ diceparsecmd(struct diced20 *buf, int argc, char *argv[])
 
     return;
 }
-    
+
 /*
  * initialise random number generator with current time
  */
@@ -71,7 +72,6 @@ dicerolld20(struct diced20 *dicebuf)
 {
     unsigned long retval = 0;
     unsigned long n;
-
 
     n = dicebuf->nd4;
     if (n) {

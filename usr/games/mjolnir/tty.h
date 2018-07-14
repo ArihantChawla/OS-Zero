@@ -3,9 +3,9 @@
 
 #include <mjolnir/conf.h>
 
-#if (MJOL_TTY)
+#if (MJOLNIR_TTY)
 
-#if (MJOL_VT)
+#if (MJOLNIR_VT)
 #include <stdio.h>
 #else
 #include <curses.h>
@@ -18,7 +18,7 @@ struct mjolwindatatty {
     void *gamewin;
 };
 
-#endif /* MJOL_TTY */
+#endif /* MJOLNIR_TTY */
 
 #endif /* __MJOLNIR_TTY_H__ */
 

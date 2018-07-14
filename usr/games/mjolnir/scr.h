@@ -4,16 +4,16 @@
 #include <mjolnir/conf.h>
 #include <mjolnir/mjol.h>
 
-#if (MJOL_VGA_TEXT)
+#if (MJOLNIR_VGA_TEXT)
 #include <mjolnir/vga.h>
-#if (MJOL_USE_COLORS)
+#if (MJOLNIR_USE_COLORS)
 #endif
 #endif
-#if (MJOL_TTY)
+#if (MJOLNIR_TTY)
 #include <mjolnir/tty.h>
 #endif
-#if (MJOL_X11)
-#define MJOL_USE_IMLIB2
+#if (MJOLNIR_X11)
+#define MJOLNIR_USE_IMLIB2
 #include <mjolnir/x11.h>
 #endif
 

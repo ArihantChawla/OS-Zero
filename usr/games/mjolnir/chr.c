@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/trix.h>
 #include <mjolnir/conf.h>
 #include <mjolnir/mjol.h>
@@ -56,7 +56,7 @@ mjolmkchr(long type)
 struct mjolchr *
 mjolmkplayer(void)
 {
-    struct mjolchr *player = mjolmkchr(MJOL_CHAR_PLAYER);
+    struct mjolchr *player = mjolmkchr(MJOLNIR_CHAR_PLAYER);
 
     mjolinitchr(player, 1);
     mjolplayer = player;
@@ -105,7 +105,7 @@ mjoldoturn(struct mjolgame *game, struct mjolchr *chr)
     int              cmd;
     int              dir;
     int              item = 0;
-    
+
     if (!n) {
         printmsg("You cannot move\n");
     }
@@ -117,8 +117,8 @@ mjoldoturn(struct mjolgame *game, struct mjolchr *chr)
             cmd = getkbd();
         } while (cmd > 0xff);
 //            clrmsg();
-        if (cmd == MJOL_CMD_BOSS) {
-                
+        if (cmd == MJOLNIR_CMD_BOSS) {
+
             exit(0);
         } else if (mjolismove(cmd)) {
             movefunc = mjolcmdmovefunctab[cmd];
@@ -133,37 +133,37 @@ mjoldoturn(struct mjolgame *game, struct mjolchr *chr)
                     dir = getkbd();
                 } while (dir > 0xff);
                 if (
-#if (MJOL_CURSES)
+#if (MJOLNIR_CURSES)
                     dir == KEY_UP ||
 #endif
-                    dir == MJOL_CMD_MOVE_UP) {
+                    dir == MJOLNIR_CMD_MOVE_UP) {
                     printmsg("UP");
                     if (y) {
                         y--;
                     }
                 } else if (
-#if (MJOL_CURSES)
+#if (MJOLNIR_CURSES)
                     dir == KEY_DOWN ||
 #endif
-                    dir == MJOL_CMD_MOVE_DOWN) {
+                    dir == MJOLNIR_CMD_MOVE_DOWN) {
                     printmsg("DOWN");
                     if (y < game->height - 1) {
                         y++;
                     }
                 } else if (
-#if (MJOL_CURSES)
+#if (MJOLNIR_CURSES)
                     dir == KEY_LEFT ||
 #endif
-                    dir == MJOL_CMD_MOVE_LEFT) {
+                    dir == MJOLNIR_CMD_MOVE_LEFT) {
                     printmsg("LEFT");
                     if (x) {
                         x--;
                     }
                 } else if (
-#if (MJOL_CURSES)
+#if (MJOLNIR_CURSES)
                     dir == KEY_RIGHT ||
 #endif
-                    dir == MJOL_CMD_MOVE_RIGHT) {
+                    dir == MJOLNIR_CMD_MOVE_RIGHT) {
                     printmsg("RIGHT");
                     if (x < game->width - 1) {
                         x++;
@@ -191,7 +191,7 @@ mjoldoturn(struct mjolgame *game, struct mjolchr *chr)
             }
         }
     }
-    
+
     return retval;
 }
 
@@ -348,7 +348,7 @@ mjolfindmove(struct mjolchr *src, struct mjolchr *dest,
             }
         }
         if (!mindist && srcx == destx && srcy == desty
-            && !(src->data.flg & MJOL_CHR_NO_PICK)) {
+            && !(src->data.flg & MJOLNIR_CHAR_NO_PICK)) {
             item = objtab[destx][desty];
             while (item) {
                 type = item->data.type;
@@ -370,7 +370,7 @@ mjolfindmove(struct mjolchr *src, struct mjolchr *dest,
             item = objtab[destx][desty];
             while (item) {
                 type = item->data.type;
-                if (type == MJOL_OBJ_TRAP) {
+                if (type == MJOLNIR_OBJ_TRAP) {
                     retval += mjoltrap(item, dest);
                 }
                 item = item->data.next;
