@@ -16,11 +16,12 @@
     (HAZ_NODE_TAB_ITEMS / 2)
 
 #define HAZ_TAB_ITEMS                                                   \
-    ((32 * sizeof(void *) - sizeof(m_atomic_t) - sizeof(struct haztab *)) / sizeof(void *))
+    ((32 * sizeof(void *) - sizeof(m_atomic_t) - sizeof(struct haztab *)) \
+     / sizeof(void *))
 #define HAZ_TAB_CHAINS 1024
 #if (PTRSIZE == 4)
 #define hazhashptr(ptr) (tmhash32((uint32_t)(ptr)) & (HAZ_TAB_CHAINS - 1))
-#else
+#elif (PTRSIZE == 8)
 #define hazhashptr(ptr) (tmhash64((uint64_t)(ptr)) & (HAZ_TAB_CHAINS - 1))
 #endif
 

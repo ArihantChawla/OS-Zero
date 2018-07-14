@@ -1,4 +1,4 @@
-Welcome to read an early version of a style guide for the Zero project! :)
+Welcome to an early version of a style guide for the Zero project! :)
 
 /* zero style abbreviations for words/terms and terminology */
 
@@ -14,6 +14,9 @@ general conventions
 objects/identifiers
 -------------------
 - m_-prefix stands for machine-specific [routine]
+- g_-prefix may be used to denote an object is globally visible
+  - it's often a good idea to collect global variables into a global structure
+    or a few of them
 - object and other names should be brief
   - global and function argument names should be longer
   - for example, number of bytes could be
@@ -91,6 +94,7 @@ prefixes
 
 abbreviations
 -------------
+acl     - access control list
 adr     - address
 alg	- algebraic
 algo	- algorithm
@@ -283,4 +287,5 @@ vm	- virtual machine/architecture
 vtx	- vertex
 win     - window
 xfrm	- transform
+xlate   - translate
 
