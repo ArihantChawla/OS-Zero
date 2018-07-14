@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/trix.h>
 #include <corewar/cw.h>
 #include <corewar/rc.h>
@@ -36,7 +36,7 @@ zeustogglesel(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
     x /= 5;
     y /= 5;
 //    pc = y * (x11->w / 5) + x;
-    pc = y * (x11->simw / 5) + x;    
+    pc = y * (x11->simw / 5) + x;
     if (!zeussel.bmap) {
         zeussel.bmap = calloc(CWCORESIZE >> 3, sizeof(uint8_t));
     }
@@ -64,7 +64,7 @@ zeusaddsel(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
     x /= 5;
     y /= 5;
 //    pc = y * (x11->w / 5) + x;
-    pc = y * (x11->simw / 5) + x;    
+    pc = y * (x11->simw / 5) + x;
     if (!zeussel.bmap) {
         zeussel.bmap = calloc(CWCORESIZE >> 3, sizeof(uint8_t));
     }
@@ -221,7 +221,7 @@ zeusleavex11button(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
     Window  win = event->xany.window;
     int     len;
     char   *str = zeusbuttonstring(win, &len);
-    
+
     if (str) {
         XSetWindowBackgroundPixmap(x11->disp,
                                    win,
@@ -235,7 +235,7 @@ zeusleavex11button(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
                     len);
         XSync(x11->disp, False);
     }
-    
+
     return;
 }
 
@@ -247,7 +247,7 @@ zeusclickx11button(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
     int                len;
     char              *str = zeusbuttonstring(win, &len);
     zeusx11buttonfunc *func;
-    
+
     if (str) {
         win = event->xany.window;
         func = zeusx11buttons.functab[id];
@@ -264,7 +264,7 @@ zeusclickx11button(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
                     len);
         XSync(x11->disp, False);
     }
-    
+
     return;
 }
 
@@ -274,7 +274,7 @@ zeusreleasex11button(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
     Window          win = event->xany.window;
     int             len;
     char           *str = zeusbuttonstring(win, &len);
-    
+
     if (str) {
         win = event->xany.window;
         XSetWindowBackgroundPixmap(x11->disp,
@@ -289,7 +289,7 @@ zeusreleasex11button(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
                     len);
         XSync(x11->disp, False);
     }
-    
+
     return;
 }
 
@@ -300,7 +300,7 @@ zeusexposex11button(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
     int     len;
     int     id = zeusfindbutton(win);
     char   *str = zeusbuttonstring(win, &len);
-    
+
     if (!event->xexpose.count) {
         win = event->xany.window;
         if (!zeusx11buttons.exposed[id]) {
@@ -381,7 +381,7 @@ zeusinitx11win(struct zeusx11 *x11)
     win = XCreateWindow(x11->disp,
                         x11->mainwin,
 //                        x11->simw, x11->dbh,
-                        x11->simw, y,                        
+                        x11->simw, y,
                         ZEUSBUTTONW, ZEUSNBUTTON * ZEUSBUTTONH,
                         0,
                         x11->depth,
@@ -742,7 +742,7 @@ zeusaddx11button(struct zeusx11 *x11, int id, const char *str,
     win = XCreateWindow(x11->disp,
                         parent,
 //                        id * ZEUSBUTTONW, 0,
-                        0, id * ZEUSBUTTONH,                        
+                        0, id * ZEUSBUTTONH,
                         ZEUSBUTTONW, ZEUSBUTTONH,
                         0,
                         x11->depth,
@@ -812,7 +812,7 @@ zeusinitx11(struct zeusx11 *info)
     disp = XOpenDisplay(NULL);
     if (!disp) {
         fprintf(stderr, "failed to open display\n");
-        
+
         exit(1);
     }
     XSynchronize(disp, 1);
@@ -868,7 +868,7 @@ zeusprintop(struct zeusx11 *x11, long pc, int x, int y)
     str = zeusdisasm(pc, &len);
     if (str) {
         if (pid) {
-            
+
         }
         if (op->op == CWOPDAT) {
             if (!*((uint64_t *)op)) {
@@ -887,11 +887,11 @@ zeusprintop(struct zeusx11 *x11, long pc, int x, int y)
         } else if (op->pid) {
             XDrawString(x11->disp, win, x11->prog2gc,
                         x, y,
-                        str, len);        
+                        str, len);
         } else {
             XDrawString(x11->disp, win, x11->prog1gc,
                         x, y,
-                        str, len);        
+                        str, len);
         }
         free(str);
     }
@@ -944,11 +944,11 @@ zeusprintdb(struct zeusx11 *x11, int simx, int simy)
     } else if (op->pid) {
         XDrawString(x11->disp, win, x11->prog2gc,
                     len * x11->fontw, x11->fontasc,
-                    str, slen);        
+                    str, slen);
     } else {
         XDrawString(x11->disp, win, x11->prog1gc,
                     len * x11->fontw, x11->fontasc,
-                    str, slen);        
+                    str, slen);
     }
     pc++;
     pc %= CWCORESIZE;
@@ -984,7 +984,7 @@ zeusprocev(struct zeusx11 *x11)
                 break;
         }
     } else
-#endif    
+#endif
     if (win == x11->mainwin) {
         switch (ev.type) {
             case Expose:
@@ -992,7 +992,7 @@ zeusprocev(struct zeusx11 *x11)
 
                 break;
             default:
-                
+
                 break;
             }
     } else if (win == x11->simwin) {
@@ -1036,7 +1036,7 @@ zeusprocev(struct zeusx11 *x11)
 
                 break;
             default:
-                
+
                 break;
         }
 #if defined(ZEUSHOVERTOOLTIP)
@@ -1127,7 +1127,7 @@ zeusdrawsimop(struct zeusx11 *x11, long pc)
                        x11->prog2gc,
                        x, y,
                        4, 4);
-        
+
     } else {
         XFillRectangle(x11->disp, x11->pixbuf,
                        x11->prog1gc,

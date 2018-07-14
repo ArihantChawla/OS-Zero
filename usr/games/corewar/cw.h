@@ -3,7 +3,7 @@
 
 #include <corewar/conf.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #if defined(ZEUS)
 #include <corewar/zeus.h>
 #endif
