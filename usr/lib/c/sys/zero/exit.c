@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <zero/cdefs.h>
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 #if defined(__ZEROKERNEL__)
 #include <sys/zero/syscall.h>
 #endif

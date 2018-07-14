@@ -18,9 +18,9 @@
 #include <mach/param.h>
 #include <zero/trix.h>
 #if (BUFTKTLK)
-#include <zero/tktlk.h>
+#include <mt/tktlk.h>
 #else
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 #endif
 #if (!BUFMULTITAB) && (BUFNEWHASH)
 #include <zero/hash.h>

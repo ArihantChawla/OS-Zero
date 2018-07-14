@@ -1,6 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 #include <kern/util.h>
 #include <kern/malloc.h>
 #include <kern/mem/membuf.h>

@@ -6,7 +6,7 @@
 #include <mach/param.h>
 #include <mach/asm.h>
 #include <zero/trix.h>
-#include <zero/tktlk.h>
+#include <mt/tktlk.h>
 #include <kern/types.h>
 #include <kern/perm.h>
 #include <kern/time.h>

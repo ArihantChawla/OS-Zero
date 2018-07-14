@@ -9,7 +9,7 @@
 #include <mach/param.h>
 #include <mach/asm.h>
 #define PTHREAD 1
-#include <zero/thr.h>
+#include <mt/thr.h>
 
 #if !defined(TKTLKSIZE)
 #define TKTLKSIZE  4

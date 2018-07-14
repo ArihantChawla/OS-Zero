@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <sys/param.h>
 #include <mach/param.h>
-#include <zero/mtx.h>
 //#include <zero/spinrw.h>
 
 #if (PAGESIZE / DEV_BSIZE <= 8)
@@ -44,7 +43,7 @@ typedef uint64_t   vmblkbits;
 #define VM_PROT_RW      (VM_PROT_READ | VM_PROT_WRITE)
 #define VM_PROT_DEFAULT VM_PROT_ALL
 
-#include <zero/tktlk.h>
+#include <mt/tktlk.h>
 #if (VMPAGETKTLK)
 #define VMPAGE_LK_T     union zerotktlk
 //#define vmspinlk(tp)    tktlkspin(tp)
@@ -58,7 +57,7 @@ typedef uint64_t   vmblkbits;
 #define VMPAGE_LK_T     zerofmtx
 #define vmlkpage(lp)    fmtxlk(lp)
 #define vmunlkpage(lp)  fmtxunlk(lp)
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 #endif
 
 struct vmpage {

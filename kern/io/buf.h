@@ -12,7 +12,7 @@
 #endif
 #if (BUFTKTLK)
 #define BUF_LK_T union zerotktlk
-#include <zero/tktlk.h>
+#include <mt/tktlk.h>
 #else
 #define BUF_LK_T m_atomic_t
 #endif

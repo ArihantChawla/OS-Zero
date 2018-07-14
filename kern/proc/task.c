@@ -1,6 +1,6 @@
 #include <zero/cdefs.h>
 #include <mach/param.h>
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 #include <kern/proc/task.h>
 
 #define DEQ_SINGLE_TYPE

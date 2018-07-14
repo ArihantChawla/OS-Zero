@@ -10,7 +10,8 @@ in /usr/lib/mt. Here we go.
 
 Module          Files                   Brief
 ------          -----                   -----
-mtx             mtx.c, mtx.h            Mutexes and "fast" (nonrecursive) ones
+mtx             mtx.c, mtx.h            mutexes and "fast" (nonrecursive) ones
+spin*           spin*.c, spin*.h        spinlocks
 
 Here are some items worth noting of their locklessinc.com origins. Revamps and
 implementations of some algorithms in their articles section as well as the
@@ -21,3 +22,4 @@ Module          Files                   Brief
 bar             bar.c, bar.h            thread barrier package
 priolk          priolk.c, priolk.h      priority locks
 tktlk           tktlk.h                 ticket locks
+

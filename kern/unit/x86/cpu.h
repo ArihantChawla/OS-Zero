@@ -7,7 +7,7 @@
 //#include <sys/types.h>
 #if defined(__KERNEL__)
 #include <mach/param.h>
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 #include <kern/cpu.h>
 #include <kern/types.h>
 //#include <kern/proc/proc.h>

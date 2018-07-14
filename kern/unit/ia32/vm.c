@@ -11,7 +11,7 @@
 #include <zero/cdefs.h>
 #include <mach/param.h>
 #include <zero/trix.h>
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 #include <kern/util.h>
 #include <kern/mem/page.h>
 #include <kern/mem/vm.h>

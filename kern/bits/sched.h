@@ -9,7 +9,7 @@
 #include <mach/param.h>
 #include <zero/trix.h>
 #include <zero/fastudiv.h>
-#include <zero/spin.h>
+#include <mt/spin.h>
 //#include <kern/sched.h>
 #include <kern/proc/task.h>
 

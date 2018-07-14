@@ -3,7 +3,7 @@
 #include <mach/param.h>
 #include <zero/types.h>
 #include <zero/fastudiv.h>
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 #include <kern/malloc.h>
 #include <kern/cpu.h>
 #include <kern/sched.h>
