@@ -30,8 +30,9 @@ objects/identifiers
     - modwinattrib or modwinparam
     - attrib, param
     - atr, parm
-- FIXME: volatile-qualifier should be used for cross-thread variables such as mutexes
-- static-qualifier is good for locally visible values
+- volatile-qualifier should be used for cross-thread variables such as mutexes
+  and reference counters where not guarded by other synchronization e.g. mutex
+- static-qualifier is used for locally (within the file) visible values
   - may let the compiler do more aggressive optimisations
   - static names can be shorter;
     not necessarily styleindent(), but perhaps indent() instead
@@ -54,11 +55,26 @@ objects/identifiers
 
 type sizes
 ----------
-- X86-like terminology
-  - byte   - 8-bit
-  - word   - 16-bit
-  - long   - 32-bit
-  - quad   - 64-bit
+- when relying on the size of an object, it is good to make the size-assumption
+  easy to catch, i.e.
+  - use int64_t i64 for a signed 64-bit value
+  - use uin32_t u32 for an unsigned 32-bit value
+  - when it's not feasible or necessary to use explicit-size types, you can use
+    conventions like illustrated below
+    - X86/C-like terminology, 32-bit oriented
+      brief                 size              short names     postfix
+      -----                 ----              ----------      -------
+      byte                  8-bit             b, nb for count 8, u8
+      word/short            16-bit            w               16, u16
+      int/longword          32-bit            i (int), l, n   32, u32
+      quadword              64-bit            qw, ll          64, u64
+      octaword              128-bit           ow              128, u128
+      hexaword              256-bit           hw              256, u256
+      (u)inptr_t            sizeof(void *)    adr
+      (u)int8_t/char        8/CHAR_BIT        (u)c, (u)b8     i8, u8
+      (u)int16_t/short      16                (u)16, (u)w16   16, w16, uw16
+      (u)int32_t/int        32                (u)i32, (u)l32  32, i32, u32
+      (u)int64_t/long long  64                (u)l64, (u)ll64 64, l64, ull64
 
 prefixes
 --------

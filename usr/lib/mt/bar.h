@@ -15,29 +15,25 @@
 #endif
 #define BARSERIALTHR (-1L)
 
-typedef struct {
-#if (ZEROFMTX)
-    volatile long lk;
-#else
-    zeromtx       lk;
-#endif
+#define BAR_LK_T zerofmtx
+
+typedef struct __zerobar {
+    BAR_LK_T      lk;
     unsigned long num;
     unsigned long cnt;
     zerocond      cond;
 } zerobar;
 
-typedef struct {
-#if (ZEROFMTX)
-    volatile int                    lk;
-    volatile int                    nref;
-#endif
-    long                            num;
+typedef struct __zerobarpool {
+    BAR_LK_T                  lk;
+    m_atomic_t                nref;
+    long                      num;
     union {
         struct {
-            volatile unsigned int   seq;
-            volatile unsigned int   cnt;
+            volatile uint32_t seq;
+            volatile uint32_t cnt;
         } vals;
-        volatile unsigned long long rst;
+        volatile uint64_t     rst;
     } cnt;
 } zerobarpool;
 

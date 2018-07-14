@@ -7,26 +7,29 @@
 #include <zero/bar.h>
 
 #if (ZEROFMTX)
-#define __barinitlk(lp) (*(lp) = FMTXINITVAL)
-#define __barlk(lp)     fmtxlk(lp)
-#define __barunlk(lp)   fmtxunlk(lp)
+#define barinitlk(lp) (*(lp) = FMTXINITVAL)
+#define barlk(lp)     fmtxlk(lp)
+#define barunlk(lp)   fmtxunlk(lp)
+#else
+#define barinitlk(lp) (*(lp) = MTXINITVAL)
+#define barlk(lp)     mtxlk(lp)
 #endif
 
 void
 barfree(zerobar *bar)
 {
-    __barlk(&bar->lk);
+    barlk(&bar->lk);
     while (bar->num > BARFLAGBIT) {
         condwait(&bar->cond, &bar->lk);
     }
-    __barunlk(&bar->lk);
+    barunlk(&bar->lk);
 //    condfree(&bar->cond);
 }
 
 void
 barinit(zerobar *bar, unsigned long cnt)
 {
-    __barinitlk(&bar->lk);
+    barinitlk(&bar->lk);
     condinit(&bar->cond);
     bar->cnt = cnt;
     bar->num = BARFLAGBIT;
@@ -35,7 +38,7 @@ barinit(zerobar *bar, unsigned long cnt)
 long
 barwait(zerobar *bar)
 {
-    __barlk(&bar->lk);
+    barlk(&bar->lk);
     while (bar->num > BARFLAGBIT) {
         condwait(&bar->cond, &bar->lk);
     }
@@ -45,8 +48,8 @@ barwait(zerobar *bar)
     bar->num++;
     if (bar->num == bar->cnt) {
         bar->num += BARFLAGBIT - 1;
-        condbroadcast(&bar->cond);
-        __barunlk(&bar->lk);
+        condbcast(&bar->cond);
+        barunlk(&bar->lk);
 
         return BARSERIALTHR;
     } else {
@@ -55,9 +58,9 @@ barwait(zerobar *bar)
         }
         bar->num--;
         if (bar->num == BARFLAGBIT) {
-            condbroadcast(&bar->cond);
+            condbcast(&bar->cond);
         }
-        __barunlk(&bar->lk);
+        barunlk(&bar->lk);
 
         return 0;
     }

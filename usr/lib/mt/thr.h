@@ -71,9 +71,9 @@ typedef struct __zerothr {
 
 #define ZEROTHRQUEUE_INITIALIZER { MTXINITVAL, NULL, NULL }
 typedef struct {
-    volatile long  lk;
-    zerothr       *head;
-    zerothr       *tail;
+    ZERO_MUTEX_TYPE  lk;
+    zerothr         *head;
+    zerothr         *tail;
 } zerothrqueue;
 
 extern void thrwait1(zerothrqueue *queue);

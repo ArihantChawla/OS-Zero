@@ -1,6 +1,7 @@
-#ifndef __ZERO_COND_H__
-#define __ZERO_COND_H__
+#ifndef __MT_COND_H__
+#define __MT_COND_H__
 
+#include <mt/conf.h>
 #include <mt/mtx.h>
 #include <mt/thr.h>
 #if defined(PTHREAD)
@@ -16,23 +17,24 @@ typedef pthread_cond_t zerocond;
 #define condinit(cp)               pthread_cond_init(cp, NULL)
 #define condwait(cp, mp)           pthread_cond_wait(cp, mp)
 #define condwaittimed(cp, mp, tsp) pthread_cond_timedwait(cp, mp, tsp)
-#define condsignal(cp)             pthread_cond_signal(cp)
-#define condbcast(cp)              pthread_cond_broadcast(cp)
+#define condsigone(cp)             pthread_cond_signal(cp)
+#define condsigall(cp)             pthread_cond_broadcast(cp)
 #define condfree(cp)               pthread_cond_destroy(cp)
 
 #elif defined(ZEROCOND)
 
 #define ZEROCOND_INITIALIZER { ZEROTHRQUEUE_INITIALIZER }
-typedef struct {
+typedef struct __zerocond {
     zerothrqueue queue;
 } zerocond;
 
 #endif
 
 void condinit(zerocond *cond);
-long condsignal(zerocond *cond);
-long condsignal2(zerocond *cond, long nthr);
-long condbroadcast(zerocond *cond);
+long condsigone(zerocond *cond);
+long condsigmany(zerocond *cond, long nthr);
+#define condsignal(zerocond *cond)
+long condsignall(zerocond *cond, ZERO_COND_BCAST_TARGETS);
 #if (ZEROFMTX)
 long condwait(zerocond *cond, zerofmtx *mtx);
 long condwaitabstime(zerocond *cond, zerofmtx *mtx,
@@ -43,5 +45,5 @@ long condwaitabstime(zerocond *cond, zeromtx *mtx,
                      const struct timespec *absts);
 #endif
 
-#endif /* __ZERO_COND_H__ */
+#endif /* __MT_COND_H__ */
 

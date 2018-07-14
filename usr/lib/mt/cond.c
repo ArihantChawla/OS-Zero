@@ -19,7 +19,7 @@ condinit(zerocond *cond)
 }
 
 long
-condsignal(zerocond *cond)
+condsigone(zerocond *cond)
 {
     if (!cond) {
 
@@ -31,7 +31,7 @@ condsignal(zerocond *cond)
 }
 
 long
-condsignal2(zerocond *cond, long nthr)
+condsigmany(zerocond *cond, long nthr)
 {
     if (!cond || !nthr) {
 
@@ -45,7 +45,7 @@ condsignal2(zerocond *cond, long nthr)
 }
 
 long
-condbroadcast(zerocond *cond)
+condsigall(zerocond *cond)
 {
     if (!cond) {
 
