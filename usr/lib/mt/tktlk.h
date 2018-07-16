@@ -59,8 +59,8 @@ typedef union zerotktlk zerotktlk;
 static INLINE void
 tktlkspin(union zerotktlk *tp)
 {
-    volatile unsigned short val = m_fetchaddu16(&tp->s.nref, 1);
-    long                    nspin = TKTLKNSPIN;
+    unsigned short val = m_fetchaddu16(&tp->s.nref, 1);
+    long                 nspin = TKTLKNSPIN;
 
     do {
         nspin--;
@@ -75,7 +75,7 @@ tktlkspin(union zerotktlk *tp)
 static INLINE void
 tktlk(union zerotktlk *tp)
 {
-    volatile unsigned short val = m_fetchaddu16(&tp->s.nref, 1);
+    unsigned short val = m_fetchaddu16(&tp->s.nref, 1);
 
     while (tp->s.val != val) {
         m_waitspin();
@@ -98,11 +98,11 @@ tktunlk(union zerotktlk *tp)
 static INLINE long
 tkttrylk(union zerotktlk *tp)
 {
-    volatile unsigned short val = tp->s.nref;
-    unsigned short          next = val + 1;
-    unsigned int            cmp = (val << 16) | val;
-    unsigned int            cmpnew = (next << 16) | val;
-    long                    res = 0;
+    unsigned short val = tp->s.nref;
+    unsigned short next = val + 1;
+    unsigned int   cmp = (val << 16) | val;
+    unsigned int   cmpnew = (next << 16) | val;
+    long           res = 0;
 
     if (m_cmpswapu32(&tp->uval, cmp, cmpnew)) {
         res++;
@@ -116,8 +116,8 @@ tkttrylk(union zerotktlk *tp)
 static INLINE void
 tktlkspin(union zerotktlk *tp)
 {
-    volatile unsigned long val = m_fetchaddu32(&tp->s.nref, 1);
-    long                   nspin = TKTLKNSPIN;
+    unsigned long val = m_fetchaddu32(&tp->s.nref, 1);
+    long                nspin = TKTLKNSPIN;
 
     do {
         nspin--;
@@ -132,7 +132,7 @@ tktlkspin(union zerotktlk *tp)
 static INLINE void
 tktlk(union zerotktlk *tp)
 {
-    volatile unsigned long val = m_fetchaddu32(&tp->s.nref, 1);
+    unsigned long val = m_fetchaddu32(&tp->s.nref, 1);
 
     while (tp->s.val != val) {
         m_waitspin();
@@ -155,11 +155,11 @@ tktunlk(union zerotktlk *tp)
 static INLINE long
 tkttrylk(union zerotktlk *tp)
 {
-    volatile unsigned long val = tp->s.nref;
-    unsigned long          next = val + 1;
-    unsigned long          cmp = (val << 32) | val;
-    unsigned long          cmpnew = (next << 32) | val;
-    long                   res = 0;
+    unsigned long val = tp->s.nref;
+    unsigned long next = val + 1;
+    unsigned long cmp = (val << 32) | val;
+    unsigned long cmpnew = (next << 32) | val;
+    long          res = 0;
 
     if (m_cmpswapu64(&tp->uval, cmp, cmpnew)) {
         res++;
