@@ -16,6 +16,16 @@
 /*
  * allocation anatomy
  * ------------------
+ * - minimum allocation size is a cacheline (may be wasteful; see <bits/mem.h>)
+ * - blocks are 1..PAGESIZE bytes in size
+ *   - allocated from thread-local pools
+ * - runs are PAGESIZE..MEM_MAX_RUN_PAGES * PAGESIZE bytes in size
+ *   - allocated from thread-local pools
+ * - middle-size blocks are multiples of 8 * PAGESIZE up to 512 * PAGESIZE
+ *   - allocated from global pools
+ * - big blocks are allocated individually
+ * - blocks are prefixed with allocation info structure struct memblk;
+ *   - other allocations have page-entries in g_mem.hashtab
  */
 #define MEM_BLK_MASK         (~(MEM_MIN_SIZE - 1))
 #define memblkid(ptr)        ((uintptr_t)(ptr) & MEM_BLK_MASK)
@@ -46,20 +56,6 @@
 #define memmidsize(pool)     ((PAGESIZE << MEM_MID_UNIT_SHIFT) * ((pool) + 1))
 #define membigsize(sz)       rounduppow2(sz, PAGESIZE)
 
-/*
- * dynamic memory management
- * -------------------------
- * - minimum allocation size is a cacheline (may be wasteful; see <bits/mem.h>)
- * - blocks are 1..PAGESIZE / 2 bytes in size
- *   - allocated from thread-local pools
- * - runs are PAGESIZE..MEM_MAX_RUN_PAGES * PAGESIZE bytes in size
- *   - allocated from thread-local pools
- * - middle-size blocks are multiples of 8 * PAGESIZE up to 512 * PAGESIZE
- *   - allocated from global pools
- * - big blocks are allocated individually
- * - blocks are prefixed with allocation info structure struct memblk;
- *   - other allocations have page-entries in g_mem.hashtab
- */
 #define MEM_SLAB_PAGE_SHIFT 3
 #define MEM_BLK_SLAB_SIZE   (PAGESIZE << MEM_SLAB_PAGE_SHIFT)
 #define MEM_BLK_POOLS       (PAGESIZELOG2 - CLSIZELOG2)

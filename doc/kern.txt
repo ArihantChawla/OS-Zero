@@ -32,6 +32,7 @@ code modules
     ------------------------
     - proc - process interface
     - thr - multicore support
+    - sched - thread scheduler
 
     mem - memory management
     -----------------------
@@ -44,6 +45,7 @@ code modules
     - buf - buffer cache layer
     - vfs - virtual filesystem support
     - mq - message queue interface
+    - fb - [graphics] framebuffer abstraction
 
     mt - multithread support package
     --------------------------------
@@ -51,4 +53,6 @@ code modules
     - sem - semaphore support
     - rwlk - read-write lock interface
     - bar - thread barrier synchronization
+    - priolk - priority locks
+    - tktlk - ticket locks
 
