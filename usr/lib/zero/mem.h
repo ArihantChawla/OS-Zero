@@ -44,7 +44,7 @@
 #define mempageid(ptr)       ((uintptr_t)(ptr) & ((uintptr_t)1 << PAGESIZELOG2))
 
 /* per-pool # of allocation blocks */
-#define memnumblk(pool)                                               \
+#define memnumblk(pool)                                                 \
     ((uintptr_t)1 << (PAGESIZELOG2 + MEM_BLK_SLAB_SHIFT - (pool)))
 #define memnumrun(pool)                                                 \
     (memfastdiv(MEM_MAX_RUN_PAGES, (pool) + 1))
