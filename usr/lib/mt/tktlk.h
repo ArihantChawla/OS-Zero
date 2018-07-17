@@ -31,6 +31,7 @@ union zerotktlk {
         uint16_t      val;
     } s;
 #endif
+    uint8_t           _pad[CLSIZE - sizeof(uint32_t) - 2 * sizeof(uint16_t)];
 };
 
 #elif (TKTLKSIZE == 8)
@@ -48,6 +49,7 @@ union zerotktlk {
         uint32_t      val;
     } s;
 #endif
+    uint8_t           _pad[CLSIZE - sizeof(uint64_t) - 2 * sizeof(uint32_t)];
 };
 
 #endif /* TKTLKSIZE */
@@ -98,8 +100,8 @@ tktunlk(union zerotktlk *tp)
 static INLINE long
 tkttrylk(union zerotktlk *tp)
 {
-    uint16_t val = tp->s.cnt;
-    uint16_t cnt = val + 1;
+    uint32_t val = tp->s.cnt;
+    uint32_t cnt = val + 1;
     uint32_t cmp = (val << 16) | val;
     uint32_t cmpnew = (cnt << 16) | val;
     long     res = 0;
@@ -155,10 +157,10 @@ tktunlk(union zerotktlk *tp)
 static INLINE long
 tkttrylk(union zerotktlk *tp)
 {
-    uint32_t val = tp->s.cnt;
-    uint32_t cnt = val + 1;
-    uint32_t cmp = (val << 32) | val;
-    uint32_t cmpnew = (cnt << 32) | val;
+    uint64_t val = tp->s.cnt;
+    uint64_t cnt = val + 1;
+    uint64_t cmp = (val << 32) | val;
+    uint64_t cmpnew = (cnt << 32) | val;
     long     res = 0;
 
     if (m_cmpswapu64(&tp->uval, cmp, cmpnew)) {
