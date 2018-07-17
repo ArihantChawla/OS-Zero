@@ -59,14 +59,10 @@ typedef union zerotktlk zerotktlk;
 #if (TKTLKSIZE == 4)
 
 static INLINE void
-tktlkspin(union zerotktlk *tp)
+tktlk(union zerotktlk *tp)
 {
     uint16_t val = m_fetchaddu16(&tp->s.cnt, 1);
-    long     nspin = TKTLKNSPIN;
 
-    do {
-        nspin--;
-    } while ((nspin) && tp->s.val != val);
     while (tp->s.val != val) {
         m_waitspin();
     }
@@ -75,9 +71,38 @@ tktlkspin(union zerotktlk *tp)
 }
 
 static INLINE void
+tktunlk(union zerotktlk *tp)
+{
+    m_membar();
+    tp->s.val++;
+    m_endspin();
+
+    return;
+}
+
+/* return 1 if lock succeeds, 0 otherwise */
+static INLINE long
+tkttrylk(union zerotktlk *tp)
+{
+    uint16_t val = tp->s.cnt;
+    uint16_t cnt = val + 1;
+    uint32_t cmp = ((uint32_t)val << 16) | val;
+    uint32_t cmpnew = ((uint32_t)cnt << 16) | val;
+    long     res = 0;
+
+    if (m_cmpswapu32(&tp->uval, cmp, cmpnew)) {
+        res++;
+    }
+
+    return res;
+}
+
+#elif (TKTLKSIZE == 8)
+
+static INLINE void
 tktlk(union zerotktlk *tp)
 {
-    uint16_t val = m_fetchaddu16(&tp->s.cnt, 1);
+    uint32_t val = m_fetchaddu32(&tp->s.cnt, 1);
 
     while (tp->s.val != val) {
         m_waitspin();
@@ -102,65 +127,8 @@ tkttrylk(union zerotktlk *tp)
 {
     uint32_t val = tp->s.cnt;
     uint32_t cnt = val + 1;
-    uint32_t cmp = (val << 16) | val;
-    uint32_t cmpnew = (cnt << 16) | val;
-    long     res = 0;
-
-    if (m_cmpswapu32(&tp->uval, cmp, cmpnew)) {
-        res++;
-    }
-
-    return res;
-}
-
-#elif (TKTLKSIZE == 8)
-
-static INLINE void
-tktlkspin(union zerotktlk *tp)
-{
-    uint32_t val = m_fetchaddu32(&tp->s.cnt, 1);
-    long     nspin = TKTLKNSPIN;
-
-    do {
-        nspin--;
-    } while ((nspin) && tp->s.val != val);
-    while (tp->s.val != val) {
-        m_waitspin();
-    }
-
-    return;
-}
-
-static INLINE void
-tktlk(union zerotktlk *tp)
-{
-    uint32_t val = m_fetchaddu32(&tp->s.cnt, 1);
-
-    while (tp->s.val != val) {
-        m_waitspin();
-    }
-
-    return;
-}
-
-static INLINE void
-tktunlk(union zerotktlk *tp)
-{
-    m_membar();
-    tp->s.val++;
-    m_endspin();
-
-    return;
-}
-
-/* return 1 if lock succeeds, 0 otherwise */
-static INLINE long
-tkttrylk(union zerotktlk *tp)
-{
-    uint64_t val = tp->s.cnt;
-    uint64_t cnt = val + 1;
-    uint64_t cmp = (val << 32) | val;
-    uint64_t cmpnew = (cnt << 32) | val;
+    uint64_t cmp = ((uint64_t)val << 32) | val;
+    uint64_t cmpnew = ((uint64_t)cnt << 32) | val;
     long     res = 0;
 
     if (m_cmpswapu64(&tp->uval, cmp, cmpnew)) {
