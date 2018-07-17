@@ -12,7 +12,7 @@
 #include <mt/thr.h>
 
 #if !defined(TKTLKSIZE)
-#define TKTLKSIZE  4
+#define TKTLKSIZE  PTRSIZE
 #endif
 #define TKTLKNSPIN 16384
 
