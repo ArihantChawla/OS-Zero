@@ -1,6 +1,7 @@
 #ifndef __MT_THR_H__
 #define __MT_THR_H__
 
+#include <mt/conf.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -76,10 +77,10 @@ typedef struct {
     zerothr         *tail;
 } zerothrqueue;
 
-extern void thrwait1(zerothrqueue *queue);
-extern long thrsleep2(zerothrqueue *queue, const struct timespec *absts);
-extern void thrwake1(zerothrqueue *queue);
-extern void thrwakeall1(zerothrqueue *queue);
+extern void      thrwait1(zerothrqueue *queue);
+extern long      thrsleep2(zerothrqueue *queue, const struct timespec *absts);
+extern zerothr * thrwake(zerothrqueue *queue);
+extern void thrwakeall(zerothrqueue *queue);
 
 #define thrwait()    thrwait1(NULL)
 #define thrwake()    thrwake1(NULL)

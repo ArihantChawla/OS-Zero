@@ -82,7 +82,7 @@ thrsleep2(zerothrqueue *queue, const struct timespec *absts)
     return 0;
 }
 
-void
+zerothr *
 thrwake1(zerothrqueue *queue)
 {
     zerothr *thr = NULL;
@@ -92,11 +92,11 @@ thrwake1(zerothrqueue *queue)
     }
     htlistdequeue(queue, &thr);
 
-    return;
+    return thr;
 }
 
 void
-thrwakeall1(zerothrqueue *queue)
+thrwakeall(zerothrqueue *queue)
 {
     zerothr *thr = NULL;
 

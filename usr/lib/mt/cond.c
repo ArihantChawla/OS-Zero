@@ -23,7 +23,7 @@ condsigone(zerocond *cond)
 {
     if (!cond) {
 
-        return EINVAL;
+        return -EINVAL;
     }
     thrwake1(&cond->queue);
 
@@ -35,10 +35,13 @@ condsigmany(zerocond *cond, long nthr)
 {
     if (!cond || !nthr) {
 
-        return EINVAL;
+        return -EINVAL;
     }
     while (nthr--) {
-        thrwake1(&cond->queue);
+        if (!thrwake(&cond->queue)) {
+
+            return 0;
+        }
     }
 
     return 0;
@@ -51,22 +54,20 @@ condsigall(zerocond *cond)
 
         return EINVAL;
     }
-    thrwakeall1(&cond->queue);
+    thrwakeall(&cond->queue);
 
     return 0;
 }
-
-#if (ZEROFMTX)
 
 long
 condwait(zerocond *cond, zerofmtx *fmtx)
 {
     if (!cond || !fmtx) {
 
-        return EINVAL;
+        return -EINVAL;
     } else if (!fmtxtrylk(fmtx)) {
 
-        return EPERM;
+        return -EPERM;
     } else {
         thrwait1(&cond->queue);
     }
@@ -81,17 +82,16 @@ condwaitabstime(zerocond *cond, zerofmtx *fmtx, const struct timespec *absts)
     if (!cond || !fmtx || !absts || absts->tv_sec < 0
         || absts->tv_nsec < 0 || absts->tv_nsec >= 1000000000) {
 
-        return EINVAL;
+        return -EINVAL;
     } else if (!fmtxtrylk(fmtx)) {
 
-        return EPERM;
+        return -EPERM;
     } else if (thrsleep2(&cond->queue, absts) < 0) {
 
-        return EINVAL;
+        return -EINVAL;
     }
     zerolkfmtx(fmtx);
 
     return 0;
 }
 
-#endif

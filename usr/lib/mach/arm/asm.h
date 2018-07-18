@@ -1,18 +1,19 @@
 #ifndef __MACH_ARM_ASM_H__
 #define __MACH_ARM_ASM_H__
 
+typedef long m_reg_t; // TODO: 64-bitt
+
 /* API declarations */
 #define m_membar()   __asm__ __volatile__ ("" : : : "memory")
-#if defined(__ARM_ARCH_4__) || defined (__ARM_ARCH_4T__)
-#define m_waitint()  __asm__ __volatile__ ("nop\n")
-#elif defined(__ARM_ARCH_7__)
+#if defined(__ARM_ARCH_7__)
 /* TODO: are these ARMv7? */
 #define m_waitspin() __asm__ __volatile__ ("wfe\n")
 #define m_endspin()  __asm__ __volatile__ ("sev\n")
 #define m_waitint()  __asm__ __volatile__ ("wfi\n")
+#elif defined(__ARM_ARCH_4__) || defined (__ARM_ARCH_4T__)
+#define m_waitint()  __asm__ __volatile__ ("nop\n")
 #else
-#define m_waitint()  __asm__ __volatile__ ("mov r0, #0\n"                \
-                                          "mcr p15, #0, r0, c7, c0, #4\n")
+#define m_waitint()  __asm__ __volatile__ ("mov r0, #0\n"                            "mcr p15, #0, r0, c7, c0, #4\n")
 #endif
 
 static __inline__ long

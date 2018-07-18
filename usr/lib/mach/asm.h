@@ -2,45 +2,40 @@
 #define __MACH_ASM_H__
 
 #include <stddef.h>
+#include <stdint.h>
 
 /*
  * TODO
  * ----
- * - m_memddbar()   - data dependency barrier
- * - m_memrdbar()   - read barrier
- * - m_memwrbar()   - write barrier
  * - m_cmpswapbit() - bit-level atomic compare and swap
  */
 
-/*
- * machine-specific asm.h headers should declare the following:
- * m_membar()   	- memory barrier for serialised access
- * m_waitspin()         - pause, wait, or loop (in spin-wait loops)
- * m_endspin()          - exit spin-loop (where relevant, empty elsewhere)
- * m_waitint()  	- pause until interrupt received
- * m_cmpswap()  	- atomic compare and swap operation
- * m_fetchadd()   	- atomic fetch and add
- * m_getretadr(pp)      - get return address of current function to *(pp)
- * m_setretadr(pp)      - store return address of current function to *(pp)
- */
-#if defined(_MSC_VER)
 #if defined(_WIN64)
 #include <zero/msc/win64.h>
 #elif defined(_WIN32)
 #include <zero/msc/win32.h>
-#endif
 #elif defined(__x86_64__) || defined(__amd64__)
-#include <mach/x86-64/asm.h>
 #include <mach/x86/asm.h>
+#include <mach/x86-64/asm.h>
 #elif (defined(__i386__) || defined(__i486__)                           \
        || defined(__i586__) || defined(__i686__))
-#include <mach/ia32/asm.h>
 #include <mach/x86/asm.h>
+#include <mach/ia32/asm.h>
 #elif defined(__arm__)
 #include <mach/arm/asm.h>
 #elif defined(__ppc__)
 #include <mach/ppc/asm.h>
 #endif
+
+/* volatile types */
+typedef m_reg_t   m_atomic_t;
+typedef int8_t    m_atomic8_t;
+typedef int16_t   m_atomic16_t;
+typedef int32_t   m_atomic32_t;
+typedef int64_t   m_atomic64_t;
+typedef void     *m_atomicptr_t;
+typedef int8_t   *m_atomicptr8_t;
+typedef intptr_t  m_atomicadr_t;
 
 /* for systems without GNU C, we define these in e.g. <mach/ia32/asm.h> */
 #if defined(__GNUC__)
@@ -52,8 +47,8 @@
 #define m_getfrmadr(p)                                                  \
     (__builtin_frame_address(0))
 /* atomic operations - FIXME: are the barriers used correctly? */
-#define m_atomread(a)      (*((volatile typeof(a))(a)))
-#define m_atomwrite(a, v)  (*((volatile typeof(v) *)(a)) = (v))
+#define m_atomread(a)      (*((typeof(a))(a)))
+#define m_atomwrite(a, v)  (*((typeof(v) *)(a)) = (v))
 #define m_syncread(a, res)                                              \
     do {                                                                \
         m_memwrbar();                                                   \

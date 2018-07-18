@@ -7,13 +7,15 @@
 #include <mach/param.h>
 #include <zero/cdefs.h>
 
-typedef volatile int8_t   m_atomic8_t;
-typedef volatile int16_t  m_atomic16_t;
-typedef volatile int32_t  m_atomic32_t;
-typedef volatile int64_t  m_atomic64_t;
-typedef volatile void    *m_atomicptr_t;
+/* machine types */
+#if defined(__x86_64__) || defined(__amd64__)
+typedef int64_t  m_reg_t;
+typedef uint64_t m_ureg_t;
+#else
+typedef int32_t  m_reg_t;
+typedef uint32_t m_ureg_t;
+#endif
 
-/* memory barrier */
 #define m_membar()   __asm__ __volatile__ ("mfence\n" : : : "memory")
 /* memory read barrier */
 #define m_memrdbar() __asm__ __volatile__ ("lfence\n" : : : "memory")

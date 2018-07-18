@@ -15,42 +15,26 @@
 #include <zero/cdefs.h>
 #include <mach/param.h>
 #include <mach/asm.h>
-#include <mt/thr.h>
+
+typedef volatile m_atomic_t zerofmtx;
 
 /*
- * Special thanks to Matthew 'kinetik' Gregan for help with the mutex code.
- * :)
+ * Special thanks to Matthew 'kinetik'
+ *Gregan for help with the mutex code.:)
  */
 
-#if defined(__KERNEL__)
-#undef PTHREAD
-#endif
-
-#if defined(__KERNEL__) && (__MTKERNEL__)
-#if !defined(PTHREAD) && defined(__linux__)
-#include <sched.h>
-#endif /* !defined(__KERNEL__) */
-#endif
-
 #if defined(PTHREAD) && defined(ZEROPTHREAD)
-typedef pthread_mutex_t     zerofmtx;
-#else
-typedef volatile m_atomic_t zerofmtx;
+typedef pthread_mutex_t     zeromtx;
 #endif
 
-#if (defined(ZERO_THREADS) || defined(ZERO_MUTEX)                       \
-     || defined(__KERNEL__) || defined(ZEROFMTX))
 #define FMTXINITVAL MTXINITVAL
 #define FMTXLKVAL   MTXLKVAL
 #if defined(ZERONEWFMTX)
 #define FMTXCONTVAL MTXCONTVAL
 #endif
-#endif
 
 #define fmtxinit(lp) (*(lp) = FMTXINITVAL)
 #define fmtxfree(lp) /* no-op */
-
-#if (ZEROMTX)
 
 #define MTXINITVAL            0
 #define MTXLKVAL              1
@@ -185,8 +169,6 @@ fmtxunlk(m_atomic_t *lp)
 #define zerotrylkfmtx(mp) fmtxtrylk(mp)
 #define zerolkfmtx(mp)    fmtxlk(mp)
 #define zerounlkfmtx(mp)  fmtxunlk(mp)
-
-#endif /* ZEROFMTX */
 
 #if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
 

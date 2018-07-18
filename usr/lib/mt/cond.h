@@ -10,7 +10,7 @@
 #include <pthread.h>
 #endif
 
-#if defined(PTHREAD) && !defined(ZEROCOND)
+#if 0 && defined(PTHREAD) && !defined(ZEROCOND)
 
 typedef pthread_cond_t zerocond;
 
@@ -30,11 +30,11 @@ typedef struct __zerocond {
 
 #endif
 
+#define condsignal(cp) condsigmany(cp, 8)
 void condinit(zerocond *cond);
 long condsigone(zerocond *cond);
 long condsigmany(zerocond *cond, long nthr);
-#define condsignal(zerocond *cond)
-long condsignall(zerocond *cond, ZERO_COND_BCAST_TARGETS);
+long condsigall(zerocond *cond);;
 #if (ZEROFMTX)
 long condwait(zerocond *cond, zerofmtx *mtx);
 long condwaitabstime(zerocond *cond, zerofmtx *mtx,
