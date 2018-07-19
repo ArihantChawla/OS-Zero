@@ -2,6 +2,7 @@
 #define __MACH_IA32_TYPES_H_
 
 #include <stdint.h>
+#include <mach/x86/types.h>
 
 /* machine types */
 typedef int32_t  m_reg_t;
@@ -33,32 +34,6 @@ struct m_segregs {
     int32_t fs;         // thread-local storage
     int32_t es;         // data segment
     int32_t ds;         // data segment
-};
-
-/* floating-point state */
-#define X86_FXSR_MAGIC 0x0000
-struct m_fpstate {
-    int32_t             _cw;
-    int32_t             _sw;
-    int32_t             _tag;
-    int32_t             _ipofs;
-    int32_t             _cs;
-    int32_t             _dataofs;
-    int32_t             _ds;
-    struct m_fpreg      _st[8];
-    int16_t             _status;
-    int16_t             _magic;  // 0xffff means regular FPU data only
-    /* FXSR FPU environment */
-    int32_t             _fxsrenv[6];
-    int32_t             _mxcsr;
-    int32_t             _res;
-    struct m_fpxreg     _fxsr[8];
-    struct m_xmmreg     _xmm[8];
-    int32_t             _pad1[44];
-    union {
-        int32_t         _pad2[12];
-        struct m_fpdata _swres;
-    } u;
 };
 
 /* interrupt return frame for iret - 20 bytes */

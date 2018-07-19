@@ -1,7 +1,7 @@
 #ifndef __MACH_X86_TYPES_H_
 #define __MACH_X86_TYPES_H_
 
-#onclude <stdint.h>
+#include <stdint.h>
 
 /* far pointer structure */
 #include <zero/pack.h>
@@ -38,6 +38,32 @@ struct m_fpdata {
     int64_t _xstate;
     int32_t _xsize;
     int32_t _pad[7];
+};
+
+/* floating-point state */
+#define X86_FXSR_MAGIC 0x0000
+struct m_fpstate32 {
+    int32_t             _cw;
+    int32_t             _sw;
+    int32_t             _tag;
+    int32_t             _ipofs;
+    int32_t             _cs;
+    int32_t             _dataofs;
+    int32_t             _ds;
+    struct m_fpreg      _st[8];
+    int16_t             _status;
+    int16_t             _magic;  // 0xffff means regular FPU data only
+    /* FXSR FPU environment */
+    int32_t             _fxsrenv[6];
+    int32_t             _mxcsr;
+    int32_t             _res;
+    struct m_fpxreg     _fxsr[8];
+    struct m_xmmreg     _xmm[8];
+    int32_t             _pad1[44];
+    union {
+        int32_t         _pad2[12];
+        struct m_fpdata _swres;
+    } u;
 };
 
 #endif /* __MACH_X86_TYPES_H_ */

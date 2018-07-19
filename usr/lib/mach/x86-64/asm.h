@@ -1,6 +1,7 @@
 #ifndef __MACH_X86_64_ASM_H__
 #define __MACH_X86_64_ASM_H__
 
+#include <stddef.h>
 #include <zero/cdefs.h>
 #include <mach/types.h>
 #include <mach/x86/asm.h>

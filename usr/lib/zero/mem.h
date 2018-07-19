@@ -1,12 +1,13 @@
 #ifndef __ZERO_MEM_H__
 #define __ZERO_MEM_H__
 
+#include <stddef.h>
 #include <mach/param.h>
 #include <mach/asm.h>
-#include <zero/bits/mem.h>
-#include <mt/mtx.h>
 #include <zero/hash.h>
 #include <zero/fastudiv.h>
+#include <mt/mtx.h>
+#include <zero/bits/mem.h>
 
 #define MEM_MAX_FAST_DIV     1023
 #define memfastdiv(num, div)                                            \
@@ -101,18 +102,20 @@ memlkptr(m_atomicptr_t *ptr)
 }
 
 /* memory slab with buffer-stack */
+struct memslab;
 #define MEM_SLAB_SIZE (2 * PAGESIZE)
 #define MEM_SLAB_BLKS (PAGESIZE / sizeof(void *))
 struct memslab {
+    void           **tab;  // allocation pointer table, used in stack-fashion
+    m_atomic_t       ndx;  // current index into allocation table
+    uint8_t         *base; // slab/map base address
     struct memslab  *prev; // pointer to previous in list
     struct memslab  *next; // pointer to next in list
-    uint8_t         *base; // slab/map base address
     size_t           pool; // allocation pool
     size_t           nblk; // number of total blocks
-    size_t           bsz; // block size in bytes
-    m_atomic_t       ndx; // current index into allocation table
+    size_t           bsz;  // block size in bytes
     uint8_t          type;
-    void           **tab; // allocation pointer table, used in stack-fashion
+    uint8_t          _pad[7];
 };
 
 #define MEM_TLS_SIZE PAGESIZE

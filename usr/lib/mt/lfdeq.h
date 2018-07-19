@@ -17,6 +17,7 @@ struct lfdeqitem {
         int16_t       left;
         int16_t       right;
     } info;
+    int32_t           _pad;
 };
 
 #define lfdeqislpush(item)  ((item)->info.left & LFDEQ_PUSH_BIT)

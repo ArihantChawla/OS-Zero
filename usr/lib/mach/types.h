@@ -2,6 +2,7 @@
 #define  __MACH_TYPES_H__
 
 #include <stdint.h>
+#include <signal.h>
 
 #if defined(_WIN64)
 #include <zero/msc/win64.h>

@@ -11,6 +11,7 @@ core.*
 *.swp
 # emacs backup files
 *~
+\#*
 # ctags files
 TAGS
 # pdflatex files

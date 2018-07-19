@@ -4,8 +4,9 @@
 //#define frameisusr(tcb) ((tcb)->frame.cs == UTEXTSEL)
 
 #include <stdint.h>
-#include <mach/param.h>
 #include <zero/cdefs.h>
+#include <mach/param.h>
+#include <mach/types.h>
 
 #if defined(__x86_64__) || defined(__amd64__)
 #include <mach/x86-64/types.h>
@@ -288,7 +289,7 @@ m_cmpclrbit32(m_atomic32_t *p, int32_t ndx)
  * - return original *p
  */
 static __inline__ int8_t
-m_cmpxchg8(m_atomic88_t *p,
+m_cmpxchg8(m_atomic64_t *p,
            int8_t want,
            int8_t val)
 {
