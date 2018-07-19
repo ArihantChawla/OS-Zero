@@ -1,6 +1,8 @@
 #ifndef __MACH_ARM_ASM_H__
 #define __MACH_ARM_ASM_H__
 
+#include <mach/types.h>
+
 /* API declarations */
 #define m_membar()   __asm__ __volatile__ ("" : : : "memory")
 #if defined(__ARM_ARCH_7__)
@@ -14,10 +16,12 @@
 #define m_waitint()  __asm__ __volatile__ ("mov r0, #0\n"                            "mcr p15, #0, r0, c7, c0, #4\n")
 #endif
 
-static __inline__ long
-m_cmpswap_armv6(volatile long *p, long want, long val)
+static __inline__ m_atomic_t
+m_cmpswap_armv6(m_atomic_t *p,
+                m_atomic_t want,
+                m_atomic_t val)
 {
-    volatile long res = 0;
+    m_atomic_t res = 0;
 
     __asm__ __volatile__ ("ldr r1, %1\n"                // r1 = want;
                           "mov %0, #0\n"                // res = 0;
@@ -38,11 +42,13 @@ m_cmpswap_armv6(volatile long *p, long want, long val)
     return res;
 }
 
-static __inline__ long
-m_cmpswap(volatile long *p, long want, long val)
+static __inline__ m_atomic_t
+m_cmpswap(m_atomic_t *p,
+          m_atomic_t want,
+          m_atomic_t val)
 {
-    volatile long res = 0;
-    volatile long tmp;
+    m_atomic_t res = 0;
+    m_atomic_t tmp;
 
     __asm__ __volatile__ ("0:\n"
                           "ldr %1, [%2]\n"

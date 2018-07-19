@@ -17,7 +17,7 @@
 #include <mach/types.h>
 #include <mach/asm.h>
 
-typedef volatile m_atomic_t zerofmtx;
+typedef m_atomic_t zerofmtx;
 
 /*
  * Special thanks to Matthew 'kinetik'
@@ -51,21 +51,22 @@ typedef pthread_mutex_t     zeromtx;
 #define __ZEROMTXATR_INIT     (1L << 31)
 /* error codes */
 #define ZEROMTXATR_NOTDYNAMIC 1
-typedef struct zeromtxatr {
-    long flg;           // feature flag-bits
+typedef struct __zeromtxatr {
+    long flg; // feature flag-bits
 } zeromtxatr;
 
 /* initializer for non-dynamic mutexes */
 #define ZEROMTX_INITVAL { ZEROMTXFREE, 0, 0, ZEROMTXATRDEFVAL }
 /* thr for unlocked mutexes */
 #define ZEROMTX_FREE    0
-typedef struct zeromtx {
-    volatile m_atomic_t val; // owner for recursive mutexes, 0 if unlocked
-    volatile m_atomic_t cnt;// access counter
-    volatile m_atomic_t rec; // recursion depth
+struct __zeromtx {
+    m_atomic_t val; // owner for recursive mutexes, 0 if unlocked
+    m_atomic_t cnt; // access counter
+    m_atomic_t rec; // recursion depth
     zeromtxatr atr;
     uint8_t    _pad[CLSIZE - 3 * sizeof(long) - sizeof(zeromtxatr)];
-} zeromtx;
+};
+typedef volatile struct __zeromtx zeromtx;
 
 #if (ZERONEWFMTX)
 

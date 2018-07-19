@@ -35,7 +35,7 @@ refadd(volatile long *lp,
     long res = m_fetchadd(lp, n);
 
     res += n;
-    
+
     return res;
 }
 
@@ -46,7 +46,7 @@ refsub(volatile long *lp,
     long res = m_fetchadd(lp, -n);
 
     res -= n;
-    
+
     return res;
 }
 

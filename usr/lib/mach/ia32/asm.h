@@ -1,11 +1,9 @@
 #ifndef __MACH_IA32_ASM_H__
 #define __MACH_IA32_ASM_H__
 
-#include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
-//#include <zero/types.h>
-#include <mach/x86/asm.h>
+#include <zero/types.h>
 
 extern uint32_t asmgetpc(void);
 
@@ -19,7 +17,7 @@ extern uint32_t asmgetpc(void);
 #define m_cmpswap(p, want, val)      (m_cmpxchg32(p, want, val) == want)
 #define m_cmpswapu(p, want, val)     (m_cmpxchgu32(p, want, val) == want)
 #define m_cmpswapptr(p, want, val)   (m_cmpxchg32ptr(p, want, val) == want)
-#define m_cmpswapdbl(p, want, val)   (m_cmpxchg64(p, val) == *want)
+#define m_cmpswapdbl(p, want, val)   (m_cmpxchg64(p, val))
 #define m_setbit(p, ndx)             m_setbit32(p, ndx)
 #define m_clrbit(p, ndx)             m_clrbit32(p, ndx)
 #define m_flipbit(p, ndx)            m_flipbit32(p, ndx)
@@ -72,7 +70,7 @@ m_getfrmadr2(void *fp, void **pp)
 static INLINE void
 m_loadretadr(void *frm,
              void **pp)
-{
+{{
     void *_ptr;
 
     __asm__ __volatile__ ("movl %c1(%2), %0\n"
@@ -132,9 +130,9 @@ m_cmpxchg64(m_atomic64_t *p64,
 #elif defined(_MSC_VER)
 
 static __inline__ long
-m_cmpxchg64(m_atomic64_t long *p64,
-            m_atomic64_t long *want,
-            m_atomic64_t long *val)
+m_cmpxchg64(long long *p64,
+            long long *want,
+            long long *val)
 {
     long long ask = *want;
     long long say = *val;
@@ -149,22 +147,31 @@ m_cmpxchg64(m_atomic64_t long *p64,
 
 /*
  * atomic 64-bit compare and swap
- * - if *p == want, let *p = val
- * - return original nonzero on success, zero on failure
+ * - if *p == want, let *p = val + set ZF
+ *   - else let EDX:EAX = *p + clear ZF
+ * - return 0 on failur, 1 on success
+
  */
 static __inline__ long
-m_cmpxchg64(m_atomic64_t *p32,
-            m_atomic64_t *val)
+m_cmpxchg64(int64_t *ptr,
+            int64_t want,
+            int64_t val)
 {
-    uint32_t eax = p32[0];
-    uint32_t ecx = p32[1];
-    char     res;
+    long    res = 0;
+    int32_t ebx __asm__ ("ebx") = want& 0xffffffff;
 
-    __asm__ __volatile__ ("lock cmpxchg8b %1\n"
-                          "setz %b0\n"
-                          : "=q" (res)
-                          : "m" (*val), "a" (eax), "c" (ecx)
-                          : "cc", "memory");
+    __asm__ __volatile (
+        "movl %%edi, %%ebx\n" // load EBX
+        "lock cmpxchg8b (%%esi)\n"
+        "setz %%al\n" // EAX may change
+        "movzx %%al, %1\n" // res = ZF
+        : "+S" (ptr), "=a" (res)
+        : "0" (ptr),
+          "d" ((uint32_t)(want >> 32)),
+          "a" ((uint32_t)(want & 0xffffffff)),
+          "c" ((uint32_t)(val >> 32)),
+          "D" ((uint32_t)(val & 0xffffffff))
+        : "flags", "memory", "eax", "edx");
 
     return res;
 }

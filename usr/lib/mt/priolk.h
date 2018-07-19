@@ -20,9 +20,6 @@ struct priolkdata {
     unsigned long               val;
     unsigned long               orig;
     volatile struct priolkdata *next;
-    uint8_t                     _pad[CLSIZE
-                                     - 2 * sizeof(long)
-                                     - sizeof(void *)];
 };
 
 struct priolk {
@@ -30,7 +27,8 @@ struct priolk {
     volatile unsigned long      waitbits;
 };
 
-void priolkinit(struct priolkdata *data, unsigned long val);
+void priolkinit(struct priolkdata *data,
+                unsigned long val);
 void priolkfin(void);
 void priolkget(struct priolk *priolk);
 void priolkrel(struct priolk *priolk);

@@ -38,7 +38,7 @@ struct rbtnode {
 #elif defined(RBT_UINTPTR_DATA)
     untptr_t        key;
     uintptr_t       data;
-#else    
+#else
     void           *data;
     long            color;
 #endif

@@ -100,7 +100,7 @@ m_xadd16(m_atomic16_t *p,
  * - return original *p
  */
 static __inline__ uint16_t
-m_xaddu16(volatile uint16_t *p,
+m_xaddu16(uint16_t *p,
           uint16_t val)
 {
     __asm__ __volatile__ ("lock xaddw %1, %w0\n"
@@ -134,7 +134,7 @@ m_xadd32(m_atomic32_t *p,
  * - return original *p
  */
 static __inline__ uint32_t
-m_xaddu32(volatile uint32_t *p,
+m_xaddu32(uint32_t *p,
           uint32_t val)
 {
     __asm__ __volatile__ ("lock xaddl %1, %0\n"
@@ -171,7 +171,7 @@ m_cmpxchg32(m_atomic32_t *p,
  * - return nonzero on success, zero on failure
  */
 static __inline__ uint32_t
-m_cmpxchgu32(volatile uint32_t *p,
+m_cmpxchgu32(uint32_t *p,
              uint32_t want,
              uint32_t val)
 {
@@ -287,10 +287,10 @@ m_cmpclrbit32(m_atomic32_t *p, int32_t ndx)
  * - if *p == want, let *p = val
  * - return original *p
  */
-static __inline__ char
-m_cmpxchg8(volatile char *p,
-           char want,
-           char val)
+static __inline__ int8_t
+m_cmpxchg8(m_atomic88_t *p,
+           int8_t want,
+           int8_t val)
 {
     long res;
 

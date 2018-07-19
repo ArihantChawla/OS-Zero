@@ -1,15 +1,11 @@
 #ifndef __MACH_X86_64_ASM_H__
 #define __MACH_X86_64_ASM_H__
 
-#include <stddef.h>
-#include <stdint.h>
 #include <zero/cdefs.h>
-#include <zero/types.h>
+#include <mach/types.h>
 #include <mach/x86/asm.h>
 
 extern uint64_t asmgetpc(void);
-
-typedef volatile int64_t m_atomic_t;
 
 #define m_atominc(p)                 m_atominc64(p)
 #define m_atomdec(p)                 m_atomdec64(p)
@@ -155,7 +151,7 @@ m_xadd64(m_atomic64_t *p,
  * - return original *p
  */
 static __inline__ uint64_t
-m_xaddu64(volatile uint64_t *p,
+m_xaddu64(uint64_t *p,
           uint64_t val)
 {
     __asm__ __volatile__ ("lock xaddq %1, %q0\n"
@@ -192,7 +188,7 @@ m_cmpxchg64(m_atomic64_t *p,
  * - return nonzero on success, zero on failure
  */
 static __inline__ uint64_t
-m_cmpxchgu64(volatile uint64_t *p,
+m_cmpxchgu64(uint64_t *p,
              uint64_t want,
              uint64_t val)
 {

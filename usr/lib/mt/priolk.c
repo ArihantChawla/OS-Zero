@@ -6,13 +6,13 @@
 
 /* <vendu> eliminated the giant mutex */
 
-static THREADLOCAL struct priolkdata *t_priolkptr;
-static volatile struct priolkdata    *g_priofree;
+THREADLOCAL struct priolkdata  *t_priolk;
+volatile struct priolkdata     *g_priolkq;
 
 void
 priolkset(unsigned long prio)
 {
-    t_priolkptr->val = 1UL << prio;
+    t_priolk->val = 1UL << prio;
 
     return;
 }
@@ -29,17 +29,17 @@ priolkinit(struct priolkdata *data, unsigned long val)
 
     if (!ptr) {
         /* structure not supplied */
-        if (g_priofree) {
+        if (g_priolkq) {
             /* try to grab from free list */
             do {
-                head = (struct priolkdata *)g_priofree;
+                head = (struct priolkdata *)g_priolkq;
                 if (head) {
                     next = (struct priolkdata *)head->next;
-                    res = m_cmpswapptr((m_atomic_t **)&g_priofree,
+                    res = m_cmpswapptr((m_atomic_t **)&g_priolkq,
                                        (long *)head,
                                        (long *)next);
                 }
-            } while (!res && (g_priofree));
+            } while (!res && (g_priolkq));
             if (res) {
                 /* success */
                 ptr = head;
@@ -62,7 +62,7 @@ priolkinit(struct priolkdata *data, unsigned long val)
     }
     ptr->val = prio;
     ptr->orig = prio;
-    t_priolkptr = ptr;
+    t_priolk = ptr;
 
     return;
 }
@@ -70,7 +70,7 @@ priolkinit(struct priolkdata *data, unsigned long val)
 void
 priolkget(struct priolk *priolk)
 {
-    unsigned long      prio = t_priolkptr->val;
+    unsigned long      prio = t_priolk->val;
     struct priolkdata *owner;
     unsigned long      mask;
     long               res;
@@ -80,9 +80,9 @@ priolkget(struct priolk *priolk)
     mask = prio - 1;
     while (priolk->waitbits & mask) {
         /* unfinished higher-priority tasks */
-        if (t_priolkptr->val != prio) {
+        if (t_priolk->val != prio) {
             /* priority changed, reread and update mask */
-            prio = t_priolkptr->val;
+            prio = t_priolk->val;
             m_membar();
             mask = prio - 1;
         }
@@ -91,7 +91,7 @@ priolkget(struct priolk *priolk)
     /* see if no higher-priority waiters and unlocked */
     res = m_cmpswapptr((m_atomic_t **)&priolk->owner,
                        NULL,
-                       (long *)t_priolkptr);
+                       (long *)t_priolk);
     if (res) {
         /* success */
 
@@ -100,10 +100,10 @@ priolkget(struct priolk *priolk)
     m_atomor(&priolk->waitbits, prio);
     do {
         while (priolk->waitbits & mask) {
-            if (t_priolkptr->val != prio) {
+            if (t_priolk->val != prio) {
                 /* priority changed */
                 m_atomand(&priolk->waitbits, ~prio);
-                prio = t_priolkptr->val;
+                prio = t_priolk->val;
                 m_atomor(&priolk->waitbits, prio);
                 mask = prio - 1;
             }
@@ -112,7 +112,7 @@ priolkget(struct priolk *priolk)
         /* see if no higher-priority waiters and unlocked */
         owner = m_fetchswapptr((m_atomic_t **)&priolk->owner,
                                NULL,
-                               (long *)t_priolkptr);
+                               (long *)t_priolk);
         if (!owner) {
             /* success */
             m_atomand(&priolk->waitbits, ~prio);
@@ -134,7 +134,7 @@ priolkrel(struct priolk *priolk)
     m_membar();
     priolk->owner = NULL;
     m_membar();
-    t_priolkptr->val = t_priolkptr->orig;
+    t_priolk->val = t_priolk->orig;
     m_endspin();
 
     return;
@@ -143,16 +143,16 @@ priolkrel(struct priolk *priolk)
 void
 priolkfin(void)
 {
-    struct priolkdata *ptr = t_priolkptr;
+    struct priolkdata *ptr = t_priolk;
     struct priolkdata *head;
 
     do {
-        head = (struct priolkdata *)g_priofree;
+        head = (struct priolkdata *)g_priolkq;
         ptr->next = head;
-        if (m_cmpswapptr((m_atomic_t **)&g_priofree,
+        if (m_cmpswapptr((m_atomic_t **)&g_priolkq,
                          (long *)head,
                          (long *)ptr)) {
-            t_priolkptr = NULL;
+            t_priolk = NULL;
 
             break;
         }
