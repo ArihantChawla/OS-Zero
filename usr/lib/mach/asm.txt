@@ -8,15 +8,15 @@ usage
 types
 -----
 
-<mach/asm.h> includes per-platform headersto define the following atomic_t types.
-
-do not forget to declare in-memory data volatile where due.
-
 machine types
 -------------
 m_reg_t		- signed word/register
 m_adr_t         - storage for address value
 m_ptr_t         - pointer
+
+<mach/asm.h> includes per-platform headers to define the following atomic types.
+
+do not forget to declare in-memory data volatile where due.
 
 atomic types
 ------------
