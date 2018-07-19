@@ -1,8 +1,6 @@
 #ifndef __MACH_ARM_ASM_H__
 #define __MACH_ARM_ASM_H__
 
-typedef long m_reg_t; // TODO: 64-bitt
-
 /* API declarations */
 #define m_membar()   __asm__ __volatile__ ("" : : : "memory")
 #if defined(__ARM_ARCH_7__)

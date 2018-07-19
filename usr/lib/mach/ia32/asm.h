@@ -4,12 +4,10 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
-#include <zero/types.h>
+//#include <zero/types.h>
 #include <mach/x86/asm.h>
 
 extern uint32_t asmgetpc(void);
-
-typedef volatile int32_t m_atomic_t;
 
 #define m_atominc(p)                 m_atominc32(p)
 #define m_atomdec(p)                 m_atomdec32(p)

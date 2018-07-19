@@ -1,12 +1,11 @@
-#ifndef __MACH_IA32_TYPES_H__
-#define __MACH_IA32_TYPES_H__
+#ifndef __MACH_IA32_TYPES_H_
+#define __MACH_IA32_TYPES_H_
 
-#include <kern/conf.h>
 #include <stdint.h>
-#include <signal.h>
-#include <zero/cdefs.h>
-#include <mach/param.h>
-#include <mach/x86/types.h>
+
+/* machine types */
+typedef int32_t  m_reg_t;
+typedef uint32_t m_ureg_t;
 
 /* C call frame - 8 bytes */
 struct m_stkframe {
@@ -147,5 +146,5 @@ struct m_task {
     struct m_fpstate fpstate;   //  X bytes @ 128; FPU state
 };
 
-#endif /* __MACH_IA32_TYPES_H__ */
+#endif /* __MACH_IA32_TYPES_H_ */
 

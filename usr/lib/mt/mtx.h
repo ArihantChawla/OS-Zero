@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <zero/cdefs.h>
 #include <mach/param.h>
+#include <mach/types.h>
 #include <mach/asm.h>
 
 typedef volatile m_atomic_t zerofmtx;
@@ -59,9 +60,9 @@ typedef struct zeromtxatr {
 /* thr for unlocked mutexes */
 #define ZEROMTX_FREE    0
 typedef struct zeromtx {
-    m_atomic_t val;     // owner for recursive mutexes, 0 if unlocked
-    m_atomic_t cnt;     // access counter
-    m_atomic_t rec;     // recursion depth
+    volatile m_atomic_t val; // owner for recursive mutexes, 0 if unlocked
+    volatile m_atomic_t cnt;// access counter
+    volatile m_atomic_t rec; // recursion depth
     zeromtxatr atr;
     uint8_t    _pad[CLSIZE - 3 * sizeof(long) - sizeof(zeromtxatr)];
 } zeromtx;

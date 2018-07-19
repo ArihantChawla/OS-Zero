@@ -7,11 +7,11 @@
 #include <mach/param.h>
 #include <zero/cdefs.h>
 
-/* machine types */
 #if defined(__x86_64__) || defined(__amd64__)
-typedef int64_t  m_reg_t;
-typedef uint64_t m_ureg_t;
+#include <mach/x86-64/types.h>
 #else
+#include <mach/ia32/types.h>
+/* machine types */
 typedef int32_t  m_reg_t;
 typedef uint32_t m_ureg_t;
 #endif

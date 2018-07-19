@@ -1,5 +1,7 @@
-#ifndef __MACH_X86_TYPES_H__
-#define __MACH_X86_TYPES_H__
+#ifndef __MACH_X86_TYPES_H_
+#define __MACH_X86_TYPES_H_
+
+#onclude <stdint.h>
 
 /* far pointer structure */
 #include <zero/pack.h>
@@ -38,5 +40,5 @@ struct m_fpdata {
     int32_t _pad[7];
 };
 
-#endif /* __MACH_X86_TYPES_H__ */
+#endif /* __MACH_X86_TYPES_H_ */
 

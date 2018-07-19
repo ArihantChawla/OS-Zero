@@ -1,9 +1,6 @@
 #ifndef __MACH_ASM_H__
 #define __MACH_ASM_H__
 
-#include <stddef.h>
-#include <stdint.h>
-
 /*
  * TODO
  * ----
@@ -26,16 +23,6 @@
 #elif defined(__ppc__)
 #include <mach/ppc/asm.h>
 #endif
-
-/* volatile types */
-typedef m_reg_t   m_atomic_t;
-typedef int8_t    m_atomic8_t;
-typedef int16_t   m_atomic16_t;
-typedef int32_t   m_atomic32_t;
-typedef int64_t   m_atomic64_t;
-typedef void     *m_atomicptr_t;
-typedef int8_t   *m_atomicptr8_t;
-typedef intptr_t  m_atomicadr_t;
 
 /* for systems without GNU C, we define these in e.g. <mach/ia32/asm.h> */
 #if defined(__GNUC__)

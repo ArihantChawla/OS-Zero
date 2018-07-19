@@ -1,11 +1,11 @@
-#ifndef __MACH_X86_64_TYPES_H__
-#define __MACH_X86_64_TYPES_H__
+#ifndef __MACH_X86_64_TYPES_H_
+#define __MACH_X86_64_TYPES_H_
 
 #include <stdint.h>
-#include <signal.h>
-#include <zero/cdefs.h>
-#include <mach/param.h>
-#include <mach/x86/types.h>
+
+/* machine types */
+typedef int64_t  m_reg_t;
+typedef uint64_t m_ureg_t;
 
 /* C call frame */
 struct m_stkframe {
@@ -104,5 +104,5 @@ struct m_task {
     struct m_fpstate fpstate;   // X bytes @ 256; FPU state
 };
 
-#endif /* __MACH_X86_64_TYPES_H__ */
+#endif /* __MACH_X86_64_TYPES_H_ */
 

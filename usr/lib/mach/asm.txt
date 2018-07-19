@@ -12,7 +12,13 @@ types
 
 do not forget to declare in-memory data volatile where due.
 
-m_atomic_t	- signed word/register
+machine types
+-------------
+m_reg_t		- signed word/register
+m_adr_t
+
+atomic types
+------------
 m_atomic8_t	- signed 8-bit atomic
 m_atomic16_t	- signed 16-bit atomic
 m_atomic32_t	- signed 32-bit atomic
