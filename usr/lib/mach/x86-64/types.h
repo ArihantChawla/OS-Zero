@@ -8,6 +8,8 @@
 typedef int64_t  m_reg_t;
 typedef uint64_t m_ureg_t;
 
+typedef int64_t  m_atomic_t;
+
 /* C call frame */
 struct m_stkframe {
     /* automatic variables go here */
@@ -63,8 +65,6 @@ struct m_fpxhdr64 {
 struct m_fpystate64 {
     int32_t _ymm[64];
 };
-
-typedef struct m_fpstate64 m_fpstate_t;
 
 struct m_fpstate64 {
     struct m_fpxstate64 _fpx;

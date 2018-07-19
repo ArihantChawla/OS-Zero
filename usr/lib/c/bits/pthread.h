@@ -1,24 +1,22 @@
 #ifndef __BITS_PTHREAD_H__
 #define __BITS_PTHREAD_H__
 
+#include <mt/conf.h>
 #include <features.h>
-#undef ZEROTHR
-#undef ZEROMTX
-#define ZEROTHR 1
-#define ZEROMTX 1
 #include <mach/param.h>
-#include <mt/thr.h>
 #include <mt/spin.h>
 #include <mt/mtx.h>
+#include <mt/thr.h>
 #include <sched.h>
 
 #define PTHREAD_STACK_MIN        16384
 
-typedef uintptr_t     pthread_t;
-typedef struct thratr pthread_attr_t;
+typedef uintptr_t  pthread_t;
+typedef zerothratr pthread_attr_t;
 
 struct __pthread {
-    zerothratr        atr;
+    pthread_t         id;
+    pthread_attr_t    atr;
     struct __pthread *prev;
     struct __pthread *next;
 };
@@ -63,7 +61,6 @@ typedef zerospin pthread_spinlock_t;
       PTHREAD_PROCESS_PRIVATE,                                          \
       PTHREAD_MUTEX_STALLED }
 typedef struct {
-//    volatile long lk;
     zeromtx  mtx;
     unsigned prioceil : 8;
     unsigned type     : 8;

@@ -8,10 +8,12 @@ usage
 types
 -----
 
+the following are some basic types for machine-level programming.
+
 machine types
 -------------
 m_reg_t		- signed word/register
-m_adr_t         - storage for address value
+m_adr_t         - storage for integer address value + possible info-bits
 m_ptr_t         - pointer
 
 <mach/asm.h> includes per-platform headers to define the following atomic types.
@@ -20,13 +22,14 @@ do not forget to declare in-memory data volatile where due.
 
 atomic types
 ------------
+m_atomic_t      - atomic machine register value/word
 m_atomic8_t	- signed 8-bit atomic
 m_atomic16_t	- signed 16-bit atomic
 m_atomic32_t	- signed 32-bit atomic
 m_atomic64_t	- signed 64-bit atomic
 m_atomicptr_t	- atomic pointer storage
 m_atomicptr8_t	- atomic 8-bit pointer for arithmetics
-m_atomicadr_t	- atomic address for flag-bit
+m_atomicadr_t	- atomic integer address value for flag-bits
 
 macros
 ------

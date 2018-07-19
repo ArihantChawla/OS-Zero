@@ -9,7 +9,7 @@
 #define thrid() ((uintptr_t)pthread_self())
 #endif
 
-#if defined(PTHREAD) || defined(ZEROPTHREAD)
+#if defined(ZERO_THREAD) || (POSIX_THREAD)
 #define thryield() pthread_yield()
 #elif defined(_WIN64) || defined(_WIN32)
 #define thryield() kYieldProcessor()
@@ -21,13 +21,14 @@
 //#define thryield() /* FIXME */
 #endif
 
+#include <mt/conf.h>
 #include <mt/mtx.h>
 
-#if !defined(__KERNEL__)
+#if defined(ZERO_THREAD)
 
-#if defined(ZEROTHR) && (ZEROTHR)
-
+#if defined(ZERO_SCHED)
 #include <sched.h>
+#endif
 
 typedef uintptr_t zerothrid;
 
@@ -50,8 +51,13 @@ typedef struct __zerothratr {
     size_t              ncpu;
     void               *cpuset;
 #endif
+#if defined(ZERO_SCHED)
     struct sched_param  schedparm;
-    uint8_t             _res[4 * CLSIZE - sizeof(struct sched_param)
+#endif
+    uint8_t             _res[4 * CLSIZE
+#if defined(ZERO_SCHED)
+                             - sizeof(struct sched_param)
+#endif
 #if defined(_GNU_SOURCE)
                              - sizeof(size_t) - sizeof(void *)
 #endif
@@ -72,9 +78,9 @@ typedef struct __zerothr {
 
 #define ZEROTHRQUEUE_INITIALIZER { MTXINITVAL, NULL, NULL }
 typedef struct {
-    ZERO_MUTEX_TYPE  lk;
-    zerothr         *head;
-    zerothr         *tail;
+    zerofmtx  lk;
+    zerothr  *head;
+    zerothr  *tail;
 } zerothrqueue;
 
 extern void      thrwait1(zerothrqueue *queue);
@@ -86,9 +92,7 @@ extern void thrwakeall(zerothrqueue *queue);
 #define thrwake()    thrwake1(NULL)
 #define thrwakeall() thrwakeall1(NULL)
 
-#endif /* defined(ZEROTHR) */
-
-#endif /* !defined(__KERNEL__) */
+#endif /* defined(ZERO_THREAD) */
 
 #endif /* __MT_THR_H__ */
 

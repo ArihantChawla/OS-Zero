@@ -2,11 +2,13 @@
 #define __MACH_IA32_TYPES_H_
 
 #include <stdint.h>
-#include <signal.h>
+#include <mach/x86/types.h>
 
 /* machine types */
 typedef int32_t  m_reg_t;
 typedef uint32_t m_ureg_t;
+
+typedef int32_t  m_atomic_t;
 
 /* C call frame - 8 bytes */
 struct m_stkframe {
@@ -104,7 +106,15 @@ struct m_tcb {
 
 #endif
 
-typedef struct m_fpstate32 m_fpstate_t;
+struct m_task {
+    int32_t            flg;     //  4 bytes @ 0; task flags
+    struct m_tcb       tcb;     // 80 bytes @ 4; task control block
+    int32_t            trapesp; //  4 bytes @ 84; stack-pointer for rescheduling
+    int8_t             _res[40]; // 40 bytes @ 88, pad to cacheline-boundary
+    struct m_fpstate32 fpstate; //  X bytes @ 128; FPU state
+};
+
+#include <signal.h>
 
 struct m_ctx {
     int                onstk;   // non-zero if on signal-stack
@@ -113,14 +123,6 @@ struct m_ctx {
     int32_t            cr2;     // page-fault virtual address
     int                fpflg;   // <kern/unit/ia32/task.h>
     struct m_fpstate32 fpstate; // FPU state
-};
-
-struct m_task {
-    int32_t            flg;     //  4 bytes @ 0; task flags
-    struct m_tcb       tcb;     // 80 bytes @ 4; task control block
-    int32_t            trapesp; //  4 bytes @ 84; stack-pointer for rescheduling
-    int8_t             _res[40]; // 40 bytes @ 88, pad to cacheline-boundary
-    struct m_fpstate32 fpstate; //  X bytes @ 128; FPU state
 };
 
 #endif /* __MACH_IA32_TYPES_H_ */

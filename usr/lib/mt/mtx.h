@@ -9,12 +9,11 @@
 #define ZERONEWFMTX 1
 #endif
 
-#include <mt/conf.h>
+//#include <mt/conf.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
 #include <mach/param.h>
-#include <mach/types.h>
 #include <mach/asm.h>
 
 typedef m_atomic_t zerofmtx;
@@ -23,10 +22,6 @@ typedef m_atomic_t zerofmtx;
  * Special thanks to Matthew 'kinetik'
  *Gregan for help with the mutex code.:)
  */
-
-#if defined(PTHREAD) && (!ZERO_MUTEX)
-typedef pthread_mutex_t     zeromtx;
-#endif
 
 #define FMTXINITVAL MTXINITVAL
 #define FMTXLKVAL   MTXLKVAL
@@ -64,7 +59,7 @@ struct __zeromtx {
     m_atomic_t cnt; // access counter
     m_atomic_t rec; // recursion depth
     zeromtxatr atr;
-    uint8_t    _pad[CLSIZE - 3 * sizeof(long) - sizeof(zeromtxatr)];
+    uint8_t    _pad[CLSIZE - 3 * sizeof(m_atomic_t) - sizeof(zeromtxatr)];
 };
 typedef volatile struct __zeromtx zeromtx;
 
@@ -127,7 +122,7 @@ fmtxunlk(m_atomic_t *lp)
 static INLINE long
 fmtxtrylk(m_atomic_t *lp)
 {
-    m_atomic_t res;
+    long res;
 
     res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
 
@@ -141,7 +136,7 @@ fmtxtrylk(m_atomic_t *lp)
 static INLINE void
 fmtxlk(m_atomic_t *lp)
 {
-    m_atomic_t res;
+    long res;
 
     do {
         res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
@@ -172,31 +167,10 @@ fmtxunlk(m_atomic_t *lp)
 #define zerolkfmtx(mp)    fmtxlk(mp)
 #define zerounlkfmtx(mp)  fmtxunlk(mp)
 
-#if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
-
-#define zerotrylkmtx(mp) fmtxtrylk
-#define zerolkmtx(mp)    fmtxtlk
-#define zerounlkmtx(mp)  fmtxunlk
-
-#elif defined(PTHREAD) && !defined(ZEROPTHREAD)
-
-#define PTHREAD_MUTEX_INITIALIZER MTXINITVAL
-#define PTHREAD_FMTX_INITIALIZER  FMTXINITVAL
-
-#define zerotrylkmtx(mp) pthread_mutex_trylock(mp)
-#define zerolkmtx(mp)    pthread_mutex_lock(mp)
-#define zerounlkmtx(mp)  pthread_mutex_unlock(mp)
-
-#elif defined(ZEROPTHREAD) && !defined(PTHREAD_MUTEX_INITIALIZER)
-
-#define PTHREAD_MUTEX_INITIALIZER MTXINITVAL
-
-#define pthread_mutex_init(mp, atr) mtxinit(mp, atr)
-#define pthread_mutex_destroy(mp)   mtxfree(mp)
-#define pthread_mutex_trylock(mp)   mtxtrylk(mp)
-#define pthread_mutex_lock(mp)      mtxlk(mp)
-#define pthread_mutex_unlock(mp)    mtxunlk(mp)
-
+#if defined(ZERO_THREAD) || defined(ZERO_MUTEX)
+#define zerotrylkmtx(mp)  fmtxtrylk
+#define zerolkmtx(mp)     fmtxtlk
+#define zerounlkmtx(mp)   fmtxunlk
 #endif
 
 #endif /* __MT_MTX_H__ */

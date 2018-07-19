@@ -10,7 +10,7 @@
 #include <zero/cdefs.h>
 #include <mach/asm.h>
 #include <mach/param.h>
-#include <zero/types.h>
+#include <mach/types.h>
 #include <kern/asm.h>
 #include <kern/util.h>
 #include <kern/malloc.h>

@@ -6,7 +6,7 @@
 #if !defined(__ASSEMBLER__)
 #include <stdint.h>
 #include <mach/asm.h>
-#include <zero/types.h>
+#include <mach/types.h>
 #endif
 #include <kern/unit/x86/boot.h>
 

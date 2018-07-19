@@ -3,7 +3,7 @@
 #include <sys/io.h>
 #include <kern/conf.h>
 #include <mach/param.h>
-#include <zero/types.h>
+#include <mach/types.h>
 //#include <kern/syscall.h>
 #include <kern/asm.h>
 #include <kern/unit/x86/boot.h>

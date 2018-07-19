@@ -56,7 +56,7 @@
 #include <sys/types.h>
 #include <zero/cdefs.h>
 #include <mach/param.h>
-#include <zero/types.h>
+#include <mach/types.h>
 #include <kern/types.h>
 #include <kern/cred.h>
 #include <kern/syscall.h>

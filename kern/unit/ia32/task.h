@@ -5,7 +5,7 @@
 
 #include <zero/cdefs.h>
 #include <mach/param.h>
-#include <zero/types.h>
+#include <mach/types.h>
 #include <kern/unit/x86/cpu.h>
 
 FASTCALL NORETURN void m_taskjmp(volatile struct m_task *task);

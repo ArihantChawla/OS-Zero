@@ -1,20 +1,26 @@
 #ifndef __PTHREAD_H__
 #define __PTHREAD_H__
 
-#include <features.h>
-
-#if defined(__GLIBC__) && !defined(ZEROPTHREAD)
-#define PTHREAD_KEY_SIZE 4
-#include <bits/pthreadtypes.h>
-#endif /* defined(linux) */
-
-#include <mach/param.h>
-#include <bits/pthread.h>
 /* mutexes */
+
+#include <features.h>
+#include <mt/mtx.h>
+#include <mt/spin.h>
+#include <bits/pthread.h>
 
 #if !defined(PTHREAD_ONCE_INIT)
 #define PTHREAD_ONCE_INIT 0
 #endif
+
+typedef uintptr_t  pthread_key_t;
+typedef zeromtxatr pthread_mutexattr_t;
+typedef zerospin   pthread_spinlock_t;
+
+#define pthread_mutex_init(mp, atr) mtxinit(mp, atr)
+#define pthread_mutex_destroy(mp)   mtxfree(mp)
+#define pthread_mutex_trylock(mp)   mtxtrylk(mp)
+#define pthread_mutex_lock(mp)      mtxlk(mp)
+#define pthread_mutex_unlock(mp)    mtxunlk(mp)
 
 /* spin locks */
 int pthread_spin_destroy(pthread_spinlock_t *spin);
@@ -36,8 +42,6 @@ int pthread_key_create(pthread_key_t *key, void (*destructor)(void *));
 int pthread_atfork(void (*prepare)(void),
                    void (*parent)(void), void (*child)(void));
 int pthread_setspecific(pthread_key_t key, const void *val);
-
-#include <bits/pthread.h>
 
 #endif /* __PTHREAD_H__ */
 

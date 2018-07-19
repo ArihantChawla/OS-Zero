@@ -1,10 +1,8 @@
 #ifndef __MACH_X86_64_ASM_H__
 #define __MACH_X86_64_ASM_H__
 
-#include <stddef.h>
+#include <stdint.h>
 #include <zero/cdefs.h>
-#include <mach/types.h>
-#include <mach/x86/asm.h>
 
 extern uint64_t asmgetpc(void);
 
@@ -28,8 +26,7 @@ extern uint64_t asmgetpc(void);
 #define m_scanlo1bit(l)              m_bsf64(l)
 #define m_scanhi1bit(l)              m_bsr64(l)
 
-struct m_stkframe;
-#define __RIPFRAMEOFS                offsetof(struct m_stkframe, pc)
+#define __RIPFRAMEOFS                8
 
 static INLINE void
 m_getretadr(void **pp)

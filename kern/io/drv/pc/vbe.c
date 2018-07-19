@@ -6,10 +6,10 @@
 
 #include <stdint.h>
 #include <zero/cdefs.h>
+#include <mach/types.h>
 #if (NEWFONT)
 #include <zero/trix.h>
 #endif
-#include <zero/types.h>
 #include <gfx/rgb.h>
 #include <kern/malloc.h>
 #include <kern/util.h>
