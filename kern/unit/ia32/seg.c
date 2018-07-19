@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <zero/cdefs.h>
 #include <mach/param.h>
-#include <zero/types.h>
+#include <mach/types.h>
 #include <kern/conf.h>
 #include <kern/cpu.h>
 #include <kern/mem/vm.h>

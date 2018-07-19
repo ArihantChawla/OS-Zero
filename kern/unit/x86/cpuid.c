@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <zero/cdefs.h>
 #include <mach/param.h>
-#include <zero/types.h>
+#include <mach/types.h>
 #include <kern/util.h>
 #include <kern/cpu.h>
 

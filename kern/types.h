@@ -23,7 +23,6 @@ typedef uint64_t  m_ureg_t;
 #endif
 /* byte-pointer (for arithmetics */
 #define m_castadr(adr, type) ((type)(adr))
-typedef int8_t   *m_adr_t;
 
 /* signed types to facilitate negative return values such as -1 */
 typedef intptr_t desc_t;

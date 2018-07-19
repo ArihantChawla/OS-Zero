@@ -6,15 +6,11 @@
 #include <stdint.h>
 #include <zero/cdefs.h>
 #include <mach/param.h>
-#include <mach/types.h>
 
 #if defined(__x86_64__) || defined(__amd64__)
 #include <mach/x86-64/types.h>
 #else
 #include <mach/ia32/types.h>
-/* machine types */
-typedef int32_t  m_reg_t;
-typedef uint32_t m_ureg_t;
 #endif
 
 #define m_membar()   __asm__ __volatile__ ("mfence\n" : : : "memory")
@@ -41,7 +37,7 @@ typedef uint32_t m_ureg_t;
 
 /* atomic increment operation */
 static __inline__ void
-m_atominc32(m_atomic32_t *p)
+m_atominc32(volatile m_atomic32_t *p)
 {
     __asm__ __volatile__ ("lock incl %0\n"
                           : "+m" (*(p))
@@ -53,7 +49,7 @@ m_atominc32(m_atomic32_t *p)
 
 /* atomic decrement operation */
 static __inline__ void
-m_atomdec32(m_atomic32_t *p)
+m_atomdec32(volatile m_atomic32_t *p)
 {
     __asm__ __volatile__ ("lock decl %0\n"
                           : "+m" (*(p))
@@ -65,7 +61,7 @@ m_atomdec32(m_atomic32_t *p)
 
 /* atomic exchange operation */
 static __inline__ int32_t
-m_xchg32(m_atomic32_t *p,
+m_xchg32(volatile m_atomic32_t *p,
          int32_t val)
 {
     int32_t res;
@@ -83,9 +79,9 @@ m_xchg32(m_atomic32_t *p,
  * - let *p = *p + val
  * - return original *p
  */
-static __inline__ short
-m_xadd16(m_atomic16_t *p,
-         short val)
+static __inline__ m_atomic16_t
+m_xadd16(volatile m_atomic16_t *p,
+         m_atomic16_t val)
 {
     __asm__ __volatile__ ("lock xaddw %1, %w0\n"
                           : "+m" (*(p)), "=a" (val)
@@ -100,9 +96,9 @@ m_xadd16(m_atomic16_t *p,
  * - let *p = *p + val
  * - return original *p
  */
-static __inline__ uint16_t
-m_xaddu16(uint16_t *p,
-          uint16_t val)
+static __inline__ m_atomicu16_t
+m_xaddu16(volatile m_atomicu16_t *p,
+          m_atomicu16_t val)
 {
     __asm__ __volatile__ ("lock xaddw %1, %w0\n"
                           : "+m" (*(p)), "=a" (val)
@@ -118,7 +114,7 @@ m_xaddu16(uint16_t *p,
  * - return original *p
  */
 static __inline__ int32_t
-m_xadd32(m_atomic32_t *p,
+m_xadd32(volatile m_atomic32_t *p,
          int32_t val)
 {
     __asm__ __volatile__ ("lock xaddl %1, %0\n"
@@ -134,9 +130,9 @@ m_xadd32(m_atomic32_t *p,
  * - let *p = *p + val
  * - return original *p
  */
-static __inline__ uint32_t
-m_xaddu32(uint32_t *p,
-          uint32_t val)
+static __inline__ m_atomicu32_t
+m_xaddu32(volatile m_atomicu32_t *p,
+          m_atomicu32_t val)
 {
     __asm__ __volatile__ ("lock xaddl %1, %0\n"
                           : "+m" (*(p)), "=a" (val)
@@ -152,7 +148,7 @@ m_xaddu32(uint32_t *p,
  * - return nonzero on success, zero on failure
  */
 static __inline__ int32_t
-m_cmpxchg32(m_atomic32_t *p,
+m_cmpxchg32(volatile m_atomic32_t *p,
             int32_t want,
             int32_t val)
 {
@@ -171,12 +167,12 @@ m_cmpxchg32(m_atomic32_t *p,
  * - if *p == want, let *p = val
  * - return nonzero on success, zero on failure
  */
-static __inline__ uint32_t
-m_cmpxchgu32(uint32_t *p,
-             uint32_t want,
-             uint32_t val)
+static __inline__ m_atomicu32_t
+m_cmpxchgu32(volatile m_atomicu32_t *p,
+             m_atomicu32_t want,
+             m_atomicu32_t val)
 {
-    uint32_t res;
+    m_atomicu32_t res;
 
     __asm__ __volatile__ ("lock cmpxchgl %1, %2\n"
                           : "=a" (res)
@@ -188,7 +184,7 @@ m_cmpxchgu32(uint32_t *p,
 
 /* atomic set bit operation */
 static INLINE void
-m_setbit32(m_atomic32_t *p, int32_t ndx)
+m_setbit32(volatile m_atomic32_t *p, int32_t ndx)
 {
     __asm__ __volatile__ ("lock btsl %1, %0\n"
                           : "=m" (*(p))
@@ -200,7 +196,7 @@ m_setbit32(m_atomic32_t *p, int32_t ndx)
 
 /* atomic reset/clear bit operation */
 static INLINE void
-m_clrbit32(m_atomic32_t *p, int32_t ndx)
+m_clrbit32(volatile m_atomic32_t *p, int32_t ndx)
 {
     int32_t mask = ~(INT32_C(1) << ndx);
 
@@ -213,7 +209,7 @@ m_clrbit32(m_atomic32_t *p, int32_t ndx)
 
 /* atomic flip/toggle bit operation */
 static INLINE void
-m_flipbit32(m_atomic32_t *p, int32_t ndx)
+m_flipbit32(volatile m_atomic32_t *p, int32_t ndx)
 {
     int32_t bit = INT32_C(1) << ndx;
 
@@ -226,7 +222,7 @@ m_flipbit32(m_atomic32_t *p, int32_t ndx)
 
 /* atomic set and test bit operation; returns the old value */
 static __inline__ int32_t
-m_cmpsetbit32(m_atomic32_t *p, int32_t ndx)
+m_cmpsetbit32(volatile m_atomic32_t *p, int32_t ndx)
 {
     int32_t val = 0;
 
@@ -253,7 +249,7 @@ m_cmpsetbit32(m_atomic32_t *p, int32_t ndx)
 
 /* atomic clear bit operation */
 static __inline__ int32_t
-m_cmpclrbit32(m_atomic32_t *p, int32_t ndx)
+m_cmpclrbit32(volatile m_atomic32_t *p, int32_t ndx)
 {
     int32_t val = 0;
 
@@ -289,7 +285,7 @@ m_cmpclrbit32(m_atomic32_t *p, int32_t ndx)
  * - return original *p
  */
 static __inline__ int8_t
-m_cmpxchg8(m_atomic64_t *p,
+m_cmpxchg8(volatile m_atomic64_t *p,
            int8_t want,
            int8_t val)
 {
@@ -304,7 +300,7 @@ m_cmpxchg8(m_atomic64_t *p,
 }
 
 static __inline__ int32_t
-m_bsf32(uint32_t val)
+m_bsf32(m_atomicu32_t val)
 {
     int32_t ret = ~0;
 
@@ -314,7 +310,7 @@ m_bsf32(uint32_t val)
 }
 
 static __inline__ int32_t
-m_bsr32(uint32_t val)
+m_bsr32(m_atomicu32_t val)
 {
     int32_t ret = ~0;
 

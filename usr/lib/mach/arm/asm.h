@@ -17,7 +17,7 @@
 #endif
 
 static __inline__ m_atomic_t
-m_cmpswap_armv6(m_atomic_t *p,
+m_cmpswap_armv6(volatile m_atomic_t *p,
                 m_atomic_t want,
                 m_atomic_t val)
 {
@@ -43,7 +43,7 @@ m_cmpswap_armv6(m_atomic_t *p,
 }
 
 static __inline__ m_atomic_t
-m_cmpswap(m_atomic_t *p,
+m_cmpswap(volatile m_atomic_t *p,
           m_atomic_t want,
           m_atomic_t val)
 {

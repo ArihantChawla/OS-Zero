@@ -66,5 +66,12 @@ struct m_fpstate32 {
     } u;
 };
 
+#if defined(_x86_64__) || defined(__amd64__)
+#include <mach/x86-64/types.h>
+#elif (defined(__i386__) || defined(__i486__)                           \
+       || defined(__i586__) || defined(__i686__))
+#include <mach/ia32/types.h>
+#endif
+
 #endif /* __MACH_X86_TYPES_H_ */
 

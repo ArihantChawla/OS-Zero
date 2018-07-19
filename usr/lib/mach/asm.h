@@ -7,6 +7,7 @@
  * - m_cmpswapbit() - bit-level atomic compare and swap
  */
 
+#include <mach/atomic.h>
 #if defined(_WIN64)
 #include <zero/msc/win64.h>
 #elif defined(_WIN32)

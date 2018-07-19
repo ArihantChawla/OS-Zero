@@ -10,5 +10,5 @@ CCWARNFLAGS="-D_FORTIFY_SOURCE=2 -Wall -Wundef -Wpointer-arith -Wuninitialized -
 #$CC $CCWARNFLAGS -m32 -D_REENTRANT=1 -D_ZERO_SOURCE=1 -D_GNU_SOURCE=1 -DZEROCOND=1 -DZEROMTX=1 -DSHUNTC=1 -DNVALGRIND -DZEROMTX=1 -DZEROMALLOC=0 -DPTHREAD=1 -DZEROTHR=1 -g -O -I.. -fPIC -shared -o libzero32.so *.c ia32/*.c -pthread
 
 #$CC $CCBUILDFLAGS $CCWARNFLAGS -g -O -I.. -fPIC -shared -o libzero.so *.c ../mach/x86-64/*.c ../mach/x86-64/*.S -pthread
-$CC $CCBUILDFLAGS $CCWARNFLAGS -g -O -I.. -fPIC -shared -o libzero.so *.c -pthread
+$CC $CCBUILDFLAGS $CCWARNFLAGS -g -O -I.. -fPIC -shared -o libzero.so *.c ../mach/x86-64/*.c ../mach/x86-64/*.S -pthread
 

@@ -1,9 +1,9 @@
 #ifndef __MACH_IA32_ASM_H__
 #define __MACH_IA32_ASM_H__
 
+#include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
-#include <zero/types.h>
 
 extern uint32_t asmgetpc(void);
 
@@ -28,41 +28,38 @@ extern uint32_t asmgetpc(void);
 
 #define __EIPFRAMEOFS                offsetof(struct m_stkframe, pc)
 
-static INLINE void
+static INLINE void *
 m_getretadr(void **pp)
 {
-    void *_ptr;
+    void *ptr;
 
     __asm__ __volatile__ ("movl %c1(%%ebp), %0\n"
-                          : "=r" (_ptr)
+                          : "=r" (ptr)
                           : "i" (__EIPFRAMEOFS));
-    *pp = _ptr;
-
-    return;
+    return ptr;
 }
 
-static INLINE void
-m_getfrmadr(void **pp)
+static INLINE void *
+m_getfrmadr(void)
 {
-    void *_ptr;
+    void *ptr;
 
-    __asm__ __volatile__ ("movl %%ebp, %0\n" : "=r" (_ptr));
-    *pp = _ptr;
+    __asm__ __volatile__ ("movl %%ebp, %0\n" : "=r" (ptr));
 
-    return;
+    return ptr;
 }
 
 static INLINE void
 m_getfrmadr2(void *fp, void **pp)
 {
-    void *_ptr;
+    void *ptr;
 
     __asm__ __volatile__ ("movl %1, %%eax\n"
                           "movl (%%eax), %0\n"
-                          : "=r" (_ptr)
+                          : "=r" (ptr)
                           : "rm" (fp)
                           : "eax");
-    *pp = _ptr;
+    *pp = ptr;
 
     return;
 }
@@ -70,24 +67,13 @@ m_getfrmadr2(void *fp, void **pp)
 static INLINE void
 m_loadretadr(void *frm,
              void **pp)
-{{
-    void *_ptr;
+{
+    void *ptr;
 
     __asm__ __volatile__ ("movl %c1(%2), %0\n"
-                          : "=r" (_ptr)
+                          : "=r" (ptr)
                           : "i" (__EIPFRAMEOFS), "r" (frm));
-    *pp = _ptr;
-
-    return;
-}
-
-static INLINE void
-m_getretfrmadr(void **pp)
-{
-    void *_ptr;
-
-    __asm__ __volatile__ ("movl (%%ebp), %0\n" : "=r" (_ptr));
-    *pp = _ptr;
+    *pp = ptr;
 
     return;
 }
@@ -100,7 +86,7 @@ m_getretfrmadr(void **pp)
 static __inline__ void *
 m_cmpxchg32ptr(m_atomic32_t **p,
                m_atomic32_t *want,
-               volatile void *val)
+               m_atomicptr_t *val)
 {
     void *res;
 
@@ -120,9 +106,9 @@ m_cmpxchg32ptr(m_atomic32_t **p,
  * - return original nonzero on success, zero on failure
  */
 static __inline__ long
-m_cmpxchg64(m_atomic64_t *p64,
-            m_atomic64_t *want,
-            m_atomic64_t *val)
+m_cmpxchg64(int64_t *p64,
+            int64_t *want,
+            int64_t *val)
 {
     return __sync_bool_compare_and_swap(p64, want, val);
 }
@@ -130,9 +116,9 @@ m_cmpxchg64(m_atomic64_t *p64,
 #elif defined(_MSC_VER)
 
 static __inline__ long
-m_cmpxchg64(long long *p64,
-            long long *want,
-            long long *val)
+m_cmpxchg64(int64_t *p64,
+            int64_t *want,
+            int64_t *val)
 {
     long long ask = *want;
     long long say = *val;
@@ -157,8 +143,8 @@ m_cmpxchg64(int64_t *ptr,
             int64_t want,
             int64_t val)
 {
-    long    res = 0;
-    int32_t ebx __asm__ ("ebx") = want& 0xffffffff;
+    long     res = 0;
+    register int32_t ebx __asm__ ("ebx") = want & 0xffffffff;
 
     __asm__ __volatile (
         "movl %%edi, %%ebx\n" // load EBX

@@ -1,7 +1,7 @@
 #include <kern/conf.h>
 #include <zero/cdefs.h>
 #include <mach/param.h>
-#include <zero/types.h>
+#include <mach/types.h>
 #include <zero/fastudiv.h>
 #include <mt/mtx.h>
 #include <kern/malloc.h>
