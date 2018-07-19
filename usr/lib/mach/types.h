@@ -20,8 +20,8 @@
 #endif
 
 /* machine types */
-typedef int32_t    m_reg_t;
-typedef uint32_t   m_ureg_t;
+typedef int8_t     m_byte_t;
+typedef int16_t    m_dualbyte_t;
 typedef uintptr_t  m_adr_t;
 typedef void      *m_ptr_t;
 

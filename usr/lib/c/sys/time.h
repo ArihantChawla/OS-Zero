@@ -93,7 +93,7 @@ typedef struct fd_set fd_set;
 
 extern int gettimeofday(struct timeval *__restrict tv,
                         timezone_ptr_t tz);
-#if (USEBSD) && (FAVORBSD)
+#if (USEBSD) && defined(FAVORBSD)
 extern int settimeofday(const struct timeval *tv, const struct timezone *tz);
 extern int adjtime(const struct timeval *delta, struct timeval *olddelta);
 #endif

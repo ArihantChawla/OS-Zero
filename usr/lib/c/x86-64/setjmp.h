@@ -38,7 +38,7 @@ typedef struct _jmpbuf jmp_buf[1];
 struct _jmpframe {
     int64_t rbp;
     int64_t rip;
-    uint8_t args[EMPTY];
+    uint8_t args[VLA];
 };
 
 /*

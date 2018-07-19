@@ -1,18 +1,18 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include <errno.h>
-//#include <pthread.h>
-
-#if defined(__ZEROLIBC__)
-
-#include <bits/pthread.h>
+#include <pthread.h>
 
 #define __PTHREAD_KEY_NHASHBIT 16
 #define __PTHREAD_KEY_NHASH    (1UL << __PTHREAD_KEY_NHASHBIT)
 
+#include <zero/hash.h>
 #if (PTHREAD_KEY_SIZE == 4)
-#define _pthreadhashkey(k) (tmhash32(k) & ((1U << __PTHREAD_KEY_NHASHBIT) - 1))
+#define __pthreadhashkey(k)                                             \
+    (tmhash32(k) & ((UINT32_C(1) << __PTHREAD_KEY_NHASHBIT) - 1))
 #elif (PTHREAD_KEY_SIZE == 8)
-#define _pthreadhashkey(k) (tmhash64(k) & ((1UL << __PTHREAD_KEY_NHASHBIT) - 1))
+#define __pthreadhashkey(k)                                             \
+    (tmhash64(k) & ((UINT64_C(1) << __PTHREAD_KEY_NHASHBIT) - 1))
 #endif
 
 struct {
@@ -48,6 +48,4 @@ __pthread_hashkey(struct __pthread_key *data)
 
     return 0;
 }
-
-#endif /* defined(ZEROPTHREAD) */
 

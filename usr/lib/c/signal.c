@@ -4,23 +4,16 @@
 #include <errno.h>
 #include <zero/cdefs.h>
 #include <mach/param.h>
-#if defined(__ZEROLIBC__)
 #include <kern/conf.h>
-#include <bits/signal.h>
-#endif
-#if defined(_ZERO_SOURCE) && defined(__ZEROKERNEL__)
 #include <sys/zero/syscall.h>
-#endif
 
-#if defined(__ZEROLIBC__)
 #define _signocatch(sig)    (g_signocatchbits & (UINT64_C(1) << (sig)))
 /* NOTE: SIG_DFL is 0 */
 static THREADLOCAL sigset_t sigmasktab[NPROCTASK] ALIGNED(PAGESIZE);
 static __sighandler_t       sigfunctab[_NSIG] = { 0 };
-static const uint64_t       g_signocatchbits = _SIGNOCATCHBITS;
-#endif
+static const uint64_t       g_signocatchbits = __SIGNOCATCHBITS;
 
-#if (USEBSD) || (USEGNU)
+#if defined(USEBSD) || defined(USEGNU)
 #undef SYSV_SIGNAL
 #else /* UNIX / System V semantics; reset to SIG_DFL, do not block */
 #define SYSV_SIGNAL
@@ -29,7 +22,7 @@ static const uint64_t       g_signocatchbits = _SIGNOCATCHBITS;
 int
 sigaction(int sig, const struct sigaction *act, struct sigaction *oldact)
 {
-    if (!_sigvalid(sig)
+    if (!__sigisvalid(sig)
         || sig == SIGSTOP
         || sig == SIGKILL) {
         errno = EINVAL;
@@ -53,7 +46,7 @@ signal(int sig, __sighandler_t func)
     int              flg = SA_RESTART;
 #endif
 
-    if (!_sigvalid(sig)
+    if (!__sigisvalid(sig)
         || sig == SIGSTOP
         || sig == SIGKILL) {
         errno = EINVAL;
@@ -90,7 +83,7 @@ sysv_signal(int sig, __sighandler_t func)
     __sighandler_t   oldfunc;
     int              flg = SA_ONESHOT | SA_NOMASK | SA_INTERRUPT;
 
-    if (!_sigvalid(sig)
+    if (!__sigisvalid(sig)
         || sig == SIGSTOP
         || sig == SIGKILL) {
         errno = EINVAL;
@@ -128,7 +121,7 @@ bsd_signal(int sig, __sighandler_t func)
     struct sigaction oldsa;
     __sighandler_t   oldfunc;
 
-    if (!_sigvalid(sig)
+    if (!__sigisvalid(sig)
         || sig == SIGSTOP
         || sig == SIGKILL) {
         errno = EINVAL;

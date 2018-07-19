@@ -28,6 +28,7 @@ extern uint64_t asmgetpc(void);
 #define m_scanlo1bit(l)              m_bsf64(l)
 #define m_scanhi1bit(l)              m_bsr64(l)
 
+struct m_stkframe;
 #define __RIPFRAMEOFS                offsetof(struct m_stkframe, pc)
 
 static INLINE void

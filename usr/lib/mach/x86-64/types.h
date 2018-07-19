@@ -64,6 +64,8 @@ struct m_fpystate64 {
     int32_t _ymm[64];
 };
 
+typedef struct m_fpstate64 m_fpstate_t;
+
 struct m_fpstate64 {
     struct m_fpxstate64 _fpx;
     struct m_fpxhdr64   _fpxhdr;

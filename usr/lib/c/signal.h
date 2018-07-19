@@ -69,7 +69,7 @@ extern __sighandler_t ssignal(int sig, __sighandler_t func);
 extern int            gsignal(int sig);
 #endif /* USESVID */
 //extern void           psignal(int sig);
-#if (FAVORBSD)
+#if defined(FAVORBSD)
 /* set mask to blocked signals, wait for signal, restore the mask */
 extern int            sigpause(int mask);
 #elif (_XOPEN_SOURCE)

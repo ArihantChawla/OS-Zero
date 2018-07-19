@@ -1,5 +1,3 @@
-#if defined(__ZEROLIBC__)
-
 #include <kern/conf.h>
 #include <kern/version.h>
 #include <errno.h>
@@ -8,8 +6,8 @@
 #include <unistd.h>
 #include <sys/sysinfo.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
-#include <zero/mtx.h>
+#include <mach/param.h>
+#include <mt/mtx.h>
 #include <kern/cpu.h>
 #include <kern/io/buf.h>
 //#include <kern/unit/x86/cpu.h>
@@ -23,7 +21,7 @@
 
 long sysconftab[NSYSCONF]
 = {
-    BUFSIZE,                    /* _SC_BLKSIZE */
+    BUFMINSIZE,                 /* _SC_BLKSIZE */
     0,                          /* _SC_L2_NWAY */
     0,                          /* _SC_L2_SIZE */
     0,                          /* _SC_L1NWAYDATA */
@@ -61,7 +59,7 @@ sysconfupd(int name)
 {
     long *ptr = sysconftab - MINSYSCONF;
     long  ret = -1;
-    
+
     switch (name) {
         case _SC_NPROCESSORS_ONLN:
             ret = ptr[_SC_NPROCESSORS_ONLN] = get_nprocs();
@@ -81,7 +79,7 @@ sysconfupd(int name)
             break;
     }
 
-    return ret; 
+    return ret;
 }
 
 static void
@@ -93,14 +91,14 @@ sysconfinit(long *tab)
     fmtxlk(&sysconflk);
     if (!(sysconfbits & SYSCONF_CPUPROBE)) {
         /* probe persistent values */
-        cpuprobe(&cpuinfo);
-        ptr[_SC_L2_NWAY] = cpuinfo.l2.nway;
-        ptr[_SC_L2_SIZE] = cpuinfo.l2.size;
-        ptr[_SC_L1_DATA_NWAY] = cpuinfo.l1d.nway;
-        ptr[_SC_L1_INST_NWAY] = cpuinfo.l1i.nway;
-        ptr[_SC_L1_DATA_SIZE] = cpuinfo.l1d.size;
-        ptr[_SC_L1_INST_SIZE] = cpuinfo.l1i.size;
-        ptr[_SC_CACHELINE_SIZE] = cpuinfo.l2.clsz;
+        cpuprobe(0, &cpuinfo, &cpuinfo.cache);
+        ptr[_SC_L2_NWAY] = cpuinfo.cache.l2.nway;
+        ptr[_SC_L2_SIZE] = cpuinfo.cache.l2.size;
+        ptr[_SC_L1_DATA_NWAY] = cpuinfo.cache.l1d.nway;
+        ptr[_SC_L1_INST_NWAY] = cpuinfo.cache.l1i.nway;
+        ptr[_SC_L1_DATA_SIZE] = cpuinfo.cache.l1d.size;
+        ptr[_SC_L1_INST_SIZE] = cpuinfo.cache.l1i.size;
+        ptr[_SC_CACHELINE_SIZE] = cpuinfo.cache.l2.clsz;
         sysconfbits |= SYSCONF_CPUPROBE;
     }
     if (sysconfbits & SYSCONF_INIT) {
@@ -175,6 +173,4 @@ main(int argc, char *argv[])
     exit(0);
 }
 #endif
-
-#endif /* defined(__ZEROLIBC__) */
 

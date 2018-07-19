@@ -82,33 +82,32 @@ inet_ntoa(struct in_addr *adr)
 int
 inet_aton(const char *cptr, struct in_addr *adr)
 {
-    char    *ptr = cptr;
     uint8_t *aptr = (uint8_t *)adr;
     long     n = 0;
     long     val;
 
     while (1) {
         val = 0;
-        if (!isdigit(ptr[0])) {
+        if (!isdigit(cptr[0])) {
 
             return 0;
         }
-        while (isdigit(ptr[0])) {
+        while (isdigit(cptr[0])) {
             val *= 10;
-            val += ptr[0];
-            ptr++;
+            val += cptr[0];
+            cptr++;
         }
         n++;
-        if (ptr[0] == '.') {
+        if (cptr[0] == '.') {
             if (val > 0xff) {
 
                 return 0;
             } else {
                 *aptr = (uint8_t)val;
-                ptr++;
+                cptr++;
                 aptr++;
             }
-        } else if (!ptr[0] && n == 4) {
+        } else if (!cptr[0] && n == 4) {
 
             return 1;
         } else {

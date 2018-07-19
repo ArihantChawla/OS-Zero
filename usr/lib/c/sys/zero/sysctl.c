@@ -1,9 +1,7 @@
-#if defined(__ZEROLIBC__)
-
 #include <stdlib.h>
 #include <limits.h>
 #include <errno.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/trix.h>
 #include <sys/zero/syscall.h>
 
@@ -11,7 +9,7 @@ int
 chroot(const char *path)
 {
     int retval;
-    
+
     retval = (int)_syscall(SYS_SYSCTL, SYSCTL_CHROOT, SYS_NOARG,
                            (uintptr_t)path);
 
@@ -40,6 +38,4 @@ ioperm(unsigned long from, unsigned long num, int val)
 
     return retval;
 }
-
-#endif /* defined(__ZEROLIBC__) */
 

@@ -30,7 +30,7 @@ void   abort(void);
 void   exit(int status);
 int    atexit(void (*func)(void));
 /* ISO C99 */
-void   _Exit(int status);
+void   _Exit(int status); // equivalent with _exit() as per POSIX.1-2017
 #if defined(_ISO_C11_SOURCE)
 /* TODO: quick_exit(), at_quick_exit() */
 #endif
@@ -129,7 +129,7 @@ char               * realpath(const char *path, char *buf);
 
 /* cryptography */
 void                 setkey(const char *key);
-void                 encrypt(char blk[64], int edflg);
+void                 encrypt(char blk[64], int flg);
 
 /* textual to numerical conversions */
 /* old interface */

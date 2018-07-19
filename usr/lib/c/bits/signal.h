@@ -1,8 +1,6 @@
 #ifndef __BITS_SIGNAL_H__
 #define __BITS_SIGNAL_H__
 
-#if defined(__ZEROLIBC__)
-
 #include <features.h>
 #include <stdint.h>
 #include <errno.h>
@@ -31,12 +29,13 @@ typedef long            pid_t;          // process ID
 typedef uint32_t        uid_t;
 #define __uid_t_defined 1
 #endif
+#include <kern/signal.h>
 
 /* internal. */
-#define _sigvalid(sig)  ((sig) && (!((sig) & ~_SIGMASK)))
-#define _sigrt(sig)     ((sig) && ((sig) & _SIGRTBIT))
-#define _signorm(sig)   ((sig) && (!((sig) & _SIGRTBIT)))
-#define _SIGNOCATCHBITS ((UINT64_C(1) << SIGKILL) | (UINT64_C(1) << SIGSTOP))
+#define __sigisvalid(sig)  (((sig) > 0) && (!((sig) & ~SIGNO_MASK)))
+#define __sigrt(sig)     (((sig) > 0) && ((sig) & _SIGRTBIT))
+#define __signorm(sig)   (((sig) > 0) && (!((sig) & _SIGRTBIT)))
+#define __SIGNOCATCHBITS ((UINT64_C(1) << SIGKILL) | (UINT64_C(1) << SIGSTOP))
 
 #if (defined(__x86_64__) || defined(__amd64__) || defined(___alpha__)   \
      || defined(__i386__) || defined(__i486__)                          \
@@ -64,7 +63,7 @@ typedef void         (*__sighandler_t)(int);
 #define SIG_UNBLOCK  1
 #define SIG_SETMASK  2
 
-#define SIGNO_MASK   0x000000ff
+#define SIGNO_MASK   0x0000003f
 #define SIGDEFER     0x00000100
 #define SIGHOLD      0x00000200
 #define SIGRELSE     0x00000400
@@ -80,8 +79,8 @@ typedef struct {
 typedef int64_t sigset_t;
 #endif
 #if !defined(__pid_t_defined)
-typedef long             pid_t;          // process ID
-#define __pid_t_defined
+typedef int32_t pid_t;
+#define __pid_t_defined 1
 #endif
 
 #if (USEBSD) && (!USEPOSIX)
@@ -295,23 +294,23 @@ struct sigcontext {
 #define sigfillset(sp)                                                  \
     (((sp)->norm = (sp)->rt = ~UINT32_C(0)), 0)
 #define sigaddset(sp, sig)                                              \
-    ((!_sigvalid(sig)                                                   \
+    ((!__sigisvalid(sig)                                                \
       ? (__seterrno(EINVAL), -1L)                                       \
-      : (_signorm(sig)                                                  \
+      : (__signorm(sig)                                                 \
          ? ((sp)->norm |= (1UL << (sig)))                               \
-         : ((sp)->rt |= (1UL << ((sig) - SIGRTMIN))),                  \
+         : ((sp)->rt |= (1UL << ((sig) - SIGRTMIN))),                   \
          0)))
 #define sigdelset(sp, sig)                                              \
-    ((!_sigvalid(sig)                                                   \
+    ((!__sigisvalid(sig)                                                \
       ? (__seterrno(EINVAL), -1L)                                       \
-      : (_signorm(sig)                                                  \
+      : (__signorm(sig)                                                 \
          ? ((sp)->norm &= ~(1UL << (sig)))                              \
-         : ((sp)->rt &= ~(1UL << ((sig) - SIGRTMIN))),                 \
+         : ((sp)->rt &= ~(1UL << ((sig) - SIGRTMIN))),                  \
          0)))
 #define sigismember(sp, sig)                                            \
-    ((!_sigvalid(sig)                                                   \
+    ((!__sigisvalid(sig)                                                \
       ? (__seterrno(EINVAL), -1L)                                       \
-      : (_signorm(sig)                                                  \
+      : (__signorm(sig)                                                 \
          ? (((sp)->norm >> (sig)) & 0x01)                               \
          : (((sp)->rt >> (sig - SIGRTMIN)) & 0x01))))
 #define __sigisemptyset(sp) (!(sp)->norm | !(sp)->rt)
@@ -324,17 +323,17 @@ struct sigcontext {
 #define sigfillset(sp)                                                  \
     (*(sp) = ~0L)
 #define sigaddset(sp, sig)                                              \
-    ((!_sigvalid(sig)                                                   \
+    ((!__sigisvalid(sig)                                                \
       ? (__seterrno(EINVAL), -1L)                                       \
       : ((sp) |= (1UL << (sig)),                                        \
          0)))
 #define sigdelset(sp, sig)                                              \
-    ((!_sigvalid(sig)                                                   \
+    ((!__sigisvalid(sig)                                                \
       ? (__seterrno(EINVAL), -1L)                                       \
       : ((sp) &= ~(1UL << (sig)),                                       \
          0)))
 #define sigismember(sp, sig)                                            \
-    ((!_sigvalid(sig)                                                   \
+    ((!__sigisvalid(sig)                                                \
       ? (__seterrno(EINVAL), -1)                                        \
       : ((*(sp) & (1UL << (sig)))                                       \
          ? 1                                                            \
@@ -385,8 +384,6 @@ struct sigaction {
     sigset_t  sa_mask;
     int       sa_flags;
 };
-
-#endif /* defined(__ZEROLIBC__) */
 
 #endif /* __BITS_SIGNAL_H__ */
 

@@ -9,7 +9,7 @@
 #define ZERONEWFMTX 1
 #endif
 
-#include <zero/conf.h>
+#include <mt/conf.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
@@ -24,7 +24,7 @@ typedef m_atomic_t zerofmtx;
  *Gregan for help with the mutex code.:)
  */
 
-#if defined(PTHREAD) && defined(ZEROPTHREAD)
+#if defined(PTHREAD) && (!ZERO_MUTEX)
 typedef pthread_mutex_t     zeromtx;
 #endif
 

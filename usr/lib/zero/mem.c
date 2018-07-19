@@ -43,7 +43,7 @@ memgettls(size_t size)
     intptr_t         n;
 
     if (size <= MEM_MAX_BLK_SIZE) {
-        _memcalcsmallpool(size, pool);
+        _memcalcblkpool(size, pool);
         slot = &g_memtls->blktab[pool];
     } else {
         _memcalcrunpool(size, pool);
@@ -61,7 +61,7 @@ memgettls(size_t size)
         } else {
             if (size <= MEM_MAX_BLK_SIZE) {
                 slab = memmapslab(pool,
-                                  memnumsmall(pool), memsmallsize(pool),
+                                  memnumblk(pool), memblksize(pool),
                                   MEM_BLK_SLAB);
             } else {
                 slab = memmapslab(pool,

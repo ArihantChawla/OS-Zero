@@ -20,7 +20,7 @@ __errnoinit(void)
     return;
 }
 
-int *
+CONST int *
 __errnoloc(void)
 {
     int *ptr = NULL;
@@ -39,7 +39,7 @@ __errnoloc(void)
 
 static THREADLOCAL int __errno;
 
-int *
+CONST int *
 __errnoloc(void)
 {
     int *ptr = &__errno;

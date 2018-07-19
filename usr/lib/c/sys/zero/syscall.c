@@ -1,5 +1,3 @@
-#if defined(__ZEROLIBC__)
-
 /*
  * libc to syscall interface for Zero
  */
@@ -7,7 +5,7 @@
 #include <features.h>
 #include <errno.h>
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <sys/zero/syscall.h>
 
 #if defined(_WIN32) || (defined(__i386__)                               \
@@ -82,6 +80,4 @@ _syscall(sysreg_t num, sysreg_t arg1, sysreg_t arg2, sysreg_t arg3)
 }
 
 #endif
-
-#endif /* defined(__ZEROLIBC__) */
 

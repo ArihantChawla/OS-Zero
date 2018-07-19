@@ -1,5 +1,3 @@
-#if defined(__ZEROLIBC__)
-
 #include <limits.h>
 #include <stdint.h>
 #include <errno.h>
@@ -53,7 +51,7 @@ int
 sched_get_priority_max(int policy)
 {
     int retval;
-    
+
 #if defined(_ZERO_SOURCE)
     if (policy < __SCHED_MIN_POLICY || policy > __SCHED_MAX_POLICY) {
         errno = EINVAL;
@@ -71,7 +69,7 @@ int
 sched_getscheduler(pid_t pid)
 {
     int retval = -1;
-    
+
     if (!pid) {
         pid = getpid();
     }
@@ -106,7 +104,7 @@ __sched_cpusets_equal(size_t size, cpu_set_t *set1, cpu_set_t *set2)
     unsigned long  lim = size / (sizeof(long) * CHAR_BIT);
     unsigned long *set1ptr = (unsigned long *)(set1)->__bitmap;
     unsigned long *set2ptr = (unsigned long *)(set2)->__bitmap;
-    
+
     for (ndx = 0 ; ndx < lim ; ndx++) {
         if (set1ptr[ndx] != set2ptr[ndx]) {
 
@@ -124,6 +122,4 @@ __sched_alloc_cpuset(int ncpu)
 
     return set;
 }
-
-#endif /* defined(__ZEROLIBC__) */
 

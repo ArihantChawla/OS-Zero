@@ -1,15 +1,15 @@
 #ifndef __BITS_PTHREAD_H__
 #define __BITS_PTHREAD_H__
 
-#if defined(__ZEROLIBC__)
-
 #include <features.h>
 #undef ZEROTHR
 #undef ZEROMTX
 #define ZEROTHR 1
 #define ZEROMTX 1
-#include <zero/thr.h>
-#include <zero/mtx.h>
+#include <mach/param.h>
+#include <mt/thr.h>
+#include <mt/spin.h>
+#include <mt/mtx.h>
 #include <sched.h>
 
 #define PTHREAD_STACK_MIN        16384
@@ -23,7 +23,9 @@ struct __pthread {
     struct __pthread *next;
 };
 
+#define PTHREAD_KEY_SIZE PTRSIZE
 typedef uintptr_t pthread_key_t;
+
 struct __pthread_key {
     pthread_key_t          key;
     void                 (*destroy)(void *);
@@ -33,8 +35,10 @@ struct __pthread_key {
     struct __pthread_key  *next;
 };
 
+typedef zerospin pthread_spinlock_t;
+
 /* prioceil values */
-#define __PTHREAD_PRIOCEIL_MIN   
+#define __PTHREAD_PRIOCEIL_MIN
 /* mutex types */
 #define PTHREAD_MUTEX_NORMAL     0
 #define PTHREAD_MUTEX_RECURSIVE  1
@@ -68,7 +72,7 @@ typedef struct {
     unsigned robust   : 1;
 } pthread_mutex_t;
 
-#endif /* defined(__ZEROLIBC__) */
+typedef zeromtxatr pthread_mutexattr_t;
 
 #endif /* __BITS_PTHREAD_H__ */
 

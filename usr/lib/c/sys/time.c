@@ -1,5 +1,3 @@
-#if defined(__ZEROLIBC__)
-
 #include <errno.h>
 #include <sys/time.h>
 
@@ -17,6 +15,4 @@ setitimer(itimer_which_t which, const struct itimerval *__restrict newval,
 {
     ;
 }
-
-#endif /* defined(__ZEROLIBC__) */
 

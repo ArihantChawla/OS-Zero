@@ -23,7 +23,7 @@ typedef struct __ucontext {
     unsigned long      uc_flags;
     struct __ucontext *uc_link;
     stack_t            uc_stack;
-    struct m_fpstate   _fpstate;
+    m_fpstate_t        _fpstate;
 } ucontext_t;
 
 #endif /* __BITS_UCONTEXT_H__ */

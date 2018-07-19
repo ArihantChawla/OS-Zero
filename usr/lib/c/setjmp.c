@@ -1,5 +1,3 @@
-#if defined(__ZEROLIBC__)
-
 #include <features.h>
 #include <stddef.h>
 #include <setjmp.h>
@@ -52,7 +50,7 @@ __attribute__ ((returns_twice))
 setjmp(jmp_buf env)
 {
     m_setjmp(env);
-#if !(USEOLDBSD)
+#if !defined(USEOLDBSD)
     _savesigmask(&(env->sigmask));
 #endif
 
@@ -63,7 +61,7 @@ ASMLINK NORETURN
 void
 longjmp(jmp_buf env, int val)
 {
-#if !(USEOLDBSD)
+#if !defined(USEOLDBSD)
     _loadsigmask(&(env->sigmask));
 #endif
     m_longjmp(env, val);
@@ -128,6 +126,4 @@ siglongjmp(sigjmp_buf env, int val)
 }
 
 #endif
-
-#endif /* defined(__ZEROLIBC__) */
 

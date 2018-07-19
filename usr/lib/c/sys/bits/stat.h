@@ -4,12 +4,9 @@
 #include <kern/perm.h>
 #include <kern/sys/stat.h>
 
-#define S_ISUID    PERM_SETUID
-#define S_ISGID    PERM_SETGID
-#if (_BSD_SOURCE)
-#define S_ISTXT    PERM_STICKY
+#if !defined(S_ISUID)
+#include <share/perm.h>
 #endif
-#define S_ISVTX    S_ISTXT
 
 #define __S_IFMT   NODE_MASK
 #define __S_IFIFO  NODE_FIFO

@@ -3,7 +3,12 @@
 
 #if !defined(__KERNEL__)
 
-#include <stddef.h>
+#if !defined(NULL)
+#include <share/null.h>
+#endif
+#if !defined(__size_t_defined)
+#include <share/size.h>
+#endif
 #include <zero/cdefs.h>
 #if !defined(__GLIBC__)
 #include <bits/string.h>

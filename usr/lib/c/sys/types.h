@@ -5,6 +5,9 @@
 #include <stdint.h>
 //#include <stddef.h>
 #include <sys/time.h>
+#if !defined(__id_t_defined)
+#include <share/id_t.h>
+#endif
 #if !defined(__time_types_defined)
 #include <share/time.h>
 #endif
@@ -48,10 +51,7 @@ typedef unsigned char   uchar;
 typedef unsigned short  ushort;
 typedef unsigned int    uint;
 typedef unsigned long   ulong;
-#if 0
 typedef int64_t         blkcnt_t;
-typedef int64_t         clock_t;
-#endif
 typedef long            blksize_t;
 typedef long            blksize_cnt;
 typedef short           cnt_t;
@@ -60,38 +60,22 @@ typedef long            daddr_t;        // disk address
 typedef int32_t         dev_t;          // device number
 typedef dev_t           major_t;
 typedef dev_t           minor_t;
-//typedef uint32_t        fsblkcnt_t;     // filesystem block count
-//typedef uint32_t        fsfilcnt_t;     // filesystem file count
-#if !defined(__id_t_defined)
-typedef uint32_t        id_t;
-#define __id_t_defined 1
-#endif
-#if !defined(__uid_t_defined)
-typedef uint32_t        uid_t;
-#define __uid_t_defined 1
-#endif
-typedef uint32_t        gid_t;          // group ID
 typedef uintptr_t       key_t;          // IPC key
 typedef unsigned long   mode_t;         // file attributes
 typedef int32_t         nlink_t;        // link count
 typedef int64_t         loff_t;
 #if !defined(__off_t_defined)
-#include <bits/off_t.h>
+#include <share/off_t.h>
 #endif /* !defined(__off_t_defined) */
-#if (_FILE_OFFSET_BITS == 32)
-typedef int32_t         blkcnt_t;
-typedef uint32_t        ino_t;          // inode number
-typedef uint32_t        fsblkcnt_t;
-typedef uint32_t        fsfilcnt;
-#else
-typedef int64_t         blkcnt_t;
+#if ((_FILE_OFFSET_BITS == 64)                                          \
+     || defined(_LARGEFILE_SOURCE) || defined(_LARGEFILE64_SOURCE))
 typedef uint64_t        ino_t;
 typedef uint64_t        fsblkcnt_t;
 typedef uint64_t        fsfilcnt_t;
-#endif
-#if !defined(__pid_t_defined)
-typedef long            pid_t;          // process ID
-#define __pid_t_defined 1
+#else
+typedef uint32_t        ino_t;          // inode number
+typedef uint32_t        fsblkcnt_t;
+typedef uint32_t        fsfilcnt;
 #endif
 #if defined(_LARGEFILE64_SOURCE)
 typedef uint64_t        ino64_t;

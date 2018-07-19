@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <dlfcn.h>
 #include <execinfo.h>
-#include <zero/asm.h>
+#include <mach/asm.h>
 
 #if defined(_ZERO_SOURCE) && 0
 #define _BTPRINTFMT  "%a <%n%D> at %f%L"
@@ -88,7 +88,7 @@ _btprintf(__btsymadrlist_t buf, __btsize_t size, const char *fmt, int fd)
                     fptr += 2;
                 }
             }
-            if (fptr == '\0') {
+            if (*fptr == '\0') {
                 fprintf(fp, "%c", '\n');
                 nl = 1;
 
@@ -134,7 +134,7 @@ _btprintf(__btsymadrlist_t buf, __btsize_t size, const char *fmt, int fd)
                     cptr = mptr + slen;
                 }
             }
-            if (fptr == '\0') {
+            if (*fptr == '\0') {
                 cptr[0] = '\n';
                 nl = 1;
                 cptr++;
@@ -151,13 +151,13 @@ _btprintf(__btsymadrlist_t buf, __btsize_t size, const char *fmt, int fd)
         }
     }
     if (fp) {
-        
+
         ret = 0;
     } else {
-        
+
         ret = (uintptr_t)mptr;
     }
-    
+
     return ret;
 }
 
@@ -233,7 +233,7 @@ _backtrace(void **buf, __btsize_t size, long syms, int fd)
                     }
                 } else {
                     ret = ndx;
-                    
+
                     break;
                 }
                 oldptr = ptr;
@@ -246,7 +246,7 @@ _backtrace(void **buf, __btsize_t size, long syms, int fd)
                     pptr[ndx] = ptr;
                 } else {
                     ret = ndx;
-                    
+
                     break;
                 }
                 oldptr = ptr;

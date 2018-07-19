@@ -3,9 +3,7 @@
 #include <stdio.h>
 #include <zero/cdefs.h>
 #include <mt/mtx.h>
-#if defined(__ZEROKERNEL__)
 #include <sys/zero/syscall.h>
-#endif
 
 #define EXIT_NOFUNC  (1 << 0)
 #define EXIT_NOFLUSH (1 << 1)
@@ -107,8 +105,6 @@ __atexit(void)
     fmtxunlk(&g_exit.lk);
 }
 
-#if defined(__ZEROKERNEL__)
-
 NORETURN
 void
 __exit(int status, long flg)
@@ -150,6 +146,4 @@ _Exit(int status)
 
     /* NOTREACHED */
 }
-
-#endif /* defined(__ZEROKERNEL__) */
 

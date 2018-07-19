@@ -1,10 +1,8 @@
 #ifndef __SHARE_NULL_H__
 #define __SHARE_NULL_H__
 
-#if defined(_ZERO_SOURCE)
-
-#include <mach/param.h>
 #include <stdint.h>
+#include <mach/param.h>
 
 #if !defined(NULL)
 #if (PTRSIZE == 8)
@@ -17,8 +15,6 @@
 #define NULL ((void *)0UL))
 #endif
 #endif
-
-#endif /* _ZERO_SOURCE */
 
 #endif /* __SHARE_NULL_H__ */
 

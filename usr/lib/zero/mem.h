@@ -40,6 +40,7 @@
 #define MEM_SLAB_BLK_BITS    (MEM_SLAB_LOW_BITS - MEM_SLAB_TYPE_BITS) // ID bits
 #define MEM_SLAB_BLK_IDS     (1 << MEM_SLAB_BLK_BITS) // max # of IDs
 #define MEM_SLAB_BLK_MASK    (~(((uintptr_t)1 << MEM_SLAB_LOW_BITS) - 1)) // ID
+#define MEM_BLK_SLAB_SHIFT   4 // slab is PAGESIZE << MEM_BLK_SLAB_SHIFT bytes
 
 /* slab book-keeping info */
 #define mempageid(ptr)       ((uintptr_t)(ptr) & ((uintptr_t)1 << PAGESIZELOG2))

@@ -2,9 +2,7 @@
 #define __KERN_UNIT_IA32_TYPES_H__
 
 #include <stdint.h>
-
-typedef uint32_t pde_t;
-typedef uint32_t pte_t;
+#include <kern/unit/x86/types.h>
 
 #endif /* __KERN_UNIT_IA32_TYPES_H__ */
 

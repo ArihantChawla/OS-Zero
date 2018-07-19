@@ -13,21 +13,27 @@
 struct lfdeqitem {
     struct lfdeqitem *prev;
     struct lfdeqitem *next;
-    struct {
-        int16_t       left;
-        int16_t       right;
-    } info;
+    union {
+        int32_t       i32;
+        struct {
+            int16_t   left;
+            int16_t   right;
+        } link;
+    } data;
     int32_t           _pad;
 };
 
-#define lfdeqislpush(item)  ((item)->info.left & LFDEQ_PUSH_BIT)
-#define lfdeqisrpush(item)  ((item)->info.right & LFDEQ_PUSH_BIT)
+#define lfdeqislpush(item)  ((item)->data.link.left & LFDEQ_PUSH_BIT)
+#define lfdeqisrpush(item)  ((item)->data.link.right & LFDEQ_PUSH_BIT)
 #define lfdeqisstable(item) (!lfdeqislpush(item) && !lfdeqisrpush(item))
 struct lfdeq {
-    struct {
-        int16_t   left;
-        int16_t   right;
-    } info;
+    volatile union {
+        int32_t       i32;
+        struct {
+            int16_t   left;
+            int16_t   right;
+        } link;
+    } data;
 };
 
 extern struct lfdeqitem *lfdeqbase;
@@ -37,10 +43,8 @@ int16_t lfdeqallocitem(void);
 
 #define lfdeqsetdata(item, data, len) memcpy(item, data, len)
 
-#if 0
-
 static __inline__ void
-lfdeqfixright(struct lfdeqitem *item)
+lfdeqfixright(struct lfdeq *deq, struct lfdeqitem *item)
 {
     struct lfdeqitem *node;
     struct lfdeqitem *prev;
@@ -48,30 +52,30 @@ lfdeqfixright(struct lfdeqitem *item)
     int16_t           left;
     int16_t           right;
 
-    right = item->info.right;
-    *((uint32_t *)&node->info) = *((uint32_t *)&item->info);
-    if (*((uint32_t *)&lfdeq.info) != *((uint32_t *)&item->info)) {
+    right = item->data.link.right;
+    node->data.i32 = item->data.i32;
+    if (deq->data.i32 != item->data.i32) {
 
         return;
     }
     next = &lfdeqbase[right];
-    node->info.right |= LFDEQ_PUSH_BIT;
-    left = next->info.left;
+    node->data.link.right |= LFDEQ_PUSH_BIT;
+    left = next->data.link.left;
     prev = &lfdeqbase[left];
-    if (*((uint32_t *)&lfdeq.info) != *((uint32_t *)&node->info)) {
+    if (deq->data.i32 != node->data.i32) {
 
         return;
     }
-    right = prev->next->info.right;
-    prev->next->info.right |= LFDEQ_PUSH_BIT;
+    right = prev->next->data.link.right;
+    prev->next->data.link.right |= LFDEQ_PUSH_BIT;
     if (prev->next != next) {
-        if (*((uint32_t *)&lfdeq.info) != *((uint32_t *)&item->info)) {
+        if (deq->data.i32 != item->data.i32) {
 
             return;
         }
-        if (m_cmpswap32((m_atomic32_t *)&prev->info,
-                        (m_atomic32_t)prev->next->info,
-                        (m_atomic32_t)prev->next->info | LFDEQ_PUSH_BIT)) {
+        if (m_cmpswap32((m_atomic32_t *)&prev->data.i32,
+                        (m_atomic32_t)prev->next->data.i32,
+                        (m_atomic32_t)prev->next->data.i32 | LFDEQ_PUSH_BIT)) {
 
             return;
         }
@@ -79,18 +83,16 @@ lfdeqfixright(struct lfdeqitem *item)
 }
 
 static __inline__ void
-lfdeqfix(struct lfdeqitem *item)
+lfdeqfix(struct lfdeq *deq, struct lfdeqitem *item)
 {
     if (lfdeqisrpush(item)) {
-        lfdeqfixright(item);
-    } else if (lfdeqislpush(item)) {
-        lfdeqfixleft(item);
+        lfdeqfixright(deq, item);
+        //    } else if (lfdeqislpush(item)) {
+        //        lfdeqfixleft(item);
     }
 
     return;
 }
-
-#endif /* 0 */
 
 static __inline__ void
 lfdeqpushtail(struct lfdeq *deq, void *data, size_t len)
@@ -101,26 +103,26 @@ lfdeqpushtail(struct lfdeq *deq, void *data, size_t len)
 
     lfdeqsetdata(item, data, len);
     do {
-        *((uint32_t *)&head.info) = *((uint32_t *)&lfdeq.info);
-        if (!item->info.right) {
-            if (m_cmpswap32((m_atomic32_t *)&lfdeq.info,
-                            (m_atomic32_t)&head.info,
-                            (m_atomic32_t)&item->info)) {
+        head.data.i32 = deq->data.i32;
+        if (!item->data.link.right) {
+            if (m_cmpswap32((m_atomic32_t *)&deq->data.i32,
+                            (m_atomic32_t)head.data.i32,
+                            (m_atomic32_t)item->data.i32)) {
 
                 return;
             }
         } else if (lfdeqisstable(&lfdeq)) {
-            item->info.left = lfdeq.info.right;
-            item->info.right |= LFDEQ_PUSH_BIT;
-            if (m_cmpswap32((m_atomic32_t *)&lfdeq.info,
-                            (m_atomic32_t)&head.info,
-                            (m_atomic32_t)&item->info)) {
-                lfdeqfixright(item);
+            item->data.link.left = deq->data.link.right;
+            item->data.link.right |= LFDEQ_PUSH_BIT;
+            if (m_cmpswap32((m_atomic32_t *)&deq->data.i32,
+                            (m_atomic32_t)head.data.i32,
+                            (m_atomic32_t)item->data.i32)) {
+                lfdeqfixright(deq, item);
 
                 return;
             }
         } else {
-            lfdeqfix(*(uint32_t *)&head.info);
+            lfdeqfix(deq, &head);
         }
     } while (1);
 

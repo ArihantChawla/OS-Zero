@@ -8,7 +8,6 @@
 #include <zero/cdefs.h>
 #include <mach/param.h>
 #include <mach/asm.h>
-#define PTHREAD 1
 #include <mt/thr.h>
 
 #if !defined(TKTLKSIZE)

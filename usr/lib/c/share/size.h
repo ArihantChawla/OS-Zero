@@ -1,14 +1,12 @@
 #ifndef __SHARE_SIZE_H__
 #define __SHARE_SIZE_H__
 
-//#include <zero/param.h>
-#if !defined(__size_t_defined)
-#if defined(_MSC_VER)
+#include <mach/param.h>
+
+#if (PTRSIZE == 8)
 typedef unsigned long long size_t;
-#else
-typedef unsigned long      size_t;
-#endif
-#define __size_t_defined 1
+#elif (PTRSIZE == 4)
+typedef unsigned long size_t;
 #endif
 
 #endif /* __SHARE_SIZE_H__ */

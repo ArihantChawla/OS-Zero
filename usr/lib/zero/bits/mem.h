@@ -54,7 +54,7 @@
 #endif
 
 /* calculate bucket for small allocation of sz bytes; multiple of CLSIZE */
-#define _memcalcsmallpool(sz, pool)                                     \
+#define _memcalcblkpool(sz, pool)                                       \
     do {                                                                \
         MEMUWORD_T _res = sz;                                           \
                                                                         \

@@ -1,9 +1,7 @@
-#if defined(__ZEROLIBC__)
-
 #include <features.h>
 
 #include <stdint.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/cdefs.h>
 #define NOP(x)        ((void)0)
 #define NOP3(x, y, z) ((void)0)
@@ -210,6 +208,4 @@ kbdinit(void)
     kbdinitmap_us();
 }
 #endif
-
-#endif /* defined(__ZEROLIBC__) */
 

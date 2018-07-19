@@ -25,7 +25,7 @@
 #include <zero/cdefs.h>
 #include <mach/param.h>
 #if (!RINGATOMIC)
-#include <zero/mtx.h>
+#include <mt/mtx.h>
 #endif
 #include <zero/trix.h>
 #if !defined(RING_MALLOC) || !defined(RING_FREE)
@@ -89,7 +89,7 @@ struct ringbuf {
 #if (RINGSHAREBUF)
     uint8_t   *data;
 #else
-    uint8_t    data[EMPTY];
+    uint8_t    data[VLA];
 #endif
 } ALIGNED(PAGESIZE);
 

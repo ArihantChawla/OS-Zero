@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <strings.h>
-#include <zero/param.h>
+#include <mach/param.h>
 
 void
 bzero(void *ptr, size_t nb)

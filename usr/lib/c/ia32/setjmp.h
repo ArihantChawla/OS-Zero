@@ -29,7 +29,7 @@ typedef struct _jmpbuf jmp_buf[1];
 struct _jmpframe {
     int32_t ebp;
     int32_t eip;
-    uint8_t args[EMPTY];
+    uint8_t args[VLA];
 };
 
 /*
@@ -88,7 +88,6 @@ struct _jmpframe {
                               : "eax", "ebx", "ecx", "edx",             \
                                 "esi", "edi", "ebp", "esp");            \
     } while (0)
-
 
 #endif /* __IA32_SETJMP_H__ */
 

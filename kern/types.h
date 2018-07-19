@@ -5,27 +5,18 @@
 #include <time.h>
 //#include <sys/types.h>
 #include <mach/param.h>
-#include <zero/trix.h>
+#include <mach/types.h>
 #if defined(__x86_64__) || defined(__amd64__)
 #include <kern/unit/x86-64/types.h>
 #elif defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__)
 #include <kern/unit/ia32/types.h>
 #endif
-
-/* machine [integer] register for better portability */
-/* Windows compilers have 32-bit longs on 64-bit systems... */
-#if (WORDSIZE == 4)
-typedef int32_t   m_ireg_t;
-typedef uint32_t  m_ureg_t;
-#elif (WORDSIZE == 8)
-typedef int64_t   m_ireg_t;
-typedef uint64_t  m_ureg_t;
-#endif
+#include <zero/trix.h>
 /* byte-pointer (for arithmetics */
 #define m_castadr(adr, type) ((type)(adr))
 
 /* signed types to facilitate negative return values such as -1 */
-typedef intptr_t desc_t;
+typedef int32_t desc_t;
 
 struct stkhdr {
     int8_t *top;

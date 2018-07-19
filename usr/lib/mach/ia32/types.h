@@ -104,6 +104,8 @@ struct m_tcb {
 
 #endif
 
+typedef struct m_fpstate32 m_fpstate_t;
+
 struct m_ctx {
     int                onstk;   // non-zero if on signal-stack
     sigset_t           oldmask; // signal mask to restore

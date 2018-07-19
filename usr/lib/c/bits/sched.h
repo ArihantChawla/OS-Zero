@@ -10,7 +10,7 @@
 #include <time.h>
 #endif
 #include <zero/cdefs.h>
-#include <zero/param.h>
+#include <mach/param.h>
 #include <zero/trix.h>
 
 /* __policy-field */
