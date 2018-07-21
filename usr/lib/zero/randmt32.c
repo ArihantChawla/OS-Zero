@@ -31,7 +31,6 @@
  * - elimination of modulus calculations and in-loop branches by unrolling loops
  */
 
-#include <zero/conf.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <zero/cdefs.h>
@@ -97,7 +96,7 @@ pthread_mutexattr_t randmt32mtxatr;
 
 #if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
 void
-_randmt32init(ZERO_MUTEX_TYPE *mtx, void *atr)
+randmt32init(ZERO_MUTEX_TYPE *mtx, void *atr)
 {
 
     return;
@@ -105,14 +104,14 @@ _randmt32init(ZERO_MUTEX_TYPE *mtx, void *atr)
 #define _randmt32mtxinit(imptr, mptr, aptr, iptr)
 #else
 void
-_randmt32init(pthread_mutex_t *mtx, void *atr)
+randmt32init(pthread_mutex_t *mtx, void *atr)
 {
     pthread_mutexattr_init(atr);
     pthread_mutex_init(mtx, atr);
 
     return;
 }
-#define _randmt32mtxinit(imptr, mptr, aptr, iptr)                       \
+#define randmt32mtxinit(imptr, mptr, aptr, iptr)                        \
     do {                                                                \
         if (!randmt32init) {                                            \
             if (pthread_mutex_trylock(imptr)) {                         \

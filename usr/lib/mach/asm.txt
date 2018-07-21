@@ -34,17 +34,16 @@ m_atomicadr_t	- atomic integer address value for flag-bits
 macros
 ------
 
-- m_membar() - memory barrier
+- m_membar() - full [read/write] memory barrier
   - synchronize pending mempry operations
-- m_memddbar()   - data dependency barrier
+- m_memddbar()  - data dependency barrier - synonymous with m_membar()
   -
-* - m_memrdbar()   - read barrier
- * - m_memwrbar()   - write barrier
- * m_waitspin()         - pause, wait, or loop (in spin-wait loops)
- * m_endspin()          - exit spin-loop (where relevant, empty elsewhere)
- * m_waitint()  	- pause until interrupt received
- * m_cmpswap()  	- atomic compare and swap operation
- * m_fetchadd()   	- atomic fetch and add
- * m_getretadr(pp)      - get return address of current function to *(pp)
- * m_setretadr(pp)      - store return address of current function to *(pp)
- */
+- m_memrdbar()  - read barrier
+- m_memwrbar()  - write barrier
+- m_waitspin()  - pause, wait, or loop (in spin-wait loops)
+- m_endspin()   - exit spin-loop (where relevant, empty elsewhere)
+- m_waitint()  	- pause until interrupt received
+- m_cmpswap()  	- atomic compare and swap operation
+- m_fetchadd()  - atomic fetch and add
+- m_getretadr() - get return address of current function
+
