@@ -7,6 +7,8 @@
  * - m_cmpswapbit() - bit-level atomic compare and swap
  */
 
+#include <mach/atomic.h>
+
 /* for systems without GNU C, we define these in e.g. <mach/ia32/asm.h> */
 #if defined(__GNUC__)
 /* stack frames */

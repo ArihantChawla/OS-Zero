@@ -7,7 +7,7 @@
 /* atomic types */
 #if (PTRSIZE == 8)
 typedef int64_t    m_atomic_t;
-#else
+#elif (PTRSIZE == 4)
 typedef int32_t    m_atomic_t;
 #endif
 typedef int8_t     m_atomic8_t;

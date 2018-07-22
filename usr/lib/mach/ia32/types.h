@@ -8,7 +8,7 @@
 typedef int32_t  m_reg_t;
 typedef uint32_t m_ureg_t;
 
-typedef int32_t  m_atomic_t;
+//typedef int32_t  m_atomic_t;
 
 /* C call frame - 8 bytes */
 struct m_stkframe {

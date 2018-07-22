@@ -1,6 +1,8 @@
 #ifndef __KERN_UNIT_X86_CPU_H__
 #define __KERN_UNIT_X86_CPU_H__
 
+#include <mach/types.h>
+
 #if (PTRBITS == 32)
 extern volatile struct cpu  * k_curcpu  __asm__ ("%gs:0");
 extern volatile long          k_curunit __asm__ ("%gs:4");

@@ -4,6 +4,7 @@
 #include <mt/conf.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <mt/mtx.h>
 
 #if defined(PTHREAD) && !defined(__KERNEL__)
 #define thrid() ((uintptr_t)pthread_self())
@@ -20,9 +21,6 @@
 //#elif defined(ZEROTHR)
 //#define thryield() /* FIXME */
 #endif
-
-#include <mt/conf.h>
-#include <mt/mtx.h>
 
 #if defined(ZERO_THREAD)
 

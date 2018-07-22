@@ -12,14 +12,8 @@
 #define PTHREAD_STACK_MIN        16384
 
 typedef uintptr_t  pthread_t;
-typedef zerothratr pthread_attr_t;
-
-struct __pthread {
-    pthread_t         id;
-    pthread_attr_t    atr;
-    struct __pthread *prev;
-    struct __pthread *next;
-};
+typedef uintptr_t  pthread_key_t;
+typedef zerospin   pthread_spinlock_t;
 
 #define PTHREAD_KEY_SIZE PTRSIZE
 typedef uintptr_t pthread_key_t;
@@ -32,8 +26,6 @@ struct __pthread_key {
     struct __pthread_key  *prev;
     struct __pthread_key  *next;
 };
-
-typedef zerospin pthread_spinlock_t;
 
 /* prioceil values */
 #define __PTHREAD_PRIOCEIL_MIN
@@ -70,6 +62,13 @@ typedef struct {
 } pthread_mutex_t;
 
 typedef zeromtxatr pthread_mutexattr_t;
+
+struct __pthread {
+    pthread_t            id;
+    pthread_mutexattr_t  atr;
+    struct __pthread    *prev;
+    struct __pthread    *next;
+};
 
 #endif /* __BITS_PTHREAD_H__ */
 

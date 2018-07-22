@@ -8,7 +8,7 @@
 typedef int64_t  m_reg_t;
 typedef uint64_t m_ureg_t;
 
-typedef int64_t  m_atomic_t;
+//typedef int64_t  m_atomic_t;
 
 /* C call frame */
 struct m_stkframe {

@@ -1,5 +1,11 @@
-l8bmach - short introduction
+libmach - short introduction
 ----------------------------
+
+brief
+-----
+
+zero libmach is a collection of machine-dependent routines. these may be used
+for things such as implementing [thread-safe] synchronization primitives.
 
 usage
 -----
@@ -31,19 +37,27 @@ m_atomicptr_t	- atomic pointer storage type
 m_atomicptr8_t	- atomic 8-bit pointer for arithmetics
 m_atomicadr_t	- atomic integer address/pointer value for flag-bits
 
-macros
-------
+interface
+---------
+
+where not otherwise documented, all these operations perform atomically.
 
 - m_membar() - full [read/write] memory barrier
   - synchronize pending mempry operations
-- m_memddbar()  - data dependency barrier - synonymous with m_membar()
-  -
+- m_memddbar()  - data dependency barrier
+  - synonymous with m_membar()
 - m_memrdbar()  - read barrier
 - m_memwrbar()  - write barrier
 - m_waitspin()  - pause, wait, or loop (in spin-wait loops)
+  - e.g. PAUSE on X86 to reduce power consumption of "busy-loops"
 - m_endspin()   - exit spin-loop (where relevant, empty elsewhere)
+  - signal end of wait (ARM SEV etc.) to wake threads up
 - m_waitint()  	- pause until interrupt received
+  - wake up after interrupt has been handled
 - m_cmpswap()  	- atomic compare and swap operation
+  - mutexes and such
 - m_fetchadd()  - atomic fetch and add
+  - reference counts
 - m_getretadr() - get return address of current function
+  - ABI
 

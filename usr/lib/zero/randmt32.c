@@ -4,6 +4,7 @@
 
 #if !defined(RANDMT32TEST)
 #define RANDMT32TEST 0
+#undef RANDMT32_REENTRANT
 #endif
 
 /*
@@ -76,7 +77,7 @@ static unsigned long randmt32key[4]
     0x456UL
 };
 #endif
-#if defined(_REENTRANT)
+#if defined(_REENTRANT) && defined(RANDMT32_REENTRANT)
 #if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
 #include <mt/mtx.h>
 ZERO_MUTEX_TYPE     randmt32initmtx = FMTXINITVAL;
@@ -135,7 +136,7 @@ srandmt32(unsigned long seed)
 #if defined(_REENTRANT)
 #if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
     fmtxlk(&randmt32mtx);
-#else
+#elif defined(RANDMT32_REENTRANT)
     if (!randmt32init) {
         _randmt32mtxinit(&randmt32initmtx, &randmt32mtx,
                          &randmt32mtxatr, &randmt32init);
@@ -155,7 +156,7 @@ srandmt32(unsigned long seed)
 #if defined(_REENTRANT)
 #if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
     fmtxunlk(&randmt32mtx);
-#else
+#elif defined(RANDMT32_REENTRANT)
     pthread_mutex_unlock(&randmt32mtx);
 #endif
 #endif
@@ -175,7 +176,7 @@ srandmt32tab(unsigned long *key, unsigned long keylen)
 #if defined(_REENTRANT)
 #if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
     fmtxlk(&randmt32mtx);
-#else
+#elif defined(RANDMT32_REENTRANT)
     if (!randmt32init) {
         _randmt32mtxinit(&randmt32initmtx, &randmt32mtx,
                          &randmt32mtxatr, &randmt32init);
@@ -223,7 +224,7 @@ srandmt32tab(unsigned long *key, unsigned long keylen)
 #if defined(_REENTRANT)
 #if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
     fmtxunlk(&randmt32mtx);
-#else
+#elif defined(RANDMT32_REENTRANT)
     pthread_mutex_unlock(&randmt32mtx);
 #endif
 #endif
@@ -275,7 +276,7 @@ randmt32(void)
 #if defined(_REENTRANT)
 #if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
     fmtxlk(&randmt32mtx);
-#else
+#elif defined(RANDMT32_REENTRANT)
     if (!randmt32init) {
         _randmt32mtxinit(&randmt32initmtx, &randmt32mtx,
                          &randmt32mtxatr, &randmt32init);
@@ -298,7 +299,7 @@ randmt32(void)
 #if defined(_REENTRANT)
 #if defined(ZERO_THREADS) || defined(ZERO_MUTEX)
     fmtxunlk(&randmt32mtx);
-#else
+#elif defined(RANDMT32_REENTRANT)
     pthread_mutex_unlock(&randmt32mtx);
 #endif
 #endif

@@ -12,10 +12,6 @@
 #define PTHREAD_ONCE_INIT 0
 #endif
 
-typedef uintptr_t  pthread_key_t;
-typedef zeromtxatr pthread_mutexattr_t;
-typedef zerospin   pthread_spinlock_t;
-
 #define pthread_mutex_init(mp, atr) mtxinit(mp, atr)
 #define pthread_mutex_destroy(mp)   mtxfree(mp)
 #define pthread_mutex_trylock(mp)   mtxtrylk(mp)

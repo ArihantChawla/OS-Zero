@@ -11,7 +11,7 @@
 #endif
 
 #include <stdint.h>
-#include <zero/types.h>
+#include <mach/types.h>
 
 typedef struct m_ctx mcontext_t;
 #define __mcontext_t_defined
@@ -23,7 +23,9 @@ typedef struct __ucontext {
     unsigned long      uc_flags;
     struct __ucontext *uc_link;
     stack_t            uc_stack;
-    m_fpstate_t        _fpstate;
+    /* FIXME
+     * m_fpstate_t        _fpstate;
+     */
 } ucontext_t;
 
 #endif /* __BITS_UCONTEXT_H__ */
