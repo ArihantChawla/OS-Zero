@@ -30,9 +30,9 @@ waitqinit(struct waitq *wq)
 #endif
         wq->flg = 0;
         wq->status = WAITQ_STATUS_NONE;
-        wq->event = WAITQ_NONE;
-        wq->prev = WAITQ_NONE;
-        wq->next = WAITQ_NONE;
+        wq->event = WAIT_NONE;
+        wq->prev = WAIT_NONE;
+        wq->next = WAIT_NONE;
         wq->data = NULL;
         condinit(&wq->cond);
         wq->signal = NULL;
@@ -56,16 +56,17 @@ waitqgetid(void)
     return waitq;
 }
 
-long
+struct waitq *
 waitqgetnext(long waitq)
 {
-    struct waitq *wq;
+    struct waitq *wq1;
+    struct waitq *wq2 = waitqtab[waitq];
 
-    while (waitq != WAITQ_NONE) {
-        wq = waitqtab[waitq];
-        waitq = wq->next;
+    while (wq2) {
+        w1 = wq2;
+        wq2 = wq1->next;
     }
-    waitq = wq->id;
+    waitq = wq1->id;
 
     return waitq;
 }
@@ -104,7 +105,7 @@ waitqgetsize(long waitq)
         wq = waitqtab[waitq];
         waitq = wq->next;
         nwait++;
-    } while (waitq != WAITQ_NONE);
+    } while (waitq != NULL);
 
     return nwait;
 }

@@ -13,6 +13,7 @@
 
 #define WAITQ_MAX         (1L << 16)
 #define WAITQ_NONE        (~0L)
+#define WAITQ_EMPTY       ((void *)WAITQ_NONE)
 
 struct waitqitem {
     struct waitq     *wq;
@@ -38,6 +39,10 @@ struct waitq {
     void     (*wait)(void);
     long     (*poll)(void);
 };
+
+struct waitq * waitqgetnext(long waitq);
+struct waitq * waitqget(void);
+long           waitqgetsize(struct waitq *waitq);
 
 #endif /* __MT_WAITQ_H__ */
 

@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <zero/cdefs.h>
 
+#define __EIPFRAMEOFS                4
+
+#if !defined(__x86_64__) && !defined(__amd64__)
+
 #define m_atominc(p)                 m_atominc32(p)
 #define m_atomdec(p)                 m_atomdec32(p)
 #define m_atomswap(p, val)           m_xchg32(p, val)
@@ -22,8 +26,6 @@
 #define m_cmpclrbit(p, ndx)          m_cmpclrbit32(p, ndx)
 #define m_scanlo1bit(l)              m_bsf32(l)
 #define m_scanhi1bit(l)              m_bsr32(l)
-
-#define __EIPFRAMEOFS                4
 
 static INLINE void *
 m_getretadr(void)
@@ -72,6 +74,8 @@ m_loadretadr(void *frm)
     return ptr;
 }
 
+#endif /* !64-bit */
+
 /* atomic increment operation */
 static __inline__ void
 m_atominc32(volatile m_atomic32_t *p)
@@ -109,6 +113,74 @@ m_xchg32(volatile m_atomic32_t *p,
                           : "cc", "memory");
 
     return res;
+}
+
+/*
+ * atomic add
+ * - let *p = *p + val
+ * - return original *p
+ */
+static __inline__ m_atomic16_t
+m_add16(volatile m_atomic16_t *p,
+         m_atomic16_t val)
+{
+    __asm__ __volatile__ ("lock addw %1, %w0\n"
+                          : "+m" (*(p)), "=a" (val)
+                          :
+                          : "cc", "memory");
+
+    return val;
+}
+
+/*
+ * atomic add
+ * - let *p = *p + val
+ * - return original *p
+ */
+static __inline__ m_atomicu16_t
+m_addu16(volatile m_atomicu16_t *p,
+          m_atomicu16_t val)
+{
+    __asm__ __volatile__ ("lock addw %1, %w0\n"
+                          : "+m" (*(p)), "=a" (val)
+                          :
+                          : "cc", "memory");
+
+    return val;
+}
+
+/*
+ * atomic add
+ * - let *p = *p + val
+ * - return original *p
+ */
+static __inline__ int32_t
+m_add32(volatile m_atomic32_t *p,
+         int32_t val)
+{
+    __asm__ __volatile__ ("lock addl %1, %0\n"
+                          : "+m" (*(p)), "=a" (val)
+                          :
+                          : "cc", "memory");
+
+    return val;
+}
+
+/*
+ * atomic add
+ * - let *p = *p + val
+ * - return original *p
+ */
+static __inline__ m_atomicu32_t
+m_addu32(volatile m_atomicu32_t *p,
+          m_atomicu32_t val)
+{
+    __asm__ __volatile__ ("lock addl %1, %0\n"
+                          : "+m" (*(p)), "=a" (val)
+                          :
+                          : "cc", "memory");
+
+    return val;
 }
 
 /*
@@ -376,6 +448,8 @@ m_cmpxchg32ptr(m_atomic32_t **p,
     return res;
 }
 
+#if !defined(__x86_64__) && !defined(__amd64__)
+
 #if defined(__GNUC__) && 0
 
 /*
@@ -441,6 +515,8 @@ m_cmpxchg64(int64_t *ptr,
 }
 
 #endif
+
+#endif /* !64-bit */
 
 #endif /* __MACH_IA32_ASM_H__ */
 
