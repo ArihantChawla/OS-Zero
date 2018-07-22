@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <mach/atomic.h>
 #include <mach/asm.h>
 
 #define LFDEQ_MAX_ITEMS      32768

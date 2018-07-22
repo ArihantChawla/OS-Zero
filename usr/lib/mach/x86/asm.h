@@ -3,8 +3,6 @@
 
 //#define frameisusr(tcb) ((tcb)->frame.cs == UTEXTSEL)
 
-extern uintptr_t asmgetpc(void);
-
 #define m_membar()   __asm__ __volatile__ ("mfence\n" : : : "memory")
 /* memory read barrier */
 #define m_memrdbar() __asm__ __volatile__ ("lfence\n" : : : "memory")

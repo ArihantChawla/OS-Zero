@@ -198,9 +198,9 @@ m_cmpxchgu64(uint64_t *p,
  * - return nonzero on success, zero on failure
  */
 static __inline__ void *
-m_cmpxchg64ptr(m_atomicptr_t **p,
-               m_atomicptr_t *want,
-               m_atomicptr_t *val)
+m_cmpxchg64ptr(m_atomicptr_t *p,
+               m_atomicptr_t want,
+               m_atomicptr_t val)
 {
     m_atomicptr_t *res;
 

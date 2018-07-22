@@ -3,37 +3,34 @@
 #include <mach/param.h>
 #include <mach/asm.h>
 
-NOINLINE void
-m_getpc(void **pp)
+NOINLINE void *
+m_getpc(void)
 {
-    void *_ptr = NULL;
+    void *ptr = NULL;
 
-    m_getretadr(&_ptr);
-    *pp = _ptr;
+    ptr = m_getretadr();
 
-    return;
+    return ptr;
 }
 
-INLINE void
-m_getpc2(void **pp)
+INLINE void *
+m_getpc2(void)
 {
-    void *_ptr;
+    void *ptr;
 
     __asm__ __volatile__ ("leaq (%rip), %0\n"
-                          : "=r" (_ptr));
-    *pp = _ptr;
+                          : "=r" (ptr));
 
-    return;
+    return ptr;
 }
 
-INLINE void
-m_getpc3(void **pp)
+INLINE void *
+m_getpc3(void)
 {
-    void *_ptr;
+    void *ptr;
 
     __asm__ __volatile__ ("movq $., %0\n"
-                          : "=r" (_ptr));
-    *pp = _ptr;
+                          : "=r" (ptr));
 
-    return;
+    return ptr;
 }
