@@ -3,6 +3,8 @@
 
 //#define frameisusr(tcb) ((tcb)->frame.cs == UTEXTSEL)
 
+extern uintptr_t asmgetpc(void);
+
 #define m_membar()   __asm__ __volatile__ ("mfence\n" : : : "memory")
 /* memory read barrier */
 #define m_memrdbar() __asm__ __volatile__ ("lfence\n" : : : "memory")
@@ -14,6 +16,15 @@
 /* wait for an interrupt */
 #define m_waitint()  __asm__ __volatile__ ("hlt\n"  : : : "memory")
 
+#include <stdint.h>
+#include <zero/cdefs.h>
+#if defined(__x86_64__) || defined(__amd64__)
+#include <mach/x86-64/asm.h>
+#elif (defined(__i386__) || defined(__i486__)                           \
+       || defined(__i586__) || defined(__i686__))
+#include <mach/ia32/asm.h>
+#endif
+
 /* atomic fetch and add, 16-bit version */
 #define m_fetchadd16(p, val)       m_xadd16(p, val)
 #define m_fetchaddu16(p, val)      m_xaddu16(p, val)
@@ -24,16 +35,6 @@
 #define m_cmpswapb(p, want, val)   (m_cmpxchg8(p, want, val) == want)
 #define m_cmpswap32(p, want, val)  (m_cmpxchg32(p, want, val) == want)
 #define m_cmpswapu32(p, want, val) (m_cmpxchgu32(p, want, val) == want)
-
-#include <stdint.h>
-#include <zero/cdefs.h>
-#if defined(__x86_64__) || defined(__amd64__)
-#include <mach/x86-64/asm.h>
-#endif
-#if (defined(__i386__) || defined(__i486__)                           \
-       || defined(__i586__) || defined(__i686__))
-#include <mach/ia32/asm.h>
-#endif
 
 #endif /* __MACH_X86_ASM_H__ */
 

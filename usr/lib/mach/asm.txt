@@ -9,12 +9,13 @@ for things such as implementing [thread-safe] synchronization primitives.
 
 usage
 -----
+
 #include <mach/asm.h> // machine interface
 
 types
 -----
 
-the following are some basic types for machine-level programming.
+the following are some basic <mach/types.h> types for machine-level programming.
 
 machine types
 -------------
@@ -59,5 +60,5 @@ where not otherwise documented, all these operations perform atomically.
 - m_fetchadd()  - atomic fetch and add
   - reference counts
 - m_getretadr() - get return address of current function
-  - ABI
+  - ABI interface
 

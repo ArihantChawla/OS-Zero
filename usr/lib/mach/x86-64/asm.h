@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <zero/cdefs.h>
 
-extern uint64_t asmgetpc(void);
-
 #define m_atominc(p)                 m_atominc64(p)
 #define m_atomdec(p)                 m_atomdec64(p)
 #define m_atomswap(p, val)           m_xchg64(p, val)
@@ -28,67 +26,60 @@ extern uint64_t asmgetpc(void);
 
 #define __RIPFRAMEOFS                8
 
-static INLINE void
-m_getretadr(void **pp)
+static INLINE void *
+m_getretadr(void)
 {
-    void *_ptr;
+    void *ptr;
 
     __asm__ __volatile__ ("movq %c1(%%rbp), %0\n"
-                          : "=r" (_ptr)
+                          : "=r" (ptr)
                           : "i" (__RIPFRAMEOFS));
-    *pp = _ptr;
-
-    return;
+    return ptr;
 }
 
-static INLINE void
-m_getfrmadr(void **pp)
+static INLINE void *
+m_getfrmadr(void)
 {
-    void *_ptr;
+    void *ptr;
 
-    __asm__ __volatile__ ("movq %%rbp, %0\n" : "=r" (_ptr));
-    *pp = _ptr;
+    __asm__ __volatile__ ("movq %%rbp, %0\n" : "=r" (ptr));
 
-    return;
+    return ptr;
 }
 
-static INLINE void
-m_getfrmadr2(void *fp, void **pp)
+static INLINE void *
+m_getfrmadr2(void *fp)
 {
-    void *_ptr;
+    void *ptr;
 
     __asm__ __volatile__ ("movq %1, %%rax\n"
                           "movq (%%rax), %0\n"
-                          : "=r" (_ptr)
+                          : "=r" (ptr)
                           : "rm" (fp)
                           : "rax");
-    *pp = _ptr;
 
-    return;
+    return ptr;
 }
 
-static INLINE void
-m_loadretadr(void *frm, void **pp)
+static INLINE void *
+m_getretfrmadr(void)
 {
-    void *_ptr;
+    void *ptr;
+
+    __asm__ __volatile__ ("movq (%%rbp), %0\n" : "=r" (ptr));
+
+    return ptr;
+}
+
+static INLINE void *
+m_loadretadr(void *frm)
+{
+    void *ptr;
 
     __asm__ __volatile__ ("movq %c1(%2), %0\n"
-                          : "=r" (_ptr)
+                          : "=r" (ptr)
                           : "i" (__RIPFRAMEOFS), "r" (frm));
-    *pp = _ptr;
-
-    return;
-}
-
-static INLINE void
-m_getretfrmadr(void **pp)
-{
-    void *_ptr;
-
-    __asm__ __volatile__ ("movq (%%rbp), %0\n" : "=r" (_ptr));
-    *pp = _ptr;
-
-    return;
+    return ptr;
 }
 
 /* atomic increment operation */

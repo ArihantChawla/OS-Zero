@@ -185,7 +185,7 @@ _backtrace(void **buf, __btsize_t size, long syms, int fd)
     pptr = buf;
     if (size) {
         ndx = 0;
-        m_getretadr(&ptr);
+        ptr = m_getretadr();
         if (ptr) {
             ndx = 1;
         }
@@ -209,8 +209,8 @@ _backtrace(void **buf, __btsize_t size, long syms, int fd)
         } else {
             pptr[0] = ptr;
         }
-        m_getretfrmadr(&fptr);
-        m_loadretadr(fptr, &ptr);
+        fptr = m_getretfrmadr();
+        ptr = m_loadretadr(fptr);
         if (syms) {
             for ( ; ndx < lim ; ndx++) {
                 fprintf(stderr, "PTR == %p, OLD == %p\n", ptr, oldptr);
@@ -237,8 +237,8 @@ _backtrace(void **buf, __btsize_t size, long syms, int fd)
                     break;
                 }
                 oldptr = ptr;
-                m_getretfrmadr(&fptr);
-                m_loadretadr(fptr, &ptr);
+                fptr = m_getretfrmadr();
+                ptr = m_loadretadr(fptr);
             }
         } else {
             for ( ; ndx < lim ; ndx++) {
@@ -250,8 +250,8 @@ _backtrace(void **buf, __btsize_t size, long syms, int fd)
                     break;
                 }
                 oldptr = ptr;
-                m_getretfrmadr(&fptr);
-                m_loadretadr(fptr, &ptr);
+                fptr = m_getretfrmadr();
+                ptr = m_loadretadr(fptr);
             }
         }
     }

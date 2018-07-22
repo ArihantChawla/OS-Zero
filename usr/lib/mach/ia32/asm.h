@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <zero/cdefs.h>
 
-extern uint32_t asmgetpc(void);
-
 #define m_atominc(p)                 m_atominc32(p)
 #define m_atomdec(p)                 m_atomdec32(p)
 #define m_atomswap(p, val)           m_xchg32(p, val)
@@ -28,7 +26,7 @@ extern uint32_t asmgetpc(void);
 #define __EIPFRAMEOFS                4
 
 static INLINE void *
-m_getretadr(void **pp)
+m_getretadr(void)
 {
     void *ptr;
 
@@ -63,18 +61,15 @@ m_getfrmadr2(void *fp, void **pp)
     return;
 }
 
-static INLINE void
-m_loadretadr(void *frm,
-             void **pp)
+static INLINE void *
+m_loadretadr(void *frm)
 {
     void *ptr;
 
     __asm__ __volatile__ ("movl %c1(%2), %0\n"
                           : "=r" (ptr)
                           : "i" (__EIPFRAMEOFS), "r" (frm));
-    *pp = ptr;
-
-    return;
+    return ptr;
 }
 
 /* atomic increment operation */

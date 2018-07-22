@@ -12,11 +12,9 @@
 #define PTHREAD_STACK_MIN        16384
 
 typedef uintptr_t  pthread_t;
+#define PTHREAD_KEY_SIZE PTRSIZE
 typedef uintptr_t  pthread_key_t;
 typedef zerospin   pthread_spinlock_t;
-
-#define PTHREAD_KEY_SIZE PTRSIZE
-typedef uintptr_t pthread_key_t;
 
 struct __pthread_key {
     pthread_key_t          key;
