@@ -22,7 +22,7 @@ m_reg_t		- signed word/register
 m_adr_t         - storage for integer address value + possible info-bits
 m_ptr_t         - pointer
 
-<mach/asm.h> includes per-platform headers to define the following atomic types.
+<mach/asm.h> includes <mach/atomic.h> to define the following atomic types.
 
 do not forget to declare in-memory data volatile where due.
 
