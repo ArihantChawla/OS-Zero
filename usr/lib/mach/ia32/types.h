@@ -80,7 +80,7 @@ struct m_tss {
     uint16_t trace;
     uint16_t iomapofs;
     long     iomapflg;  // indicates presence of an 8K iomap field
-    uint8_t  iomap[VLA] ALIGNED(PAGESIZE);
+    //    uint8_t  iomap[VLA] ALIGNED(PAGESIZE);
 };
 
 #if (PERTHRSTACKS)

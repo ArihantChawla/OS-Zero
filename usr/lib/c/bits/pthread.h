@@ -57,6 +57,8 @@ typedef struct {
     unsigned proto    : 2;
     unsigned pshared  : 1;
     unsigned robust   : 1;
+    unsigned _resv    : 12; /* force _pad to 32-bit boundary */
+    uint32_t            pad;
 } pthread_mutex_t;
 
 typedef zeromtxatr pthread_mutexattr_t;

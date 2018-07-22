@@ -91,6 +91,7 @@ struct lvtreg {
     uint32_t res3[3];
 };
 
+#if 0
 /* FIXME: pad this to fill a page; use PAGESIZE in arrays and cast pointers */
 struct apic {
     uint32_t       res1;
@@ -102,11 +103,11 @@ struct apic {
     const unsigned version : 8;
     const unsigned res6    : 8;
     const unsigned maxlvt  : 8;
-    uint32_t       res7[3];
-    uint32_t       res8[4];
-    uint32_t       res9[4];
-    uint32_t       res10[4];
-    uint32_t       res11[4];
+    uint8_t        res7[12];
+    uint8_t        res8[16];
+    uint8_t        res9[16];
+    uint8_t        res10[16];
+    uint8_t        res11[16];
     /* task priority register */
     struct {
         unsigned   lvl  : 8;
@@ -180,7 +181,7 @@ struct apic {
         unsigned   res33     : 2;
         unsigned   shorthand : 1;
         unsigned   res34     : 12;
-        uint32_t   res35[3];
+        uint8_t    res35[12];
         unsigned   res36     : 24;
         unsigned   dest      : 8;
         uint32_t   res37[3];
@@ -219,6 +220,7 @@ struct apic {
     } divconf;
     uint32_t       res46[4];
 };
+#endif
 
 static __inline__ uint32_t
 apicread(uint32_t reg)

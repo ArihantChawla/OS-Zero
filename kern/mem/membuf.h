@@ -176,9 +176,9 @@ struct membuf {
 };
 
 #if (SMP)
-#define membufincref(buf)       m_atominc(&(buf).nref)
-#define membufdecref(buf)       m_atomdec(&(buf).nref)
-#define membufgetnref(buf, res) m_syncread(&(buf).nref, (res))
+#define membufincref(buf)       m_atominc(&(buf)->nref)
+#define membufdecref(buf)       m_atomdec(&(buf)->nref)
+#define membufgetnref(buf, res) m_syncread(&(buf)->nref, (res))
 #else
 #define membufincref(buf)       ((buf)->nref++)
 #define membufdecref(buf)       ((buf)->nref--)

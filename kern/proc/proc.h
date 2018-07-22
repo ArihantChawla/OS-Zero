@@ -150,7 +150,7 @@ struct proc {
     /* event queue */
     struct ev           *evq;
 #endif
-} ALIGNED(PAGESIZE);
+};
 
 #endif /* __KERN_PROC_PROC_H__ */
 

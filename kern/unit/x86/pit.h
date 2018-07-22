@@ -1,8 +1,6 @@
 #ifndef __KERN_UNIT_X86_PIT_H__
 #define __KERN_UNIT_X86_PIT_H__
 
-extern void irqtmr0(void);
-
 void pitinit(void);
 void pitsleep(unsigned long msec);
 

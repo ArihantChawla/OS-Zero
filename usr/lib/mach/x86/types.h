@@ -3,9 +3,6 @@
 
 #include <stdint.h>
 
-typedef uintptr_t pde_t;
-typedef uintptr_t pte_t;
-
 /* far pointer structure */
 #include <zero/pack.h>
 struct m_farptr {

@@ -74,11 +74,11 @@ struct pcidev {
 //    struct pcidev *next;
     char          *str;
     long           ndx;
-    uint16_t       vendor;
-    uint16_t       id;
-    uint8_t        bus;
-    uint8_t        slot;
-    uint8_t        irq;
+    unsigned long  vendor;
+    unsigned long  id;
+    long           bus;
+    long           slot;
+    long           irq;
 //    uint8_t        dma;
     /* DMA buffers */
     long           inbufsz;

@@ -93,9 +93,9 @@ struct sb16drv {
     long        init;
     uint8_t    *dmabuf8;
     uint16_t   *dmabuf16;
-    uint8_t     irq;
-    uint8_t     dma8;
-    uint8_t     dma16;
+    long        irq;
+    long        dma8;
+    long        dma16;
     long        dmainofs8;
     long        dmainofs16;
     long        dmaoutofs8;
@@ -145,7 +145,7 @@ size_t sb16read(void *buf, size_t len)
 {
     size_t   nread = 0;
     uint8_t *u8ptr = buf;
-    
+
     len >>= 1;
     while ((len) && inb(SB16RDBUFSTAT & SB16BUFSTATBIT)) {
         *u8ptr++ = inb(SB16READ);

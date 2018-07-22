@@ -57,7 +57,7 @@ void
 vbeint10(void)
 {
 #if (SMP)
-    long id = k_curcpu->id;
+    long id = k_curcpu->unit;
 #endif
     static int       first = 1;
     uint64_t        *gdt;

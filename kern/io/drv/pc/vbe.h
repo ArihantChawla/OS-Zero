@@ -63,7 +63,7 @@ struct vbeinfo {
     char      sig[4];           // VBE2SIG
     uint16_t  ver;              // VBE version
     uint16_t  oem[2];
-    uint32_t  cap;              // controller capabilities
+    uint8_t   cap[4];              // controller capabilities
     uint16_t  modelst[2];       // video mode list
     uint16_t  nblk;             // memory size in 64 kb blocks
 #if 0
@@ -142,7 +142,7 @@ struct vbemode {
     uint32_t   fbadr;
     uint32_t   offscrofs;
     uint16_t   nkboffscr;
-//    uint8_t    res2[206];
+    uint8_t    res2[206];
 };
 
 /* VBE screen information */
