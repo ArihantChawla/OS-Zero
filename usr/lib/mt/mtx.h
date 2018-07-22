@@ -72,7 +72,11 @@ typedef volatile struct __zeromtx zeromtx;
 static INLINE long
 fmtxtrylk(m_atomic_t *lp)
 {
-    long res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
+    long res = 0;
+
+    if (*lp == FMTXINITVAL) {
+        res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
+    }
 
     return res;
 }
@@ -84,18 +88,18 @@ fmtxtrylk(m_atomic_t *lp)
 static INLINE void
 fmtxlk(m_atomic_t *lp)
 {
-    m_atomic_t res;
+    m_atomic_t res = 0;
 
     do {
-        do {
-            res = *lp;
-        } while (res);
-        res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
-        if (!res) {
-            /* do a "light-weight busy-wait" */
-            m_waitspin();
+        if (*lp == FMTXINITVAL) {
+            res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
+            if (res) {
+
+                return;
+            }
         }
-    } while (!res);
+        m_waitspin();
+    } while (1);
 
     return;
 }
@@ -107,8 +111,9 @@ fmtxlk(m_atomic_t *lp)
 static INLINE void
 fmtxunlk(m_atomic_t *lp)
 {
-    m_membar();
-    *lp = FMTXINITVAL;
+    m_membar();         // full memory barrier
+    *lp = FMTXINITVAL;  // lazy-write
+    m_endspin();        // signal wakeup-event
 
     return;
 }

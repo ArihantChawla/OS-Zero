@@ -44,12 +44,12 @@ spinlk(m_atomic_t *sp)
         res = *sp;
         if (res == ZEROSPININITVAL) {
             res = m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL);
-        } else {
-            res = 0;
+            if (res) {
+
+                return;
+            }
         }
-        if (!res) {
-            m_waitspin();
-        }
+        m_waitspin();
     } while (!res);
 
     return;
