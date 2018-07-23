@@ -12,10 +12,10 @@
 #include <zero/trix.h>
 
 void
-hazinit(struct hazptr *hp,
-        m_atomic_t degree,
-        m_atomic_t threshold,
-        void (*recl)(void *))
+hazinitptr(struct hazptr *hp,
+           m_atomic_t degree,
+           m_atomic_t threshold,
+           void (*recl)(void *))
 {
     hp->stk.head = NULL;
     hp->stk.gen = NULL;

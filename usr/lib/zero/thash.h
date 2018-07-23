@@ -123,6 +123,7 @@ thashchk(struct thashtab **tab, uintptr_t key, long del)
                  */
                 val = 0;
                 switch (ni) {
+                    default:
                     case 8:
                         item = &slot->list[7];
                         mask = -(item->key == key);
@@ -163,7 +164,7 @@ thashchk(struct thashtab **tab, uintptr_t key, long del)
                         mask = -(item->key == key);
                         mask &= (uintptr_t)item;
                         val |= mask;
-                    default:
+                    case 0:
 
                         break;
                 }
@@ -183,10 +184,9 @@ thashchk(struct thashtab **tab, uintptr_t key, long del)
                     }
 
                     return val;
-                } else {
-                    slot += ni;
-                    n -= ni;
                 }
+                slot += ni;
+                n -= ni;
             } else {
                 ndx = 0;
                 slot = slot->hdr.next;
