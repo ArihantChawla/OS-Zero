@@ -25,7 +25,7 @@ struct lkpoolitem {
  * single one
  */
 struct lkpool {
-    struct lkpoolitem   tab[LKPOOL_ITEMS];;
+    struct lkpoolitem tab[LKPOOL_ITEMS];;
 };
 
 static __inline__ void

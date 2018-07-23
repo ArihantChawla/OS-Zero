@@ -5,9 +5,6 @@
 #if !defined(ZEROFMTX)
 #define ZEROFMTX    1
 #endif
-#if !defined(ZERONEWFMTX)
-#define ZERONEWFMTX 1
-#endif
 
 //#include <mt/conf.h>
 #include <stddef.h>
@@ -25,9 +22,7 @@ typedef m_atomic_t zerofmtx;
 
 #define FMTXINITVAL MTXINITVAL
 #define FMTXLKVAL   MTXLKVAL
-#if defined(ZERONEWFMTX)
 #define FMTXCONTVAL MTXCONTVAL
-#endif
 
 #define fmtxinit(lp) (*(lp) = FMTXINITVAL)
 #define fmtxfree(lp) /* no-op */
@@ -62,8 +57,6 @@ struct __zeromtx {
     uint8_t    _pad[CLSIZE - 3 * sizeof(m_atomic_t) - sizeof(zeromtxatr)];
 };
 typedef volatile struct __zeromtx zeromtx;
-
-#if (ZERONEWFMTX)
 
 /*
  * try to acquire fast mutex lock
@@ -117,56 +110,6 @@ fmtxunlk(m_atomic_t *lp)
 
     return;
 }
-
-#else
-
-/*
- * try to acquire fast mutex lock
- * - return non-zero on success, zero if already locked
- */
-static INLINE long
-fmtxtrylk(m_atomic_t *lp)
-{
-    long res;
-
-    res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
-
-    return res;
-}
-
-/*
- * acquire fast mutex lock
- * - allow other threads to run when blocking
- */
-static INLINE void
-fmtxlk(m_atomic_t *lp)
-{
-    long res;
-
-    do {
-        res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
-        if (!res) {
-            m_waitspin();
-        }
-    } while (!res);
-
-    return;
-}
-
-/*
- * unlock fast mutex
- * - must use full memory barrier to guarantee proper write-ordering
- */
-static INLINE void
-fmtxunlk(m_atomic_t *lp)
-{
-    m_membar();
-    *lp = FMTXINITVAL;
-
-    return;
-}
-
-#endif
 
 #define zerotrylkfmtx(mp) fmtxtrylk(mp)
 #define zerolkfmtx(mp)    fmtxlk(mp)
