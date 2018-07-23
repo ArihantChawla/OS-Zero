@@ -11,7 +11,6 @@
 #include <zero/qrand.h>
 
 #define LKPOOLLOCKS 8
-#define LKPOOL_HASH(key) (tmhash32((uint32_t)key) & (LKPOOLLOCKS - 1))
 
 /* make mutex size equal cacheline */
 struct lkpoolmtx {
