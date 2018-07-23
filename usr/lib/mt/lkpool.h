@@ -1,6 +1,7 @@
 #ifndef __ZERO_LKPOOL_H__
 #define __ZERO_LKPOOL_H__
 
+#include <string.h>
 #include <stdint.h>
 #include <mach/param.h>
 #include <mach/atomic.h>
@@ -10,34 +11,41 @@
 #include <zero/hash.h>
 #include <zero/qrand.h>
 
-#define LKPOOLLOCKS 8
+#define LKPOOL_ITEMS 8
 
 /* make mutex size equal cacheline */
-struct lkpoolmtx {
-    m_atomic_t lk;
-    int8_t     _pad[CLSIZE - sizeof(m_atomic_t)];
+struct lkpoolitem {
+    m_atomic_t    lk;
+    LKPOOL_DATA_T data;
+    int8_t        _pad[CLSIZE - sizeof(m_atomic_t) - sizeof(LKPOOL_DATA_T)];
 };
 
 /*
- * distribute load somewhat-randomly over LKPOOLLOCKS mutexes instead of a
+ * distribute load somewhat-randomly over LKPOOL_ITEMS mutexes instead of a
  * single one
  */
 struct lkpool {
-    struct lkpoolmtx lktab[LKPOOLLOCKS];;
+    struct lkpoolitem   tab[LKPOOL_ITEMS];;
 };
 
-/* scan pool for an unacquired lock, start at random offset into lktab */
+static __inline__ void
+lkpoolinit(struct lkpool *pool)
+{
+    memset(pool, 0, sizeof(struct lkpool));
+
+    return;
+}
+
+/* scan pool for an unacquired lock, start at random offset into tab */
 static INLINE long
 lkpooltrylk(struct lkpool *pool)
 {
-    struct lkpoolmtx *lpmtx = &pool->lktab[0];
-    long              n;
-    long              ofs;
+    struct lkpoolitem *lpmtx = &pool->tab[0];
+    long               n = LKPOOL_ITEMS;
+    long               ofs = qrand32();
 
-    n = LKPOOLLOCKS;
-    ofs = qrand32();
     while (n--) {
-        ofs &= LKPOOLLOCKS - 1;
+        ofs &= LKPOOL_ITEMS - 1;
         if (lpmtx[ofs].lk == FMTXINITVAL) {
             if (fmtxtrylk(&lpmtx[ofs].lk)) {
 
@@ -64,7 +72,7 @@ lkpoollk(struct lkpool *pool)
 }
 
 /* unlock lock in pool */
-#define lkpoolunlk(pp, ofs) fmtxunlk(&(pp)->lktab[(ofs)].lk)
+#define lkpoolunlk(pp, ofs) fmtxunlk(&(pp)->tab[(ofs)].lk)
 
 #endif /* __ZERO_LKPOOL_H__ */
 
