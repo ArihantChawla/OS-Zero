@@ -128,7 +128,7 @@ dkhash(unsigned long u)
 /* the following two snippets were posted on stackoverflow by Thomas Mueller */
 
 uint32_t
-tmhash32(unsigned long u)
+tmhash32(uint32_t u)
 {
     u = ((u >> 16) ^ u) * 0x45d9f3b;
     u = ((u >> 16) ^ u) * 0x45d9f3b;

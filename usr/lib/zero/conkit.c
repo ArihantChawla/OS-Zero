@@ -11,14 +11,15 @@
 #include <zero/conkit.h>
 #include <zero/trix.h>
 
+#define hazinitstknode(hp) ((hp)->stk.head = (hp)->stk.gen = NULL)
+
 void
 hazinitptr(struct hazptr *hp,
            m_atomic_t degree,
            m_atomic_t threshold,
            void (*recl)(void *))
 {
-    hp->stk.head = NULL;
-    hp->stk.gen = NULL;
+    hazinitstknode(hp);
     hp->nstk = 0;
     hp->nfree = 0;
     hp->thresh = threshold;
