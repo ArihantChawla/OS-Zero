@@ -22,9 +22,10 @@
 #define PERM_SHM    0x40000000   // permission to share memory
 //#define PERM_RAWIO  0x20000000   // permission to do raw device I/O operations
 
+/* set permission object elements */
 #define setperm(perm, usr, grp, flg)                                    \
     ((perm)->uid = (usr), (perm)->gid = (grp), (perm)->flg = (flg))
-#define permchk(usr, grp, perm, type)                                   \
+#define permchk(perm, usr, grp, type)                                   \
     (!(usr)                                                             \
      ? 1                                                                \
      : (((usr) == (perm)->uid && ((perm)->flg & ((type) << 6)))         \
@@ -32,9 +33,9 @@
         : (((grp) == (perm)->gid && ((perm)->flg & ((type) << 3)))      \
            ? 1                                                          \
            : ((perm)->flg & ((perm)->flg & (type))))))
-#define permread(usr, grp, perm)  permchk(usr, grp, perm, PERM_READ)
-#define permwrite(usr, grp, perm) permchk(usr, grp, perm, PERM_WRITE)
-#define permexec(usr, grp, perm)  permchk(usr, grp, perm, PERM_EXEC)
+#define permread(perm, usr, grp)  permchk(perm, usr, grp, PERM_READ)
+#define permwrite(perm, usr, grp) permchk(perm, usr, grp, PERM_WRITE)
+#define permexec(perm, usr, grp)  permchk(perm, usr, grp, PERM_EXEC)
 #define permsticky(perm)          ((perm)->flg & PERM_STICKY)
 #define permsetgid(perm)          ((perm)->flg & PERM_SETGID)
 #define permsetuid(perm)          ((perm)->flg & PERM_SETUID)
@@ -46,7 +47,6 @@ struct perm {
     long        uid;    // user ID
     long        gid;    // group ID
     long        flg;    // access bits
-    struct acl *acl;    // access-control [object] list
 };
 
 #endif /* __KERN_PERM_H__ */

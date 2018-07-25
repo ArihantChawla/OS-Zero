@@ -22,16 +22,6 @@
 #define memunlkbkt(lp) fmtxunlk(lp)
 #endif
 
-/* memory zones */
-#define MEM_LOW_ZONE    0 // low-memory (x86: boot)
-#define MEM_IO_ZONE     1 // I/O zone (x86: DMA)
-#define MEM_SYS_ZONE    2 // system zone (page-tables and such)
-#define MEM_VIRT_ZONE   3 // virtual memory zone
-#define MEM_PHYS_ZONE   4 // physical memory zone
-#define MEM_DEV_ZONE    5 // memory-mapped device zone
-#define MEM_BUF_ZONE    6 // buffer cache zone
-#define MEM_ZONES       8
-
 /* memory caching type */
 #define MEMWRBIT     0x01
 #define MEMCACHEBIT  0x02
@@ -84,16 +74,7 @@
 #define memgetbkt(hdr)                                                  \
     (&(hdr)->info & ((1 << MEMBKTBITS) - 1))
 
-#include <kern/mem/slab.h>
-#include <kern/mem/mag.h>
-#include <kern/mem/bkt.h>
-#include <kern/mem/zone.h>
-//#include <kern/mem/page.h>
-
 void meminit(size_t nbphys, size_t nbvirt);
-void meminitphys(struct memzone *zone, uintptr_t base, size_t nbyte);
-void meminitvirt(struct memzone *zone, size_t nbvirt);
-void memfree(struct memzone *zone, void *ptr);
 
 #endif /* __KERN_MEM_MEM_H__ */
 

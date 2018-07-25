@@ -9,8 +9,11 @@
 #include <kern/sched.h>
 #include <kern/cpu.h>
 #include <kern/proc/proc.h>
+#include <kern/mem/mem.h>
+#if 0
 #include <kern/mem/vm.h>
 #include <kern/mem/page.h>
+#endif
 #include <kern/io/drv/chr/cons.h>
 //#include <kern/task.h>
 #include <kern/io/drv/pc/dma.h>
@@ -40,7 +43,6 @@
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
 extern uint8_t                   kernsysstktab[NCPU * KERNSTKSIZE];
 extern uint8_t                   kernusrstktab[NCPU * KERNSTKSIZE];
-extern struct cpu                cputab[NCPU];
 extern struct proc               proctab[NTASK];
 #if (VBE)
 extern uint64_t                  kernidt[NINTR];

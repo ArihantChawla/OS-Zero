@@ -10,13 +10,10 @@
 #include <stdint.h>
 #include <mach/param.h>
 #include <zero/cdefs.h>
-#include <kern/unit/x86/pit.h>
-#include <kern/unit/x86/link.h>
+#include <kern/unit/x86/apic.h>
 
 extern uint32_t *volatile mpapic;
 
-void apicinit(long id);
-void apicstart(uint8_t id, uint32_t adr);
 void kusleep(unsigned long nusec);
 
 #define apiceoi()        apicwrite(0, APICEOI)

@@ -4,6 +4,9 @@
 #include <stddef.h>
 #include <mach/param.h>
 #include <kern/types.h>
+#include <kern/mem/mem.h>
+#include <kern/mem/slab.h>
+#include <kern/mem/mag.h>
 #include <kern/mem/bkt.h>
 
 /* flags for creating memzones */
@@ -20,6 +23,16 @@
 #define MEMZONE_VIRTUAL 0x00000400 // zone is for virtual memory subsystem
 #define MEMZONE_REFCNT  0x00000800 // keep allocation reference counts
 
+/* allocation memory zones */
+#define MEM_LOW_ZONE    0 // low-memory (x86: boot)
+#define MEM_IO_ZONE     1 // I/O zone (x86: DMA)
+#define MEM_SYS_ZONE    2 // system zone (page-tables and such)
+#define MEM_VIRT_ZONE   3 // virtual memory zone
+#define MEM_PHYS_ZONE   4 // physical memory zone
+#define MEM_DEV_ZONE    5 // memory-mapped device zone
+#define MEM_BUF_ZONE    6 // buffer cache zone
+#define MEM_ZONES       8
+
 struct memzone {
     struct membkt  tab[PTRBITS];
     m_atomic_t     lk;
@@ -34,6 +47,10 @@ void   slabfree(struct memzone *zone, void *ptr);
 
 //void * zonegetslab(struct memzone *zone, unsigned long nb, unsigned long flg);
 //#void   zonefreeslab(struct memzone *zone, void *ptr);
+
+void meminitphys(struct memzone *zone, uintptr_t base, size_t nbyte);
+void meminitvirt(struct memzone *zone, size_t nbvirt);
+void memfree(struct memzone *zone, void *ptr);
 
 #endif /* __KERN_MEM_ZONE_H__ */
 

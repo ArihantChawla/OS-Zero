@@ -12,9 +12,9 @@
 #include <mt/mtx.h>
 #include <kern/util.h>
 #include <kern/cpu.h>
-#include <kern/mem/vm.h>
 #include <kern/mem/mem.h>
-#include <kern/mem/slab.h>
+#include <kern/mem/zone.h>
+#include <kern/mem/vm.h>
 #include <kern/proc/proc.h>
 #if defined(__i386__)
 #include <kern/unit/x86/link.h>

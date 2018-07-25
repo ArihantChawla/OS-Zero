@@ -1,6 +1,7 @@
 #ifndef __MACH_IA32_TYPES_H_
 #define __MACH_IA32_TYPES_H_
 
+#include <kern/conf.h>
 #include <stdint.h>
 #include <mach/x86/types.h>
 

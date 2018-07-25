@@ -16,7 +16,7 @@
 #define __STRUCT_MEMBKT_PAD                                          \
     (rounduppow2(__STRUCT_MEMBKT_SIZE, CLSIZE) - __STRUCT_MEMBKT_SIZE)
 struct membkt {
-    m_atomic_t  lk;
+    MEM_LK_T    lk;
     void       *list;
     uint8_t     _pad[__STRUCT_MEMBKT_PAD];
 };

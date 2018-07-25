@@ -2,6 +2,7 @@
 #define __KERN_OBJ_H__
 
 #include <kern/perm.h>
+#include <kern/acl.h>
 #include <kern/lfb.h>
 
 /* type values */
@@ -27,6 +28,7 @@ struct desc {
     long           flg;   /* type-specific flags */
     struct perm    perm;  /* permission structure */
     void          *obj;   /* type-specific attributes */
+    struct acl    *acl;   /* access control list */
 };
 
 #endif /* __KERN_OBJ_H__ */

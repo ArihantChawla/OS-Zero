@@ -3,7 +3,7 @@
 #include <mach/param.h>
 #include <kern/malloc.h>
 #include <kern/cpu.h>
-#include <kern/mem/vm.h>
+#include <kern/mem/mem.h>
 #include <kern/proc/task.h>
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/ia32/seg.h>

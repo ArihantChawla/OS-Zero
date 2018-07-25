@@ -24,7 +24,7 @@
 #else
 #define MEMNBUFBLK    32768
 #endif
-#define PERTHRSTACKS  0
+#define PERTHRSTACKS  1
 
 #define NEWBUFBLK     1
 #define BUFNEWHASH    1

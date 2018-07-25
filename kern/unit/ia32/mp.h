@@ -24,7 +24,8 @@
 void          mpentry(void);
 void          mpinit(void);
 extern void * mpend;
-extern long   mpmultiproc;
+
+extern long  mpmultiproc;
 
 struct mp {
     unsigned char  signature[4];        // "_MP_"

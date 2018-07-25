@@ -1,10 +1,9 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/trix.h>
-#include <kern/mem/zone.h>
 #include <kern/mem/mem.h>
-#include <kern/mem/vm.h>
-//#include <kern/unit/ia32/vm.h>
+#include <kern/mem/zone.h>
+#include <kern/unit/ia32/vm.h>
 
 extern struct memzone memzonetab[MEM_ZONES];
 

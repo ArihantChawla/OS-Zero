@@ -17,16 +17,17 @@
 #include <kern/cpu.h>
 #include <kern/mem/vm.h>
 #include <kern/proc/task.h>
+#include <kern/unit/x86/kern.h>
+#include <kern/unit/ia32/mp.h>
+#if 0
 #include <kern/unit/x86/boot.h>
-#include <kern/unit/x86/apic.h>
 #include <kern/unit/x86/link.h>
 #include <kern/unit/ia32/seg.h>
-#include <kern/unit/ia32/mp.h>
+#endif
 
 #if (HPET)
 extern void hpetinit(void);
 #endif
-extern void tssinit(long id);
 
 /* used to scan for MP table */
 #define EBDAADR   0x040e
@@ -37,14 +38,6 @@ extern void tssinit(long id);
 
 extern void gdtinit(void);
 extern void trapinitidt(void);
-#if (APIC)
-extern void apicinit(long unit);
-#endif
-#if (IOAPIC)
-extern void ioapicinit(long unit);
-#endif
-extern void cpuinit(long unit);
-extern void seginit(long id);
 extern void idtset(void);
 
 extern pde_t               *kernpagedir[NPDE];
@@ -160,7 +153,7 @@ mpinit(void)
     struct mp       *mp;
     struct mpconf   *conf;
     struct mpcpu    *cpu;
-    struct mpioapic *ioapic;
+    struct mpioapic *apic;
     long             unit;
     uint8_t         *u8ptr;
     uint8_t         *lim;
@@ -187,9 +180,9 @@ mpinit(void)
 
                 continue;
             case MPIOAPIC:
-                ioapic = (struct mpioapic *)u8ptr;
-                mpioapicid = ioapic->apicnum;
-                mpioapic = ioapic->adr;
+                apic = (struct mpioapic *)u8ptr;
+                mpioapicid = apic->apicnum;
+                mpioapic = apic->adr;
                 u8ptr += sizeof(struct mpioapic);
 
                 continue;

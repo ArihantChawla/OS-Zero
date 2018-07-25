@@ -13,13 +13,9 @@
 //#include <kern/sched.h>
 #include <kern/proc/task.h>
 
+extern struct cpu cputab[NCPU];
+
 #define SCHEDDIVU16TABSIZE min(2 * SCHEDHISTORYSIZE, 65536)
-
-extern long mpmultiproc;
-
-extern void schedsetready(struct task *task);
-extern void schedsetwait(struct task *task);
-extern void schedsetsleep(struct task *task);
 
 #define schedlkcpuntick(cpu)     (spinlk(&cpu->lk), (cpu)->ntick)
 #define schedlkcpu(cpu)          (spinlk(&cpu->lk))
@@ -105,7 +101,6 @@ struct schedqueueset {
     uint8_t       _pad[__STRUCT_SCHEDQUEUESET_PAD];
 };
 
-extern struct cpu   cputab[NCPU];
 extern long                  schedidlecoremap[SCHEDIDLECOREMAPNWORD];
 extern struct task          *schedreadytab0[SCHEDNQUEUE];
 extern struct task          *schedreadytab1[SCHEDNQUEUE];

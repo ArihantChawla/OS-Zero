@@ -4,15 +4,13 @@
 
 #include <stdint.h>
 #include <kern/mem/vm.h>
-#include <kern/unit/x86/trap.h>
-#include <kern/unit/x86/ioapic.h>
-#include <kern/unit/x86/link.h>
+#include <kern/unit/x86/kern.h>
 #include <kern/unit/ia32/mp.h>
 
-extern volatile struct cpu       cputab[NCPU];
-extern volatile struct cpu      *mpbootcpu;
-extern volatile struct mpioapic *mpioapic;
-volatile struct ioapic          *ioapic;
+extern volatile struct cpu  cputab[NCPU];
+extern volatile struct cpu *mpbootcpu;
+extern volatile uint32_t   *mpioapic;
+volatile struct ioapic     *ioapic;
 
 void
 ioapicinit(long id)

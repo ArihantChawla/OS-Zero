@@ -28,6 +28,7 @@ typedef uint64_t   vmblkbits;
      || defined(__x86_64__) || defined(__amd64__))
 #include <kern/unit/x86/vm.h>
 #endif
+#include <kern/unit/ia32/vm.h>
 
 #if (VMTKTLK)
 #define VM_LK_T         zerotktlk

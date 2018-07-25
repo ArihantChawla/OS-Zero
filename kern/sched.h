@@ -5,7 +5,7 @@
 #include <zero/trix.h>
 #include <zero/fastudiv.h>
 #if defined(__KERNEL__)
-#include <kern/proc/task.h>
+#include <kern/unit/x86/kern.h>
 #endif
 
 #if defined(__KERNEL__)
@@ -14,6 +14,14 @@ extern void schedinit(void);
 extern void schedyield(void);
 
 #if defined(ZEROSCHED)
+
+extern void schedinitset(void);
+extern void schedswitchtask(struct task *curtask);
+extern void schedsetready(struct task *task);
+extern void schedsetstopped(struct task *task);
+extern void schedsetzombie(struct proc *proc);
+extern void schedsetwait(struct task *task);
+extern void schedsetsleep(struct task *task);
 
 /* task scheduler classes */
 #define SCHEDNCLASSPRIO     64          // # of priorities per class

@@ -3,12 +3,19 @@
 
 #include <kern/conf.h>
 #include <stdint.h>
+#include <kern/cpu.h>
+#include <kern/unit/x86/link.h>
+#include <kern/unit/x86/pit.h>
+#include <kern/unit/x86/hpet.h>
+#include <kern/unit/x86/trap.h>
+#include <kern/unit/x86/ioapic.h>
+#include <kern/unit/x86/link.h>
+#include <kern/unit/ia32/mp.h>
 
 extern void trapinit(void);
 extern void seginit(long core);
 extern void vminit(void);
 extern void picinit(void);
-extern void meminit(unsigned long nbphys, unsigned long nbvirt);
 extern void vgainitcon(int w, int h);
 extern void kbdinit(void);
 extern void mouseinit(void);
