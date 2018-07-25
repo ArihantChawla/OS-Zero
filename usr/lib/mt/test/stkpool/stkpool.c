@@ -3,31 +3,48 @@
 #include <mach/asm.h>
 #define STKPOOL_LOCKFREE 1
 #include <mt/stkpool.h>
+#include <mt/mtx.h>
 #include <pthread.h>
 
-#define STKPOOL_THREADS         8
-#define STKPOOL_THREAD_POINTERS 16777216
+#define STKPOOL_THREADS         32
+#define STKPOOL_THREAD_POINTERS 2097152
 
-static struct lkpool         pool[STKPOOL_THREADS];
-static void                **ptrtab[STKPOOL_THREADS];
-pthread_t                    thrtab[STKPOOL_THREADS];
-static volatile m_atomic_t   thrcnt;
+static struct lkpool  stkpool[STKPOOL_THREADS];
+static pthread_t      thrtab[STKPOOL_THREADS];
+static void         **thrptrtab[STKPOOL_THREADS];
+static zerofmtx       thrcntmtx;
+static volatile long  thrcnt;
+
+static __inline__ long
+thrgetid(void)
+{
+    long id;
+
+    fmtxlk(&thrcntmtx);
+    id = m_fetchadd(&thrcnt, 1);
+    fmtxunlk(&thrcntmtx);
+
+    return id;
+
+}
 
 void *
 thrstart(void *arg)
 {
-    m_atomic_t      id = m_fetchadd(&thrcnt, 1);
-    void          **pptr = ptrtab[id];
+    struct lkpool  *pool = arg;
+    void          **pptr;
+    long            id;
     long            ndx;
     void            *ptr;
 
+    id = thrgetid();
     fprintf(stderr, "thrstart(%lx)\n", id);
     lkpoolinit(pool);
+    pptr = thrptrtab[id];
     for (ndx = 0 ; ndx < STKPOOL_THREAD_POINTERS ; ndx++) {
         ptr = &pptr[ndx];
         pptr[ndx] = ptr;
     }
-    pptr = ptrtab[id];
     for (ndx = 0 ; ndx < STKPOOL_THREAD_POINTERS ; ndx++) {
         if (!stkpoolpushptr(pool, pptr[ndx])) {
             fprintf(stderr, "stkpoolpushptr() failed\n");
@@ -49,24 +66,19 @@ thrstart(void *arg)
 int
 main(int argc, char *argv[])
 {
-#if 0
     long           ndx;
     int            res;
     void          *ptr;
-#endif
 
-    ptrtab[0] = malloc(STKPOOL_THREAD_POINTERS * sizeof(void *));
-    thrstart(&pool[0]);
-#if 0
     for (ndx = 0 ; ndx < STKPOOL_THREADS ; ndx++) {
-        ptrtab[ndx] = malloc(STKPOOL_THREAD_POINTERS * sizeof(void *));
-        if (!ptrtab[ndx]) {
+        thrptrtab[ndx] = malloc(STKPOOL_THREAD_POINTERS * sizeof(void *));
+        if (!thrptrtab[ndx]) {
 
             exit(1);
         }
     }
     for (ndx = 0 ; ndx < STKPOOL_THREADS ; ndx++) {
-        res = pthread_create(&thrtab[ndx], NULL, thrstart, &pool[ndx]);
+        res = pthread_create(&thrtab[ndx], NULL, thrstart, &stkpool[ndx]);
         if (res) {
             fprintf(stderr, "pthread_create() FAILED\n");
 
@@ -81,7 +93,6 @@ main(int argc, char *argv[])
             exit(1);
         }
     }
-#endif
 
     exit(0);
 }

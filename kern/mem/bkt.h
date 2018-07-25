@@ -1,6 +1,7 @@
 #ifndef __KERN_MEM_BKT_H__
 #define __KERN_MEM_BKT_H__
 
+#include <kern/conf.h>
 #include <zero/trix.h>
 
 #define MEM_CONST_SIZE_TRICK 1

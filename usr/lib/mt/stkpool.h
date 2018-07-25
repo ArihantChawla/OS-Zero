@@ -2,7 +2,7 @@
 #define __ZERO_STKPOOL_H__
 
 #if !defined(STKPOOL_LOCKFREE)
-#define STKPOOL_LOCKFREE 1
+#define STKPOOL_LOCKFREE 0
 #endif
 #if !defined(STKPOOL_ITEM_T)
 #define STKPOOL_ITEM_T struct stkitem
@@ -41,8 +41,8 @@ stkpoolpush(struct lkpool *pool, STKPOOL_CHAIN_T *item)
         do {
             ofs &= LKPOOL_ITEMS - 1;
             data = &pool->tab[ofs].data;
-            chain = m_atomread(&data->chain);
-            m_atomwrite(&item->chain, chain);
+            chain = data->chain;
+            item->chain = chain;
             if (m_cmpswapptr((m_atomicptr_t *)&data->chain,
                              (m_atomicptr_t)chain,
                              (m_atomicptr_t)item)) {
@@ -89,10 +89,11 @@ stkpoolpop(struct lkpool *pool)
         do {
             ofs &= LKPOOL_ITEMS - 1;
             data = &pool->tab[ofs].data;
-            chain = m_atomread(&data->chain);
-            if (m_cmpswapptr((m_atomicptr_t *)&(pool->tab[ofs].data.chain),
-                             (m_atomicptr_t)chain,
-                             (m_atomicptr_t)chain->chain)) {
+            chain = data->chain;
+            if ((chain)
+                && m_cmpswapptr((m_atomicptr_t *)&data->chain,
+                                (m_atomicptr_t)chain,
+                                (m_atomicptr_t)chain->chain)) {
                 ptr = chain->ptr;
                 if (chain) {
                     stkpoolputitem(data);

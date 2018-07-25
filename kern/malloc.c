@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <zero/cdefs.h>
 #include <mach/param.h>
+#include <mach/asm.h>
 #include <zero/trix.h>
 #include <mt/mtx.h>
 #include <kern/util.h>
@@ -55,7 +56,7 @@ memalloc(size_t nb, long flg)
     if (MEMWIRE) {
         vmflg |= PAGEPRES;
     }
-    fmtxlk(&bkt->lk);
+    memlkbkt(&bkt->lk);
     if (bktid >= MEMSLABSHIFT) {
         ptr = slaballoc(virtzone, sz, flg);
         if (ptr) {
@@ -132,7 +133,7 @@ memalloc(size_t nb, long flg)
     if (!ptr) {
         panic(TRAPNONE, -ENOMEM);
     }
-    fmtxunlk(&bkt->lk);
+    memunlkbkt(&bkt->lk);
 
     return ptr;
 }
@@ -151,6 +152,7 @@ memwtalloc(size_t nb, long flg, long spin)
 
                 return ptr;
             }
+            m_waitspin();
         } while (spin--);
         m_waitint();
     } while (1);
@@ -177,7 +179,7 @@ kfree(void *ptr)
 
         return;
     }
-    fmtxlk(&bkt->lk);
+    memlkbkt(&bkt->lk);
 #if defined(MEMPARANOIA)
     ndx = ((uintptr_t)ptr - mag->base) >> bktid;
 #if ((MEMSLABSHIFT - MEMMINSHIFT) < (LONGSIZELOG2 + 3))
@@ -221,7 +223,7 @@ kfree(void *ptr)
 #if defined(MEMPARANOIA)
     clrbit(bmap, ndx);
 #endif
-    fmtxunlk(&bkt->lk);
+    memunlkbkt(&bkt->lk);
 
     return;
 }

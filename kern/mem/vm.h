@@ -29,9 +29,15 @@ typedef uint64_t   vmblkbits;
 #include <kern/unit/x86/vm.h>
 #endif
 
+#if (VMTKTLK)
+#define VM_LK_T         zerotktlk
+#define vmlk(lp)        tktlk(lp)
+#define vmunlk(lp)      tktunlk(lp)
+#else
 #define VM_LK_T         zerofmtx
 #define vmlk(lp)        fmtxlk(lp)
 #define vmunlk(lp)      fmtxunlk(lp)
+#endif
 
 #define VM_PROT_NONE    0
 #define VM_PROT_EXECUTE (1 << 0)
@@ -46,7 +52,6 @@ typedef uint64_t   vmblkbits;
 #include <mt/tktlk.h>
 #if (VMPAGETKTLK)
 #define VMPAGE_LK_T     union zerotktlk
-//#define vmspinlk(tp)    tktlkspin(tp)
 #define vmlkpage(tp)    tktlk(tp)
 #define vmunlkpage(tp)  tktunlk(tp)
 #elif (VMTKTLK)

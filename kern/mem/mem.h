@@ -10,6 +10,18 @@
 #include <mach/param.h>
 #include <zero/trix.h>
 
+#if (MEMTKTLK)
+#include <mt/tktlk.h>
+#define MEM_LK_T       zerotktlk
+#define memlkbkt(lp)   tktlk(lp)
+#define memunlkbkt(lp) tktunlk(lp)
+#else
+#include <mt/mtx.h>
+#define MEM_LK_T       zerofmtx
+#define memlkbkt(lp)   fmtxlk(lp)
+#define memunlkbkt(lp) fmtxunlk(lp)
+#endif
+
 /* memory zones */
 #define MEM_LOW_ZONE    0 // low-memory (x86: boot)
 #define MEM_IO_ZONE     1 // I/O zone (x86: DMA)

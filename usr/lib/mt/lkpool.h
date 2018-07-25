@@ -16,7 +16,7 @@
 /* make mutex size equal cacheline */
 struct lkpoolitem {
     m_atomic_t     lk;
-    void          *ptr;
+    void          *tab;
     LKPOOL_DATA_T  data;
     int8_t         _pad[CLSIZE
                         - sizeof(m_atomic_t)
@@ -45,8 +45,8 @@ static INLINE long
 lkpooltrylk(struct lkpool *pool)
 {
     struct lkpoolitem *lpmtx = &pool->tab[0];
-    long               n = LKPOOL_ITEMS;
-    long               ofs = qrand32();
+    long                n = LKPOOL_ITEMS;
+    long                ofs = qrand32();
 
     while (n--) {
         ofs &= LKPOOL_ITEMS - 1;
