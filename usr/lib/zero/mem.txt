@@ -1,0 +1,18 @@
+terminology
+-----------
+
+- slab          - fixed-size core allocation
+- magazine      - cache/buffer for smaller parts of slabs
+- block         - single allocated block
+
+allocation classes
+------------------
+
+- small allocations are up to PAGESIZE bytes and are served from slabs of
+  16 * PAGESIZE bytes
+- runs are aligned multiples of PAGESIZE and up to 64 * PAGESIZE bytes in size
+- middle-size allocations are multiples of 4 * PAGESIZE up to 128 * PAGESIZE
+- big allocations are individuals memory-mappings and multiples of PAGESIZE
+  bytes
+- small and run allocations are queue in thread-local buckets
+
