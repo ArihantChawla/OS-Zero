@@ -15,9 +15,13 @@
 
 /* make mutex size equal cacheline */
 struct lkpoolitem {
-    m_atomic_t    lk;
-    LKPOOL_DATA_T data;
-    int8_t        _pad[CLSIZE - sizeof(m_atomic_t) - sizeof(LKPOOL_DATA_T)];
+    m_atomic_t     lk;
+    void          *ptr;
+    LKPOOL_DATA_T  data;
+    int8_t         _pad[CLSIZE
+                        - sizeof(m_atomic_t)
+                        - sizeof(void *)
+                        - sizeof(LKPOOL_DATA_T)];
 };
 
 /*

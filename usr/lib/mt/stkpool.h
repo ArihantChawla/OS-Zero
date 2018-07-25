@@ -23,6 +23,7 @@ struct stkitem {
     void            (*recl)(void *);
 };
 
+#include <mach/asm.h>
 #include <mt/lkpool.h>
 
 #if defined(STKPOOL_LOCKFREE)
@@ -49,6 +50,7 @@ stkpoolpush(struct lkpool *pool, STKPOOL_CHAIN_T *item)
                 return;
             }
             ofs--;
+            m_waitspin();
         } while (n--);
         ofs = qrand32();
     } while (1);
@@ -99,6 +101,7 @@ stkpoolpop(struct lkpool *pool)
                 return ptr;
             }
             ofs++;
+            m_waitspin();
         } while (n--);
     } while (1);
 

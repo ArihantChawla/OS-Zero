@@ -5,35 +5,39 @@
 #include <mt/stkpool.h>
 #include <pthread.h>
 
-#define STKPOOL_THREADS 8
+#define STKPOOL_THREADS         8
+#define STKPOOL_THREAD_POINTERS 16777216
 
+static struct lkpool         pool[STKPOOL_THREADS];
 static void                **ptrtab[STKPOOL_THREADS];
-static volatile m_atomic_t   thrcnt;
 pthread_t                    thrtab[STKPOOL_THREADS];
+static volatile m_atomic_t   thrcnt;
 
 void *
 thrstart(void *arg)
 {
     m_atomic_t      id = m_fetchadd(&thrcnt, 1);
-    struct lkpool  *pool = arg;
     void          **pptr = ptrtab[id];
     long            ndx;
     void            *ptr;
 
     fprintf(stderr, "thrstart(%lx)\n", id);
     lkpoolinit(pool);
-    for (ndx = 0 ; ndx < 1048576 ; ndx++) {
+    for (ndx = 0 ; ndx < STKPOOL_THREAD_POINTERS ; ndx++) {
         ptr = &pptr[ndx];
         pptr[ndx] = ptr;
     }
-    for (ndx = 0 ; ndx < 1048576 ; ndx++) {
-        if (!stkpoolpushptr(pool, ptrtab[ndx])) {
+    pptr = ptrtab[id];
+    for (ndx = 0 ; ndx < STKPOOL_THREAD_POINTERS ; ndx++) {
+        if (!stkpoolpushptr(pool, pptr[ndx])) {
+            fprintf(stderr, "stkpoolpushptr() failed\n");
 
             exit(1);
         }
     }
-    for (ndx = 0 ; ndx < 1048576 ; ndx++) {
+    for (ndx = 0 ; ndx < STKPOOL_THREAD_POINTERS ; ndx++) {
         if (!stkpoolpop(pool)) {
+            fprintf(stderr, "stkpoolpop() failed\n");
 
             exit(1);
         }
@@ -45,13 +49,17 @@ thrstart(void *arg)
 int
 main(int argc, char *argv[])
 {
-    struct lkpool  pool[STKPOOL_THREADS];
+#if 0
     long           ndx;
     int            res;
     void          *ptr;
+#endif
 
+    ptrtab[0] = malloc(STKPOOL_THREAD_POINTERS * sizeof(void *));
+    thrstart(&pool[0]);
+#if 0
     for (ndx = 0 ; ndx < STKPOOL_THREADS ; ndx++) {
-        ptrtab[ndx] = malloc(1048576 * STKPOOL_THREADS * sizeof(void *));
+        ptrtab[ndx] = malloc(STKPOOL_THREAD_POINTERS * sizeof(void *));
         if (!ptrtab[ndx]) {
 
             exit(1);
@@ -73,6 +81,7 @@ main(int argc, char *argv[])
             exit(1);
         }
     }
+#endif
 
     exit(0);
 }
