@@ -58,7 +58,7 @@ stkpoolpush(struct lkpool *pool, STKPOOL_CHAIN_T *item)
 
 #define stkpoolgetitem()   malloc(sizeof(STKPOOL_CHAIN_T))
 //#define stkpoolputitem(dp) ((dp)->recl((dp)->ptr))
-#define stkpoolputitem(dp)
+#define stkpoolputitem(dp) /* FIXME: reclaim memory */
 
 static __inline__ void *
 stkpoolpushptr(struct lkpool *pool, void *ptr)
