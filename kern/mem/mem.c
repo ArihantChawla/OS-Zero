@@ -1,17 +1,12 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/trix.h>
+#include <kern/mem/page.h>
 #include <kern/mem/mem.h>
 #include <kern/mem/zone.h>
 #include <kern/unit/ia32/vm.h>
 
 extern struct memzone memzonetab[MEM_ZONES];
-
-extern unsigned long pageinitphyszone(uintptr_t base, struct vmpage **zone,
-                                      unsigned long nb);
-extern unsigned long pageaddphyszone(uintptr_t base, struct vmpage **zone,
-                                     unsigned long nb);
-extern unsigned long pageinitphys(uintptr_t base, size_t nbphys);
 
 void
 meminit(size_t nbphys, size_t nbvirt)

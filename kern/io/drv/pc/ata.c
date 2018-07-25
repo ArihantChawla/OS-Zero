@@ -60,7 +60,7 @@ ataprobedrv(uint16_t iobase, uint8_t id)
     byte2 = inb(iobase + 5);
     if (byte1 == ATAIDATAPIBYTE1 && byte2 == ATAIDATAPIBYTE2) {
         /* ATAPI */
-        
+
         retval = 2;
     } else if (byte1 == ATAIDSATABYTE1 && byte2 == ATAIDSATABYTE2) {
         /* SATA */
@@ -75,29 +75,29 @@ ataprobedrv(uint16_t iobase, uint8_t id)
         do {
             byte1 = inb(iobase + 7);        // read status port
             if (!byte1) {
-                
+
                 return 0;
             } else if (byte1 & ATABSY) {
-                
+
                 continue;
             } else {
                 byte1 = inb(iobase + 4);    // LBAmid
                 byte2 = inb(iobase + 5);    // LBAhi
                 if ((byte1) || (byte2)) {
-                    
+
                     return 0;
                 } else {
                     while (!retval) {
                         byte1 = inb(iobase + 7);
                         byte2 = byte1 & (ATADRQ | ATAERR);
                         if (!byte2) {
-                            
+
                             continue;
                         } else if (byte2 & ATAERR) {
-                            
+
                             return 0;
                         } else {
-                            
+
                             retval = 1;
                         }
                     }
@@ -156,7 +156,7 @@ ataprobedrv2(uint16_t iobase)
         byte1 = inb(iobase + 4);
         outb(0x55, 0x80);
         byte2 = inb(iobase + 5);
-        if (byte1 != 0x55 || byte1 != 0xaa) {
+        if (byte1 != 0x55 || byte2 != 0xaa) {
             kprintf("ATA: no drive found on interface 0x%x\n", iobase);
 
             return;

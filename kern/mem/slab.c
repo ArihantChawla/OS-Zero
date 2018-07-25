@@ -4,11 +4,9 @@
 #include <zero/trix.h>
 #include <mt/mtx.h>
 #include <kern/util.h>
+#include <kern/mem/vm.h>
 #include <kern/mem/mem.h>
 #include <kern/mem/zone.h>
-//#include <kern/mem/mag.h>
-//#include <kern/mem/bkt.h>
-//#include <kern/mem/vm.h>
 
 #define MEMDIAG 0
 

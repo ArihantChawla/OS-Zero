@@ -166,6 +166,7 @@ struct pcihdr01 {
 struct pcihdrtype {
     unsigned type : 7;
     unsigned mf   : 1;
+    unsigned _res : 24;
 };
 
 struct pcibist {
@@ -173,6 +174,7 @@ struct pcibist {
     unsigned res       : 2;
     unsigned startbist : 1;
     unsigned bistcap   : 1;
+    unsigned _res      : 24;
 };
 
 struct pcicmd {
@@ -188,6 +190,7 @@ struct pcicmd {
     unsigned fastbtobenab : 1;
     unsigned intrdisab    : 1;
     unsigned res2         : 1;
+    unsigned _res         : 20;
 };
 
 struct pcistatus {
@@ -204,6 +207,7 @@ struct pcistatus {
     unsigned mastabort : 1;
     unsigned syserr    : 1;
     unsigned parityerr : 1;
+    unsigned _res      : 16;
 };
 
 struct pcibaseadr {

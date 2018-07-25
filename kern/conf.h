@@ -87,7 +87,7 @@
 #define DEVEL         0         // debugging
 
 #define APIC          1         // local [per-CPU] APIC support
-#define HPET          0         // high precision event timer support
+#define HPET          1         // high precision event timer support
 /* planned and developed drivers */
 #define VBE           1         // VBE2 graphics driver
 #define VBEMTRR       1         // map graphics framebuffer write-combining

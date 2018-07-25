@@ -3,6 +3,7 @@
 #include <mt/mtx.h>
 #include <kern/util.h>
 #include <kern/malloc.h>
+#include <kern/mem/vm.h>
 #include <kern/mem/membuf.h>
 
 //static struct membufpool membufpooltab[NCPU] ALIGNED(PAGESIZE);
