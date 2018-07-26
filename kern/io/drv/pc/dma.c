@@ -5,6 +5,7 @@
 #include <zero/trix.h>
 #include <mt/mtx.h>
 #include <kern/util.h>
+#include <kern/printf.h>
 #include <kern/io/drv/pc/dma.h>
 
 const uint8_t dmapageports[DMANCHAN] ALIGNED(PAGESIZE)

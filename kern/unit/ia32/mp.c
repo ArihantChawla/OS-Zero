@@ -1,10 +1,14 @@
 #if !defined(__x86_64__) && !defined(__amd64__)
 
 #include <kern/conf.h>
+#include <kern/unit/x86/mp.h>
+
+struct k_mp k_mp;
 
 #if (SMP) || (APIC)
 
 #include <stddef.h>
+#include <stdint.h>
 #include <sys/io.h>
 #include <zero/trix.h>
 #include <zero/cdefs.h>
@@ -17,9 +21,11 @@
 #include <kern/cpu.h>
 #include <kern/mem/vm.h>
 #include <kern/proc/task.h>
+#include <kern/proc/kern.h>
 #include <kern/unit/x86/kern.h>
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/ia32/mp.h>
+#include <kern/unit/ia32/task.h>
 
 /* used to scan for MP table */
 #define EBDAADR   0x040e
@@ -29,11 +35,9 @@
 #define MPSIG 0x5f504d5f        // "_MP_"
 
 extern void gdtinit(void);
-extern void trapinitidt(void);
 extern void idtset(void);
 
-extern pde_t *kernpagedir[NPDE];
-struct k_mp   k_mp;
+extern uintptr_t *kernpagedir[NPDE];
 
 static long
 mpchksum(uint8_t *ptr, unsigned long len)
@@ -134,16 +138,32 @@ mpconf(struct mp **mptab)
 }
 
 void
+mpinitcpu(long unit)
+{
+    cpuinit(unit);
+    /* TODO: initialise HPET; enable [rerouted] interrupts */
+#if (HPET)
+    hpetinit();
+#endif
+    apicinit(unit);
+#if (IOAPIC)
+    ioapicinit(unit);
+#endif
+    tssinit(unit);
+
+    return;
+}
+
+void
 mpinit(void)
 {
-    struct mp          *mp;
-    struct mpconf      *conf;
-    struct mpcpu       *cpu;
-    uint32_t *volatile  mpapic;
-    struct mpioapic    *ioapic;
-    long                unit;
-    uint8_t            *u8ptr;
-    uint8_t            *lim;
+    struct mp       *mp;
+    struct mpconf   *conf;
+    struct mpcpu    *cpu;
+    struct mpioapic *ioapic;
+    long             unit;
+    uint8_t         *u8ptr;
+    uint8_t         *lim;
 
     conf = mpconf(&mp);
     if (!conf) {
@@ -151,7 +171,6 @@ mpinit(void)
         return;
     }
     mpapic = conf->apicadr;
-    k_mp.apic = mpapic;
     for (u8ptr = (uint8_t *)(conf + 1), lim = (uint8_t *)conf + conf->len ;
          u8ptr < lim ; ) {
         switch (*u8ptr) {
@@ -159,9 +178,10 @@ mpinit(void)
                 cpu = (struct mpcpu *)u8ptr;
                 unit = cpu->id;
                 if (cpu->flags & MPCPUBOOT) {
-                    k_mp.bootcpu = &k_cputab[unit];
-                    taskinittls(unit, PROCKERN);
+                    mpbootcpu = &k_cputab[unit];
+                    taskinittls(unit, TASKKERN);
                 }
+                mpinitcpu(unit);
                 k_cputab[unit].unit = unit;
                 k_mp.ncpu++;
                 u8ptr += sizeof(struct mpcpu);
@@ -181,7 +201,7 @@ mpinit(void)
 
                 continue;
             default:
-                k_mp.multiproc = 0;
+                continue;
 
                 break;
         }
@@ -196,30 +216,6 @@ mpinit(void)
         outb(0x70, 0x22);               // select IMCR
         outb(inb(0x23) | 0x01, 0x23);   // mask external timer interrupts
     }
-#if 0
-    /* Boot CPU */
-    /* local APIC initialisation where present */
-//    apicinit();
-    /* I/O APIC initialisation */
-//    ioapicinit();
-#endif
-
-    return;
-}
-
-void
-mpinitcpu(long unit)
-{
-    cpuinit(unit);
-    /* TODO: initialise HPET; enable [rerouted] interrupts */
-#if (HPET)
-    hpetinit();
-#endif
-    apicinit(unit);
-#if (IOAPIC)
-    ioapicinit(unit);
-#endif
-    tssinit(unit);
 
     return;
 }
@@ -233,7 +229,9 @@ mpmain(struct cpu *cpu)
     seginit(unit);
     idtset();
     m_atomwrite((m_atomic_t *)&cpu->flg, CPUSTARTED);
-    mpinitcpu(unit);
+#if 0
+    unit = mpinitcpu();
+#endif
     schedloop();
 
     /* NOTREACHED */
@@ -278,15 +276,6 @@ mpstart(void)
     return;
 }
 #endif
-
-/* spurious interrupt handler for SMP */
-void
-mpspurint(void)
-{
-    apiceoi();
-
-    return;
-}
 
 #endif /* SMP || APIC */
 

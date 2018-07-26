@@ -26,7 +26,7 @@
 #include <string.h>
 #define kprintf printf
 #define kbzero bzero
-#define panic(pid, trap, err) abort()
+#define panic(trap, err, frm) abort()
 #endif
 //#define panic(pid, trap, err)
 
@@ -123,7 +123,7 @@ memalloc(size_t nb, long flg)
             kprintf("duplicate allocation %p (%ld/%ld)\n",
                     ptr, ndx, mag->n);
 
-            panic(TRAPNONE, -EINVAL);
+            panic(TRAPNONE, -EINVAL, NULL);
         }
         setbit(bmap, ndx);
 #endif /* defined(MEMPARANOIA) */
@@ -132,7 +132,7 @@ memalloc(size_t nb, long flg)
         }
     }
     if (!ptr) {
-        panic(TRAPNONE, -ENOMEM);
+        panic(TRAPNONE, -ENOMEM, NULL);
     }
     memunlkbkt(&bkt->lk);
 
@@ -192,7 +192,7 @@ kfree(void *ptr)
         kprintf("invalid free: %p (%ld/%ld)\n",
                 ptr, ndx, mag->n);
 
-        panic(TRAPNONE, -EINVAL);
+        panic(TRAPNONE, -EINVAL, NULL);
     }
 #endif
     mempush(mag, ptr);

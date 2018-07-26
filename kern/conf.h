@@ -5,8 +5,8 @@
 
 #include <mach/param.h>
 
-#define PLASMA        1
-#define PLASMAFOREVER 1
+#define PLASMA        0
+#define PLASMAFOREVER 0
 #define USYSINFO      1
 #define MEMTKTLK      1
 #define VMTKTLK       1
@@ -24,7 +24,7 @@
 #else
 #define MEMNBUFBLK    32768
 #endif
-#define PERTHRSTACKS  1
+#define PERTHRSTACKS  0
 
 #define NEWBUFBLK     1
 #define BUFNEWHASH    1
@@ -86,12 +86,12 @@
 #define BOCHS         1
 #define DEVEL         0         // debugging
 
-#define APIC          1         // local [per-CPU] APIC support
+#define APIC          0         // local [per-CPU] APIC support
 #define HPET          1         // high precision event timer support
 /* planned and developed drivers */
 #define VBE           1         // VBE2 graphics driver
 #define VBEMTRR       1         // map graphics framebuffer write-combining
-#define PIC           1
+#define PIC           0
 #define IOAPIC        0         // enable I/O APIC support
 #define SMBIOS        0         // SMBIOS (system management) support
 #define PCI           1         // PCI bus driver

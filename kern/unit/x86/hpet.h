@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <zero/cdefs.h>
 #include <mach/param.h>
+#include <kern/printf.h>
 
 /* base addresses */
 #define HPET0BASE     0xfed00000

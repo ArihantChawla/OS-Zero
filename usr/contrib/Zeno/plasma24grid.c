@@ -295,7 +295,7 @@ bool init(void)
     for (i = 0; i < PALETTE_SIZE / 2; i++) {
         int b;
 
-        tmp = ceil(i * step);
+        tmp = k_ceil(i * step);
         b = min_colour + tmp;
         if (b > max_colour) b = max_colour;
 
@@ -306,7 +306,8 @@ bool init(void)
 
     // void init_offsetTable(void)
     for (i = 0; i < len; i++) {
-        offsetTable[i] = sin(DEG_TO_RAD((double)i / len * 360.0)) * OFFSET_MAG;
+        offsetTable[i] = k_sin(DEG_TO_RAD((double)i / len * 360.0))
+                         * OFFSET_MAG;
     }
 
 #if (!__KERNEL__)

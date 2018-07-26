@@ -7,6 +7,7 @@
 #include <kern/unit/x86/kern.h>
 #include <kern/unit/x86/ioapic.h>
 #include <kern/unit/x86/trap.h>
+#include <kern/unit/x86/mp.h>
 #include <kern/unit/ia32/mp.h>
 
 extern volatile struct cpu k_cputab[NCPU];
@@ -24,7 +25,7 @@ ioapicinit(long id)
 
         return;
     }
-    if (cpu == k_mp.bootcpu) {
+    if (cpu == mpbootcpu) {
         vmmapseg((uint32_t)ioapic, (uint32_t)ioapic,
                  (uint32_t)((uint8_t *)ioapic + PAGESIZE),
                  PAGEPRES | PAGEWRITE);

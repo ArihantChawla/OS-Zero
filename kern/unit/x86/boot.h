@@ -6,7 +6,7 @@
 #endif
 #include <kern/conf.h>
 
-#define APICBASE   0xfee00000
+#define APICBASE   0xfffff000
 #define APICEOIADR (APICBASE + 0xb0)
 
 #if !defined(__ASSEMBLER__)

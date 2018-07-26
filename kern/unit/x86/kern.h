@@ -2,6 +2,8 @@
 #define __UNIT_X86_KERN_H__
 
 #include <kern/conf.h>
+#include <stdint.h>
+#include <zero/cdefs.h>
 
 extern void trapinit(void);
 extern void seginit(long core);

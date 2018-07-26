@@ -26,14 +26,14 @@ hpetprobe(long id)
             hpetdrv.iobase0 = ptr;
             hpetdrv.ntmr0 = hpetntmr(ptr);
             hpetdrv.tmr0size = hpetcntsize(ptr);
-            kprintf("HPET0: rev = 0x%x, vendor = 0x%x, %l timers, 64-bit = %x\n",
+            kprintf("HPET0: rev = 0x%x, vendor = 0x%x, %d timers, 64-bit = 0x%x\n",
                     hpetrevid(ptr), hpetvendor(ptr),
                     hpetntmr(ptr), hpetcntsize(ptr) >> 13);
         } else {
             hpetdrv.iobase1 = ptr;
             hpetdrv.ntmr1 = hpetntmr(ptr);
             hpetdrv.tmr1size = hpetcntsize(ptr);
-            kprintf("HPET1: rev = 0x%x, vendor = 0x%x, %l timers, 64-bit: %x\n",
+            kprintf("HPET1: rev = 0x%x, vendor = 0x%x, %d timers, 64-bit: %x\n",
                     hpetrevid(ptr), hpetvendor(ptr),
                     hpetntmr(ptr), hpetcntsize(ptr));
         }

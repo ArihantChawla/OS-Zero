@@ -36,6 +36,9 @@ typedef int32_t bufval_t;
 #if (BUFTKTLK)
 #define buflk(lp)   tktlk(lp)
 #define bufunlk(lp) tktunlk(lp)
+#else
+#define buflk(lp)   fmtxlk(lp)
+#define bufunlk(lp) fmtxunlk(lp)
 #endif
 
 #if (!BUFMULTITAB)

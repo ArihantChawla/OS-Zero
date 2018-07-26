@@ -4,20 +4,18 @@
 #include <kern/conf.h>
 #include <stdint.h>
 #include <mach/param.h>
-//#include <zero/mtx.h>
-//#include <kern/buf.h>
-#include <kern/types.h>
+#include <mach/types.h>
 #include <kern/unit/x86/link.h>
 
 #define VMFLATPHYSTAB 1
 
 extern long kernlongmode;
 
-void vminitphys(uint32_t base, unsigned long nbphys);
-void vminitvirt(void *virt, uint32_t size, uint32_t flg);
-void vmfreephys(void *virt, uint32_t size);
-void vmmapseg(uint32_t virt, uint32_t phys, uint32_t lim,
-              uint32_t flg);
+void vminitphys(uintptr_t base, m_ureg_t nbphys);
+void vminitvirt(void *virt, m_ureg_t size, m_ureg_t flg);
+void vmfreephys(void *virt, m_ureg_t size);
+void vmmapseg(uintptr_t virt, uintptr_t phys, m_ureg_t lim,
+              m_ureg_t flg);
 
 #define KERNVIRTBASE      0xc0000000U
 #define KERNLOADBASE      0x01400000U
@@ -95,8 +93,8 @@ vmflushtlb(void *adr)
 #define PAGEFLTPAGEMASK 0xfffff000U
 
 struct vmpagemap {
-    pde_t *dir; // page directory address
-    pte_t *tab; // flat page-table of NPDE * NPTE entries
+    uintptr_t *dir; // page directory address
+    uintptr_t *tab; // flat page-table of NPDE * NPTE entries
 };
 
 struct vmpagestat {

@@ -4,7 +4,7 @@
 /* REFERENCE: http://phk.freebsd.dk/pubs/timecounter.pdf */
 
 #include <stdint.h>
-#include <sys/types.h>
+#include <stdint.h>
 
 #define TIME_SECOND 1000000000    // nanosecond resolution
 

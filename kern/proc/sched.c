@@ -5,6 +5,7 @@
 #include <zero/fastudiv.h>
 #include <mt/mtx.h>
 #include <kern/malloc.h>
+#include <kern/printf.h>
 #include <kern/cpu.h>
 #include <kern/sched.h>
 #include <kern/proc/proc.h>
@@ -14,7 +15,6 @@
 #include <sys/io.h>
 #include <kern/unit/x86/pic.h>
 #endif
-#include <kern/unit/ia32/task.h>
 
 extern struct proc      *k_proczombietab[NTASK];
 extern struct tasktabl0  k_taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
@@ -76,7 +76,7 @@ schedinit(void)
 #error define supported scheduler such as ZEROSCHED
 #endif
 #endif
-    kprintf("SCHEDHISTORYSIZE == %ld\n", SCHEDHISTORYSIZE);
+    kprintf("SCHEDHISTORYSIZE == %d\n", SCHEDHISTORYSIZE);
     fastu16divu16gentab(k_fastu16divu16tab, SCHEDDIVU16TABSIZE);
     schedinitset();
 
@@ -305,8 +305,8 @@ schedsetzombie(struct proc *proc)
 }
 
 /* switch tasks */
-void
 //schedswitchtask(struct task *curtask)
+FASTCALL struct task *
 schedswitchtask(struct task *curtask)
 {
     //    long                   unit = k_curcpu->unit;
@@ -327,7 +327,7 @@ schedswitchtask(struct task *curtask)
     if (!curtask) {
         /* kernel initialisations are still taking place */
 
-        return;
+        return NULL;
     }
     switch (state) {
         case TASKNEW:
@@ -348,7 +348,7 @@ schedswitchtask(struct task *curtask)
 
             break;
         default:
-            panic(-1, 0); /* FIXME: error # */
+            panic(-1, 0, NULL); /* FIXME: error # */
 
             break;
     }
@@ -375,7 +375,8 @@ schedswitchtask(struct task *curtask)
                         }
                         fmtxunlk(&set->lk);
 
-                        m_taskjmp(&task->m_task);
+                        //                        m_taskjmp(&task->m_task);
+                        return task;
                     }
                 }
             }
@@ -405,7 +406,8 @@ schedswitchtask(struct task *curtask)
                     }
                     fmtxunlk(&set->lk);
 
-                    m_taskjmp(&task->m_task);
+                    //                    m_taskjmp(&task->m_task);
+                    return task;
                 }
             }
         }
@@ -415,13 +417,13 @@ schedswitchtask(struct task *curtask)
         map = &set->idlemap[0];
         setbit(map, unit);
         fmtxunlk(&set->lk);
-        k_enabintr();
+        k_intron();
         m_waitint();
     } while (1);
-    m_taskjmp(&task->m_task);
+    //    m_taskjmp(&task->m_task);
 
     /* NOTREACHED */
-    return;
+    return curtask;
 }
 
 #if 0

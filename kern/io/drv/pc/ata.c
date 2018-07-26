@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <sys/io.h>
 
-#include <kern/util.h>
+#include <kern/printf.h>
 #include <kern/io/drv/pc/ata.h>
 #include <kern/unit/x86/apic.h>
 

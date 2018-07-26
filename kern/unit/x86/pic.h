@@ -3,6 +3,7 @@
 
 #if !defined(__ASSEMBLER__)
 #include <sys/io.h>
+#include <kern/unit/x86/asm.h>
 #endif
 
 /* PIC registers */

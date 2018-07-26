@@ -11,6 +11,7 @@
 #include <zero/fastudiv.h>
 #include <mt/spin.h>
 #include <kern/cpu.h>
+#include <kern/proc/proc.h>
 #include <kern/proc/task.h>
 #include <kern/unit/x86/mp.h>
 

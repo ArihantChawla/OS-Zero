@@ -1,9 +1,7 @@
 #ifndef __KERN_ACL_H__
 #define __KERN_ACL_H__
 
-#include <mach/param.h>
-#include <zero/trix.h>
-#include <kern/types.h>
+#include <unistd.h>
 
 /* FIXME: assert size/alignments! */
 struct acl {

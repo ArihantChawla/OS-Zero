@@ -10,6 +10,7 @@
 #include <zero/trix.h>
 #include <mt/mtx.h>
 #include <kern/util.h>
+#include <kern/printf.h>
 #include <kern/malloc.h>
 #include <kern/time.h>
 #include <kern/mem/vm.h>
@@ -69,7 +70,7 @@ pageaddphyszone(m_ureg_t base,
 #endif
     k_physmem.pagestat.nphys += n;
     kprintf("reserving %ld (%lx) maps @ %p (%lx)\n",
-            n, n, k_vmphystab, pagenum(base));
+            (long)n, (long)n, k_vmphystab, (long)pagenum(base));
     while (n--) {
         if (!*pte) {
 //            page--;

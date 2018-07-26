@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <mt/mtx.h>
 #include <kern/util.h>
+#include <kern/printf.h>
 #include <kern/malloc.h>
 #include <kern/mem/vm.h>
 #include <kern/mem/membuf.h>

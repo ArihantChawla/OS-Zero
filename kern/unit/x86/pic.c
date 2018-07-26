@@ -23,12 +23,13 @@ picmapirq(void)
 void
 picinit(void)
 {
+    k_introff();
     /* map IRQ0..15 to INTs 0x20..0x2f */
     picmapirq();
     /* set masks to zero; enable all interrupts */
-    outb(0x00, 0x21);
-    outb(0x00, 0xa1);
-//    __asm__ __volatile__ ("sti\n");
+    outb(0x00, PICMASK1);
+    outb(0x00, PICMASK2);
+    k_intron();
 
     return;
 }

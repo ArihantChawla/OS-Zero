@@ -10,12 +10,6 @@ schedloop(void)
 {
     /* test scheduler loop; interrupted by timer [and other] interrupts */
     do {
-        /* enable all interrupts */
-#if !(APIC)
-        outb(0x00, PICMASK1);
-        outb(0x00, PICMASK2);
-#endif
-//        kprintregs();
         /* wait for interrupt */
         k_waitint();
     } while (1);

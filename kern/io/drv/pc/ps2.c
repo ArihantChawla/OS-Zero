@@ -25,7 +25,7 @@
 #include <zero/ev.h>
 #include <zero/keysym.h>
 #include <zero/ring.h>
-#include <kern/util.h>
+//#include <kern/util.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/io/drv/pc/ps2.h>

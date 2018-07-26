@@ -8,6 +8,9 @@
 #include <kern/asm.h>
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/trap.h>
+#if (APIC)
+#include <kern/unit/x86/apic.h>
+#endif
 
 //extern void ksyscall(void);
 
@@ -37,17 +40,11 @@ extern void irqtmr0(void);
 extern void irqtmr(void);
 extern void irqkbd(void);
 extern void irqmouse(void);
-#if (SMP)
-extern void irqerror(void);
-#endif
-#if (APIC)
-extern void irqspurious(void);
-#endif
 
 #if (SMP)
 extern volatile long   mpmultiproc;
 #endif
-extern uint64_t        kernidt[NINTR];
+extern uint64_t        kernidt[];
 extern struct m_farptr idtptr;
 
 long                   k_trappriotab[NINTR];
@@ -93,8 +90,10 @@ trapsetidt(long ntrap, uint64_t *idt)
 #endif
 
 void
-trapinitidt(uint64_t *idt)
+trapinitidt(void)
 {
+    uint64_t *idt = kernidt;
+
     trapsetintrgate(&idt[TRAPDE], trapde, TRAPSYS);
     trapsetintrgate(&idt[TRAPDB], trapdb, TRAPSYS);
     trapsetintrgate(&idt[TRAPNMI], trapnmi, TRAPSYS);
@@ -116,18 +115,16 @@ trapinitidt(uint64_t *idt)
     /* system call trap */
     trapsetintrgate(&idt[TRAPSYSCALL], ksyscall, TRAPUSER);
     /* IRQs */
+#if (APIC) && 0
     trapsetintrgate(&idt[trapirqid(IRQTMR)], irqtmr0, TRAPUSER);
+#else
+    trapsetintrgate(&idt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
+#endif
     trapsetintrgate(&idt[trapirqid(IRQKBD)], irqkbd, TRAPUSER);
     trapsetintrgate(&idt[trapirqid(IRQMOUSE)], irqmouse, TRAPUSER);
-#if (SMP)
-    trapsetintrgate(&idt[trapirqid(IRQERROR)], irqerror, TRAPUSER);
-#endif
 #if (APIC)
-    trapsetintrgate(&idt[trapirqid(IRQAPICTMR)], irqtmr, TRAPUSER);
+    trapsetintrgate(&idt[trapirqid(IRQERROR)], irqerror, TRAPUSER);
     trapsetintrgate(&idt[trapirqid(IRQSPURIOUS)], irqspurious, TRAPUSER);
-#endif
-#if 0
-    trapsetintrgate(&idt[TRAPV86MODE], trapv86, TRAPUSER);
 #endif
     /* initialize interrupts */
     trapsetidt(NINTR, idt);
@@ -147,13 +144,13 @@ trapinitprio(void)
 void
 trapinit(void)
 {
-    trapinitidt(kernidt);
+    trapinitidt();
     trapinitprio();
     picinit();  // initialise interrupt controllers
     /* mask timer interrupt, enable other interrupts */
     outb(0x01, 0x21);
     outb(0x00, 0xa1);
-    k_enabintr();
+    k_intron();
 //    __asm__ __volatile__ ("sti\n");
 //    pitinit();  // initialise interrupt timer
 

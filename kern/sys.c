@@ -1,9 +1,8 @@
 #include <kern/conf.h>
 #include <limits.h>
 #include <unistd.h>
-#include <zero/cdefs.h>
 #include <mach/param.h>
-#include <zero/trix.h>
+#include <kern/version.h>
 #include <kern/cpu.h>
 #include <kern/sys.h>
 #include <kern/io/buf.h>
@@ -14,17 +13,9 @@ void
 sysinit(void)
 {
     volatile struct m_cpucacheinfo  cbuf;
-    //    volatile struct cpu            *cpu = k_curcpu;
-    //    volatile struct m_cpuinfo      *info = &cpu->info;
     long                           *tab = k_sys.conf.tab;
     long                           *ptr = tab + zeroabs(MINSYSCONF);
 
-#if 0
-    if (!(cpu->flg & CPUINITBIT)) {
-        /* CPU interface */
-        cpuprobe(info, &cbuf);
-    }
-#endif
     ptr[_SC_OS_VERSION] = _ZERO_VERSION;
     ptr[_SC_VERSION] = _POSIX_VERSION;
     ptr[_SC_ARG_MAX] = ARG_MAX;

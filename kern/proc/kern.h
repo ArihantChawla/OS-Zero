@@ -4,12 +4,12 @@
 #include <kern/proc/proc.h>
 
 /* system-assigned process IDs */
-#define PROCKERN     0  // main kernel; context switches, system calls, ...
-#define PROCINIT     1  // init process; the mother of all processes
-#define PROCEVD      2  // event daemon; manage events such as user input ones
-#define PROCBUFD     3  // buffer daemon; HID, audio, video, net, disk
-#define PROCPAGED    4  // page daemon; page replacement; aging, LRU-queue
-#define PROCIDLE     5  // idle process; (zeroes memory etc.?)
+#define TASKKERN     0  // main kernel; context switches, system calls, ...
+#define TASKINIT     1  // init process; the mother of all processes
+#define TASKEVD      2  // event daemon; manage events such as user input ones
+#define TASKBUFD     3  // buffer daemon; HID, audio, video, net, disk
+#define TASKPAGED    4  // page daemon; page replacement; aging, LRU-queue
+#define TASKIDLE     5  // idle process; maintenance tasks
 #define TASKNPREDEF  6
 
 /*

@@ -1,11 +1,12 @@
-#include <zero/cdefs.h>
 #include <kern/conf.h>
+#include <zero/cdefs.h>
 #if (VBE)
 #include <kern/io/drv/pc/vbe.h>
 #endif
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/link.h>
+#include <kern/unit/x86/trap.h>
 
 extern uint8_t kernusrstktab[NCPU * KERNSTKSIZE];
 
@@ -17,7 +18,9 @@ extern void trapinit(void);
 extern void kinitprot(unsigned long pmemsz);
 extern void kinitlong(unsigned long pmemsz);
 
-long kernlongmode;
+extern uint64_t kernidt[NINTR];
+
+long            kernlongmode;
 
 ASMLINK
 void

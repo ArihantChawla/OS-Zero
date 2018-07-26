@@ -13,6 +13,7 @@
 #include <gfx/rgb.h>
 #include <kern/malloc.h>
 #include <kern/util.h>
+#include <kern/printf.h>
 #if (SMP)
 #include <kern/cpu.h>
 #endif
@@ -25,6 +26,7 @@
 #include <kern/io/drv/pc/vbe.h>
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/ia32/real.h>
+#include <kern/unit/ia32/task.h>
 
 extern void            realint10(void);
 
@@ -57,7 +59,7 @@ void
 vbeint10(void)
 {
 #if (SMP)
-    long id = k_curcpu->unit;
+    long id = k_getcurcpu()->unit;
 #endif
     static int       first = 1;
     uint64_t        *gdt;
@@ -236,7 +238,7 @@ vbeprintinfo(void)
     kprintf("VBE FB: %ld kilobytes @ 0x%p - 0x%p\n",
             vbescreen.fbufsize >> 10, vbescreen.fbuf,
             (void *)((uint8_t *)vbescreen.fbuf + vbescreen.fbufsize - 1));
-    kprintf("VBE OEM: %s\n", (void *)VBEPTR(&info->oem));
+    kprintf("VBE OEM: %s\n", (char *)VBEPTR(&info->oem));
     modeptr = (uint16_t *)VBEPTR(vbectlinfo.modelst);
     kprintf("VBE modes:");
     cnt = 0;

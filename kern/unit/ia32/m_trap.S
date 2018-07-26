@@ -22,7 +22,7 @@
  * return with IRET after return from handler.
  *
  * top of stack after interrupt
- * 
+ *
  * eflags
  * cs
  * eip		<- ESP if error code not present
@@ -44,14 +44,14 @@
  * in the end, we enable interrupts with STI.
  */
 
-//.extern	irqtimerfired
+.extern	pittimerticks
 
 .globl	trapde, trapdb, trapnmi, trapbp, trapof, trapbr, trapud, trapnm, trapdf
 .globl	trapts, trapnp, trapss, trapgp, trappf, trapmf, trapac, trapmc, trapxf
 .globl	irqtmr0, irqtmr, irqkbd, irqmouse, irqerror, irqspurious
 .globl	irqvec
-#if (SMP) || (APIC)
-.globl	irqerror, irqspurious, mpspurint, irqtmrcnt
+#if (APIC) || (SMP)
+.globl	irqerror, irqspurious, apicspurint, irqtmrcnt
 #endif
 
 .extern	sigfunc, tmrsyncscr, schedswitchtask
@@ -300,7 +300,7 @@ trapgp:
 	xorl	%eax, %eax
 	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
-_gpfin:	
+_gpfin:
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -409,7 +409,7 @@ trapxf:
 
 .align	16
 
-#if (APIC)
+#if (APIC) || (SMP)
 	/* dummy interrupt handler for probing APIC frequency */
 irqtmrcnt:
 	_apiceoi
@@ -432,7 +432,7 @@ irqtmr0:
 	movl	0(%eax), %ebx
 	/* call if non-zero */
 	cmpl	$0, %ebx
-	jz	_tmr0fin
+	jz		_tmr0fin
 	call	*%ebx
 	/* zero interrupt handler address */
 	movl	$irqvec, %eax
@@ -504,7 +504,7 @@ _save:
 	je	_fnsave
 	fxsave	(%ecx)			// SSE-context detected
 	jmp	_fpusaved
-_fnsave:	
+_fnsave:
 	fnsave	(%ecx)
 _fpusaved:
 	fwait
@@ -520,7 +520,7 @@ _fpunone:
 _getsysstk:
 	/* construct stack information */
 	movl	$DATASEL, %esi		// ESI = system stack/data selector
-_havestk:	
+_havestk:
 	leal	4(%ebp), %edi		// EDI = trap frame addr
 	movl	%ecx, 52(%eax)		// task->pdbr = PDBR
 	movl	%edx, 68(%eax)		// task->frame.cs = caller %cs
@@ -538,12 +538,12 @@ _havestk:
 	movl	%ebx, 28(%eax)		// task->genregs.ebp = pre-trap EBP
 	movl	%ebp, %esp		// restore stack pointer
 	/* copy of task pointer is still in EAX */
-	pushl	%eax			// store task pointer
+//	pushl	%eax			// store task pointer
 	call	schedswitchtask		// call scheduler function
 	/* schedswitchtask does not return normally */
 	/* continue the same task */
-	popl	%ebx			// pop earlier task pointer
-	leal	20(%ebx), %esp
+//	popl	%ebx			// pop earlier task pointer
+	leal	20(%eax), %esp
 	popal
 	movl	32(%esp), %esp		// ESP = m_task.trapesp
 #if (APIC)
@@ -552,7 +552,7 @@ _havestk:
 	_piceoi1
 #endif
 	iretl
- 	
+
 .align	16
 
 irqkbd:
@@ -560,18 +560,17 @@ irqkbd:
 	pushl	$IRQKBD
 	_trapenter
 	movl	%esp, %ebp
-
 	movl	$irqvec, %eax
 	movl	4(%eax), %ebx
-	jz	_irqkbddone
+	jz		_irqkbddone
 	call	*%ebx
-_irqkbddone:	
+_irqkbddone:
 #if (APIC)
 	_apiceoi
 #else
 	_piceoi1
 #endif
-	
+
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -589,7 +588,7 @@ irq3:
 #else
 	_piceoi1
 #endif
-	
+
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -608,7 +607,7 @@ irq4:
 #else
 	_piceoi1
 #endif
-	
+
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -624,15 +623,15 @@ irq5:
 
 	movl	$irqvec, %eax
 	movl	20(%eax), %ebx
-	jz	_irq5done
+	jz		_irq5done
 	call	*%ebx
-_irq5done:	
+_irq5done:
 #if (APIC)
 	_apiceoi
 #else
 	_piceoi1
 #endif
-	
+
 	movl	%ebp, %esp
 	_trapleave
 	sti
@@ -648,22 +647,22 @@ irqmouse:
 
 	movl	$irqvec, %eax
 	movl	48(%eax), %ebx
-	jz	_irqmousedone
+	jz		_irqmousedone
 	call	*%ebx
-_irqmousedone:	
+_irqmousedone:
 #if (APIC)
 	_apiceoi
 #else
 	_piceoi1
 	_piceoi2
 #endif
-	
+
 	movl	%ebp, %esp
 	_trapleave
 	sti
 	iretl
 
-#if (SMP) || (APIC)
+#if (APIC) || (SMP)
 
 .align	16
 
@@ -675,16 +674,12 @@ irqerror:
 
 irqspurious:
 	_trapenter
-	movl	%esp, %ebp
-
-	call	mpspurint
-
-	movl	%ebp, %esp
+	_apiceoi
 	_trapleave
 	sti
 	iretl
 
-#endif /* SMP || APIC */
+#endif /* APIC || SMP */
 
 .bss
 

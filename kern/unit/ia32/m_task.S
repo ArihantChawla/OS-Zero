@@ -18,7 +18,7 @@
 
 m_taskjmp:
 	movl	%gs:8, %eax
-	/* fetch flg-word */
+	/* fetch flgsave-word */
 	movl	(%eax), %ebx
 	andl	$M_FPMASK, %ebx
 	leal	128(%eax), %edx

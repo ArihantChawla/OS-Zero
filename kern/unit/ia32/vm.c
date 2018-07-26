@@ -28,8 +28,8 @@ void pginit(void);
 
 extern uint8_t     kernsysstktab[NCPU * KERNSTKSIZE];
 extern uint8_t     kernusrstktab[NCPU * KERNSTKSIZE];
-extern pde_t       kernpagedir[NPDE];
-extern pde_t       usrpagedir[NPDE];
+extern uintptr_t   kernpagedir[NPDE];
+extern uintptr_t   usrpagedir[NPDE];
 #if (VMFLATPHYSTAB)
 struct vmpage      k_vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
 #endif
@@ -49,14 +49,14 @@ struct k_physmem   k_physmem;
  *     vmphysadr = pagetab[vmpagenum(virt)]; // physical address
  */
 void
-vmmapseg(uintptr_t virt, uintptr_t phys, uintptr_t lim,
-         uintptr_t flg)
+vmmapseg(uintptr_t virt, uintptr_t phys, m_ureg_t lim,
+         m_ureg_t flg)
 {
-    pte_t *pte;
-    long   n;
+    uintptr_t *pte;
+    m_ureg_t   n;
 
     n = rounduppow2(lim - virt, PAGESIZE) >> PAGESIZELOG2;
-    pte = (pte_t *)&_pagetab + vmpagenum(virt);
+    pte = (uintptr_t *)&_pagetab + vmpagenum(virt);
     k_physmem.pagestat.nmap += n;
     while (n--) {
         *pte = phys | flg;
@@ -79,8 +79,8 @@ vmmapseg(uintptr_t virt, uintptr_t phys, uintptr_t lim,
 void
 vminit(void)
 {
-    pde_t     *pde;
-    pte_t     *pte;
+    uintptr_t *pde;
+    uintptr_t *pte;
     uintptr_t  adr;
     long       n;
 
@@ -97,7 +97,7 @@ vminit(void)
     }
 
     /* map page directory index page */
-    pde = (pde_t *)&_pagetab + vmpagenum(kernpagedir);
+    pde = (uintptr_t *)&_pagetab + vmpagenum(kernpagedir);
     adr = (uintptr_t)&kernpagedir;
     *pde = adr | PAGEUSER | PAGEPRES | PAGEWRITE;
 
@@ -184,9 +184,9 @@ vminit(void)
 }
 
 void
-vminitphys(uintptr_t base, unsigned long nbphys)
+vminitphys(uintptr_t base, m_ureg_t nbphys)
 {
-    unsigned long nb = min(nbphys, KERNVIRTBASE);
+    m_ureg_t nb = min(nbphys, KERNVIRTBASE);
 
     /* initialise physical memory manager */
     pageinitphys(base, nb);
@@ -195,14 +195,14 @@ vminitphys(uintptr_t base, unsigned long nbphys)
 }
 
 void
-vminitvirt(void *virt, uintptr_t size, uintptr_t flg)
+vminitvirt(void *virt, m_ureg_t size, m_ureg_t flg)
 {
-    void  *adr;
-    pte_t *pte;
-    long   n;
+    void      *adr;
+    uintptr_t *pte;
+    long       n;
 
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
-    pte = (pte_t *)&_pagetab + vmpagenum(virt);
+    pte = (uintptr_t *)&_pagetab + vmpagenum(virt);
     while (n--) {
         *pte = flg;
         pte++;
@@ -212,17 +212,17 @@ vminitvirt(void *virt, uintptr_t size, uintptr_t flg)
 }
 
 void
-vmfreephys(void *virt, uintptr_t size)
+vmfreephys(void *virt, m_ureg_t size)
 {
 //    struct vmbuf *buf;
     uintptr_t  adr;
-    pte_t     *pte;
+    uintptr_t *pte;
     long       n;
 //    long          nref;
 //    struct vmpage  *pg;
 
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
-    pte = (pte_t *)&_pagetab + vmpagenum(virt);
+    pte = (uintptr_t *)&_pagetab + vmpagenum(virt);
     while (n--) {
         adr = (uintptr_t)*pte;
         adr &= VMPAGEMASK;
@@ -253,15 +253,15 @@ vmfreephys(void *virt, uintptr_t size)
 
 FASTCALL
 void
-vmpagefault(uintptr_t pid, uintptr_t adr, uintptr_t error)
+vmpagefault(uintptr_t pid, uintptr_t adr, m_ureg_t error)
 {
-    pte_t         *pte = (pte_t *)&_pagetab + vmpagenum(adr);
+    uintptr_t     *pte = (uintptr_t *)&_pagetab + vmpagenum(adr);
     uintptr_t      flg = (uintptr_t)*pte & (PAGEFLTFLGMASK | PAGESYSFLAGS);
     struct vmpage *page = NULL;
-    unsigned long  qid;
+    long           qid;
 
     kprintf("PAGEFAULT: pid == %lx, adr == %lx, error == %lx\n",
-            pid, adr, error);
+            (long)pid, (long)adr, (long)error);
     if (!(adr & ~(PAGEFLTADRMASK | PAGESYSFLAGS))) {
         page = pageallocphys();
         if (page) {

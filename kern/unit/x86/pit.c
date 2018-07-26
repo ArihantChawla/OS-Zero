@@ -6,15 +6,15 @@
 #include <kern/conf.h>
 #include <kern/asm.h>
 #include <kern/util.h>
+#include <kern/printf.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/pic.h>
 
-extern uint64_t  kernidt[];
-extern void     *irqvec[];
-//extern void      irqtmr0(void);
-extern void      irqtmr(void);
-//volatile long    irqtmrfired;
+extern uint64_t      kernidt[NINTR];
+extern void         *irqvec[];
+extern void          irqtmr0(void);
+extern void          irqtmr(void);
 
 void
 pitinit(void)
@@ -56,10 +56,10 @@ pitsleep(unsigned long msec)
     unsigned long tmp = 1000L/msec;
 
     /* enable timer interrupt, disable other interrupts */
+    irqvec[IRQTMR] = NULL;
     outb(~0x01, PICMASK1);
     outb(~0x00, PICMASK2);
-    irqvec[IRQTMR] = NULL;
-//    trapsetintrgate(&idt[trapirqid(IRQTMR)], irqtmr0, TRAPUSER);
+    trapsetintrgate(&kernidt[trapirqid(IRQTMR)], irqtmr0, TRAPUSER);
     outb(PITDUALBYTE | PITONESHOT, PITCTRL);
     pitsethz(hz, PITCHAN0);
     k_waitint();

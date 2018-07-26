@@ -8,6 +8,7 @@
 
 #include <kern/malloc.h>
 #include <kern/util.h>
+#include <kern/printf.h>
 #include <kern/io/drv/pc/pci.h>
 
 #if (AC97)
@@ -46,7 +47,7 @@ pciregdrv(uint16_t vendor, uint16_t devid,
 
     if (initfunc) {
         if (!ptr) {
-            kprintf("PCI: allocating %ld IDs (%lx)\n",
+            kprintf("PCI: allocating %u IDs (%x)\n",
                     65536 * sizeof(struct pcidrvent), vendor);
             ptr = kmalloc(65536 * sizeof(struct pcidrvent));
             if (ptr) {
@@ -55,7 +56,7 @@ pciregdrv(uint16_t vendor, uint16_t devid,
             }
         }
         if (ptr) {
-            kprintf("PCI: allocating ID %lx (vendor == %lx)\n", devid, vendor);
+            kprintf("PCI: allocating ID %x (vendor == %x)\n", devid, vendor);
             drv = &ptr[devid];
             drv->init = initfunc;
             dev = &pcidevtab[drv->devid];
@@ -98,7 +99,7 @@ pciprobe(void)
             vendor = tmp & 0xffff;
             devid = (tmp >> 16) & 0xffff;
             if (vendor != 0xffff && devid != 0xffff) {
-                kprintf("PCI: vendor: 0x%lx, devid == 0x%lx\n", vendor, devid);
+                kprintf("PCI: vendor: 0x%x, devid == 0x%x\n", vendor, devid);
                 drv = pcifinddrv(vendor, devid);
                 if (drv) {
                     kprintf("PCI: initialising %s\n", drv->str);
@@ -119,7 +120,7 @@ pciprobe(void)
             vendor = tmp & 0xffff;
             devid = (tmp >> 16) & 0xffff;
             if (vendor != 0xffff && devid != 0xffff) {
-                kprintf("PCI: vendor: 0x%lx, devid == 0x%lx\n", vendor, devid);
+                kprintf("PCI: vendor: 0x%x, devid == 0x%x\n", vendor, devid);
                 drv = pcifinddrv(vendor, devid);
                 if (drv) {
                     kprintf("PCI: initialising %s\n", drv->str);

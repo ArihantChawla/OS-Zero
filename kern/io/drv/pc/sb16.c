@@ -6,6 +6,7 @@
 #include <zero/trix.h>
 #include <mt/mtx.h>
 #include <kern/util.h>
+#include <kern/printf.h>
 #include <kern/tmr.h>
 #include <kern/malloc.h>
 #include <kern/mem/vm.h>
@@ -101,7 +102,7 @@ sb16setup(void)
     }
     dmatakechan(sb16drv.dma8);
     dmatakechan(sb16drv.dma16);
-    kprintf("SB16 @ 0x%x, IRQ %d, DMA %d (8-bit), DMA %d (16-bit)\n",
+    kprintf("SB16 @ 0x%x, IRQ %ld, DMA %ld (8-bit), DMA %ld (16-bit)\n",
             SB16BASE, sb16drv.irq, sb16drv.dma8, sb16drv.dma16);
     /* initialize DMA interface */
     /* reserve buffers from DMA zone */

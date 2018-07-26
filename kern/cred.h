@@ -2,7 +2,7 @@
 #define __KERN_CRED_H__
 
 #include <stddef.h>
-#include <sys/types.h>
+#include <unistd.h>
 
 #define NOCRED NULL                     // no cred available
 #define FSCRED ((struct ucred *)-1)     // filesystem credential

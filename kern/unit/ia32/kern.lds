@@ -50,6 +50,7 @@ SECTIONS {
 	main.o(.text)
 	main.o(.text.*)
 	main.o(.data)
+	main.o(.bss)
 /*
         mp.o(.text)
         mp.o(.data)

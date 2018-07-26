@@ -63,7 +63,7 @@ typedef volatile struct __zeromtx zeromtx;
  * - return non-zero on success, zero if already locked
  */
 static INLINE long
-fmtxtrylk(m_atomic_t *lp)
+fmtxtrylk(volatile m_atomic_t *lp)
 {
     long res = 0;
 
@@ -79,7 +79,7 @@ fmtxtrylk(m_atomic_t *lp)
  * - spin on volatile lock to avoid excess lock-operations
  */
 static INLINE void
-fmtxlk(m_atomic_t *lp)
+fmtxlk(volatile m_atomic_t *lp)
 {
     m_atomic_t res = 0;
 
@@ -102,7 +102,7 @@ fmtxlk(m_atomic_t *lp)
  * - must use full memory barrier to guarantee proper write-ordering
  */
 static INLINE void
-fmtxunlk(m_atomic_t *lp)
+fmtxunlk(volatile m_atomic_t *lp)
 {
     m_membar();         // full memory barrier
     *lp = FMTXINITVAL;  // lazy-write

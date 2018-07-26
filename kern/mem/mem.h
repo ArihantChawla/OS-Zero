@@ -21,6 +21,8 @@
 #else
 #include <mt/mtx.h>
 #define MEM_LK_T       zerofmtx
+#define memlk(lp)      fmtxlk(lp)
+#define memunlk(lp)    fmtxunlk(lp)
 #define memlkbkt(lp)   fmtxlk(lp)
 #define memunlkbkt(lp) fmtxunlk(lp)
 #endif

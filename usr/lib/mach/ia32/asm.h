@@ -48,19 +48,28 @@ m_getfrmadr(void)
     return ptr;
 }
 
-static INLINE void
-m_getfrmadr2(void *fp, void **pp)
+static INLINE void *
+m_getfrmadr1(void **fp)
 {
     void *ptr;
 
-    __asm__ __volatile__ ("movl %1, %%eax\n"
-                          "movl (%%eax), %0\n"
-                          : "=r" (ptr)
-                          : "rm" (fp)
-                          : "eax");
-    *pp = ptr;
+    if (fp) {
+        ptr = *fp;
+    } else {
+        ptr = m_getfrmadr();
+    }
 
-    return;
+    return ptr;
+}
+
+static INLINE void *
+m_getretfrm(void)
+{
+    void *ptr;
+
+    __asm__ __volatile__ ("movl *%%ebp, %0\n" : "=r" (ptr));
+
+    return ptr;
 }
 
 static INLINE void *
@@ -71,6 +80,7 @@ m_loadretadr(void *frm)
     __asm__ __volatile__ ("movl %c1(%2), %0\n"
                           : "=r" (ptr)
                           : "i" (__EIPFRAMEOFS), "r" (frm));
+
     return ptr;
 }
 

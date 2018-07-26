@@ -1,10 +1,11 @@
 #include <stdint.h>
 #include <mach/types.h>
 #include <kern/util.h>
+#include <kern/printf.h>
 #include <kern/debug.h>
 
 void
-m_printregs(void)
+m_printregs32(void)
 {
     int32_t eax;
     int32_t ecx;
@@ -27,14 +28,14 @@ m_printregs(void)
                             "=m" (esp), "=m" (ebp), "=m" (esi), "=m" (edi));
     kprintf("general-purpose registers\n");
     kprintf("-------------------------\n");
-    kprintf("eax\t0x%lx\n", eax);
-    kprintf("ecx\t0x%lx\n", ecx);
-    kprintf("edx\t0x%lx\n", edx);
-    kprintf("ebx\t0x%lx\n", ebx);
-    kprintf("esp\t0x%lx\n", esp);
-    kprintf("ebp\t0x%lx\n", ebp);
-    kprintf("esi\t0x%lx\n", esi);
-    kprintf("edi\t0x%lx\n", edi);
+    kprintf("eax\t0x%lx\n", (long)eax);
+    kprintf("ecx\t0x%lx\n", (long)ecx);
+    kprintf("edx\t0x%lx\n", (long)edx);
+    kprintf("ebx\t0x%lx\n", (long)ebx);
+    kprintf("esp\t0x%lx\n", (long)esp);
+    kprintf("ebp\t0x%lx\n", (long)ebp);
+    kprintf("esi\t0x%lx\n", (long)esi);
+    kprintf("edi\t0x%lx\n", (long)edi);
 
     return;
 }
@@ -44,14 +45,14 @@ m_printgenregs(struct m_genregs *genregs)
 {
     kprintf("general-purpose registers\n");
     kprintf("-------------------------\n");
-    kprintf("eax\t0x%lx\n", genregs-> eax);
-    kprintf("ecx\t0x%lx\n", genregs-> ecx);
-    kprintf("edx\t0x%lx\n", genregs-> edx);
-    kprintf("ebx\t0x%lx\n", genregs-> ebx);
-    kprintf("esp\t0x%lx\n", genregs-> esp);
-    kprintf("ebp\t0x%lx\n", genregs-> ebp);
-    kprintf("esi\t0x%lx\n", genregs-> esi);
-    kprintf("edi\t0x%lx\n", genregs-> edi);
+    kprintf("eax\t0x%lx\n", (long)genregs-> eax);
+    kprintf("ecx\t0x%lx\n", (long)genregs-> ecx);
+    kprintf("edx\t0x%lx\n", (long)genregs-> edx);
+    kprintf("ebx\t0x%lx\n", (long)genregs-> ebx);
+    kprintf("esp\t0x%lx\n", (long)genregs-> esp);
+    kprintf("ebp\t0x%lx\n", (long)genregs-> ebp);
+    kprintf("esi\t0x%lx\n", (long)genregs-> esi);
+    kprintf("edi\t0x%lx\n", (long)genregs-> edi);
 
     return;
 }
@@ -61,10 +62,10 @@ m_printsegregs(struct m_segregs *segregs)
 {
     kprintf("segment registers\n");
     kprintf("-----------------\n");
-    kprintf("ds\t0x%lx\n", segregs->ds);
-    kprintf("es\t0x%lx\n", segregs->es);
-    kprintf("fs\t0x%lx\n", segregs->fs);
-    kprintf("gs\t0x%lx\n", segregs->gs);
+    kprintf("ds\t0x%lx\n", (long)segregs->ds);
+    kprintf("es\t0x%lx\n", (long)segregs->es);
+    kprintf("fs\t0x%lx\n", (long)segregs->fs);
+    kprintf("gs\t0x%lx\n", (long)segregs->gs);
 }
 
 void
@@ -72,11 +73,11 @@ m_printtrapframe(struct m_trapframe *trapframe, long havestk)
 {
     kprintf("jump/stack frame\n");
     kprintf("----------------\n");
-    kprintf("eip\t0x%lx\n", trapframe->eip);
+    kprintf("eip\t0x%lx\n", (long)trapframe->eip);
     kprintf("cs\t%hx\n", trapframe->cs);
-    kprintf("eflags\t0x%lx\n", trapframe->eflags);
+    kprintf("eflags\t0x%lx\n", (long)trapframe->eflags);
     if (havestk) {
-        kprintf("uesp\t0x%lx\n", trapframe->uesp);
+        kprintf("uesp\t0x%lx\n", (long)trapframe->uesp);
         kprintf("uss\t%hx\n", trapframe->uss);
     }
 
@@ -86,8 +87,8 @@ m_printtrapframe(struct m_trapframe *trapframe, long havestk)
 void
 m_printtask(struct m_task *task, long flg)
 {
-    kprintf("flg\t%lx\n", task->flg);
-    kprintf("pdbr\t%lx\n", task->tcb.pdbr);
+    kprintf("flg\t%lx\n", (long)task->flg);
+    kprintf("pdbr\t%lx\n", (long)task->tcb.pdbr);
     m_printgenregs(&task->tcb.genregs);
     m_printsegregs(&task->tcb.segregs);
     m_printtrapframe(&task->tcb.trapframe, flg & M_TRAPFRAMESTK);

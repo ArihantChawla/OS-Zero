@@ -3,10 +3,9 @@
 
 #if !defined(__ASSEMBLER__)
 
+#include <kern/conf.h>
 #include <zero/cdefs.h>
-#include <mach/param.h>
-#include <mach/types.h>
-#include <kern/unit/x86/cpu.h>
+#include <kern/cpu.h>
 
 FASTCALL NORETURN void m_taskjmp(volatile struct m_task *task);
 
@@ -22,6 +21,8 @@ FASTCALL NORETURN void m_taskjmp(volatile struct m_task *task);
 //#define M_FPMASK (M_FPUSED)
 
 #if !defined(__ASSEMBLER__)
+
+#define k_errnoloc() (&(k_getcurtask()->errnum))
 
 static __inline__ struct cpu *
 k_getcurcpu(void)
@@ -103,6 +104,20 @@ k_setcurpid(long pid)
     __asm__ __volatile__ ("movl %0, %%gs:12\n"
                           :
                           : "r" (pid));
+
+    return;
+}
+
+static __inline__ void
+taskinittls(long unit, long id)
+{
+    volatile struct cpu *cpu = &k_cputab[unit];
+    struct task         *task = &k_tasktab[id];
+
+    k_setcurcpu(cpu);
+    k_setcurunit(unit);
+    k_setcurtask(task);
+    k_setcurpid(id);
 
     return;
 }

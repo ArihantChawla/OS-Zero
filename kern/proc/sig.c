@@ -3,25 +3,24 @@
 #include <signal.h>
 #include <zero/cdefs.h>
 #include <mach/param.h>
-#include <mach/types.h>
+//#include <mach/types.h>
 #include <kern/util.h>
-#include <kern/cpu.h>
+//#include <kern/cpu.h>
 //#include <kern/obj.h>
 #include <kern/proc/proc.h>
-#if !defined(__arm__)
+#include <kern/proc/task.h>
 #include <kern/unit/x86/trap.h>
-#endif
+#include <kern/unit/ia32/task.h>
 
-extern struct task k_tasktab[NTASK];
-extern long        k_trapsigmap[TRAPNCPU];
+extern long        k_trapsigmap[NCPU];
 
 __sighandler_t     k_sigfunctab[NSIG] ALIGNED(PAGESIZE);
 long               k_traperrbits = TRAPERRBITS;
 
 void
-prockill(struct proc *proc)
+prockill(pid_t pid, long sig)
 {
-    ;
+    kprintf("PROC %ld received signal %ld\n", (long)pid, sig);
 }
 
 FASTCALL
@@ -34,18 +33,13 @@ sigfunc(unsigned long pid, int32_t trap, long err, void *frame)
     __sighandler_t  func;
 
     if (pid < TASKNPREDEF) {
-        panic(trap, err);
+        panic(trap, err, frame);
     }
-//    kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
-    if (trap == TRAPUD) {
-//        kprintf("PANIC: #UD (0x%lx)\n", errcode);
-    } else if (trap == TRAPGP) {
-//        kprintf("PANIC: #GP (0x%lx)\n", errcode);
-    } else if (sig == SIGKILL) {
-//        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
-        prockill(proc);
-    } else if ((sig) && sigismember(&task->sigmask, sig)) {
-//        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
+    if (trap == TRAPUD
+        || trap == TRAPGP
+        || sig == SIGKILL) {
+        prockill(pid, sig);
+    } else {
         func = proc->sigvec[sig];
         if (func) {
             func(sig);

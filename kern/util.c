@@ -5,22 +5,13 @@
 #include <zero/cdefs.h>
 #include <mach/param.h>
 #include <zero/trix.h>
+#include <kern/printf.h>
 #include <kern/io/drv/chr/cons.h>
 #include <kern/io/drv/pc/vga.h>
 #include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/trap.h>
 
-#define MAXPRINTFSTR 2048
-
-#define isprintascii(c) ((c) >= 0x20 && (c) < 0x7f)
-
 #define CACHEPREWARM    0
-#if (LONGSIZE == 4)
-#define LONGBUFSIZE     16
-#else
-#define LONGBUFSIZE     32
-#endif
-#define LONGLONGBUFSIZE 32
 
 /*
  * NOTES
@@ -51,26 +42,6 @@ const char *trapnametab[TRAPNCPU] ALIGNED(PAGESIZE)
     "AC",
     "MC",
     "XF"
-};
-
-const char _ltoxtab[]
-= {
-    '0',
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    'a',
-    'b',
-    'c',
-    'd',
-    'e',
-    'f',
 };
 
 /* assumes longword-aligned blocks */
@@ -330,101 +301,8 @@ kstrncpy(char *dest, const char *src, long len)
     return nb;
 }
 
-static m_ureg_t
-_ltoxn(long val, char *buf, uintptr_t len)
-{
-    m_ureg_t uval = zeroabs(val);
-    m_ureg_t byte;
-    m_ureg_t l = len - 1;
-    m_ureg_t incr = 4;
-    m_ureg_t sign = 0;
-
-    if (val < 0) {
-        sign = 1;
-    }
-    buf[l] = '\0';
-    do {
-        byte = uval & 0xf;
-        l--;
-        uval >>= 4;
-        buf[l] = _ltoxtab[byte];
-    } while (uval);
-    if (sign) {
-        l--;
-        buf[l] = '-';
-    }
-
-    return l;
-}
-
-static m_ureg_t
-_ltodn(long val, char *buf, uintptr_t len)
-{
-    m_ureg_t uval = zeroabs(val);
-    m_ureg_t tmp;
-    m_ureg_t byte;
-    m_ureg_t l = len - 1;
-    m_ureg_t n;
-    m_ureg_t sign = 0;
-
-    if (val < 0) {
-        sign = 1;
-    }
-    buf[l] = '\0';
-    do {
-        tmp = divu10(uval);
-        l--;
-        byte = uval - 10 * tmp;
-        buf[l] = _ltoxtab[byte];
-        uval = tmp;
-    } while (uval);
-    if (sign) {
-        l--;
-        buf[l] = '-';
-    }
-
-    return l;
-}
-
-static m_ureg_t
-_ultoxn(m_ureg_t uval, char *buf, uintptr_t len)
-{
-    m_ureg_t byte;
-    m_ureg_t l = len - 1;
-
-    buf[l] = '\0';
-    do {
-        byte = uval & 0xf;
-        l--;
-        uval >>= 4;
-        buf[l] = _ltoxtab[byte];
-    } while (uval);
-
-    return l;
-}
-
-static m_ureg_t
-_ultodn(m_ureg_t uval, char *buf, uintptr_t len)
-{
-    m_ureg_t byte;
-    m_ureg_t tmp;
-    m_ureg_t l = len - 1;
-    m_ureg_t n;
-
-    buf[l] = '\0';
-    do {
-        tmp = divu10(uval);
-        l--;
-        byte = uval - 10 * tmp;
-        buf[l] = _ltoxtab[byte];
-        uval = tmp;
-    } while (uval);
-
-    return l;
-}
-
-static void *
-_strtok(void *ptr, int ch)
+void *
+kstrtok(void *ptr, int ch)
 {
     uint8_t *u8ptr = ptr;
 
@@ -439,209 +317,6 @@ _strtok(void *ptr, int ch)
 
     return u8ptr;
 }
-
-#if defined(__KERNEL__) && (__KERNEL__)
-
-/*
- * %x, %c, %h, %d, %ld, %uc, %uh, %ud, %ul, %lx, %x, %p
- */
-#if defined(__GNUC__)
-__attribute__ ((format(printf, 1, 2)))
-#endif
-void
-kprintf(const char *fmt, ...)
-{
-//    char    *str = fmt;
-    struct cons *cons;
-    char        *arg;
-    char        *sptr;
-    char        *cptr;
-    long         val;
-    m_ureg_t     uval;
-    long         isuns;
-    long         isch;
-    long         isdec;
-    long         ishex;
-    long         l;
-    long         len;
-    va_list      al;
-    char         buf[LONGLONGBUFSIZE];
-    char         str[MAXPRINTFSTR];
-
-    cons = &constab[conscur];
-    if (cons->puts) {
-        va_start(al, fmt);
-        len = MAXPRINTFSTR - 1;
-        len = kstrncpy(str, fmt, len);
-        sptr = str;
-        while (*sptr) {
-            isch = 0;
-            isdec = 0;
-            ishex = 0;
-            val = 0;
-            uval = 0;
-            isuns = 0;
-            arg = _strtok(sptr, '%');
-            if (arg) {
-                cons->puts(sptr);
-                arg++;
-                if (*arg) {
-                    switch (*arg) {
-                        case 's':
-                            cptr = va_arg(al, char *);
-                            arg++;
-                            if (cptr) {
-                                cons->puts(cptr);
-                            }
-
-                            break;
-                        case 'c':
-                            isch = 1;
-                            val = (char)va_arg(al, int);
-                            arg++;
-
-                            break;
-                        case 'h':
-                            isdec = 1;
-                            val = (short)va_arg(al, int);
-                            arg++;
-
-                            break;
-                        case 'd':
-                            isdec = 1;
-                            val = va_arg(al, int);
-                            arg++;
-
-                            break;
-                        case 'p':
-                        case 'l':
-                            isdec = 1;
-                            if (*arg == 'p') {
-                                ishex = 1;
-                                isuns = 1;
-                                uval = (m_ureg_t)va_arg(al, void *);
-                            } else if (arg[1] == 'x' || arg[1] == 'u') {
-                                if (arg[1] == 'x') {
-                                    ishex = 1;
-                                } else {
-                                    isdec = 1;
-                                }
-                                isuns = 1;
-                                uval = va_arg(al, unsigned long);
-                                arg++;
-                            } else {
-                                val = va_arg(al, long);
-                            }
-                            arg++;
-                            if (*arg) {
-                                if (*arg == 'd') {
-                                    arg++;
-#if 0
-                                } else if (*arg == 'x') {
-                                    arg++;
-                                    ishex = 1;
-                                    isuns++;
-#endif
-                                }
-                            }
-
-                            break;
-                        case 'x':
-//                            val = va_arg(al, int);
-                            ishex = 1;
-                            isuns = 1;
-                            uval = va_arg(al, unsigned int);
-                            arg++;
-
-                            break;
-                        case 'u':
-                            isuns = 1;
-                            arg++;
-                            if (*arg) {
-                                switch (*arg) {
-                                    case 'c':
-                                        isch = 1;
-                                        uval = (char)va_arg(al, unsigned int);
-
-                                        break;
-                                    case 'h':
-                                        isdec = 1;
-                                        uval = (short)va_arg(al, unsigned int);
-
-                                        break;
-                                    case 'd':
-                                        isdec = 1;
-                                        uval = va_arg(al, unsigned int);
-
-                                        break;
-                                    case 'l':
-                                        isdec = 1;
-                                        uval = va_arg(al, unsigned long);
-
-                                        break;
-                                    default:
-
-                                        break;
-                                }
-                                arg++;
-                            } else {
-                                va_end(al);
-
-                                return;
-                            }
-
-                            break;
-                        default:
-
-                            break;
-                    }
-                    if (isuns) {
-                        if (ishex) {
-                            l = _ultoxn(uval, buf, LONGLONGBUFSIZE);
-                            cons->puts(&buf[l]);
-                        } else if (isdec) {
-                            l = _ultodn(uval, buf, LONGLONGBUFSIZE);
-                            cons->puts(&buf[l]);
-                        } else if ((isch) && isprintascii(val)) {
-                            cons->putchar((int)uval);
-                        } else {
-                            cons->putchar(' ');
-                        }
-                    } else {
-                        if (ishex) {
-                            l = _ltoxn(val, buf, LONGLONGBUFSIZE);
-                            cons->puts(&buf[l]);
-                        } else if (isdec) {
-                            l = _ltodn(val, buf, LONGLONGBUFSIZE);
-                            cons->puts(&buf[l]);
-                        } else if ((isch) && isprintascii(val)) {
-                            cons->putchar((int)val);
-                        } else {
-                            cons->putchar(' ');
-                        }
-                    }
-                } else {
-                    va_end(al);
-
-                    return;
-                }
-            } else {
-                if (*sptr) {
-                    cons->puts(sptr);
-                }
-                va_end(al);
-
-                return;
-            }
-            sptr = arg;
-        }
-        va_end(al);
-    }
-
-    return;
-}
-
-#endif /* defined(__KERNEL__) && (__KERNEL__) */
 
 /*
  * scan bitmap for first zero-bit past ofs
@@ -710,18 +385,37 @@ bfindzerol(long *bmap, long ofs, long nbit)
 #if defined(__KERNEL__) && (__KERNEL__)
 
 void
-panic(long pid, int32_t trap, long err)
+rewind(void *frame, void *symmap)
+{
+    while (frame) {
+        frame = m_getfrmadr1(frame);
+        if (symmap) {
+            ; /* TODO */
+        }
+        kprintf("%p\n", frame);
+    }
+
+    return;
+}
+
+void
+panic(int32_t trap, long err, void *frame)
 {
     const char *name;
 
     if (trap >= 0) {
         name = trapnametab[trap];
         if (name) {
-            kprintf("PROC %lu CAUGHT TRAP %ld (%s): %lx\n",
-                    pid, (long)trap, name, err);
+            kprintf("CAUGHT TRAP %ld (%s): %lx\n",
+                    (long)trap, name, err);
         } else {
-            kprintf("PROC %lu CAUGHT RESERVED TRAP %ld (%s)\n",
-                    pid, (long)trap, name);
+            kprintf("CAUGHT RESERVED TRAP %ld (%s)\n",
+                    (long)trap, name);
+        }
+        if (frame) {
+            kprintf("STACK TRACE\n");
+            kprintf("-----------\n");
+            rewind(frame, NULL);
         }
     }
     k_halt();

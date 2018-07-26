@@ -8,6 +8,7 @@
 #include <kern/obj.h>
 #include <kern/sched.h>
 #include <kern/cpu.h>
+#include <kern/proc/kern.h>
 #include <kern/proc/proc.h>
 #include <kern/mem/mem.h>
 #include <kern/mem/vm.h>
@@ -64,6 +65,7 @@ kinitprot(unsigned long pmemsz)
     /* initialise virtual memory */
     //    vminit((uint32_t *)&_pagetab);
     vminit();
+    trapinit();
     //    schedinit();
     /* zero kernel BSS segment */
     kbzero((void *)&_bssvirt,
@@ -80,7 +82,7 @@ kinitprot(unsigned long pmemsz)
                           : "rm" (sp));
     meminit(min(pmemsz, lim), min(KERNVIRTBASE, lim));
     cpuinit(0);
-    procinit(0, PROCKERN, SCHEDNOCLASS);
+    procinit(0, TASKKERN, SCHEDSYSTEM);
     taskinitenv();
     tssinit(0);
 #if (VBE)
@@ -97,29 +99,26 @@ kinitprot(unsigned long pmemsz)
 #if (PS2DRV)
     ps2init();
 #endif
-#if (SMP) || (APIC)
 #if (SMP)
     /* multiprocessor initialisation */
     mpinit();
-    if (mpncpu == 1) {
-        kprintf("found %ld processor\n", mpncpu);
+    if (k_mp.ncpu == 1) {
+        kprintf("found %ld processor\n", k_mp.ncpu);
     } else {
-        kprintf("found %ld processors\n", mpncpu);
+        kprintf("found %ld processors\n", k_mp.ncpu);
     }
-#endif
-#if (APIC)
-    apicinit(0);
-#endif
-#if (IOAPIC)
-    ioapicinit(0);
-#endif
 #if 0
-    if (mpmultiproc) {
+    if (k_mp.multiproc) {
         mpstart();
     }
 #endif
-#endif /* SMP || APIC */
-//    procinit(PROCKERN, SCHEDNOCLASS);
+#elif (APIC)
+    apicinit(0);
+#endif /* SMP */
+#if (IOAPIC)
+    ioapicinit(0);
+#endif
+//    procinit(TASKKERN, SCHEDNOCLASS);
     kprintf("%lu free physical pages @ 0x%p..0x%p\n",
             k_physmem.pagestat.nphys, k_physmem.pagestat.phys, k_physmem.pagestat.physend);
 #if (SMBIOS)

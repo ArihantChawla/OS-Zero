@@ -48,7 +48,7 @@ m_getfrmadr(void)
 }
 
 static INLINE void *
-m_getfrmadr2(void *fp)
+m_getfrmadr1(void *fp)
 {
     void *ptr;
 

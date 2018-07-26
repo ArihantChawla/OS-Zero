@@ -14,77 +14,36 @@
 #include <kern/proc/task.h>
 //#include <kern/obj.h>
 #include <kern/unit/x86/boot.h>
+#include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/link.h>
 #include <kern/unit/x86/cpu.h>
-#include <kern/unit/ia32/task.h>
 
-extern pde_t                kernpagedir[NPDE];
-extern struct task          k_tasktab[NTASK];
+extern uintptr_t            kernpagedir[NPDE];
 struct proc                *k_proctab[NTASK] ALIGNED(PAGESIZE);
 volatile struct proc       *k_proczombietab[NTASK];
 
 long
 procinit(long unit, long id, long sched)
 {
+    struct task         *task = NULL;
     volatile struct cpu *cpu;
     struct proc         *proc;
-    struct task         *task;
     long                 prio;
-    long                 val;
     struct taskstk      *stk;
     void                *ptr;
     uint8_t             *u8ptr;
 
-    if (id < TASKNPREDEF) {
-        cpu = &k_cputab[unit];
-        proc = k_proctab[id];
-        task = &k_tasktab[id];
-        prio = SCHEDSYSPRIOMIN;
-        task->sched = SCHEDSYSTEM;
-        task->prio = prio;
-        proc->pagedir = (pde_t *)kernpagedir;
-        proc->pagetab = (pte_t *)&_pagetab;
-        task->state = TASKREADY;
-        if (cpu->info.flg & CPUHASFXSR) {
-            task->flg |= CPUHASFXSR;
-        }
-#if 0
-        k_curcpu = cpu;
-        k_curunit = 0;
-        k_curtask = task;
-        k_curpid = id;
-#endif
-
-        return id;
-    } else {
-        cpu = &k_cputab[0];
+    k_introff();
+    cpu = &k_cputab[unit];
+    if (id == PROCNEW) {
         id = taskgetid();
-        proc = k_proctab[id];
         task = &k_tasktab[id];
-        task->state = TASKNEW;
+        kbzero(task, sizeof(struct task));
+        proc = k_proctab[id];
+        kbzero(proc, sizeof(struct proc));
         proc->pid = id;
-        proc->nice = 0;
         proc->task = task;
-#if 0
-        k_curtask = task;
-#endif
         task->proc = proc;
-        val = 0;
-        if (cpu->flg & CPUHASFXSR) {
-            val = CPUHASFXSR;
-            task->flg |= val;
-        }
-        val = 0;
-        task->flg = val;
-        task->score = val;
-        task->slice = val;
-        task->runtime = val;
-        task->slptime = val;
-        task->ntick = val;
-        val = cpu->ntick;
-        task->lastrun = val;
-        task->firstrun = val;
-        task->lasttick = val;
         if (sched == SCHEDNOCLASS) {
             prio = SCHEDUSERPRIOMIN;
             task->sched = SCHEDNORMAL;
@@ -94,11 +53,12 @@ procinit(long unit, long id, long sched)
             task->sched = sched;
             task->prio = prio;
         }
+        task->flg |= CPUHASFXSR;
         if (task->state == TASKNEW) {
             /* initialise page directory */
-            ptr = kwalloc(NPDE * sizeof(pde_t));
+            ptr = kwalloc(NPDE * sizeof(uintptr_t));
             if (ptr) {
-                kbzero(ptr, NPDE * sizeof(pde_t));
+                kbzero(ptr, NPDE * sizeof(uintptr_t));
                 proc->pagedir = ptr;
             } else {
                 kfree(proc);
@@ -132,18 +92,35 @@ procinit(long unit, long id, long sched)
                 }
             }
         }
+    } else if (id < TASKNPREDEF) {
+        task = &k_tasktab[id];
+        kbzero(task, sizeof(struct task));
+        proc = k_proctab[id];
+        kbzero(proc, sizeof(struct proc));
+        proc->pid = id;
+        prio = SCHEDSYSPRIOMIN;
+        task->sched = SCHEDSYSTEM;
+        task->flg |= CPUHASFXSR;
+        task->prio = prio;
+        proc->pagedir = (uintptr_t *)kernpagedir;
+        proc->pagetab = (uintptr_t *)&_pagetab;
     }
+    k_setcurcpu(cpu);
+    k_setcurunit(unit);
+    k_setcurtask(task);
+    k_setcurpid(id);
+    task->state = TASKREADY;
+    k_intron();
 
     return id;
 }
 
 /* see <kern/proc.h> for definitions of scheduler classes */
 struct proc *
-newproc(long unit, int argc, char *argv[], char *envp[], long sched)
+procrun(long unit, long sched, int argc, char *argv[], char *envp[])
 {
     long         id = taskgetid();
-    struct proc *proc = (id >= 0) ? k_proctab[id] : NULL;
-    struct task *task = (id >= 0) ? &k_tasktab[id] : NULL;
+    struct proc *proc = k_proctab[id];
 
     if (proc) {
         procinit(unit, id, sched);

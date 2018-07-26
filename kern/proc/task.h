@@ -2,34 +2,10 @@
 #define __KERN_PROC_TASK_H__
 
 #include <kern/conf.h>
-#include <stddef.h>
 #include <time.h>
-#include <sys/types.h>
-#include <zero/cdefs.h>
-#include <mach/param.h>
 #include <mach/types.h>
-#include <zero/trix.h>
-//#include <zero/list.h>
-#include <kern/syscall.h>
-#include <kern/cpu.h>
-#include <kern/asm.h>
-#include <kern/proc/proc.h>
-#if defined(__x86_64__) || defined(__amd64__)
-//#include <kern/unit/x86/cpu.h>
-#include <kern/unit/x86-64/task.h>
-#elif (defined(__i386__) || defined(__i486__)                           \
-       || defined(__i586__) || defined(__i686__))
-//#include <kern/unit/x86/cpu.h>
-#include <kern/unit/ia32/task.h>
-#endif
 
-#define __errnoloc() (&(k_getcurtask()->errnum))
-
-extern void taskinittls(long unit, long id);
-
-//extern struct m_cpuinfo cpuinfo;
-
-//#include <zero/mtx.h>
+#define TASK_LK_T volatile m_atomic_t
 
 /* process states */
 #define TASKNEW      0
@@ -71,9 +47,9 @@ struct task {
     /* signal state */
     sigset_t         sigmask;           // signal mask
     sigset_t         sigpend;           // pending signals
-    struct siginfo **sigqueue     ;     // info structures for pending signals
+    struct siginfo **sigqueue;          // info structures for pending signals
     /* scheduler parameters */
-    m_atomic_t       lk;
+    TASK_LK_T        lk;
     long             unit;              // CPU-affinity
     long             sched;             // thread scheduler class
     long             flg;               // received user input [interrupt]
@@ -95,6 +71,8 @@ struct task {
     uintptr_t        waitchan;          // wait channel
     time_t           timelim;           // wakeup time or deadline
 };
+
+extern struct task k_tasktab[NTASK];
 
 #if (PTRSIZE == 8)
 #define TASKNLVLWAITLOG2 16

@@ -1,4 +1,5 @@
 #include <kern/util.h>
+#include <kern/printf.h>
 
 void
 logoprint(void)

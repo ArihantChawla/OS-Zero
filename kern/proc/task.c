@@ -2,7 +2,9 @@
 #include <mach/param.h>
 #include <mt/mtx.h>
 #include <kern/cpu.h>
+#include <kern/proc/proc.h>
 #include <kern/proc/task.h>
+#include <kern/unit/ia32/task.h>
 
 #define DEQ_SINGLE_TYPE
 #define DEQ_TYPE struct taskid
@@ -31,29 +33,9 @@ taskinitids(void)
 }
 
 void
-taskinittls(long unit, long id)
-{
-    volatile struct cpu *cpu = &k_cputab[unit];
-    struct task         *task = &k_tasktab[id];
-
-    k_setcurcpu(cpu);
-    k_setcurunit(unit);
-    k_setcurtask(task);
-    k_setcurpid(id);
-#if 0
-    k_curcpu = (volatile struct cpu *)cpu;
-    k_curunit = (volatile long)unit;
-    k_curtask = (volatile struct task *)task;
-    k_curpid = (volatile long)id;
-#endif
-
-    return;
-}
-
-void
 taskinit(struct task *task, long unit)
 {
-    long id = (task) ? task->id : PROCKERN;
+    long id = (task) ? task->id : TASKKERN;
 
     taskinittls(unit, id);
     if (!task) {

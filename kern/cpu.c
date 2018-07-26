@@ -3,6 +3,7 @@
 #include <mach/param.h>
 #include <kern/cpu.h>
 #include <kern/proc/task.h>
+#include <kern/unit/ia32/task.h>
 
 extern void         cpuprintinfo(void);
 

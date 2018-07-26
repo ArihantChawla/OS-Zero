@@ -60,30 +60,34 @@
 #include <kern/types.h>
 #include <kern/cred.h>
 #include <kern/syscall.h>
-#include <kern/cpu.h>
 #include <kern/proc/kern.h>
 #include <kern/proc/task.h>
 //#include <kern/unit/x86/vm.h>
 
+/* ID used to create new process */
 #define PROCNEW (-1L)
 
-long procinit(long unit, long id, long sched);
+long          procinit(long unit, long id, long sched);
+struct proc * procrun(long unit, long sched,
+                      int argc, char *argv[], char *envp[]);
+#if 0
 long procgetpid(void);
 void procfreepid(long id);
+#endif
 
 /* process segments other than the stacks */
 struct procseginfo {
-    void   *trapvec;
-    size_t  trapvecsize;
-    void   *text;
-    size_t  textsize;
-    void   *rodata;
-    size_t  rodatasize;
-    void   *data;
-    size_t  datasize;
-    void   *bss;
-    size_t  heapsize;
-    void   *brk;
+    void     *trapvec;
+    m_ureg_t  trapvecsize;
+    void     *text;
+    m_ureg_t  textsize;
+    void     *rodata;
+    m_ureg_t  rodatasize;
+    void     *data;
+    m_ureg_t  datasize;
+    void     *bss;
+    m_ureg_t  heapsize;
+    void     *brk;
 };
 
 /* process structure */
@@ -115,9 +119,9 @@ struct proc {
     long                 ppid;          // parent process ID
     long                 pgrp;          // process-group ID (leader)
     /* memory management */
-    pde_t               *pagedir;       // page directory address
+    uintptr_t           *pagedir;       // page directory address
 #if (VMFLATPHYSTAB)
-    pte_t               *pagetab;
+    uintptr_t           *pagetab;
 #endif
     struct maghdr      **vmmagtab;      // PTRBITS queues of mags
     struct slabhdr     **vmslabtab;     // PTRBITS queues of slabs
@@ -128,7 +132,7 @@ struct proc {
     struct cred         *realcred;      // real credentials
     struct cred         *savecred;      // saved credentials
     /* descriptor tables */
-    size_t               ndesctab;      // number of entries in descriptor table
+    m_ureg_t             ndesctab;      // number of entries in descriptor table
     struct desc         *desctab;       // descriptor table
     /* current working directory */
     char                *cwd;           // current working directory
