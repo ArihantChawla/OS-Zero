@@ -14,6 +14,8 @@
 #if (MEMTKTLK)
 #include <mt/tktlk.h>
 #define MEM_LK_T       zerotktlk
+#define memlk(lp)      tktlk(lp)
+#define memunlk(lp)    tktunlk(lp)
 #define memlkbkt(lp)   tktlk(lp)
 #define memunlkbkt(lp) tktunlk(lp)
 #else

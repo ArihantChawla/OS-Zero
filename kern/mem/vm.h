@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <sys/param.h>
 #include <mach/param.h>
-//#include <zero/spinrw.h>
 
 #if (PAGESIZE / DEV_BSIZE <= 8)
 #define VMBLKBITS 0xff

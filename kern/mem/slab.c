@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <mach/param.h>
+#include <mach/types.h>
 #include <zero/trix.h>
 #include <mt/mtx.h>
 #include <kern/util.h>
@@ -10,8 +11,8 @@
 
 #define MEMDIAG 0
 
-struct memzone        k_memzonetab[MEM_ZONES];
-//struct memzone        memphyszone ALIGNED(PAGESIZE);
+struct memzone k_memzonetab[MEM_ZONES];
+
 /*
  * zero slab allocator
  * -------------------
@@ -29,7 +30,7 @@ memdiag(struct memzone *zone)
     struct memslab *slab2;
     struct memslab *null = NULL;
 
-    fmtxlk(&memphyszonelk);
+    memlk(&memphyszonelk);
     for (bktid = 0 ; bktid < PTRBITS ; bktid++) {
             slab1 = (struct memslab **)zone->tab[bktid];
              if (slab1) {
@@ -77,7 +78,7 @@ memdiag(struct memzone *zone)
             }
         }
     }
-    fmtxunlk(&memphyszonelk);
+    memunlk(&memphyszonelk);
 
     return;
 }
@@ -86,15 +87,15 @@ memdiag(struct memzone *zone)
 /*
  * combine slab with bigger [previous- or next-address] ones if possible.
  */
-unsigned long
+long
 slabcomb(struct memzone *zone, struct memmag *mag)
 {
+    long           ret  = 0;
     struct membkt *bkt = zone->tab;
-    unsigned long  nblk = zone->nblk;
-    unsigned long  bktid = memmaggetbkt(mag);
-    unsigned long  bktid1 = bktid;
-    unsigned long  bktid2 = bktid1;
-    unsigned long  ret  = 0;
+    m_ureg_t       nblk = zone->nblk;
+    long           bktid = memmaggetbkt(mag);
+    long           bktid1 = bktid;
+    long           bktid2 = bktid1;
     long           prev = 1;
     long           next = 1;
     intptr_t       ofs = 1UL << (bktid1 - MEMMINSHIFT);
@@ -197,10 +198,10 @@ slabcomb(struct memzone *zone, struct memmag *mag)
  * - caller has locked the bucket dest
  */
 void
-slabsplit(struct memzone *zone, struct memmag *mag, unsigned long dest)
+slabsplit(struct memzone *zone, struct memmag *mag, long dest)
 {
     struct membkt *bkt = zone->tab;
-    unsigned long  bktid = memmaggetbkt(mag);
+    long           bktid = memmaggetbkt(mag);
     uint8_t       *ptr = memgetadr(mag, zone);
     struct memmag *mag1;
     struct memmag *mag2;
@@ -243,16 +244,16 @@ slabsplit(struct memzone *zone, struct memmag *mag, unsigned long dest)
  * allocate mag; split from larger ones if necessary.
  */
 void *
-slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg)
+slaballoc(struct memzone *zone, m_ureg_t nb, long flg)
 {
     struct membkt *bkt = zone->tab;
-    unsigned long  bktid1 = memcalcbkt(nb);
-    unsigned long  bktid2 = bktid1;
+    long           bktid1 = memcalcbkt(nb);
+    long           bktid2 = bktid1;
     uint8_t       *ptr = NULL;
     struct memmag *mag1;
     struct memmag *mag2;
 
-    fmtxlk(&zone->lk);
+    memlk(&zone->lk);
     mag1 = bkt[bktid1].list;
     if (!mag1) {
         while (!mag1 && ++bktid2 < PTRBITS) {
@@ -280,7 +281,7 @@ slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg)
         memsetmagflg(mag1, flg);
         ptr = memgetadr(mag1, zone);
     }
-    fmtxunlk(&zone->lk);
+    memunlk(&zone->lk);
 #if (__KERNEL__ && (MEMDIAG))
     memdiag(zone);
 #endif
@@ -296,10 +297,10 @@ slabfree(struct memzone *zone, void *ptr)
 {
     struct membkt *bkt = zone->tab;
     struct memmag *mag1 = memgetmag(ptr, zone);
-    unsigned long  bktid = memmaggetbkt(mag1);
+    long           bktid = memmaggetbkt(mag1);
     struct memmag *mag2;
 
-    fmtxlk(&zone->lk);
+    memlk(&zone->lk);
 #if (!MEMTEST)
     vmfreephys(ptr, 1UL << bktid);
 #endif
@@ -313,7 +314,7 @@ slabfree(struct memzone *zone, void *ptr)
         memsetmagnext(mag1, mag2);
         bkt[bktid].list = mag1;
     }
-    fmtxunlk(&zone->lk);
+    memunlk(&zone->lk);
 #if (__KERNEL__ && (MEMDIAG))
     memdiag(zone);
 #endif

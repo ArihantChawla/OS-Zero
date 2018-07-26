@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <limits.h>
 #include <mach/param.h>
+#include <mach/types.h>
 #include <kern/types.h>
 
 struct memslab {

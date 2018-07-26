@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <zero/cdefs.h>
 #include <mach/param.h>
+#include <mach/types.h>
 #include <mach/asm.h>
 #include <zero/trix.h>
 #include <mt/mtx.h>

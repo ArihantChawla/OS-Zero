@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <mach/param.h>
+#include <mach/types.h>
 #include <kern/types.h>
 #include <kern/mem/mem.h>
 #include <kern/mem/slab.h>
@@ -35,21 +36,21 @@
 
 struct memzone {
     struct membkt  tab[PTRBITS];
-    m_atomic_t     lk;
+    MEM_LK_T       lk;
     m_ureg_t       flg;
     uintptr_t      base;
     unsigned long  nblk;
     void          *hdrtab;
 };
 
-void * slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg);
+void * slaballoc(struct memzone *zone, m_ureg_t nb, long flg);
 void   slabfree(struct memzone *zone, void *ptr);
 
 //void * zonegetslab(struct memzone *zone, unsigned long nb, unsigned long flg);
 //#void   zonefreeslab(struct memzone *zone, void *ptr);
 
-void meminitphys(struct memzone *zone, uintptr_t base, size_t nbyte);
-void meminitvirt(struct memzone *zone, size_t nbvirt);
+void meminitphys(struct memzone *zone, m_ureg_t base, m_ureg_t nbyte);
+void meminitvirt(struct memzone *zone, m_ureg_t nbvirt);
 void memfree(struct memzone *zone, void *ptr);
 
 #endif /* __KERN_MEM_ZONE_H__ */
