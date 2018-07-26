@@ -180,16 +180,16 @@ kmemset(void *adr, int byte, size_t len)
 }
 
 void
-kmemcpy(void *dest, void *src, unsigned long len)
+kmemcpy(void *dest, void *src, m_ureg_t len)
 {
-    unsigned long  nleft = len;
-    long          *dptr = NULL;
-    long          *sptr = NULL;
-    long          *dnext;
-    long          *snext;
-    long           incr;
+    m_ureg_t  nleft = len;
+    long     *dptr = NULL;
+    long     *sptr = NULL;
+    long     *dnext;
+    long     *snext;
+    long      incr;
 #if (CACHEPREWARM) && !defined(__GNUC__)
-    long    tmp;
+    long      tmp;
 #endif
 
     dnext = dest;
@@ -229,15 +229,15 @@ kmemcpy(void *dest, void *src, unsigned long len)
 }
 
 void
-kbfill(void *adr, uint8_t byte, unsigned long len)
+kbfill(void *adr, uint8_t byte, m_ureg_t len)
 {
-    unsigned long  nleft = len;
-    long          *ptr = NULL;
-    long          *next;
-    long           val;
-    long           incr;
+    m_ureg_t  nleft = len;
+    long     *ptr = NULL;
+    long     *next;
+    long      val;
+    long      incr;
 #if (CACHEPREWARM)
-    long           tmp;
+    long      tmp;
 #endif
 
     next = adr;
@@ -278,7 +278,7 @@ kbfill(void *adr, uint8_t byte, unsigned long len)
 int
 kmemcmp(const void *ptr1,
         const void *ptr2,
-        unsigned long nb)
+        m_ureg_t nb)
 {
     unsigned char *ucptr1 = (unsigned char *)ptr1;
     unsigned char *ucptr2 = (unsigned char *)ptr2;
@@ -330,14 +330,14 @@ kstrncpy(char *dest, const char *src, long len)
     return nb;
 }
 
-static unsigned long
+static m_ureg_t
 _ltoxn(long val, char *buf, uintptr_t len)
 {
-    unsigned long uval = zeroabs(val);
-    unsigned long byte;
-    unsigned long l = len - 1;
-    unsigned long incr = 4;
-    unsigned long sign = 0;
+    m_ureg_t uval = zeroabs(val);
+    m_ureg_t byte;
+    m_ureg_t l = len - 1;
+    m_ureg_t incr = 4;
+    m_ureg_t sign = 0;
 
     if (val < 0) {
         sign = 1;
@@ -357,15 +357,15 @@ _ltoxn(long val, char *buf, uintptr_t len)
     return l;
 }
 
-static unsigned long
+static m_ureg_t
 _ltodn(long val, char *buf, uintptr_t len)
 {
-    unsigned long uval = zeroabs(val);
-    unsigned long tmp;
-    unsigned long byte;
-    unsigned long l = len - 1;
-    unsigned long n;
-    unsigned long sign = 0;
+    m_ureg_t uval = zeroabs(val);
+    m_ureg_t tmp;
+    m_ureg_t byte;
+    m_ureg_t l = len - 1;
+    m_ureg_t n;
+    m_ureg_t sign = 0;
 
     if (val < 0) {
         sign = 1;
@@ -386,11 +386,11 @@ _ltodn(long val, char *buf, uintptr_t len)
     return l;
 }
 
-static unsigned long
-_ultoxn(unsigned long uval, char *buf, uintptr_t len)
+static m_ureg_t
+_ultoxn(m_ureg_t uval, char *buf, uintptr_t len)
 {
-    unsigned long byte;
-    unsigned long l = len - 1;
+    m_ureg_t byte;
+    m_ureg_t l = len - 1;
 
     buf[l] = '\0';
     do {
@@ -403,13 +403,13 @@ _ultoxn(unsigned long uval, char *buf, uintptr_t len)
     return l;
 }
 
-static unsigned long
-_ultodn(unsigned long uval, char *buf, uintptr_t len)
+static m_ureg_t
+_ultodn(m_ureg_t uval, char *buf, uintptr_t len)
 {
-    unsigned long byte;
-    unsigned long tmp;
-    unsigned long l = len - 1;
-    unsigned long n;
+    m_ureg_t byte;
+    m_ureg_t tmp;
+    m_ureg_t l = len - 1;
+    m_ureg_t n;
 
     buf[l] = '\0';
     do {
@@ -452,21 +452,21 @@ void
 kprintf(const char *fmt, ...)
 {
 //    char    *str = fmt;
-    struct cons   *cons;
-    char          *arg;
-    char          *sptr;
-    char          *cptr;
-    long           val;
-    unsigned long  uval;
-    long           isuns;
-    long           isch;
-    long           isdec;
-    long           ishex;
-    long           l;
-    long           len;
-    va_list        al;
-    char           buf[LONGLONGBUFSIZE];
-    char           str[MAXPRINTFSTR];
+    struct cons *cons;
+    char        *arg;
+    char        *sptr;
+    char        *cptr;
+    long         val;
+    m_ureg_t     uval;
+    long         isuns;
+    long         isch;
+    long         isdec;
+    long         ishex;
+    long         l;
+    long         len;
+    va_list      al;
+    char         buf[LONGLONGBUFSIZE];
+    char         str[MAXPRINTFSTR];
 
     cons = &constab[conscur];
     if (cons->puts) {
@@ -519,7 +519,7 @@ kprintf(const char *fmt, ...)
                             if (*arg == 'p') {
                                 ishex = 1;
                                 isuns = 1;
-                                uval = (unsigned long)va_arg(al, void *);
+                                uval = (m_ureg_t)va_arg(al, void *);
                             } else if (arg[1] == 'x' || arg[1] == 'u') {
                                 if (arg[1] == 'x') {
                                     ishex = 1;
@@ -710,7 +710,7 @@ bfindzerol(long *bmap, long ofs, long nbit)
 #if defined(__KERNEL__) && (__KERNEL__)
 
 void
-panic(unsigned long pid, int32_t trap, long err)
+panic(long pid, int32_t trap, long err)
 {
     const char *name;
 

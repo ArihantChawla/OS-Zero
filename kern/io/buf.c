@@ -60,7 +60,7 @@ static struct bufblkqueue  buffreelist;
 static struct bufblkqueue  buflruqueue;
 static m_atomic_t          bufzonelk;
 static void               *bufzone;
-static long                bufnbyte;
+static m_ureg_t            bufnbyte;
 
 /* allocate and initialise buffer cache; called at boot time */
 long
@@ -73,7 +73,7 @@ ioinitbuf(void)
     struct bufblk     *prev;
     long               n;
     long               sz;
-    unsigned long      lim;
+    m_ureg_t      lim;
 
 #if (BUFDYNALLOC)
     sz = BUFNBLK * sizeof(struct bufblk);
@@ -103,7 +103,7 @@ ioinitbuf(void)
     kprintf("BUF: reserved %lu bytes for buffer cache\n", sz);
 #endif
     u8ptr = ptr;
-    lim = (unsigned long)(u8ptr + sz);
+    lim = (m_ureg_t)(u8ptr + sz);
     stats->nbuf = sz >> BUFMINSIZELOG2;
     stats->buf = ptr;
     stats->bufend = u8ptr + sz;

@@ -9,7 +9,7 @@
 //static struct membufpool membufpooltab[NCPU] ALIGNED(PAGESIZE);
 static struct membufpool k_membufpool;
 
-long
+intmax_t
 membufinit(void)
 {
     struct membufpool *tab = &k_membufpool;
@@ -18,7 +18,7 @@ membufinit(void)
     void              *last;
     uint8_t           *u8ptr1;
     uint8_t           *u8ptr2;
-    long               n;
+    intmax_t           n;
 
     /* allocate wired memory for membufs */
     u8ptr1 = kwalloc(MEMNBUF * MEMBUF_SIZE);
@@ -62,8 +62,8 @@ memgetbuf(long how)
     uint8_t            *ptr;
     struct membuf     *buf;
     struct membuf     *last;
-    long                loop;
-    size_t              n;
+    long               loop;
+    m_ureg_t           n;
 
     loop = how & MEM_WAIT;
     do {
@@ -99,14 +99,14 @@ memputbuf(struct membuf *buf)
 void *
 memgetcpubuf(long how)
 {
-    volatile long       unit = k_curunit;
+    volatile long      unit = k_curunit;
     struct membufpool *tab = &k_membufpooltab[unit];
-    uint8_t            *ptr;
-    struct memblk      *ret = NULL;
-    struct memblk      *blk;
-    struct memblk      *last;
-    long                loop;
-    long                n;
+    uint8_t           *ptr;
+    struct memblk     *ret = NULL;
+    struct memblk     *blk;
+    struct memblk     *last;
+    long               loop;
+    m_ureg_t           n;
 
     loop = how & MEM_WAIT;
     do {
@@ -149,9 +149,9 @@ long
 meminitcpubuf(long unit, long how)
 {
     struct membufpool *tab = &k_membufpooltab[unit];
-    uint8_t            *u8ptr = kwalloc(PAGESIZE);
-    size_t              n = PAGESIZE / MEMBUF_SIZE;
-    void               *last = NULL;
+    uint8_t           *u8ptr = kwalloc(PAGESIZE);
+    m_ureg_t           n = PAGESIZE / MEMBUF_SIZE;
+    void              *last = NULL;
     struct membuf     *buf;
 
     if (!u8ptr) {
@@ -194,7 +194,7 @@ memallocext(struct membuf *buf, long how)
 
 /* set up preallocated external storage and refer it to buffer */
 static __inline__ void
-memsetext(struct membuf *buf, void *adr, long size,
+memsetext(struct membuf *buf, void *adr, m_ureg_t size,
           void (*rel)(void *, void *),
           void *args, long type, long flg)
 {
@@ -278,7 +278,7 @@ memrelchain(struct membuf *buf)
  * - TODO: implement MEM_BLOCK
  */
 static __inline__ struct membuf *
-memgetchain(size_t len, long how, long type)
+memgetchain(m_ureg_t len, long how, long type)
 {
     struct membuf *buf;
     struct membuf *last = NULL;
@@ -353,7 +353,7 @@ memcpypkthdr(struct membuf *src, struct membuf *dest)
 
 /* allocate new buffer to prepend to chain, copy data along */
 static __inline__ struct membuf *
-_membufprepend(struct membuf *buf, size_t len, long how)
+_membufprepend(struct membuf *buf, m_ureg_t len, long how)
 {
     struct membuf *head;
     long           type;
@@ -381,10 +381,10 @@ _membufprepend(struct membuf *buf, size_t len, long how)
 
 /* prepare buf for prepending len bytes of data */
 static __inline__ struct membuf *
-membufprepend(struct membuf *buf, size_t len, long how)
+membufprepend(struct membuf *buf, m_ureg_t len, long how)
 {
     struct mempkthdr *pkt;
-    size_t            lead = membufleadspace(buf);
+    m_ureg_t          lead = membufleadspace(buf);
 
     if (lead >= len) {
         buf->hdr.data -= len;
@@ -407,11 +407,11 @@ membufprepend(struct membuf *buf, size_t len, long how)
  * - copy is read-only; blocks are not copied, just reference counts incremented
  */
 static __inline__ struct membuf *
-memcpychain(struct membuf *src, size_t ofs0, size_t nb, long how)
+memcpychain(struct membuf *src, m_ureg_t ofs0, m_ureg_t nb, long how)
 {
-    size_t             ofs = ofs0;
+    m_ureg_t           ofs = ofs0;
     long               cpyhdr = 0;
-    size_t             len;
+    m_ureg_t           len;
     long               type;
     struct membuf     *top = NULL;
     struct membuf     *dest;
@@ -495,7 +495,7 @@ memcpypkt(struct membuf *src, long how)
     struct membuf    *top;
     struct memexthdr *ext1;
     struct memexthdr *ext2;
-    size_t            len;
+    m_ureg_t          len;
     uint8_t          *pkt1;
     uint8_t          *pkt2;
     long              type;
@@ -559,9 +559,9 @@ memcpypkt(struct membuf *src, long how)
  * the indicated buffer
  */
 static __inline__ void
-memcpydata(struct membuf *src, size_t ofs, size_t len, uint8_t *dest)
+memcpydata(struct membuf *src, m_ureg_t ofs, m_ureg_t len, uint8_t *dest)
 {
-    size_t csz;
+    m_ureg_t csz;
 
     csz = membuflen(src);
     while (ofs > 0) {
@@ -600,8 +600,8 @@ memduppkt(struct membuf *src, long how)
     uint8_t        *sptr;
     uint8_t        *dptr;
     long            type;
-    size_t          ofs;
-    size_t          len;
+    m_ureg_t        ofs;
+    m_ureg_t        len;
     long            sz;
     long            csz;
 
@@ -667,12 +667,12 @@ memduppkt(struct membuf *src, long how)
 static __inline__ void
 memcatchain(struct membuf *src, struct membuf *dest)
 {
-    uint8_t *sptr;
-    uint8_t *dptr;
-    uint8_t *lim;
-    long     join;
-    size_t   slen;
-    size_t   dlen;
+    uint8_t  *sptr;
+    uint8_t  *dptr;
+    uint8_t  *lim;
+    long      join;
+    m_ureg_t  slen;
+    m_ureg_t  dlen;
 
     dptr = membufdata(dest);
     while (membufnext(dest)) {

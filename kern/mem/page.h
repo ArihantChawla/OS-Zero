@@ -58,11 +58,11 @@ struct swapdev {
     struct vmpage *freeq;
 };
 
-extern unsigned long   pageinitphyszone(uintptr_t base, struct vmpage **zone,
-                                        unsigned long nb);
-extern unsigned long   pageaddphyszone(uintptr_t base, struct vmpage **zone,
-                                       unsigned long nb);
-extern unsigned long   pageinitphys(uintptr_t base, unsigned long nb);
+extern m_ureg_t        pageinitphyszone(uintptr_t base, struct vmpage **zone,
+                                        m_ureg_t nb);
+extern m_ureg_t        pageaddphyszone(uintptr_t base, struct vmpage **zone,
+                                       m_ureg_t nb);
+extern m_ureg_t        pageinitphys(uintptr_t base, m_ureg_t nb);
 extern struct vmpage * pageallocphys(void);
 extern void            pagefreephys(void *adr);
 #if 0

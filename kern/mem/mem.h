@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <mach/param.h>
+#include <mach/types.h>
 #include <zero/trix.h>
 
 #if (MEMTKTLK)
@@ -74,7 +75,7 @@
 #define memgetbkt(hdr)                                                  \
     (&(hdr)->info & ((1 << MEMBKTBITS) - 1))
 
-void meminit(size_t nbphys, size_t nbvirt);
+void meminit(m_ureg_t nbphys, m_ureg_t nbvirt);
 
 #endif /* __KERN_MEM_MEM_H__ */
 

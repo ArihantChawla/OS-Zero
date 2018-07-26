@@ -28,12 +28,12 @@
  * ----
  */
 struct membufctl {
-    size_t bufsize;     // MEMBUF_SIZE
-    size_t blkshift;    // MEMBUF_BLK_SHIFT
-    size_t blkmin;      // MEMBUF_BLK_MIN_SIZE
-    size_t datalen;     // MEMBUF_DATA_LEN
-    size_t pktlen;      // MEMBUF_PKT_LEN
-    size_t maxcompress;
+    m_ureg_t bufsize;     // MEMBUF_SIZE
+    m_ureg_t blkshift;    // MEMBUF_BLK_SHIFT
+    m_ureg_t blkmin;      // MEMBUF_BLK_MIN_SIZE
+    m_ureg_t datalen;     // MEMBUF_DATA_LEN
+    m_ureg_t pktlen;      // MEMBUF_PKT_LEN
+    m_ureg_t maxcompress;
 };
 
 /* copy parameter */
@@ -118,8 +118,8 @@ struct membufctl {
 /* record/packet header in first mb of chain; MEMBUF_PKTHDR is set */
 struct mempkthdr {
     struct netif  *recvif;      // receiver interface
-    size_t         size;        // buffer length
-    size_t         len;         // packet length
+    m_ureg_t         size;        // buffer length
+    m_ureg_t         len;         // packet length
     uint8_t       *hdr;         // packet header
     int32_t        flg;         // checksum and other flags
     int32_t        chksum;      // checksum data
@@ -144,8 +144,8 @@ struct mempkthdr {
 struct memexthdr {
     volatile m_atomic_t   nref;
     uint8_t              *data; // buffer base address
-    size_t                size; // buffer size
-    size_t                len;  // buffer data length
+    m_ureg_t                size; // buffer size
+    m_ureg_t                len;  // buffer data length
     void                (*rel)(void *, void *); // optional custom free()
     void                 *args; // optional argument pointer
     long                  type; // storage type
@@ -153,8 +153,8 @@ struct memexthdr {
 
 struct membufhdr {
     uint8_t          *data;     // buffer data base address
-    size_t            size;     // buffer size
-    size_t            len;      // # of bytes in membuf
+    m_ureg_t            size;     // buffer size
+    m_ureg_t            len;      // # of bytes in membuf
     long              type;     // buffer type
     long              flg;      // flags
     struct membuf    *next;     // next buffer in chain
@@ -208,10 +208,14 @@ struct membufauxpkt {
 struct membufpool {
     m_atomic_t     lk;
     long           flg;
-    size_t         nbuf;
-    size_t         nblk;
+    m_ureg_t       nbuf;
+    m_ureg_t       nblk;
     struct membuf *buflist;
-    uint8_t         _pad[CLSIZE - 5 * sizeof(long) - 1 * sizeof(void *)];
+    uint8_t         _pad[CLSIZE
+                         - sizeof(m_atomic_t)
+                         - sizeof(long)
+                         - 2 * sizeof(m_ureg_t)
+                         - sizeof(struct membuf *)];
 };
 
 #include <kern/mem/bits/membuf.h>

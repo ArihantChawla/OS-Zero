@@ -9,20 +9,20 @@
 extern struct memzone k_memzonetab[MEM_ZONES];
 
 void
-meminit(size_t nbphys, size_t nbvirt)
+meminit(m_ureg_t nbphys, m_ureg_t nbvirt)
 {
-    size_t    lim = max(nbphys, KERNVIRTBASE);
-    uintptr_t adr;
+    m_ureg_t lim = max(nbphys, KERNVIRTBASE);
+    m_ureg_t adr;
 
-    vmmapseg((uint32_t)nbvirt,
-             (uint32_t)nbvirt,
-             (uint32_t)lim,
+    vmmapseg((m_ureg_t)nbvirt,
+             (m_ureg_t)nbvirt,
+             (m_ureg_t)lim,
              PAGEPRES | PAGEWRITE);
 #if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__)
-    pageinitphys((uintptr_t)&_epagetab,
-                 lim - (size_t)&_epagetab);
+    pageinitphys((m_ureg_t)&_epagetab,
+                 lim - (m_ureg_t)&_epagetab);
     lim = max(nbvirt, KERNVIRTBASE);
-    //    meminitzone((uintptr_t)&_epagetab, lim - (size_t)&_epagetab);
+    //    meminitzone((m_ureg_t)&_epagetab, lim - (m_ureg_t)&_epagetab);
     vminitvirt(&_epagetab, nbvirt, PAGEWRITE);
 #elif defined(__x86_64__) || defined(__amd64__)
 #error implement x86-64 memory management

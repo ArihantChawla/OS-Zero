@@ -49,8 +49,8 @@ struct k_physmem   k_physmem;
  *     vmphysadr = pagetab[vmpagenum(virt)]; // physical address
  */
 void
-vmmapseg(uint32_t virt, uint32_t phys, uint32_t lim,
-         uint32_t flg)
+vmmapseg(uintptr_t virt, uintptr_t phys, uintptr_t lim,
+         uintptr_t flg)
 {
     pte_t *pte;
     long   n;
@@ -79,26 +79,26 @@ vmmapseg(uint32_t virt, uint32_t phys, uint32_t lim,
 void
 vminit(void)
 {
-    pde_t    *pde;
-    pte_t    *pte;
-    uint32_t  adr;
-    long      n;
+    pde_t     *pde;
+    pte_t     *pte;
+    uintptr_t  adr;
+    long       n;
 
     /* PHYSICAL MEMORY */
 
     /* initialize page directory index page */
     pde = kernpagedir;
-    adr = (uint32_t)&_pagetab;
+    adr = (uintptr_t)&_pagetab;
     n = NPDE;
     while (n--) {
         *pde = adr | PAGEPRES | PAGEWRITE;
-        adr += NPTE * sizeof(uint32_t);
+        adr += NPTE * sizeof(uintptr_t);
         pde++;
     }
 
     /* map page directory index page */
     pde = (pde_t *)&_pagetab + vmpagenum(kernpagedir);
-    adr = (uint32_t)&kernpagedir;
+    adr = (uintptr_t)&kernpagedir;
     *pde = adr | PAGEUSER | PAGEPRES | PAGEWRITE;
 
     /* zero page tables */
@@ -110,12 +110,12 @@ vminit(void)
     kbzero(kernusrstktab, NCPU * KERNSTKSIZE);
 #endif
     /* map kernel-mode stacks */
-    vmmapseg((uint32_t)kernsysstktab, (uint32_t)kernsysstktab,
-             (uint32_t)kernsysstktab + NCPU * KERNSTKSIZE,
+    vmmapseg((uintptr_t)kernsysstktab, (uintptr_t)kernsysstktab,
+             (uintptr_t)kernsysstktab + NCPU * KERNSTKSIZE,
              PAGEPRES | PAGEWRITE);
     /* map user-mode stacks */
-    vmmapseg((uint32_t)kernusrstktab, (uint32_t)kernusrstktab,
-             (uint32_t)kernusrstktab + NCPU * KERNSTKSIZE,
+    vmmapseg((uintptr_t)kernusrstktab, (uintptr_t)kernusrstktab,
+             (uintptr_t)kernusrstktab + NCPU * KERNSTKSIZE,
              PAGEUSER | PAGEPRES | PAGEWRITE);
 #if defined(__x86_64__) || defined(__amd64__)
     /* zero page structures */
@@ -127,51 +127,51 @@ vminit(void)
              HICORE,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
 #if (SMP)
-    vmmapseg((uint32_t)MPENTRY, (uint32_t)MPENTRY,
-             (uint32_t)&mpend - (uint32_t)&mpentry + MPENTRY,
+    vmmapseg((uintptr_t)MPENTRY, (uintptr_t)MPENTRY,
+             (uintptr_t)&mpend - (uintptr_t)&mpentry + MPENTRY,
              PAGEPRES);
 #endif
 
     /* identity-map kernel low-half boot segment */
     vmmapseg(HICORE, HICORE,
-             (uint32_t)&_dmabuf,
+             (uintptr_t)&_dmabuf,
              PAGEPRES | PAGEWRITE);
 
 #if (USYSINFO)
     /* identity-map USYSINFO */
-    vmmapseg((uint32_t)&_usysinfo, (uint32_t)&_usysinfo,
-             (uint32_t)&_eusysinfo,
+    vmmapseg((uintptr_t)&_usysinfo, (uintptr_t)&_usysinfo,
+             (uintptr_t)&_eusysinfo,
              PAGEPRES | PAGEWRITE);
 #endif
 
     /* identity-map kernel DMA buffers */
-    vmmapseg((uint32_t)&_dmabuf, DMABUFBASE,
-             (uint32_t)&_dmabuf + DMABUFSIZE,
+    vmmapseg((uintptr_t)&_dmabuf, DMABUFBASE,
+             (uintptr_t)&_dmabuf + DMABUFSIZE,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
 
     /* identity-map page tables */
-    vmmapseg((uint32_t)&_pagetab, (uint32_t)&_pagetab,
-             (uint32_t)&_pagetab + PAGETABSIZE,
+    vmmapseg((uintptr_t)&_pagetab, (uintptr_t)&_pagetab,
+             (uintptr_t)&_pagetab + PAGETABSIZE,
              PAGEPRES | PAGEWRITE | PAGEWIRED);
 
     /* identity map free RAM */
-    vmmapseg((uint32_t)&_epagetab,
-             (uint32_t)&_epagetab,
-             KERNVIRTBASE - (uint32_t)&_epagetab,
+    vmmapseg((uintptr_t)&_epagetab,
+             (uintptr_t)&_epagetab,
+             KERNVIRTBASE - (uintptr_t)&_epagetab,
              PAGEWRITE);
 
-    //    kbzero(&_epagetab, lim - (uint32_t)&_epagetab);
+    //    kbzero(&_epagetab, lim - (uintptr_t)&_epagetab);
 
     /* VIRTUAL MEMORY */
 
     /* map kernel text/read-only segments */
-    vmmapseg(vmvirtadr((uint32_t)&_textvirt), vmlinkadr((uint32_t)&_textvirt),
-             (uint32_t)&_etextvirt,
+    vmmapseg(vmvirtadr((uintptr_t)&_textvirt), vmlinkadr((uintptr_t)&_textvirt),
+             (uintptr_t)&_etextvirt,
              PAGEPRES);
 
     /* map kernel DATA and BSS segments */
-    vmmapseg(vmvirtadr((uint32_t)&_datavirt), vmlinkadr((uint32_t)&_datavirt),
-             (uint32_t)&_ebssvirt,
+    vmmapseg(vmvirtadr((uintptr_t)&_datavirt), vmlinkadr((uintptr_t)&_datavirt),
+             (uintptr_t)&_ebssvirt,
              PAGEPRES | PAGEWRITE);
 
     /* identity-map 3.5G..4G */
@@ -184,7 +184,7 @@ vminit(void)
 }
 
 void
-vminitphys(uint32_t base, unsigned long nbphys)
+vminitphys(uintptr_t base, unsigned long nbphys)
 {
     unsigned long nb = min(nbphys, KERNVIRTBASE);
 
@@ -195,7 +195,7 @@ vminitphys(uint32_t base, unsigned long nbphys)
 }
 
 void
-vminitvirt(void *virt, uint32_t size, uint32_t flg)
+vminitvirt(void *virt, uintptr_t size, uintptr_t flg)
 {
     void  *adr;
     pte_t *pte;
@@ -212,19 +212,19 @@ vminitvirt(void *virt, uint32_t size, uint32_t flg)
 }
 
 void
-vmfreephys(void *virt, uint32_t size)
+vmfreephys(void *virt, uintptr_t size)
 {
 //    struct vmbuf *buf;
-    uint32_t  adr;
-    pte_t    *pte;
-    long      n;
+    uintptr_t  adr;
+    pte_t     *pte;
+    long       n;
 //    long          nref;
 //    struct vmpage  *pg;
 
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
     pte = (pte_t *)&_pagetab + vmpagenum(virt);
     while (n--) {
-        adr = (uint32_t)*pte;
+        adr = (uintptr_t)*pte;
         adr &= VMPAGEMASK;
         if (!adr) {
 
@@ -253,11 +253,11 @@ vmfreephys(void *virt, uint32_t size)
 
 FASTCALL
 void
-vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
+vmpagefault(uintptr_t pid, uintptr_t adr, uintptr_t error)
 {
     pte_t         *pte = (pte_t *)&_pagetab + vmpagenum(adr);
-    uint32_t       flg = (uint32_t)*pte & (PAGEFLTFLGMASK | PAGESYSFLAGS);
-    struct vmpage   *page = NULL;
+    uintptr_t      flg = (uintptr_t)*pte & (PAGEFLTFLGMASK | PAGESYSFLAGS);
+    struct vmpage *page = NULL;
     unsigned long  qid;
 
     kprintf("PAGEFAULT: pid == %lx, adr == %lx, error == %lx\n",
@@ -308,16 +308,16 @@ vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
 
 #if 0
 void
-vmseekdev(uint32_t dev, uint64_t ofs)
+vmseekdev(uintptr_t dev, uint64_t ofs)
 {
     devseek(k_vmdevtab[dev], ofs, SEEK_SET);
 }
 
-uint32_t
-vmpagein(uint32_t adr)
+uintptr_t
+vmpagein(uintptr_t adr)
 {
-    uint32_t       pageid = vmpagenum(adr);
-    uint32_t       blk = vmblkid(pageid);
+    uintptr_t      pageid = vmpagenum(adr);
+    uintptr_t      blk = vmblkid(pageid);
     struct vmpage *page = pagefind(adr);
     void          *data;
 
@@ -329,7 +329,7 @@ vmpagein(uint32_t adr)
 }
 
 void
-vmpagefree(uint32_t adr)
+vmpagefree(uintptr_t adr)
 {
     ;
 }
