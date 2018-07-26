@@ -52,10 +52,6 @@ apicprobe(void)
 void
 apicstarttmr(volatile uint32_t *base)
 {
-    uint32_t val;
-    //    uint32_t spur = apicread(volatile uint32_t *base, APICSPURIOUS) | APICSWENABLE;
-
-    apicwrite(base, 0, APICEOI);
     /*
      * timer counts down at bus frequency from apicrate and issues
      * the interrupt trapirqid(Irqtmr)
@@ -78,18 +74,16 @@ apicinittmr(volatile uint32_t *base)
     uint32_t tmrcnt;
     uint8_t  tmp8;
 
-    /* initialise APIC */
-#if 0
-    apicwrite(base, 0xffffffff, APICDFR);
-    apicwrite(base, (apicread(base, (APICLDR) & 0x00ffffff)) | 1, APICLDR);
-#endif
     /* enable APIC */
-    //    apicwrite((uint32_t)apic | APICENABLE, APICSPURIOUS);
-    apicwrite(base, IRQSPURIOUS | APICSWENABLE, APICSPURIOUS);
-    apicwrite(base, 0x03, APICTMRDIVCONF);
-    /* initialise PIT channel 2 in one-shot mode, 100 Hz frequency */
-    apicwrite(base, 0xffffffff, APICTMRINITCNT);
     trapsetintrgate(&kernidt[trapirqid(IRQTMR)], irqtmrcnt, TRAPUSER);
+    /* initialise timer, mask interrupts, set divisor */
+    apicwrite(base, 0x03, APICTMRDIVCONF);
+    apicwrite(base, trapirqid(IRQTMR) | APICPERIODIC, APICTMR);
+    apicwrite(base, 10000000, APICTMRINITCNT);
+    apicwrite(base, 0xffffffff, APICTMRINITCNT);
+    /* enable local APIC; set spurious interrupt vector */
+    apicwrite(base, IRQSPURIOUS | APICSWENABLE, APICSPURIOUS);
+    /* initialise PIT channel 2 in one-shot mode, 100 Hz frequency */
     tmp8 = inb(PITCTRL2) & 0xfd;
     tmp8 |= PITONESHOT;
     outb(tmp8, PITCTRL2);
@@ -105,10 +99,10 @@ apicinittmr(volatile uint32_t *base)
     outb(tmp8 | 1, PITCTRL2);
     /* number of ticks in 10 milliseconds */
     ntick = 0xffffffff - apicread(base, APICTMRCURCNT);
+    kprintf("tcks in 10 milliseconds: %ld\n2", ntick);
     ntick >> 2; // divide by 4 to get rate for 250 Hz
     rate = ntick / 250;
-    kprintf("APIC ticks per slice: %lu\n", (unsigned long)rate);
-//    kprintf("APIC interrupt frequency: %ld MHz\n", divu1000000(freq));
+    kprintf("ticks per slice: %lu\n", (unsigned long)rate);
     trapsetintrgate(&kernidt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
     apicrate = rate;
     //    apicwrite(base, 0, APICEOI);
@@ -148,12 +142,6 @@ apicinit(long id)
         irqvec[IRQERROR] = irqerror;
         irqvec[IRQSPURIOUS] = irqspurious;
     }
-    /* enable local APIC; set spurious interrupt vector */
-    apicwrite(base, IRQSPURIOUS | APICSWENABLE, APICSPURIOUS);
-    /* initialise timer, mask interrupts, set divisor */
-    apicwrite(base, 0x03, APICTMRDIVCONF);
-    apicwrite(base, trapirqid(IRQTMR) | APICPERIODIC, APICTMR);
-    apicwrite(base, 10000000, APICTMRINITCNT);
     apicwrite(base, APICMASKED, APICTMR);
     /* disable logical interrupt lines */
     apicwrite(base, APICMASKED, APICINTR0);
@@ -164,9 +152,11 @@ apicinit(long id)
     }
     /* map error interrupt to IRQERROR */
     apicwrite(base, IRQERROR, APICERROR);
+#if 0
     /* clear error status registers */
     apicwrite(base, 0, APICERRSTAT);
     apicwrite(base, 0, APICERRSTAT);
+#endif
     /* acknowledge outstanding interrupts */
     apicwrite(base, 0, APICEOI);
     if (cpu != mpbootcpu) {
