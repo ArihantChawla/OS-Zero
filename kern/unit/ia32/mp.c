@@ -18,16 +18,8 @@
 #include <kern/mem/vm.h>
 #include <kern/proc/task.h>
 #include <kern/unit/x86/kern.h>
+#include <kern/unit/x86/apic.h>
 #include <kern/unit/ia32/mp.h>
-#if 0
-#include <kern/unit/x86/boot.h>
-#include <kern/unit/x86/link.h>
-#include <kern/unit/ia32/seg.h>
-#endif
-
-#if (HPET)
-extern void hpetinit(void);
-#endif
 
 /* used to scan for MP table */
 #define EBDAADR   0x040e
@@ -40,14 +32,8 @@ extern void gdtinit(void);
 extern void trapinitidt(void);
 extern void idtset(void);
 
-extern pde_t               *kernpagedir[NPDE];
-extern volatile struct cpu  cputab[NCPU];
-volatile struct cpu        *mpbootcpu;
-long                        mpmultiproc;
-long                        mpncpu;
-long                        mpioapicid;
-uint32_t *volatile          mpapic;
-uint32_t                   *mpioapic;
+extern pde_t *kernpagedir[NPDE];
+struct k_mp   k_mp;
 
 static long
 mpchksum(uint8_t *ptr, unsigned long len)
@@ -89,8 +75,8 @@ mpprobe(uintptr_t adr, unsigned long len)
 struct mp *
 mpsearch(void)
 {
-    uint32_t       adr = 0;
-    struct mp     *mp = NULL;
+    uint32_t   adr = 0;
+    struct mp *mp = NULL;
 
     adr = (uint32_t)(((uint16_t *)EBDAADR)[0] << 4);
     if (adr) {
@@ -150,13 +136,14 @@ mpconf(struct mp **mptab)
 void
 mpinit(void)
 {
-    struct mp       *mp;
-    struct mpconf   *conf;
-    struct mpcpu    *cpu;
-    struct mpioapic *apic;
-    long             unit;
-    uint8_t         *u8ptr;
-    uint8_t         *lim;
+    struct mp          *mp;
+    struct mpconf      *conf;
+    struct mpcpu       *cpu;
+    uint32_t *volatile  mpapic;
+    struct mpioapic    *ioapic;
+    long                unit;
+    uint8_t            *u8ptr;
+    uint8_t            *lim;
 
     conf = mpconf(&mp);
     if (!conf) {
@@ -164,6 +151,7 @@ mpinit(void)
         return;
     }
     mpapic = conf->apicadr;
+    k_mp.apic = mpapic;
     for (u8ptr = (uint8_t *)(conf + 1), lim = (uint8_t *)conf + conf->len ;
          u8ptr < lim ; ) {
         switch (*u8ptr) {
@@ -171,18 +159,18 @@ mpinit(void)
                 cpu = (struct mpcpu *)u8ptr;
                 unit = cpu->id;
                 if (cpu->flags & MPCPUBOOT) {
-                    mpbootcpu = &cputab[unit];
+                    k_mp.bootcpu = &k_cputab[unit];
                     taskinittls(unit, PROCKERN);
                 }
-                cputab[unit].unit = unit;
-                mpncpu++;
+                k_cputab[unit].unit = unit;
+                k_mp.ncpu++;
                 u8ptr += sizeof(struct mpcpu);
 
                 continue;
             case MPIOAPIC:
-                apic = (struct mpioapic *)u8ptr;
-                mpioapicid = apic->apicnum;
-                mpioapic = apic->adr;
+                ioapic = (struct mpioapic *)u8ptr;
+                k_mp.ioapicid = ioapic->apicnum;
+                k_mp.ioapic = (struct ioapic *)ioapic->adr;
                 u8ptr += sizeof(struct mpioapic);
 
                 continue;
@@ -193,13 +181,13 @@ mpinit(void)
 
                 continue;
             default:
-                mpmultiproc = 0;
+                k_mp.multiproc = 0;
 
                 break;
         }
     }
-    if (mpncpu > 1) {
-        mpmultiproc = 1;
+    if (k_mp.ncpu > 1) {
+        k_mp.multiproc = 1;
     } else {
 
         return;
@@ -260,7 +248,7 @@ mpstart(void)
     volatile struct cpu *lim;
     uint32_t            *mpentrystk = (uint32_t *)MPENTRYSTK;
 
-    lim = &cputab[0] + mpncpu;
+    lim = &k_cputab[0] + k_mp.ncpu;
 #if 0
     if (first) {
         kmemcpy((void *)MPENTRY,
@@ -268,8 +256,8 @@ mpstart(void)
         first = 0;
     }
 #endif
-    for (cpu = &cputab[0] ; cpu < lim ; cpu++) {
-        if (cpu == mpbootcpu) {
+    for (cpu = &k_cputab[0] ; cpu < lim ; cpu++) {
+        if (cpu == k_mp.bootcpu) {
             /* started already */
 
             continue;

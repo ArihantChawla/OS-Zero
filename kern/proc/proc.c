@@ -18,10 +18,10 @@
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/task.h>
 
-extern pde_t          kernpagedir[NPDE];
-extern struct task    tasktab[NTASK];
-struct proc           proctab[NTASK] ALIGNED(PAGESIZE);
-volatile struct proc *proczombietab[NTASK];
+extern pde_t                kernpagedir[NPDE];
+extern struct task          k_tasktab[NTASK];
+struct proc                *k_proctab[NTASK] ALIGNED(PAGESIZE);
+volatile struct proc       *k_proczombietab[NTASK];
 
 long
 procinit(long unit, long id, long sched)
@@ -36,9 +36,9 @@ procinit(long unit, long id, long sched)
     uint8_t             *u8ptr;
 
     if (id < TASKNPREDEF) {
-        cpu = &cputab[unit];
-        proc = &proctab[id];
-        task = &tasktab[id];
+        cpu = &k_cputab[unit];
+        proc = k_proctab[id];
+        task = &k_tasktab[id];
         prio = SCHEDSYSPRIOMIN;
         task->sched = SCHEDSYSTEM;
         task->prio = prio;
@@ -57,10 +57,10 @@ procinit(long unit, long id, long sched)
 
         return id;
     } else {
-        cpu = &cputab[0];
+        cpu = &k_cputab[0];
         id = taskgetid();
-        proc = &proctab[id];
-        task = &tasktab[id];
+        proc = k_proctab[id];
+        task = &k_tasktab[id];
         task->state = TASKNEW;
         proc->pid = id;
         proc->nice = 0;
@@ -142,8 +142,8 @@ struct proc *
 newproc(long unit, int argc, char *argv[], char *envp[], long sched)
 {
     long         id = taskgetid();
-    struct proc *proc = (id >= 0) ? &proctab[id] : NULL;
-    struct task *task = (id >= 0) ? &tasktab[id] : NULL;
+    struct proc *proc = (id >= 0) ? k_proctab[id] : NULL;
+    struct task *task = (id >= 0) ? &k_tasktab[id] : NULL;
 
     if (proc) {
         procinit(unit, id, sched);

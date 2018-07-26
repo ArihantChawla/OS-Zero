@@ -31,8 +31,6 @@
 #include <kern/unit/x86/cpu.h>
 #endif
 
-extern struct cpu  cputab[NCPU];
-
 struct m_cacheinfo cpuidcacheinfo[16] ALIGNED(PAGESIZE);
 struct m_cpuinfo   cpuinfo;
 
@@ -154,7 +152,7 @@ cpuprobe(long id,
          volatile struct m_cpuinfo *info,
          volatile struct m_cpucacheinfo *cache)
 {
-    volatile struct cpu  *m_cpu = &cputab[id];
+    volatile struct cpu  *m_cpu = &k_cputab[id];
     struct m_cacheinfo   *cbuf;
     struct m_cpuid        buf;
     union  m_cpuidvendor  vbuf;
@@ -212,7 +210,7 @@ cpuprobe(long id,
 void
 cpuprintinfo(long id)
 {
-    volatile struct cpu  *cpu = &cputab[id];
+    volatile struct cpu  *cpu = &k_cputab[id];
     struct m_cacheinfo    cbuf;
     struct m_cpuid        buf;
     union  m_cpuidvendor  vbuf;

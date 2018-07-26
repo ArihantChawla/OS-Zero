@@ -7,12 +7,12 @@
 #include <kern/mem/membuf.h>
 
 //static struct membufpool membufpooltab[NCPU] ALIGNED(PAGESIZE);
-static struct membufpool membufpool;
+static struct membufpool k_membufpool;
 
 long
 membufinit(void)
 {
-    struct membufpool *tab = &membufpool;
+    struct membufpool *tab = &k_membufpool;
     struct membuf     *buf;
     struct memblk     *blk;
     void              *last;
@@ -57,7 +57,7 @@ membufinit(void)
 struct membuf *
 memgetbuf(long how)
 {
-    struct membufpool *tab = &membufpool;
+    struct membufpool *tab = &k_membufpool;
     struct membuf     *ret = NULL;
     uint8_t            *ptr;
     struct membuf     *buf;
@@ -82,7 +82,7 @@ memgetbuf(long how)
 void
 memputbuf(struct membuf *buf)
 {
-    struct membufpool *tab = &membufpool;
+    struct membufpool *tab = &k_membufpool;
 
     fmtxlk(&tab->lk);
     buf->hdr.next = tab->buflist;
@@ -100,7 +100,7 @@ void *
 memgetcpubuf(long how)
 {
     volatile long       unit = k_curunit;
-    struct membufpool *tab = &membufpooltab[unit];
+    struct membufpool *tab = &k_membufpooltab[unit];
     uint8_t            *ptr;
     struct memblk      *ret = NULL;
     struct memblk      *blk;
@@ -134,7 +134,7 @@ void
 memputcpubuf(struct memblk *blk)
 {
     long                unit = k_curunit;
-    struct membufpool *tab = &membufpooltab[unit];
+    struct membufpool *tab = &k_membufpooltab[unit];
 
     fmtxlk(&tab->lk);
     blk->next = tab->buflist;
@@ -148,7 +148,7 @@ memputcpubuf(struct memblk *blk)
 long
 meminitcpubuf(long unit, long how)
 {
-    struct membufpool *tab = &membufpooltab[unit];
+    struct membufpool *tab = &k_membufpooltab[unit];
     uint8_t            *u8ptr = kwalloc(PAGESIZE);
     size_t              n = PAGESIZE / MEMBUF_SIZE;
     void               *last = NULL;

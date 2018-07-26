@@ -16,21 +16,14 @@ void ioapicinit(long unit);
 #define IOAPICACTIVELO 0x00002000
 #define IOAPICLOGICAL  0x00000800
 
-#define __STRUCT_IOAPIC_SIZE                                            \
-    (5 * sizeof(int32_t))
-#define __STRUCT_IOAPIC_PAD                                             \
-    (rounduppow2(__STRUCT_IOAPIC_SIZE, CLSIZE) - __STRUCT_IOAPIC_SIZE)
 struct ioapic {
     uint32_t reg;
     uint32_t _pad1[3];
     uint32_t data;
-    uint8_t  _pad[__STRUCT_IOAPIC_PAD];
 };
 
-extern volatile struct ioapic *ioapic;
-
 static __inline__ uint32_t
-ioapicread(uint32_t reg)
+ioapicread(volatile struct ioapic *ioapic, uint32_t reg)
 {
     ioapic->reg = reg;
 
@@ -38,7 +31,7 @@ ioapicread(uint32_t reg)
 }
 
 static __inline__ void
-ioapicwrite(uint32_t val, uint32_t reg)
+ioapicwrite(volatile struct ioapic *ioapic, uint32_t val, uint32_t reg)
 {
     ioapic->reg = reg;
     ioapic->data = val;

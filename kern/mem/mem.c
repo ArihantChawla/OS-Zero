@@ -6,7 +6,7 @@
 #include <kern/mem/zone.h>
 #include <kern/unit/ia32/vm.h>
 
-extern struct memzone memzonetab[MEM_ZONES];
+extern struct memzone k_memzonetab[MEM_ZONES];
 
 void
 meminit(size_t nbphys, size_t nbvirt)
@@ -18,8 +18,7 @@ meminit(size_t nbphys, size_t nbvirt)
              (uint32_t)nbvirt,
              (uint32_t)lim,
              PAGEPRES | PAGEWRITE);
-#if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
-    || defined(__arm__)
+#if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__)
     pageinitphys((uintptr_t)&_epagetab,
                  lim - (size_t)&_epagetab);
     lim = max(nbvirt, KERNVIRTBASE);

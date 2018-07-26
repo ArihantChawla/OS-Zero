@@ -2,20 +2,20 @@
 #include <zero/cdefs.h>
 #include <mach/param.h>
 #include <kern/cpu.h>
+#include <kern/proc/task.h>
 
-extern void    taskinittls(long unit);
-extern void    cpuprintinfo(void);
+extern void         cpuprintinfo(void);
 
-struct cpu     cputab[NCPU] ALIGNED(PAGESIZE);
-extern uint8_t kernusrstktab[NCPU * KERNSTKSIZE];
+volatile struct cpu k_cputab[NCPU] ALIGNED(PAGESIZE);
+extern uint8_t      kernusrstktab[NCPU * KERNSTKSIZE];
 
 void
 cpuinit(long unit)
 {
-    struct cpu       *cpu = &cputab[unit];
-    struct m_cpuinfo *info = &cpu->info;
+    volatile struct cpu       *cpu = &k_cputab[unit];
+    volatile struct m_cpuinfo *info = &cpu->info;
 
-    taskinittls(unit);
+    taskinittls(unit, 0);
     cpuprobe(unit, info, &info->cache);
     cpu->flg |= CPUINITBIT | CPUHASINFO;
 

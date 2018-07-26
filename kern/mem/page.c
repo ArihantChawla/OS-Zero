@@ -15,18 +15,7 @@
 #include <kern/mem/page.h>
 
 #if (VMFLATPHYSTAB)
-extern struct vmpage      vmphystab[NPAGEMAX];
-#endif
-//extern m_atomic_t       vmlrulktab[PTRBITS];
-extern struct vmpage      vmlrutab[PTRBITS];
-extern struct vmpagestat  vmpagestat;
-extern VM_LK_T            vmphyslk;
-extern struct vmpage     *vmphysqueue;
-extern struct vmpage     *vmshmqueue;
-#if 0
-static m_atomic_t         vmsetlk;
-//pid_t                   vmsetmap[NPAGEMAX];
-unsigned char             vmsetbitmap[NPAGEMAX / CHAR_BIT];
+extern struct vmpage      k_vmphystab[NPAGEMAX];
 #endif
 
 unsigned long
@@ -34,7 +23,7 @@ pageinitphyszone(uintptr_t base,
                  struct vmpage **zone,
                  size_t nbphys)
 {
-    struct vmpage *page = &vmphystab[pagenum(base)];
+    struct vmpage *page = &k_vmphystab[pagenum(base)];
     uintptr_t      adr = rounduppow2(base, PAGESIZE);
     unsigned long  n = rounddownpow2(nbphys - adr, PAGESIZE) >> PAGESIZELOG2;
     unsigned long  size = n * PAGESIZE;
@@ -45,9 +34,9 @@ pageinitphyszone(uintptr_t base,
     page += n;
 #endif
     end += size;
-    vmpagestat.nphys = n;
-    vmpagestat.phys = (void *)base;
-    vmpagestat.physend = (void *)end;
+    k_physmem.pagestat.nphys = n;
+    k_physmem.pagestat.phys = (void *)base;
+    k_physmem.pagestat.physend = (void *)end;
     while (n--) {
 //        page--;
         page->adr = adr;
@@ -68,7 +57,7 @@ pageaddphyszone(uintptr_t base,
                 size_t nbphys)
 {
     uintptr_t      adr = rounduppow2(base, PAGESIZE);
-    struct vmpage *page = &vmphystab[pagenum(adr)];
+    struct vmpage *page = &k_vmphystab[pagenum(adr)];
     uint32_t      *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
     unsigned long  n  = rounduppow2(nbphys - adr, PAGESIZE) >> PAGESIZELOG2;
     unsigned long  size = n * PAGESIZE;
@@ -77,9 +66,9 @@ pageaddphyszone(uintptr_t base,
     adr += n << PAGESIZELOG2;
     page += n;
 #endif
-    vmpagestat.nphys += n;
+    k_physmem.pagestat.nphys += n;
     kprintf("reserving %ld (%lx) maps @ %p (%lx)\n",
-            n, n, vmphystab, pagenum(base));
+            n, n, k_vmphystab, pagenum(base));
     while (n--) {
         if (!*pte) {
 //            page--;
@@ -103,7 +92,7 @@ pageinitphys(uintptr_t base, size_t nbphys)
     unsigned long size;
 
 //    vmspinlk(&vmphyslk);
-    size = pageinitphyszone(base, &vmphysqueue, nbphys);
+    size = pageinitphyszone(base, &k_physmem.pagequeue, nbphys);
 //    vmunlkpage(&vmphyslk);
 
     return size;
@@ -115,7 +104,7 @@ pagevalloc(void)
 {
     struct vmpage *page;
 
-    page = deqpop(&vmshmqueue);
+    page = deqpop(&k_physmem.shmqueue);
     if (page) {
 
         return (void *)page->adr;
@@ -136,31 +125,31 @@ pageallocphys(void)
     long            qid;
     long            q;
 
-    vmlk(&vmphyslk);
-    page = deqpop(&vmphysqueue);
-    vmunlk(&vmphyslk);
+    vmlk(&k_physmem.lk);
+    page = deqpop(&k_physmem.pagequeue);
+    vmunlk(&k_physmem.lk);
     if (!page) {
         do {
             for (q = 0 ; q < LONGSIZE * CHAR_BIT ; q++) {
-                vmlkpage(&vmlrutab[q].lk);
-                queue = &vmlrutab[q].next;
+                vmlkpage(&k_physmem.lrutab[q].lk);
+                queue = &k_physmem.lrutab[q].next;
                 page = deqgetlast(queue);
                 if (page) {
                     found++;
                     page->nmap++;
                     qid = pagecalcqid(page);
                     if (qid != q) {
-                        vmlkpage(&vmlrutab[q].lk);
+                        vmlkpage(&k_physmem.lrutab[q].lk);
                     }
-                    queue = &vmlrutab[qid].next;
+                    queue = &k_physmem.lrutab[qid].next;
                     deqpush(page, queue);
                     if (qid != q) {
-                        vmunlkpage(&vmlrutab[qid].lk);
+                        vmunlkpage(&k_physmem.lrutab[qid].lk);
                     }
 
                     break;
                 }
-                vmunlkpage(&vmlrutab[q].lk);
+                vmunlkpage(&k_physmem.lrutab[q].lk);
             }
             if (found) {
 
@@ -179,16 +168,16 @@ pagefreephys(void *adr)
     struct vmpage *page;
 
     /* free physical page */
-    vmlk(&vmphyslk);
+    vmlk(&k_physmem.lk);
     id = vmpagenum(adr);
-    page = &vmphystab[id];
+    page = &k_vmphystab[id];
     vmlkpage(&page->lk);
     if (!--page->nref) {
         vmflushtlb(adr);
-        deqpush(page, &vmphysqueue);
+        deqpush(page, &k_physmem.pagequeue);
     }
     vmunlkpage(&page->lk);
-    vmunlk(&vmphyslk);
+    vmunlk(&k_physmem.lk);
 
     return;
 }

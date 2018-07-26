@@ -16,16 +16,14 @@
 #endif
 #include <kern/unit/ia32/task.h>
 
-//extern struct cpu   cputab[NCPU];
-extern struct proc *proczombietab[NTASK];
-extern struct tasktabl0      taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
-//extern struct divu16         fastu16divu16tab[SCHEDDIVU16TABSIZE];
+extern struct proc      *k_proczombietab[NTASK];
+extern struct tasktabl0  k_taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
 
 /* lookup table to convert nice values to priority offsets */
 /* nice is between -20 and 19 inclusively */
-/* schedniceptr = &schednicetab[SCHEDNICEHALF]; */
-/* prio += schedniceptr[nice]; */
-long schednicetab[SCHEDNICERANGE] ALIGNED(CLSIZE)
+/* k_schedniceptr = &k_schednicetab[SCHEDNICEHALF]; */
+/* prio += k_schedniceptr[nice]; */
+long k_schednicetab[SCHEDNICERANGE] ALIGNED(CLSIZE)
 = {
     0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, -64, -60, -57, -54, -51,
@@ -38,9 +36,9 @@ long schednicetab[SCHEDNICERANGE] ALIGNED(CLSIZE)
 };
 /* lookup table to convert nice values to slices in 4-ms ticks */
 /* nice is between -20 and 19 inclusively */
-/* schedsliceptr = &schedslicetab[SCHEDNICEHALF]; */
-/* slice = schedsliceptr[nice]; */
-long schedslicetab[SCHEDNICERANGE] ALIGNED(CLSIZE)
+/* k_schedsliceptr = &k_schedslicetab[SCHEDNICEHALF]; */
+/* slice = k_schedsliceptr[nice]; */
+long k_schedslicetab[SCHEDNICERANGE] ALIGNED(CLSIZE)
 = {
     0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 1, 1, 2, 2,
@@ -52,34 +50,34 @@ long schedslicetab[SCHEDNICERANGE] ALIGNED(CLSIZE)
     0, 0, 0, 0, 0, 0, 0,
 };
 
-long                    *schedniceptr = &schednicetab[SCHEDNICEHALF];
-long                    *schedsliceptr = &schedslicetab[SCHEDNICEHALF];
-static struct tasktabl0  scheddeadlinetab[SCHEDNLVL0DL];
-static struct task      *schedstoppedtab[NTASK];
-struct task             *schedreadytab0[SCHEDNQUEUE];
-struct task             *schedreadytab1[SCHEDNQUEUE];
-static struct task      *schedidletab[SCHEDNIDLE];
-static long              schedreadymap0[SCHEDREADYMAPNWORD];
-static long              schedreadymap1[SCHEDREADYMAPNWORD];
-static long              schedidlemap[SCHEDIDLEMAPNWORD];
+long                    *k_schedniceptr = &k_schednicetab[SCHEDNICEHALF];
+long                    *k_schedsliceptr = &k_schedslicetab[SCHEDNICEHALF];
+static struct tasktabl0  k_scheddeadlinetab[SCHEDNLVL0DL];
+static struct task      *k_schedstoppedtab[NTASK];
+struct task             *k_schedreadytab0[SCHEDNQUEUE];
+struct task             *k_schedreadytab1[SCHEDNQUEUE];
+static struct task      *k_schedidletab[SCHEDNIDLE];
+static long              k_schedreadymap0[SCHEDREADYMAPNWORD];
+static long              k_schedreadymap1[SCHEDREADYMAPNWORD];
+static long              k_schedidlemap[SCHEDIDLEMAPNWORD];
 /* SCHEDIDLE queues are not included in SCHEDNQUEUE */
-static long              schedloadmap[SCHEDLOADMAPNWORD];
-static long              scheddeadlinemap[SCHEDDEADLINEMAPNWORD];
-long                     schedidlecoremap[SCHEDIDLECOREMAPNWORD];
-struct schedqueueset     schedreadyset;
+static long              k_schedloadmap[SCHEDLOADMAPNWORD];
+static long              k_scheddeadlinemap[SCHEDDEADLINEMAPNWORD];
+long                     k_schedidlecoremap[SCHEDIDLECOREMAPNWORD];
+struct schedqueueset     k_schedreadyset;
 
 void
 schedinit(void)
 {
 #if 0
 #if (ZEROSCHED)
-    schedswitch = schedswitchtask;
+    schedswitch = k_schedswitchtask;
 #else
 #error define supported scheduler such as ZEROSCHED
 #endif
 #endif
     kprintf("SCHEDHISTORYSIZE == %ld\n", SCHEDHISTORYSIZE);
-    fastu16divu16gentab(fastu16divu16tab, SCHEDDIVU16TABSIZE);
+    fastu16divu16gentab(k_fastu16divu16tab, SCHEDDIVU16TABSIZE);
     schedinitset();
 
     return;
@@ -98,22 +96,22 @@ void
 schedinitset(void)
 {
     long                  lim = NCPU;
-    struct schedqueueset *set = &schedreadyset;
+    struct schedqueueset *set = &k_schedreadyset;
     //    long                  unit = k_curcpu->unit;
     long                  id;
 
     lim >>= __LONGBITSLOG2;
     for (id = 0 ; id < lim ; id++) {
-        schedidlecoremap[id] = ~1L;
+        k_schedidlecoremap[id] = ~1L;
     }
-    //    clrbit(schedidlecoremap, unit);
-    set->curmap = schedreadymap0;
-    set->nextmap = schedreadymap1;
-    set->idlemap = schedidlemap;
-    set->loadmap = schedloadmap;
-    set->cur = schedreadytab0;
-    set->next = schedreadytab1;
-    set->idle = schedidletab;
+    //    clrbit(k_schedidlecoremap, unit);
+    set->curmap = k_schedreadymap0;
+    set->nextmap = k_schedreadymap1;
+    set->idlemap = k_schedidlemap;
+    set->loadmap = k_schedloadmap;
+    set->cur = k_schedreadytab0;
+    set->next = k_schedreadytab1;
+    set->idle = k_schedidletab;
 
     return;
 }
@@ -131,15 +129,15 @@ schedsetdeadline(struct task *task)
     unsigned long      key0 = taskdlkey0(deadline);
     unsigned long      key1 = taskdlkey1(deadline);
     unsigned long      key2 = taskdlkey2(deadline);
-    long              *map = scheddeadlinemap;
+    long              *map = k_scheddeadlinemap;
     void              *ptr = NULL;
     void             **pptr = NULL;
     long               fail = 0;
     struct taskqueue  *queue;
     void              *ptab[SCHEDNDLKEY - 1] = { NULL, NULL };
 
-    fmtxlk(&scheddeadlinetab[key0].lk);
-    l0tab = &scheddeadlinetab[key0];
+    fmtxlk(&k_scheddeadlinetab[key0].lk);
+    l0tab = &k_scheddeadlinetab[key0];
     ptr = l0tab->tab;
     pptr = ptr;
     if (!ptr) {
@@ -175,7 +173,7 @@ schedsetdeadline(struct task *task)
         tab = ptab[1];
         tab->nref++;
     }
-    fmtxunlk(&scheddeadlinetab[key0].lk);
+    fmtxunlk(&k_scheddeadlinetab[key0].lk);
 
     return;
 }
@@ -185,7 +183,7 @@ schedsetready(struct task *task)
 {
     long                   sched = task->sched;
     long                   prio = task->prio;
-    struct schedqueueset  *set = &schedreadyset;
+    struct schedqueueset  *set = &k_schedreadyset;
     struct task          **queue;
     long                  *map;
     long                   score;
@@ -291,7 +289,7 @@ schedsetstopped(struct task *task)
 {
     long id = task->id;
 
-    schedstoppedtab[id] = task;
+    k_schedstoppedtab[id] = task;
 
     return;
 }
@@ -301,7 +299,7 @@ schedsetzombie(struct proc *proc)
 {
     long qid = proc->ppid;      // FIXME: might need to use proc->pgrp here
 
-    proczombietab[qid] = proc;
+    k_proczombietab[qid] = proc;
 
     return;
 }
@@ -315,7 +313,7 @@ schedswitchtask(struct task *curtask)
     //    struct task           *curtask = (struct task *)k_curtask;
     long                   unit = curtask->unit;
     long                   state = (curtask) ? curtask->state : -1;
-    struct schedqueueset  *set = &schedreadyset;
+    struct schedqueueset  *set = &k_schedreadyset;
     struct task           *task;
     struct task           *next;
     struct task          **queue;

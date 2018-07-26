@@ -8,15 +8,10 @@
 #if !defined(__ASSEMBLER__)
 
 #include <stdint.h>
-#include <mach/param.h>
-#include <zero/cdefs.h>
-#include <kern/unit/x86/apic.h>
 
-extern uint32_t *volatile mpapic;
+extern void kusleep(unsigned long nusec);
 
-void kusleep(unsigned long nusec);
-
-#define apiceoi()        apicwrite(0, APICEOI)
+#define apiceoi()        apicwrite(k_mp.apic, 0, APICEOI)
 
 #endif /* !defined(__ASSEMBLER__) */
 
@@ -219,30 +214,38 @@ struct apic {
 };
 #endif
 
+static __inline__ uint32_t apicread(uint32_t *volatile base,
+                                    uint32_t reg);
+static __inline__ void     apicwrite(uint32_t *volatile base,
+                                     uint32_t val,
+                                     uint32_t reg);
+static __inline__ void     apicsendirq(uint32_t *volatile base,
+                                       uint32_t hi, uint32_t lo, long nusec);
+
 static __inline__ uint32_t
-apicread(uint32_t reg)
+apicread(uint32_t *volatile base, uint32_t reg)
 {
-    uint32_t ret = mpapic[reg >> 2];
+    uint32_t ret = base[reg >> 2];
 
     return ret;
 }
 
 /* wait for write to finish by reading ID */
 static __inline__ void
-apicwrite(uint32_t val, uint32_t reg)
+apicwrite(uint32_t *volatile base, uint32_t val, uint32_t reg)
 {
-    mpapic[(reg) >> 2] = val;
-    apicread(APICID);
+    base[(reg) >> 2] = val;
+    apicread(base, APICID);
 }
 
 static __inline__ void
-apicsendirq(uint32_t hi, uint32_t lo, long nusec)
+apicsendirq(uint32_t *volatile base, uint32_t hi, uint32_t lo, long nusec)
 {
     __asm__ __volatile__ ("pushfl\n");
     __asm__ __volatile__ ("cli\n");
-    apicwrite(hi, APICINTRHI);
+    apicwrite(base, hi, APICINTRHI);
     kusleep(nusec);
-    apicwrite(lo, APICINTRLO);
+    apicwrite(base, lo, APICINTRLO);
     kusleep(nusec);
     __asm__ __volatile__ ("sti\n");
     __asm__ __volatile__ ("popfl\n");

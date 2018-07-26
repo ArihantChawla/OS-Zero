@@ -10,8 +10,8 @@
 #include <kern/cpu.h>
 #include <kern/proc/proc.h>
 #include <kern/mem/mem.h>
-#if 0
 #include <kern/mem/vm.h>
+#if 0
 #include <kern/mem/page.h>
 #endif
 #include <kern/io/drv/chr/cons.h>
@@ -49,15 +49,11 @@ extern uint64_t                  kernidt[NINTR];
 extern long                      vbefontw;
 extern long                      vbefonth;
 #endif
-extern volatile long             mpncpu;
-extern struct vmpagestat         vmpagestat;
 #if (SMP)
 #if (ACPI)
 extern volatile struct acpidesc *acpidesc;
 #endif
 #endif
-extern struct pageq              vmphysq;
-extern struct pageq              vmshmq;
 
 void
 kinitprot(unsigned long pmemsz)
@@ -125,7 +121,7 @@ kinitprot(unsigned long pmemsz)
 #endif /* SMP || APIC */
 //    procinit(PROCKERN, SCHEDNOCLASS);
     kprintf("%lu free physical pages @ 0x%p..0x%p\n",
-            vmpagestat.nphys, vmpagestat.phys, vmpagestat.physend);
+            k_physmem.pagestat.nphys, k_physmem.pagestat.phys, k_physmem.pagestat.physend);
 #if (SMBIOS)
     smbiosinit();
 #endif
@@ -166,8 +162,8 @@ kinitprot(unsigned long pmemsz)
     }
 #if 0
     kprintf("%lu kilobytes of buffer cache @ %p..%p\n",
-            vmpagestat.nbuf << (PAGESIZELOG2 - 10),
-            vmpagestat.buf, vmpagestat.bufend);
+            k_physmem.pagestat.nbuf << (PAGESIZELOG2 - 10),
+            k_physmem.pagestat.buf, k_physmem.pagestat.bufend);
 #endif
     /* allocate unused device regions (in 3.5G..4G) */
 //    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffffU - DEVMEMBASE + 1);
@@ -181,10 +177,10 @@ kinitprot(unsigned long pmemsz)
 //    kprintf("%ld kilobytes physical memory\n", pmemsz >> 10);
     kprintf("%ld kilobytes kernel memory\n", (uint32_t)&_ebss >> 10);
     kprintf("%ld kilobytes allocated physical memory (%ld wired, %ld total)\n",
-            ((vmpagestat.nwire + vmpagestat.nmap + vmpagestat.nbuf)
+            ((k_physmem.pagestat.nwire + k_physmem.pagestat.nmap + k_physmem.pagestat.nbuf)
              << (PAGESIZELOG2 - 10)),
-            vmpagestat.nwire << (PAGESIZELOG2 - 10),
-            vmpagestat.nphys << (PAGESIZELOG2 - 10));
+            k_physmem.pagestat.nwire << (PAGESIZELOG2 - 10),
+            k_physmem.pagestat.nphys << (PAGESIZELOG2 - 10));
 #endif
     sysinit();
     schedinit();

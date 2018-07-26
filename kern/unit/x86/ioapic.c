@@ -5,35 +5,34 @@
 #include <stdint.h>
 #include <kern/mem/vm.h>
 #include <kern/unit/x86/kern.h>
+#include <kern/unit/x86/ioapic.h>
+#include <kern/unit/x86/trap.h>
 #include <kern/unit/ia32/mp.h>
 
-extern volatile struct cpu  cputab[NCPU];
-extern volatile struct cpu *mpbootcpu;
-extern volatile uint32_t   *mpioapic;
-volatile struct ioapic     *ioapic;
+extern volatile struct cpu k_cputab[NCPU];
 
 void
 ioapicinit(long id)
 {
-    volatile struct cpu *cpu = &cputab[id];
-    long                 ntrap;
+    volatile struct cpu    *cpu = (struct cpu *)&k_cputab[id];
+    volatile struct ioapic *ioapic = k_mp.ioapic;
+    long                    ntrap;
 //    long id;
-    long                 l;
+    long                    l;
 
-    if (!mpmultiproc) {
+    if (!k_mp.multiproc) {
 
         return;
     }
-    ioapic = (volatile struct ioapic *)mpioapic;
-    if (cpu == mpbootcpu) {
-        vmmapseg((uint32_t)mpioapic, (uint32_t)mpioapic,
-                 (uint32_t)((uint8_t *)mpioapic + PAGESIZE),
+    if (cpu == k_mp.bootcpu) {
+        vmmapseg((uint32_t)ioapic, (uint32_t)ioapic,
+                 (uint32_t)((uint8_t *)ioapic + PAGESIZE),
                  PAGEPRES | PAGEWRITE);
     }
-    ntrap = (ioapicread(IOAPICVER) >> 16) & 0xff;
+    ntrap = (ioapicread(ioapic, IOAPICVER) >> 16) & 0xff;
     for (l = 0 ; l < ntrap ; l++) {
-        ioapicwrite(IOAPICDISABLED | (IRQTMR + l), IOAPICTAB + 2 * l);
-        ioapicwrite(0, IOAPICTAB + 2 * l + 1);
+        ioapicwrite(ioapic, IOAPICDISABLED | (IRQTMR + l), IOAPICTAB + 2 * l);
+        ioapicwrite(ioapic, 0, IOAPICTAB + 2 * l + 1);
     }
 
     return;
@@ -42,12 +41,14 @@ ioapicinit(long id)
 void
 ioapicsetirq(long irq, long id)
 {
-    if (!mpmultiproc) {
+    volatile struct ioapic *ioapic = k_mp.ioapic;
+
+    if (!k_mp.multiproc) {
 
         return;
     }
-    ioapicwrite(IRQTMR + irq, IOAPICTAB + 2 * irq);
-    ioapicwrite(id << 24, IOAPICTAB + 2 * irq + 1);
+    ioapicwrite(ioapic, IRQTMR + irq, IOAPICTAB + 2 * irq);
+    ioapicwrite(ioapic, id << 24, IOAPICTAB + 2 * irq + 1);
 
     return;
 }

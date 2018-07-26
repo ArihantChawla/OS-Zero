@@ -1,27 +1,27 @@
 #include <zero/cdefs.h>
 #include <mach/param.h>
 #include <mt/mtx.h>
+#include <kern/cpu.h>
 #include <kern/proc/task.h>
 
 #define DEQ_SINGLE_TYPE
 #define DEQ_TYPE struct taskid
 #include <zero/deq.h>
 
-extern struct cpu    cputab[NCPU];
-struct task          tasktab[NTASK] ALIGNED(PAGESIZE);
-static struct taskid taskidtab[NTASK];
-static struct taskid taskidqueue;
+struct task          k_tasktab[NTASK] ALIGNED(PAGESIZE);
+static struct taskid k_taskidtab[NTASK];
+static struct taskid k_taskidqueue;
 
 void
 taskinitids(void)
 {
-    struct taskid *queue = &taskidqueue;
+    struct taskid *queue = &k_taskidqueue;
     struct taskid *taskid;
     long           id;
 
     fmtxlk(&queue->lk);
     for (id = TASKNPREDEF ; id < NTASK ; id++) {
-        taskid = &taskidtab[id];
+        taskid = &k_taskidtab[id];
         taskid->id = id;
         deqappend(taskid, &queue);
     }
@@ -33,8 +33,8 @@ taskinitids(void)
 void
 taskinittls(long unit, long id)
 {
-    struct cpu  *cpu = &cputab[unit];
-    struct task *task = &tasktab[id];
+    volatile struct cpu *cpu = &k_cputab[unit];
+    struct task         *task = &k_tasktab[id];
 
     k_setcurcpu(cpu);
     k_setcurunit(unit);
@@ -74,7 +74,7 @@ taskinitenv(void)
 long
 taskgetid(void)
 {
-    struct taskid *queue = &taskidqueue;
+    struct taskid *queue = &k_taskidqueue;
     struct taskid *taskid;
     long           retval = -1;
 
@@ -91,8 +91,8 @@ taskgetid(void)
 void
 taskfreeid(long id)
 {
-    struct taskid *queue = &taskidqueue;
-    struct taskid *taskid = &taskidtab[id];
+    struct taskid *queue = &k_taskidqueue;
+    struct taskid *taskid = &k_taskidtab[id];
 
     fmtxlk(&queue->lk);
     deqappend(taskid, &queue);

@@ -31,20 +31,16 @@ extern uint8_t     kernusrstktab[NCPU * KERNSTKSIZE];
 extern pde_t       kernpagedir[NPDE];
 extern pde_t       usrpagedir[NPDE];
 #if (VMFLATPHYSTAB)
-struct vmpage      vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
+struct vmpage      k_vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
 #endif
-//m_atomic_t         vmlrulktab[PTRBITS];
-struct vmpage      vmlrutab[PTRBITS];
+//m_atomic_t         k_vmlrulktab[PTRBITS];
 
-//static struct vmpage  vmpagetab[NPAGEMAX] ALIGNED(PAGESIZE);
+//static struct vmpage  k_vmpagetab[NPAGEMAX] ALIGNED(PAGESIZE);
 #if (PAGEDEV)
-static struct dev  vmdevtab[NPAGEDEV];
-static m_atomic_t  vmdevlktab[NPAGEDEV];
+static struct dev  k_vmdevtab[NPAGEDEV];
+static m_atomic_t  k_vmdevlktab[NPAGEDEV];
 #endif
-VM_LK_T            vmphyslk;
-struct vmpage     *vmphysqueue;
-struct vmpage     *vmshmqueue;
-struct vmpagestat  vmpagestat;
+struct k_physmem   k_physmem;
 
 /*
  * 32-bit page directory is flat 4-megabyte table of page-tables.
@@ -61,7 +57,7 @@ vmmapseg(uint32_t virt, uint32_t phys, uint32_t lim,
 
     n = rounduppow2(lim - virt, PAGESIZE) >> PAGESIZELOG2;
     pte = (pte_t *)&_pagetab + vmpagenum(virt);
-    vmpagestat.nmap += n;
+    k_physmem.pagestat.nmap += n;
     while (n--) {
         *pte = phys | flg;
         phys += PAGESIZE;
@@ -242,10 +238,10 @@ vmfreephys(void *virt, uint32_t size)
             pg = pagefind(adr);
             pagerm(pg);
 #endif
-            vmpagestat.nmap--;
+            k_physmem.pagestat.nmap--;
         } else {
 //                kprintf("UNWIRE\n");
-            vmpagestat.nwire--;
+            k_physmem.pagestat.nwire--;
         }
         pagefreephys((void *)adr);
         *pte = 0;
@@ -272,15 +268,15 @@ vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
             vmlkpage(&page->lk);
             page->nref++;
             if (flg & PAGEWIRED) {
-                vmpagestat.nwire++;
+                k_physmem.pagestat.nwire++;
             } else {
-                vmpagestat.nmap++;
+                k_physmem.pagestat.nmap++;
                 page->nmap++;
                 if (!(adr & PAGEWIRED)) {
                     qid = pagecalcqid(page);
-                    vmlkpage(&vmlrutab[qid].lk);
-                    deqpush(page, &vmlrutab[qid].next);
-                    vmunlkpage(&vmlrutab[qid].lk);
+                    vmlkpage(&k_physmem.lrutab[qid].lk);
+                    deqpush(page, &k_physmem.lrutab[qid].next);
+                    vmunlkpage(&k_physmem.lrutab[qid].lk);
                 }
             }
             vmunlkpage(&page->lk);
@@ -294,9 +290,9 @@ vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
             vmlkpage(&page->lk);
             page->nmap++;
             qid = pagecalcqid(page);
-            vmlkpage(&vmlrutab[qid].lk);
-            deqpush(page, &vmlrutab[qid].next);
-            vmunlkpage(&vmlrutab[qid].lk);
+            vmlkpage(&k_physmem.lrutab[qid].lk);
+            deqpush(page, &k_physmem.lrutab[qid].next);
+            vmunlkpage(&k_physmem.lrutab[qid].lk);
             vmunlkpage(&page->lk);
         }
 #endif
@@ -314,22 +310,22 @@ vmpagefault(uint32_t pid, uint32_t adr, uint32_t error)
 void
 vmseekdev(uint32_t dev, uint64_t ofs)
 {
-    devseek(vmdevtab[dev], ofs, SEEK_SET);
+    devseek(k_vmdevtab[dev], ofs, SEEK_SET);
 }
 
 uint32_t
 vmpagein(uint32_t adr)
 {
-    uint32_t     pageid = vmpagenum(adr);
-    uint32_t     blk = vmblkid(pageid);
+    uint32_t       pageid = vmpagenum(adr);
+    uint32_t       blk = vmblkid(pageid);
     struct vmpage *page = pagefind(adr);
-    void        *data;
+    void          *data;
 
-    vmlkpage(&vmdevlktab[dev], MEMPID);
+    vmlkpage(&k_vmdevlktab[dev], MEMPID);
     vmseekdev(dev, blk * PAGESIZE);
     page->nmap++;
 //    data = pageread(dev, PAGESIZE);
-    vmunlkpage(&vmdevlktab[pagedev], MEMPID);
+    vmunlkpage(&k_vmdevlktab[pagedev], MEMPID);
 }
 
 void

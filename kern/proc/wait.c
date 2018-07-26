@@ -11,7 +11,7 @@
 #define DEQ_TYPE        struct task
 #include <zero/deq.h>
 
-struct tasktabl0 taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
+struct tasktabl0 k_taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
 
 /* add task to wait table */
 void
@@ -34,8 +34,8 @@ schedsetwait(struct task *task)
     key1 = taskwaitkey1(wtchan);
     key2 = taskwaitkey2(wtchan);
     key3 = taskwaitkey3(wtchan);
-    fmtxlk(&taskwaittab[key0].lk);
-    l0tab = &taskwaittab[key0];
+    fmtxlk(&k_taskwaittab[key0].lk);
+    l0tab = &k_taskwaittab[key0];
     ptr = l0tab->tab;
     pptr = ptr;
     if (!ptr) {
@@ -88,7 +88,7 @@ schedsetwait(struct task *task)
         tab = ptab[2];
         tab->nref++;
     }
-    fmtxunlk(&taskwaittab[key0].lk);
+    fmtxunlk(&k_taskwaittab[key0].lk);
 
     return;
 }
@@ -112,11 +112,11 @@ schedwakeup(uintptr_t wtchan)
     void              *ptab[TASKNWAITKEY - 1] = { NULL, NULL, NULL };
     void             **pptab[TASKNWAITKEY - 1] = { NULL, NULL, NULL };
 
-    fmtxlk(&taskwaittab[key0].lk);
-    l0tab = &taskwaittab[key0];
+    fmtxlk(&k_taskwaittab[key0].lk);
+    l0tab = &k_taskwaittab[key0];
     if (l0tab) {
         ptab[0] = l0tab;
-        pptab[0] = (void **)&taskwaittab[key0];
+        pptab[0] = (void **)&k_taskwaittab[key0];
         tab = ((void **)l0tab)[key1];
         if (tab) {
             ptab[1] = tab;
@@ -166,7 +166,7 @@ schedwakeup(uintptr_t wtchan)
             }
         }
     }
-    fmtxunlk(&taskwaittab[key0].lk);
+    fmtxunlk(&k_taskwaittab[key0].lk);
 
     return;
 }

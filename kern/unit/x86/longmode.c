@@ -85,18 +85,10 @@ extern uint64_t                  kernidt[NINTR];
 extern long                      vbefontw;
 extern long                      vbefonth;
 #endif
-extern volatile long             mpncpu;
-extern volatile long             mpmultiproc;
-extern struct vmpagestat         vmpagestat;
 #if (SMP)
 #if (ACPI)
 extern volatile struct acpidesc *acpidesc;
 #endif
-#endif
-extern struct pageq              vmphysq;
-extern struct pageq              vmshmq;
-#if (SMP) || (APIC)
-extern volatile uint32_t        *mpapic;
 #endif
 
 void

@@ -58,16 +58,16 @@ struct swapdev {
     struct vmpage *freeq;
 };
 
-extern unsigned long     pageinitphyszone(uintptr_t base, struct vmpage **zone,
-                                          unsigned long nb);
-extern unsigned long     pageaddphyszone(uintptr_t base, struct vmpage **zone,
-                                         unsigned long nb);
-extern unsigned long     pageinitphys(uintptr_t base, unsigned long nb);
-extern struct vmpage *   pageallocphys(void);
-extern void              pagefreephys(void *adr);
+extern unsigned long   pageinitphyszone(uintptr_t base, struct vmpage **zone,
+                                        unsigned long nb);
+extern unsigned long   pageaddphyszone(uintptr_t base, struct vmpage **zone,
+                                       unsigned long nb);
+extern unsigned long   pageinitphys(uintptr_t base, unsigned long nb);
+extern struct vmpage * pageallocphys(void);
+extern void            pagefreephys(void *adr);
 #if 0
-void              pagefree(void *adr);
-void              swapfree(uintptr_t adr);
+void                   pagefree(void *adr);
+void                   swapfree(uintptr_t adr);
 #endif
 
 #endif /* __KERN_MEM_PAGE_H__ */

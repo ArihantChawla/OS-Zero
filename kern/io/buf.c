@@ -38,8 +38,6 @@
 #define DEQ_TYPE      struct bufblk
 #include <zero/deq.h>
 
-extern struct vmpagestat   vmpagestat;
-
 #define bufadrtoid(ptr)                                                 \
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFMINSIZELOG2 : NULL)
 
@@ -68,13 +66,14 @@ static long                bufnbyte;
 long
 ioinitbuf(void)
 {
-    uint8_t       *u8ptr;
-    void          *ptr = NULL;
-    struct bufblk *blk;
-    struct bufblk *prev;
-    long           n;
-    long           sz;
-    unsigned long  lim;
+    struct vmpagestat *stats = &k_physmem.pagestat;
+    uint8_t           *u8ptr;
+    void              *ptr = NULL;
+    struct bufblk     *blk;
+    struct bufblk     *prev;
+    long               n;
+    long               sz;
+    unsigned long      lim;
 
 #if (BUFDYNALLOC)
     sz = BUFNBLK * sizeof(struct bufblk);
@@ -105,16 +104,16 @@ ioinitbuf(void)
 #endif
     u8ptr = ptr;
     lim = (unsigned long)(u8ptr + sz);
-    vmpagestat.nbuf = sz >> BUFMINSIZELOG2;
-    vmpagestat.buf = ptr;
-    vmpagestat.bufend = u8ptr + sz;
+    stats->nbuf = sz >> BUFMINSIZELOG2;
+    stats->buf = ptr;
+    stats->bufend = u8ptr + sz;
     vmmapseg((uint32_t)ptr, (uint32_t)ptr,
              (uint32_t)lim,
              PAGEBUF | PAGEPRES | PAGEWRITE | PAGEWIRED);
-    vmpagestat.nphys += (sz >> PAGESIZELOG2);
-    vmpagestat.nvirt += (sz >> PAGESIZELOG2);
-    vmpagestat.nwire += (sz >> PAGESIZELOG2);
-    vmpagestat.nbuf += (sz >> PAGESIZELOG2);
+    stats->nphys += (sz >> PAGESIZELOG2);
+    stats->nvirt += (sz >> PAGESIZELOG2);
+    stats->nwire += (sz >> PAGESIZELOG2);
+    stats->nbuf += (sz >> PAGESIZELOG2);
     kprintf("BUF: mapped buffer cache to %lx..%lx\n",
             (unsigned long)ptr, (unsigned long)(lim - 1));
     if (ptr) {

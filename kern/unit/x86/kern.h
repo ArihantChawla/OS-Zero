@@ -2,15 +2,6 @@
 #define __UNIT_X86_KERN_H__
 
 #include <kern/conf.h>
-#include <stdint.h>
-#include <kern/cpu.h>
-#include <kern/unit/x86/link.h>
-#include <kern/unit/x86/pit.h>
-#include <kern/unit/x86/hpet.h>
-#include <kern/unit/x86/trap.h>
-#include <kern/unit/x86/ioapic.h>
-#include <kern/unit/x86/link.h>
-#include <kern/unit/ia32/mp.h>
 
 extern void trapinit(void);
 extern void seginit(long core);
@@ -73,7 +64,6 @@ extern void taskinitenv(void);
 #if (USERMODE)
 extern FASTCALL void m_jmpusr(long id, void *func);
 #endif
-extern void taskinit(struct task *task, long unit);
 extern void schedloop(void);
 
 #endif /* __UNIT_X86_KERN_H__ */

@@ -50,15 +50,11 @@ typedef uint64_t   vmblkbits;
 #define VM_PROT_RW      (VM_PROT_READ | VM_PROT_WRITE)
 #define VM_PROT_DEFAULT VM_PROT_ALL
 
+#if (VMPAGETKTLK) || (VMTKTLK)
 #include <mt/tktlk.h>
-#if (VMPAGETKTLK)
 #define VMPAGE_LK_T     union zerotktlk
 #define vmlkpage(tp)    tktlk(tp)
 #define vmunlkpage(tp)  tktunlk(tp)
-#elif (VMTKTLK)
-#define VMPAGE_LK_T     union zerotktlk
-#define vmlkpage(lp)    zerotktlk(lp)
-#define vmunlkpage(lp)  zerotktunlk(lp)
 #else
 #define VMPAGE_LK_T     zerofmtx
 #define vmlkpage(lp)    fmtxlk(lp)
@@ -139,6 +135,17 @@ struct vmdomain {
     long          lastscan;
     struct vmpage marker;       // pagedaemon private use
 };
+
+struct k_physmem {
+    struct vmpage      lrutab[PTRBITS];
+    VM_LK_T            lk;
+    intmax_t           pagefree;
+    struct vmpage     *pagequeue;
+    struct vmpage     *shmqueue;
+    struct vmpagestat  pagestat;
+};
+
+extern struct k_physmem k_physmem;
 
 #endif /* __KERN_MEM_VM_H__ */
 

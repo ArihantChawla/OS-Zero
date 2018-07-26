@@ -15,17 +15,12 @@
 #if !defined(__ASSEMBLER__)
 
 #include <stdint.h>
-#include <zero/cdefs.h>
-#include <mach/param.h>
-#include <kern/cpu.h>
 #include <kern/unit/x86/apic.h>
-#include <kern/unit/ia32/mp.h>
+#include <kern/unit/x86/mp.h>
 
 void          mpentry(void);
 void          mpinit(void);
 extern void * mpend;
-
-extern long  mpmultiproc;
 
 struct mp {
     unsigned char  signature[4];        // "_MP_"
@@ -87,8 +82,8 @@ mpcpunum(void)
 
     __asm__ __volatile__ ("pushfl\n");
     __asm__ __volatile__ ("cli\n");
-    if (mpapic) {
-        ret = apicread(APICID);
+    if (k_mp.apic) {
+        ret = apicread(k_mp.apic, APICID);
     }
     __asm__ __volatile__ ("sti\n");
     __asm__ __volatile__ ("popfl\n");

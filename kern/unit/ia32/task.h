@@ -68,7 +68,7 @@ k_getcurpid(void)
 }
 
 static __inline__ void
-k_setcurcpu(struct cpu *cpu)
+k_setcurcpu(volatile struct cpu *cpu)
 {
     __asm__ __volatile__ ("movl %0, %%gs:0\n"
                           :

@@ -2,7 +2,7 @@
 #define __KERN_BITS_SCHED_H__
 
 #define _roundup16b(a, b)                                               \
-    ((fastu16divu16((a) + (b) - 1, (b), fastu16divu16tab)) * (b))
+    ((fastu16divu16((a) + (b) - 1, (b), k_fastu16divu16tab)) * (b))
 
 #include <kern/conf.h>
 #include <zero/cdefs.h>
@@ -10,10 +10,9 @@
 #include <zero/trix.h>
 #include <zero/fastudiv.h>
 #include <mt/spin.h>
-//#include <kern/sched.h>
+#include <kern/cpu.h>
 #include <kern/proc/task.h>
-
-extern struct cpu cputab[NCPU];
+#include <kern/unit/x86/mp.h>
 
 #define SCHEDDIVU16TABSIZE min(2 * SCHEDHISTORYSIZE, 65536)
 
@@ -33,7 +32,7 @@ extern struct cpu cputab[NCPU];
 /* macros */
 #define schedcalctime(task)  ((task)->ntick >> SCHEDTICKSHIFT)
 #define schedcalcticks(task) (max((task)->lastrun - (task)->firstrun, kgethz()))
-#define schedcalcnice(val)   (schednicetab[(val)])
+#define schedcalcnice(val)   (k_schednicetab[(val)])
 #if 0
 #define schedsetprio(task, pri)                                         \
     ((task)->prio = schedprioqueueid(pri))
@@ -85,10 +84,6 @@ extern struct cpu cputab[NCPU];
 
 /* data structures */
 
-#define __STRUCT_SCHEDQUEUESET_SIZE                                     \
-    (sizeof(m_atomic_t) + 7 * sizeof(void *))
-#define __STRUCT_SCHEDQUEUESET_PAD                                      \
-    (rounduppow2(__STRUCT_SCHEDQUEUESET_SIZE, CLSIZE) - __STRUCT_SCHEDQUEUESET_SIZE)
 struct schedqueueset {
     m_atomic_t    lk;
     long         *curmap;
@@ -98,18 +93,17 @@ struct schedqueueset {
     struct task **cur;
     struct task **next;
     struct task **idle;
-    uint8_t       _pad[__STRUCT_SCHEDQUEUESET_PAD];
 };
 
-extern long                  schedidlecoremap[SCHEDIDLECOREMAPNWORD];
-extern struct task          *schedreadytab0[SCHEDNQUEUE];
-extern struct task          *schedreadytab1[SCHEDNQUEUE];
-extern struct schedqueueset  schedreadyset;
-extern struct divu16         fastu16divu16tab[SCHEDDIVU16TABSIZE];
-extern long                  schednicetab[SCHEDNICERANGE];
-extern long                  schedslicetab[SCHEDNICERANGE];
-extern long                 *schedniceptr;
-extern long                 *schedsliceptr;
+extern long                  k_schedidlecoremap[SCHEDIDLECOREMAPNWORD];
+extern struct task          *k_schedreadytab0[SCHEDNQUEUE];
+extern struct task          *k_schedreadytab1[SCHEDNQUEUE];
+extern struct schedqueueset  k_schedreadyset;
+extern struct divu16         k_fastu16divu16tab[SCHEDDIVU16TABSIZE];
+extern long                  k_schednicetab[SCHEDNICERANGE];
+extern long                  k_schedslicetab[SCHEDNICERANGE];
+extern long                 *k_schedniceptr;
+extern long                 *k_schedsliceptr;
 
 /* based on sched_pctcpu_update from ULE */
 static INLINE void
@@ -136,7 +130,7 @@ schedadjcpupct(struct task *task, long run)
             div = last - first;
             val = tick - SCHEDHISTORYNTICK;
             last -= val;
-            ntick = fastu16divu16(ntick, div, fastu16divu16tab);
+            ntick = fastu16divu16(ntick, div, k_fastu16divu16tab);
             ntick *= last;
             task->firstrun = val;
             task->ntick = ntick;
@@ -154,32 +148,32 @@ schedadjcpupct(struct task *task, long run)
 static INLINE void
 schedswapqueues(void)
 {
-    struct schedqueueset *set = &schedreadyset;
+    struct schedqueueset *set = &k_schedreadyset;
 
-    if (mpmultiproc) {
+    if (k_mp.multiproc) {
         spinlk(&set->lk);
     }
     set->next = set->cur;
     set->cur = set->next;
     set->nextmap = set->curmap;
     set->curmap = set->nextmap;
-    if (mpmultiproc) {
+    if (k_mp.multiproc) {
         spinunlk(&set->lk);
     }
 
     return;
 }
 
-static INLINE struct cpu *
+static INLINE volatile struct cpu *
 schedfindidlecore(long unit, long *retcore)
 {
-    struct cpu *cpu = &cputab[unit];
+    volatile struct cpu *cpu = &k_cputab[unit];
     long                 nunit = NCPU;
     long                 ndx = 0;
     long                 val = 0;
 
     for (ndx = 0 ; ndx < nunit ; ndx++) {
-        if (ndx != unit && bitset(schedidlecoremap, ndx)) {
+        if (ndx != unit && bitset(k_schedidlecoremap, ndx)) {
             *retcore = ndx;
 
             return cpu;
@@ -197,7 +191,7 @@ schedsetnice(struct task *task, long val)
 
     val = max(-20, val);
     val = min(19, val);
-    nice = schedniceptr[val];
+    nice = k_schedniceptr[val];
     proc->nice = nice;
     proc->niceval = val;
 
@@ -225,11 +219,11 @@ schedcalcscore(struct task *task)
 #if (SCHEDSCOREHALF == 64)
         run >>= 6;
 #else
-        run = fastu16divu16(run, SCHEDSCOREHALF, fastu16divu16tab);
+        run = fastu16divu16(run, SCHEDSCOREHALF, k_fastu16divu16tab);
 #endif
         res = SCHEDSCOREMAX;
         div = max(1, run);
-        tmp = fastu16divu16(slp, div, fastu16divu16tab);
+        tmp = fastu16divu16(slp, div, k_fastu16divu16tab);
         res -= tmp;
         task->score = res;
 
@@ -242,7 +236,7 @@ schedcalcscore(struct task *task)
         slp = fastu16divu16(slp, SCHEDHALFSCORE, s);
 #endif
         div = max(1, slp);
-        res = fastu16divu16(run, div, fastu16divu16tab);
+        res = fastu16divu16(run, div, k_fastu16divu16tab);
         task->score = res;
 
         return res;
@@ -272,9 +266,9 @@ schedcalcuserprio(struct task *task)
      * then divide by SCHEDPRIORANGE; i'm cheating big time =)
      */
     val += SCHEDPRIORANGE - 1;
-    val = fastu16divu16(val, SCHEDPRIORANGE, fastu16divu16tab);
+    val = fastu16divu16(val, SCHEDPRIORANGE, k_fastu16divu16tab);
     /* divide runtime by the result */
-    res = fastu16divu16(time, (uint16_t)val, fastu16divu16tab);
+    res = fastu16divu16(time, (uint16_t)val, k_fastu16divu16tab);
 
     return res;
 }
@@ -298,7 +292,7 @@ schedcalcprio(struct task *task)
 #if (SCHEDSCOREINTLIM == 32)
         delta >>= 5;
 #else
-        delta = fastu16divu16(delta, SCHEDSCOREINTLIM, fastu16divu16tab);
+        delta = fastu16divu16(delta, SCHEDSCOREINTLIM, k_fastu16divu16tab);
 #endif
         delta *= score;
         prio += delta;
@@ -387,9 +381,9 @@ schedadjforkintparm(struct task *task)
         run += run2;
         slp += slp2;
 #else
-        ratio = fastu16divu16(sum, SCHEDRECTIMEFORKMAX, fastu16divu16tab);
-        run = fastu16divu16(run, ratio, fastu16divu16tab);
-        slp = fastu16divu16(slp, ratio, fastu16divu16tab);
+        ratio = fastu16divu16(sum, SCHEDRECTIMEFORKMAX, k_fastu16divu16tab);
+        run = fastu16divu16(run, ratio, k_fastu16divu16tab);
+        slp = fastu16divu16(slp, ratio, k_fastu16divu16tab);
 #endif
         task->runtime = run;
         task->slptime = slp;
@@ -423,7 +417,7 @@ schedcalcintparm(struct task *task, long *retscore)
 #if (SCHEDSCOREINTLIM == 32)
         range >>= 5;
 #else
-        range = fastu16divu16(range, SCHEDSCOREINTLIM, fastu16divu16tab);
+        range = fastu16divu16(range, SCHEDSCOREINTLIM, k_fastu16divu16tab);
 #endif
         range *= score;
         res += range;
@@ -440,9 +434,9 @@ schedcalcintparm(struct task *task, long *retscore)
             //            tmp = roundup(total, range);
             tmp = _roundup16b(total, range);
             res += nice;
-            div = fastu16divu16(total, tmp, fastu16divu16tab);
+            div = fastu16divu16(total, tmp, k_fastu16divu16tab);
             range--;
-            total = fastu16divu16(tickhz, div, fastu16divu16tab);
+            total = fastu16divu16(tickhz, div, k_fastu16divu16tab);
             diff = min(total, range);
             res += diff;
         }
@@ -491,7 +485,7 @@ taskwakeup(struct task *task)
     task->unit = unit;
     m_taskjmp(&task->m_task);
 #if 0
-    schedsetcpu(&cputab[unit]);
+    schedsetcpu(&k_cputab[unit]);
     schedsetready(task, unit);
 #endif
     /* FIXME: sched_setpreempt() */

@@ -12,11 +12,11 @@
 #include <kern/unit/x86/trap.h>
 #endif
 
-extern struct task tasktab[NTASK];
-extern long        trapsigmap[TRAPNCPU];
+extern struct task k_tasktab[NTASK];
+extern long        k_trapsigmap[TRAPNCPU];
 
-__sighandler_t     sigfunctab[NSIG] ALIGNED(PAGESIZE);
-long               traperrbits = TRAPERRBITS;
+__sighandler_t     k_sigfunctab[NSIG] ALIGNED(PAGESIZE);
+long               k_traperrbits = TRAPERRBITS;
 
 void
 prockill(struct proc *proc)
@@ -28,8 +28,8 @@ FASTCALL
 void
 sigfunc(unsigned long pid, int32_t trap, long err, void *frame)
 {
-    struct task    *task = &tasktab[pid];
-    long            sig = trapsigmap[trap];
+    struct task    *task = &k_tasktab[pid];
+    long            sig = k_trapsigmap[trap];
     struct proc    *proc = task->proc;
     __sighandler_t  func;
 
@@ -50,7 +50,7 @@ sigfunc(unsigned long pid, int32_t trap, long err, void *frame)
         if (func) {
             func(sig);
         } else {
-            func = sigfunctab[sig];
+            func = k_sigfunctab[sig];
             if (func) {
                 func(sig);
             }

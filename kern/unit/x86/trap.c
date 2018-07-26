@@ -50,8 +50,8 @@ extern volatile long   mpmultiproc;
 extern uint64_t        kernidt[NINTR];
 extern struct m_farptr idtptr;
 
-long                   trappriotab[NINTR];
-long                   trapsigmap[TRAPNCPU]
+long                   k_trappriotab[NINTR];
+long                   k_trapsigmap[TRAPNCPU]
 = {
     SIGFPE,
     0,
@@ -76,7 +76,7 @@ long                   trapsigmap[TRAPNCPU]
 };
 
 #define trapsetprio(irq, prio)                                          \
-    (trappriotab[(irq)] = (prio))
+    (k_trappriotab[(irq)] = (prio))
 
 #if (PTRSIZE == 4)
 

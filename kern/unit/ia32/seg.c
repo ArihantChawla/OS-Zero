@@ -17,13 +17,12 @@ extern uint64_t            kerngdt[NCPU][NGDT];
 extern uint64_t            kerngdt[NGDT];
 #endif
 //extern struct m_tss    tsstab[NTHR];
-extern volatile struct cpu cputab[NCPU];
 extern struct m_farptr     gdtptrtab[NCPU];
 
 ASMLINK void
 seginit(long id)
 {
-    volatile struct cpu *cpu = &cputab[id];
+    volatile struct cpu *cpu = &k_cputab[id];
     struct m_farptr     *farptr = &gdtptrtab[id];
     uint64_t            *gdt;
 

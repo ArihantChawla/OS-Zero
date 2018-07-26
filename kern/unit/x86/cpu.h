@@ -1,7 +1,8 @@
 #ifndef __KERN_UNIT_X86_CPU_H__
 #define __KERN_UNIT_X86_CPU_H__
 
-#include <mach/types.h>
+//#include <kern/proc/task.h>
+#include <kern/unit/x86/cpuid.h>
 
 #if (PTRBITS == 32)
 extern volatile struct cpu  * k_curcpu  __asm__ ("%gs:0");

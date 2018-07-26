@@ -8,8 +8,19 @@
 #include <zero/randklc.h>
 
 /* minimum allocation block size */
+#if defined(__BIGGEST_ALIGNMENT__)
+#define MEMMINALIGN    __BIGGEST_ALIGNMENT__
+#if (__BIGGEST_ALIGNMENT__ == 8)
+#define MEMALIGNSHIFT  3
+#elif (__BIGGEST_ALIGNMENT__ == 16)
+#define MEMALIGNSHIFT  4
+#elif (__BIGGEST_ALIGNMENT__ == 32)
+#define MEMALIGNSHIFT  5
+#endif
+#else
 #define MEMMINALIGN    CLSIZE
 #define MEMALIGNSHIFT  CLSIZELOG2
+#endif
 #define MEM_MIN_SIZE   MEMMINALIGN
 
 /* custom allocator types */
@@ -59,7 +70,7 @@
         MEMUWORD_T _res = sz;                                           \
                                                                         \
         _res--;                                                         \
-        _res >>= CLSIZELOG2;                                            \
+        _res >>= MEMALIGNSHIFT;                                         \
         (pool) = _res;                                                  \
     } while (0)
 /* calculate bucket for page-run of sz bytes; multiple of PAGESIZE */
@@ -80,28 +91,6 @@
         _res >>= MEM_MID_UNIT_SHIFT + PAGESIZELOG2;                     \
         (pool) = _res;                                                  \
     } while (0)
-/* calculate bucket for big global allocation; a power of two */
-#if (WORDSIZE == 4)
-#define _memcalcbigpool(sz, pool)                                       \
-    do {                                                                \
-        int32_t _tmp;                                                   \
-        int32_t _pool;                                                  \
-                                                                        \
-        ceilpow2_32(sz, _tmp);                                          \
-        _pool = tzerol(_tmp);                                           \
-        (pool) = _pool;                                                 \
-    } while (0)
-#elif (WORDSIZE == 8)
-#define _memcalcbigpool(sz, pool)                                       \
-    do {                                                                \
-        int64_t _tmp;                                                   \
-        int64_t _pool;                                                  \
-                                                                        \
-        ceilpow2_64(sz, _tmp);                                          \
-        _pool = tzeroll(_tmp);                                          \
-        (pool) = _pool;                                                 \
-    } while (0)
-#endif
 
 /* generate an address in the range ptr + [0, 8 * CLSIZE] */
 static __inline__ MEMPTR_T
