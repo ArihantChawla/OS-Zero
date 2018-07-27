@@ -16,8 +16,8 @@
 #include <stdlib.h>
 #endif
 
-#define SYSCONF_CPUPROBE 0x00000001
-#define SYSCONF_INIT     0x00000002
+#define SYSCONF_INIT     0x00000001
+#define SYSCONF_CPUPROBE 0x00000002
 
 long sysconftab[NSYSCONF]
 = {
@@ -50,6 +50,7 @@ long sysconftab[NSYSCONF]
 };
 volatile long sysconfbits;
 zerofmtx      sysconflk;
+struct cpu    sysconfcpu;
 
 #define _sysconfneedupd(name)                                           \
     ((name) <= _SC_PHYS_PAGES && (name) >= _SC_NPROCESSORS_ONLN)
@@ -85,20 +86,20 @@ sysconfupd(int name)
 static void
 sysconfinit(long *tab)
 {
-    struct m_cpuinfo  cpuinfo;
-    long             *ptr = tab - MINSYSCONF;
+    long       *ptr = tab - MINSYSCONF;
+    struct cpu *cpu = &sysconfcpu;
 
     fmtxlk(&sysconflk);
     if (!(sysconfbits & SYSCONF_CPUPROBE)) {
         /* probe persistent values */
-        cpuprobe(0, &cpuinfo, &cpuinfo.cache);
-        ptr[_SC_L2_NWAY] = cpuinfo.cache.l2.nway;
-        ptr[_SC_L2_SIZE] = cpuinfo.cache.l2.size;
-        ptr[_SC_L1_DATA_NWAY] = cpuinfo.cache.l1d.nway;
-        ptr[_SC_L1_INST_NWAY] = cpuinfo.cache.l1i.nway;
-        ptr[_SC_L1_DATA_SIZE] = cpuinfo.cache.l1d.size;
-        ptr[_SC_L1_INST_SIZE] = cpuinfo.cache.l1i.size;
-        ptr[_SC_CACHELINE_SIZE] = cpuinfo.cache.l2.clsz;
+        cpuprobe(cpu);
+        ptr[_SC_L2_NWAY] = cpu->info.cache.l2.nway;
+        ptr[_SC_L2_SIZE] = cpu->info.cache.l2.size;
+        ptr[_SC_L1_DATA_NWAY] = cpu->info.cache.l1d.nway;
+        ptr[_SC_L1_INST_NWAY] = cpu->info.cache.l1i.nway;
+        ptr[_SC_L1_DATA_SIZE] = cpu->info.cache.l1d.size;
+        ptr[_SC_L1_INST_SIZE] = cpu->info.cache.l1i.size;
+        ptr[_SC_CACHELINE_SIZE] = cpu->info.cache.l2.clsz;
         sysconfbits |= SYSCONF_CPUPROBE;
     }
     if (sysconfbits & SYSCONF_INIT) {

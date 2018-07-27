@@ -9,19 +9,19 @@
 
 /* minimum allocation block size */
 #if defined(__BIGGEST_ALIGNMENT__)
-#define MEMMINALIGN    __BIGGEST_ALIGNMENT__
+#define MEM_MIN_ALIGN   __BIGGEST_ALIGNMENT__
 #if (__BIGGEST_ALIGNMENT__ == 8)
-#define MEMALIGNSHIFT  3
+#define MEM_ALIGN_SHIFT 3
 #elif (__BIGGEST_ALIGNMENT__ == 16)
-#define MEMALIGNSHIFT  4
+#define MEM_ALIGN_SHIFT 4
 #elif (__BIGGEST_ALIGNMENT__ == 32)
-#define MEMALIGNSHIFT  5
+#define MEM_ALIGN_SHIFT 5
 #endif
 #else
-#define MEMMINALIGN    CLSIZE
-#define MEMALIGNSHIFT  CLSIZELOG2
+#define MEM_MIN_ALIGN   CLSIZE
+#define MEM_ALIGN_SHIFT CLSIZELOG2
 #endif
-#define MEM_MIN_SIZE   MEMMINALIGN
+#define MEM_MIN_SIZE    MEM_MIN_ALIGN
 
 /* custom allocator types */
 /* size of machine word/integer */
@@ -70,7 +70,7 @@
         MEMUWORD_T _res = sz;                                           \
                                                                         \
         _res--;                                                         \
-        _res >>= MEMALIGNSHIFT;                                         \
+        _res >>= MEM_ALIGN_SHIFT;                                       \
         (pool) = _res;                                                  \
     } while (0)
 /* calculate bucket for page-run of sz bytes; multiple of PAGESIZE */
@@ -111,7 +111,7 @@ memgenadr(MEMPTR_T ptr)
     shift = 4;
 #endif
     /* shift out some [mostly-aligned] low bits */
-    res >>= MEMALIGNSHIFT;
+    res >>= MEM_ALIGN_SHIFT;
     /* divide by 9 */
     q = res - (res >> 3);
     q = q + (q >> 6);
@@ -149,7 +149,7 @@ memgenofs(MEMPTR_T ptr)
     shift = 5;
 #endif
     /* shift out some [mostly-aligned] low bits */
-    res >>= MEMALIGNSHIFT;
+    res >>= MEM_ALIGN_SHIFT;
     /* divide by 9 */
     q = res - (res >> 3);
     q = q + (q >> 6);

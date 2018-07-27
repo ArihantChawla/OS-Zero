@@ -38,34 +38,32 @@
  * - blocks are prefixed with allocation info structure struct memblk;
  *   - other allocations have page-entries in g_mem.hashtab
  */
-#define MEM_BLK_MASK        (~(MEM_MIN_SIZE - 1))
-#define memblkid(ptr)       ((uintptr_t)(ptr) & MEM_BLK_MASK)
-
 /* stored together with slab address to denote slab type */
-#define MEM_BLK_SLAB        (0x1 << MEM_SLAB_BLK_BITS)
-#define MEM_RUN_SLAB        (0x2 << MEM_SLAB_BLK_BITS)
-#define MEM_MID_SLAB        (0x3 << MEM_SLAB_BLK_BITS)
-#define MEM_BLK_TYPE_MASK   (0x03 << MEM_SLAB_BLK_BITS)
+#define MEM_BLK_MASK        (~(MEM_MIN_SIZE - 1))
+#define MEM_BLK_SLAB        1
+#define MEM_RUN_SLAB        2
+#define MEM_MID_SLAB        3
+#define MEM_BLK_TYPE_MASK   (3 << MEM_SLAB_BLK_BITS)
 #define MEM_SLAB_TYPE_BITS  2 // # of bits used for slab type
 #define MEM_SLAB_LOW_BITS   PAGESIZELOG2 // info
 #define MEM_SLAB_BLK_BITS   (MEM_SLAB_LOW_BITS - MEM_SLAB_TYPE_BITS) // ID bits
-#define MEM_SLAB_BLK_IDS    (1 << MEM_SLAB_BLK_BITS) // max # of IDs
+#define MEM_SLAB_BLK_IDS    (1L << MEM_SLAB_BLK_BITS) // max # of IDs
 #define MEM_BLK_ID_MASK     (MEM_SLAB_BLK_IDS - 1)
 #define MEM_BLK_SLAB_SHIFT  4 // slab is PAGESIZE << MEM_BLK_SLAB_SHIFT bytes
 #define MEM_SLAB_PAGE_SHIFT 3
 #define MEM_BLK_SLAB_SIZE   (PAGESIZE << MEM_SLAB_PAGE_SHIFT)
-#define MEM_BLK_POOLS       (PAGESIZELOG2 - MEMMINALIGN)
+#define MEM_BLK_POOLS       (1L << (PAGESIZELOG2 - MEM_ALIGN_SHIFT))
 #define MEM_MAX_BLK_POOL    (MEM_BLK_POOLS - 1)
 #define MEM_MAX_BLK_SIZE    PAGESIZE
 #define MEM_RUN_POOLS       (MEM_MAX_RUN_PAGES)
 #define MEM_MAX_RUN_SHIFT   6
-#define MEM_MAX_RUN_PAGES   (1 << MEM_MAX_RUN_SHIFT)
+#define MEM_MAX_RUN_PAGES   (1L << MEM_MAX_RUN_SHIFT)
 #define MEM_MAX_RUN_POOL    (MEM_MAX_RUN_PAGES - 1)
 #define MEM_MIN_RUN_SIZE    PAGESIZE
 #define MEM_MAX_RUN_SIZE    (MEM_MAX_RUN_PAGES * PAGESIZE)
 #define MEM_MID_POOLS       32
 #define MEM_MID_UNIT_SHIFT  2
-#define MEM_MID_UNIT_PAGES  (1 << MEM_MID_UNIT_SHIFT)
+#define MEM_MID_UNIT_PAGES  (1L << MEM_MID_UNIT_SHIFT)
 #define MEM_MAX_MID_PAGES   (MEM_MID_UNIT_PAGES * MEM_MID_POOLS)
 #define MEM_MIN_MID_SIZE    (MEM_MID_UNIT_PAGES * PAGESIZE)
 #define MEM_MAX_MID_SIZE    (MEM_MAX_MID_PAGES * PAGESIZE)

@@ -261,7 +261,7 @@ shuntcmod64(struct shuntctoken *arg1, struct shuntctoken *arg2)
     return res;
 }
 
-CONST void
+void
 shuntcinitconvtab(void)
 {
     /* integral tables */

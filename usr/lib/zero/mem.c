@@ -191,7 +191,7 @@ memgetblk(size_t size, size_t align, long zero)
 {
     void   *ptr;
     size_t  sz = max(size, MEM_MIN_SIZE);
-    size_t  aln = max(align, MEMMINALIGN);
+    size_t  aln = max(align, MEM_MIN_ALIGN);
 
     if (!(g_mem.flg & MEM_INIT_BIT)) {
         fmtxlk(&g_mem.lk);

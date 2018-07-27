@@ -1,6 +1,6 @@
 #! /bin/sh
 
-CC=clang
+CC=gcc
 CCBUILDFLAGS="-D_REENTRANT=1 -D_ZERO_SOURCE=1 -D_GNU_SOURCE=1 -DZEROCOND=1 -DSHUNTC=1 -DNVALGRIND -DZEROTHR=1 -DMEMMULTITAB=0 -DMEMNEWHASH=1 -DMEMLFHASH=1"
 #CC=clang
 CCWARNFLAGS="-D_FORTIFY_SOURCE=2 -Wall -Wundef -Wpointer-arith -Wuninitialized -Winit-self -Wmissing-include-dirs -Wparentheses -Wswitch-default -Wswitch-bool -Wunused-parameter -Wstrict-aliasing -Wstrict-overflow -Wtrampolines -Wfloat-equal -Wshadow -Wstack-usage=16384 -Wunsafe-loop-optimizations -Wbad-function-cast -Wc99-c11-compat -Wcast-align -Wwrite-strings -Wdate-time -Wjump-misses-init -Wlogical-op -Waggregate-return -Wstrict-prototypes -Wnormalized -Wopenmp-simd -Wpacked -Wpadded -Wredundant-decls -Wnested-externs -Winline -Wvector-operation-performance -Wvla -Wstack-protector -Woverlength-strings -Wno-designated-init -Wdeclaration-after-statement -Wformat-security -Wmissing-format-attribute"

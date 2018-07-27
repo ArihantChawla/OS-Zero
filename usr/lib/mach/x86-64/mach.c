@@ -18,7 +18,7 @@ m_getpc2(void)
 {
     void *ptr;
 
-    __asm__ __volatile__ ("leaq (%rip), %0\n"
+    __asm__ __volatile__ ("leaq (%%rip), %0\n"
                           : "=r" (ptr));
 
     return ptr;
