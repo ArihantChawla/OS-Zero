@@ -19,7 +19,7 @@
 extern void       (*mpspurint)(void);
 extern void         irqerror(void);
 extern void         irqspurious(void);
-void                apicstart(uint8_t id, uint32_t adr);
+void                apicstart(uint8_t id, uint32_t *base);
 void                kusleep(unsigned long nusec);
 
 #endif /* !defined(__ASSEMBLER__) */

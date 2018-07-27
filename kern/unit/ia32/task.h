@@ -6,6 +6,7 @@
 #include <kern/conf.h>
 #include <zero/cdefs.h>
 #include <kern/cpu.h>
+#include <kern/proc/task.h>
 
 FASTCALL NORETURN void m_taskjmp(volatile struct m_task *task);
 

@@ -413,6 +413,7 @@ trapxf:
 	/* dummy interrupt handler for probing APIC frequency */
 irqtmrcnt:
 	_apiceoi
+	sti
 	iretl
 #endif
 
@@ -474,7 +475,7 @@ irqtmr:
 	pushl	%eax			// back %eax up
 	movl	%gs:8, %eax		// per-cpu current task
 	cmpl	$0, %eax
-	jnz	_save
+	jnz		_save
 	popl	%eax
 	movl	%ebp, %esp
 	popl	%ebp
@@ -483,6 +484,7 @@ irqtmr:
 #else
 	_piceoi1
 #endif
+	sti
 	iretl
 _save:
 	// adjust sp for pushing m_tcb.genregs
@@ -551,6 +553,7 @@ _havestk:
 #else
 	_piceoi1
 #endif
+	sti
 	iretl
 
 .align	16

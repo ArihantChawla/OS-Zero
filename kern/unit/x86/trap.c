@@ -1,7 +1,7 @@
+#include <kern/conf.h>
 #include <stdint.h>
 #include <signal.h>
 #include <sys/io.h>
-#include <kern/conf.h>
 #include <mach/param.h>
 #include <mach/types.h>
 //#include <kern/syscall.h>
@@ -43,8 +43,10 @@ extern void irqmouse(void);
 
 #if (SMP)
 extern volatile long   mpmultiproc;
+extern uint64_t        kernidt[NCPU][NINTR];
+#else
+extern uint64_t        kernidt[NINTR];
 #endif
-extern uint64_t        kernidt[];
 extern struct m_farptr idtptr;
 
 long                   k_trappriotab[NINTR];
@@ -90,9 +92,13 @@ trapsetidt(long ntrap, uint64_t *idt)
 #endif
 
 void
-trapinitidt(void)
+trapinitidt(long unit)
 {
-    uint64_t *idt = kernidt;
+#if (SMP)
+    uint64_t *idt = &kernidt[unit][0];
+#else
+    uint64_t *idt = &kernidt[0];
+#endif
 
     trapsetintrgate(&idt[TRAPDE], trapde, TRAPSYS);
     trapsetintrgate(&idt[TRAPDB], trapdb, TRAPSYS);
@@ -142,9 +148,9 @@ trapinitprio(void)
 }
 
 void
-trapinit(void)
+trapinit(long unit)
 {
-    trapinitidt();
+    trapinitidt(unit);
     trapinitprio();
     picinit();  // initialise interrupt controllers
     /* mask timer interrupt, enable other interrupts */

@@ -148,15 +148,14 @@ static const char *_vendortab[]
 #define CPUIDSSE3      0x00000001 /* sse3. */
 
 void
-cpuprobe(long id,
-         volatile struct m_cpuinfo *info,
-         volatile struct m_cpucacheinfo *cache)
+cpuprobe(struct cpu *cpu)
 {
-    volatile struct cpu  *m_cpu = &k_cputab[id];
-    struct m_cacheinfo   *cbuf;
-    struct m_cpuid        buf;
-    union  m_cpuidvendor  vbuf;
-    long                  flg;
+    struct m_cpuinfo      *info = &cpu->info;
+    struct m_cpucacheinfo *cache = &cpu->info.cache;
+    struct m_cacheinfo    *cbuf;
+    struct m_cpuid         buf;
+    union  m_cpuidvendor   vbuf;
+    long                   flg;
 
     cpuidgetvendor(&vbuf);
     if (!__strcmp((const char *)vbuf.str, _vendortab[CPUIDINTEL])) {
@@ -202,7 +201,7 @@ cpuprobe(long id,
     if (cpuidhasapic(&info->id)) {
         flg |= CPUHASAPIC;
     }
-    m_cpu->flg = flg;
+    cpu->flg = flg;
 
     return;
 }

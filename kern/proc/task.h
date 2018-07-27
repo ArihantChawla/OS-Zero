@@ -4,6 +4,7 @@
 #include <kern/conf.h>
 #include <time.h>
 #include <mach/types.h>
+#include <kern/syscall.h>
 
 #define TASK_LK_T volatile m_atomic_t
 

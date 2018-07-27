@@ -10,8 +10,6 @@
 #include <kern/unit/x86/mp.h>
 #include <kern/unit/ia32/mp.h>
 
-extern volatile struct cpu k_cputab[NCPU];
-
 void
 ioapicinit(long id)
 {

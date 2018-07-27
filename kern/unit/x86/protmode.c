@@ -65,7 +65,7 @@ kinitprot(unsigned long pmemsz)
     /* initialise virtual memory */
     //    vminit((uint32_t *)&_pagetab);
     vminit();
-    trapinit();
+    //    trapinit(0);
     //    schedinit();
     /* zero kernel BSS segment */
     kbzero((void *)&_bssvirt,
@@ -113,6 +113,7 @@ kinitprot(unsigned long pmemsz)
     }
 #endif
 #elif (APIC)
+    trapinitidt(0);
     apicinit(0);
 #endif /* SMP */
 #if (IOAPIC)

@@ -138,9 +138,13 @@ mpconf(struct mp **mptab)
 }
 
 void
-mpinitcpu(long unit)
+mpinitcpu(long unit, volatile uint32_t *apic)
 {
-    cpuinit(unit);
+    volatile struct cpu *cpu = &k_cputab[unit];
+
+    cpuinit(cpu);
+    cpu->unit = unit;
+    cpu->apic = apic;
     /* TODO: initialise HPET; enable [rerouted] interrupts */
 #if (HPET)
     hpetinit();
@@ -157,20 +161,21 @@ mpinitcpu(long unit)
 void
 mpinit(void)
 {
-    struct mp       *mp;
-    struct mpconf   *conf;
-    struct mpcpu    *cpu;
-    struct mpioapic *ioapic;
-    long             unit;
-    uint8_t         *u8ptr;
-    uint8_t         *lim;
+    struct mp         *mp;
+    struct mpconf     *conf;
+    struct mpcpu      *cpu;
+    volatile uint32_t *apic;
+    struct mpioapic   *ioapic;
+    long               unit;
+    uint8_t           *u8ptr;
+    uint8_t           *lim;
 
     conf = mpconf(&mp);
     if (!conf) {
 
         return;
     }
-    mpapic = conf->apicadr;
+    apic = conf->apicadr;
     for (u8ptr = (uint8_t *)(conf + 1), lim = (uint8_t *)conf + conf->len ;
          u8ptr < lim ; ) {
         switch (*u8ptr) {
@@ -179,9 +184,8 @@ mpinit(void)
                 unit = cpu->id;
                 if (cpu->flags & MPCPUBOOT) {
                     mpbootcpu = &k_cputab[unit];
-                    taskinittls(unit, TASKKERN);
                 }
-                mpinitcpu(unit);
+                mpinitcpu(unit, apic);
                 k_cputab[unit].unit = unit;
                 k_mp.ncpu++;
                 u8ptr += sizeof(struct mpcpu);

@@ -4,8 +4,9 @@
 #include <kern/conf.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
+#include <kern/cpu.h>
 
-extern void trapinit(void);
+extern void trapinit(long unit);
 extern void seginit(long core);
 extern void vminit(void);
 extern void picinit(void);
@@ -14,7 +15,7 @@ extern void kbdinit(void);
 extern void mouseinit(void);
 extern void logoprint(void);
 extern void tssinit(long id);
-extern void cpuinit(long unit);
+extern void cpuinit(volatile struct cpu *cpu);
 extern long sysinit(void);
 extern long ioinitbuf(void);
 #if (VBE)

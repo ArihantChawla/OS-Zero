@@ -14,7 +14,7 @@ extern void seginit(long id);
 #if (VBE)
 extern void vbeinit(void);
 #endif
-extern void trapinit(void);
+extern void trapinit(long unit);
 extern void kinitprot(unsigned long pmemsz);
 extern void kinitlong(unsigned long pmemsz);
 
@@ -35,7 +35,7 @@ kmain(unsigned long longmode, struct mboothdr *boothdr)
     /* initialise VBE graphics subsystem */
     vbeinit();
 #endif
-    trapinit();
+    trapinit(0);
     kernlongmode = longmode;
     /* determine amount of RAM */
     pmemsz = grubmemsz(boothdr);

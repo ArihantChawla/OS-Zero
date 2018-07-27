@@ -20,15 +20,19 @@ extern uint64_t            kerngdt[NGDT];
 extern struct m_farptr     gdtptrtab[NCPU];
 
 ASMLINK void
-seginit(long id)
+seginit(long unit)
 {
-    volatile struct cpu *cpu = &k_cputab[id];
-    struct m_farptr     *farptr = &gdtptrtab[id];
-    uint64_t            *gdt;
+    volatile struct cpu *cpu = &k_cputab[unit];
+    struct m_farptr     *farptr = &gdtptrtab[unit];
+#if (SMP)
+    uint64_t            *gdt = &kerngdt[unit][0];
+#else
+    uint64_t            *gdt = &kerngdt[0];
+#endif
 
     /* set descriptors */
 #if (SMP)
-    gdt = &kerngdt[id][0];
+    gdt = &kerngdt[unit][0];
 #else
     gdt = kerngdt;
 #endif

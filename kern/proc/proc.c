@@ -16,7 +16,6 @@
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/link.h>
-#include <kern/unit/x86/cpu.h>
 
 extern uintptr_t            kernpagedir[NPDE];
 struct proc                *k_proctab[NTASK] ALIGNED(PAGESIZE);

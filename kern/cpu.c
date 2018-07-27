@@ -11,13 +11,13 @@ volatile struct cpu k_cputab[NCPU] ALIGNED(PAGESIZE);
 extern uint8_t      kernusrstktab[NCPU * KERNSTKSIZE];
 
 void
-cpuinit(long unit)
+cpuinit(struct cpu *cpu)
 {
-    volatile struct cpu       *cpu = &k_cputab[unit];
     volatile struct m_cpuinfo *info = &cpu->info;
+    long                       flg;
 
-    taskinittls(unit, 0);
-    cpuprobe(unit, info, &info->cache);
+    cpu->cpu = cpu;
+    cpuprobe(cpu);
     cpu->flg |= CPUINITBIT | CPUHASINFO;
 
     return;

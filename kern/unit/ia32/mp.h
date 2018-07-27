@@ -76,14 +76,14 @@ struct mpioapic {
 };
 
 static __inline__ long
-mpcpunum(volatile uint32_t *base)
+mpunit(volatile uint32_t *base)
 {
     long ret = 0;
 
     __asm__ __volatile__ ("pushfl\n");
     __asm__ __volatile__ ("cli\n");
-    if (mpapic) {
-        ret = apicread(base, APICID);
+    if (base) {
+        ret = apicread(base, APICID) >> 24;
     }
     __asm__ __volatile__ ("sti\n");
     __asm__ __volatile__ ("popfl\n");
