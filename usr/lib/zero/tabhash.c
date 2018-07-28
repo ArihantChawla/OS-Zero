@@ -2,6 +2,51 @@
 #include <mach/atomic.h>
 #include <zero/tabhash.h>
 
+/* add item { key, val } into hash table */
+static __inline__ void
+tabhashadd(struct tabhashbuf **hash, uintptr_t key, uintptr_t val)
+{
+    unsigned long      hkey = TABHASH_FUNC(key);
+    struct tabhashbuf *buf;
+    TABHASH_ITEM_T    *item;
+    TABHASH_ITEM_T    *iptr;
+    m_atomic_t         n;
+    long               ni;
+
+    tabhashlkbuf(&hash[key]);
+    buf = (void *)((uintptr_t)&hash[key] & ~TABHASH_BUF_LK_BIT);
+    if (buf) {
+        /* scan existing chain tables for an empty slot */
+        while (buf) {
+            n = buf->hdr.n;
+            item = &buf->tab[n];
+            if (n < TABHASH_TAB_ITEMS) {
+                buf->hdr.n++;
+                item->key = key;
+                item->val = val;
+
+                break;
+            } else {
+                buf = buf->hdr.chain;
+            }
+        }
+        /* if empty slot not found, allocate new table and push it to chain */
+        if (!buf) {
+            buf = tabhashalloctab();
+            if (!buf) {
+                fprintf(stderr, "TABHASH: failed to allocate teble\n");
+
+                exit(1);
+            }
+            item = &buf->tab[0];
+            item->key = key;
+            item->val = val;
+            buf->hdr.chain = buf;
+            m_atomwrite(&hash[hkey], buf);
+        }
+    }
+}
+
 /*
  * array hash, chains tables of items instead of single ones to avoid excess
  * pointer data dependencies/chase
@@ -12,8 +57,8 @@ tabhashsearch(struct tabhashbuf **hash, uintptr_t key, long op)
     unsigned long      hkey = TABHASH_FUNC(key);
     uintptr_t          val;
     struct tabhashbuf *buf;
-    TABHASH_ITEM_T    *iptr;
     TABHASH_ITEM_T    *item;
+    TABHASH_ITEM_T    *iptr;
     uintptr_t          mask;
     m_atomic_t         src;
     m_atomic_t         n;
@@ -21,7 +66,7 @@ tabhashsearch(struct tabhashbuf **hash, uintptr_t key, long op)
     long               ndx;
 
     tabhashlkbuf(&hash[hkey]);
-    buf = (void *)((uintptr_t)hash[hkey] & ~TABHASH_BUF_LK_BIT);
+    buf = (void *)((uintptr_t)&hash[hkey] & ~TABHASH_BUF_LK_BIT);
     if (buf) {
         do {
             n = buf->hdr.n;
