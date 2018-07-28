@@ -34,7 +34,7 @@
 struct rbtnode {
 #if defined(RBT_INTPTR_DATA)
     intptr_t        key;
-    uintptr_t       data;
+    intptr_t        data;
 #elif defined(RBT_UINTPTR_DATA)
     untptr_t        key;
     uintptr_t       data;

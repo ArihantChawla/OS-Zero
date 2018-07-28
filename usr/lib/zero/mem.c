@@ -6,9 +6,9 @@
 #include <mach/asm.h>
 #include <zero/mem.h>
 #include <zero/unix.h>
-#define THASH_VAL_NONE     (~(uintptr_t)0)
-#define THASH_FUNC(key)    (tmhash32(key))
-#include <zero/thash.h>
+#define TABHASH_VAL_NONE   (~(uintptr_t)0)
+#define TABHASH_FUNC(key)  (tmhash32(key))
+#include <zero/tabhash.h>
 #define LFDEQ_DATA_T       struct memslab
 #include <mt/lfdeq.h>
 
