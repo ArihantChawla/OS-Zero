@@ -9,16 +9,16 @@
 static __inline__ uintptr_t
 tabhashsearch(struct tabhashbuf **hash, uintptr_t key, long op)
 {
-    unsigned long       hkey = TABHASH_FUNC(key);
-    uintptr_t           val;
-    struct tabhashbuf  *buf;
-    struct tabhashitem *iptr;
-    TABHASH_ITEM_T     *item;
-    uintptr_t           mask;
-    m_atomic_t          src;
-    m_atomic_t          n;
-    long                ni;
-    long                ndx;
+    unsigned long      hkey = TABHASH_FUNC(key);
+    uintptr_t          val;
+    struct tabhashbuf *buf;
+    TABHASH_ITEM_T    *iptr;
+    TABHASH_ITEM_T    *item;
+    uintptr_t          mask;
+    m_atomic_t         src;
+    m_atomic_t         n;
+    long               ni;
+    long               ndx;
 
     tabhashlkbuf(&hash[hkey]);
     buf = (void *)((uintptr_t)hash[hkey] & ~TABHASH_BUF_LK_BIT);

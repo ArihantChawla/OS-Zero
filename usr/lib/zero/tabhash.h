@@ -28,7 +28,7 @@ struct tabhashhdr {
 #if !defined(TABHASH_ITEM_T)
 #define TABHASH_ITEM_T struct tabhashitem
 #endif
-struct tabhashitem {
+struct tabhashitem{
     uintptr_t key;
     uintptr_t val;
 };
@@ -48,12 +48,15 @@ struct tabhashbuf {
 /*
  * acquire chain/buffer lock by locking the lowest bit of a pointer
  */
+#define tabhashlkbit(buf)   (!m_cmpsetbit((m_atomic_t *)buf,              \
+                                          TABHASH_BUF_LK_BIT_POS))
+#define __tabhashlkbuf(buf) tabhashlkbit(buf)
 static __inline__ void
 tabhashlkbuf(struct tabhashbuf **buf)
 {
     do {
         if (!((uintptr_t)*buf & TABHASH_BUF_LK_BIT)) {
-            if (!m_cmpsetbit((m_atomic_t *)buf, TABHASH_BUF_LK_BIT_POS)) {
+            if (__tabhashlkbuf(buf)) {
 
                 return;
             }
