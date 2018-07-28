@@ -5,16 +5,23 @@
 #include <mach/atomic.h>
 #include <mach/asm.h>
 #include <zero/trix.h>
+#include <zero/hash.h>
+
+#if !defined(TABHASH_VAL_NONE)
+#define TABHASH_VAL_NONE 0
+#endif
 
 /*
- * array hash, chains tables of items instead of single ones to avoid excess
- * pointer data dependencies/chase
+ * TABHASH_FUNC may be #defined before including this header
  */
+#if !defined(TABHASH_FUNC)
+#define TABHASH_FUNC(val) tmhash32(val & 0xffffffff)
+#endif
 
 /* allocation hash-table queue structure; cache-friendly */
 struct tabhashhdr {
-    m_atomic_t     n;
-    volatile void *chain;
+    m_atomic_t  n;
+    void       *chain;
 };
 
 /* allocation hash data entry */
@@ -55,7 +62,7 @@ tabhashlkbuf(struct tabhashbuf **buf)
     } while (1);
 
     /* NOTREACHED */
-    return NULL;
+    return;
 }
 
 /*
@@ -70,6 +77,9 @@ tabhashunlkbuf(struct tabhashbuf **buf)
     return;
 }
 
+#define TABHASH_REMOVE -1
+#define TABHASH_SEARCH  0
+
 /* convenience macros */
 /* allocate new hash chain table */
 #define tabhashalloctab() calloc(1, sizeof(struct tabhashbuf))
@@ -77,120 +87,4 @@ tabhashunlkbuf(struct tabhashbuf **buf)
 #define tabhashfind(tab, key) tabhashsearch(tab, key, TAB_HASH_SEARCH)
 /* find and remove a hash entry */
 #define tabhashdel(tab, key)  tabhashsearch(tab, key, TAB_HASH_REMOVE)
-
-#define TABHASH_REMOVE -1
-#define TABHASH_SEARCH  0
-static __inline__ uintptr_t
-tabhashsearch(struct tabhashbuf **hash, uintptr_t key, long op)
-{
-    unsigned long      hkey = TABHASH_FUNC(key);
-    uintptr_t          val;
-    struct tabhashbuf *buf;
-    struct tabhashbuf *bptr;
-    TABHASH_ITEM_T    *item;
-    uintptr_t          mask;
-    m_atomic_t         src;
-    m_atomic_t         n;
-    long               ni;
-    long               ndx;
-
-    tabhashlkbuf(&hash[hkey]);
-    buf = (void *)((uintptr_t)hash[hkey] & ~TABHASH_BUF_LK_BIT);
-    if (buf) {
-        do {
-            n = buf->hdr.n;
-            bptr = buf->tab;
-            do {
-                ni = min(n, 8);
-                if (ni) {
-                    /*
-                     * - if item found, the mask will be -1; all 1-bits),
-                     *   and val will be the item address
-                     * - if not found, the mask will be 0 and so will val
-                     */
-                    val = 0;
-                    switch (ni) {
-                        default:
-                        case 8:
-                            item = &bptr[7];
-                            mask = -(item->key == key);
-                            mask &= (uintptr_t)item;
-                            val |= mask;
-                        case 7:
-                            item = &bptr[6];
-                            mask = -(item->key == key);
-                            mask &= (uintptr_t)item;
-                            val |= mask;
-                        case 6:
-                            item = &bptr[5];
-                            mask = -(item->key == key);
-                            mask &= (uintptr_t)item;
-                            val |= mask;
-                        case 5:
-                            item = &bptr[4];
-                            mask = -(item->key == key);
-                            mask &= (uintptr_t)item;
-                            val |= mask;
-                        case 4:
-                            item = &bptr[3];
-                            mask = -(item->key == key);
-                            mask &= (uintptr_t)item;
-                            val |= mask;
-                        case 3:
-                            item = &bptr[2];
-                            mask = -(item->key == key);
-                            mask &= (uintptr_t)item;
-                            val |= mask;
-                        case 2:
-                            item = &bptr[1];
-                            mask = -(item->key == key);
-                            mask &= (uintptr_t)item;
-                            val |= mask;
-                        case 1:
-                            item = &bptr[0];
-                            mask = -(item->key == key);
-                            mask &= (uintptr_t)item;
-                            val |= mask;
-                        case 0:
-
-                            break;
-                    }
-                    if (val) {
-                        item = (TABHASH_ITEM_T *)val;
-                        if (op == TABHASH_REMOVE) {
-                            n--;
-                            src = n;
-                            ndx = item - &buf->tab[0];
-                            if (!n) {
-                                /* TODO: deallocate table or keep it */
-                            } else if (ndx != src) {
-                                buf->tab[ndx] = buf->tab[src];
-                                buf->tab[src].key = key;
-                                buf->tab[src].val = TABHASH_VAL_NONE;
-                            } else {
-                                buf->tab[ndx].key = 0;
-                                buf->tab[ndx].val = TABHASH_VAL_NONE;
-                            }
-                            buf->hdr.n = n;
-                            /*
-                             * TODO: implement add to front caching of items
-                             */
-                        }
-                        tabhashunlkbuf(&hash[hkey]);
-
-                        return val;
-                    }
-                    bptr += ni;
-                    n -= ni;
-                } else {
-                    ndx = 0;
-                    buf = buf->hdr.chain;
-                }
-            } while (ni);
-        } while (buf);
-        tabhashunlkbuf(&hash[hkey]);
-    }
-
-    return val;
-}
 

@@ -75,7 +75,7 @@ memgettls(size_t size)
                 if (n > 1) {
                     m_atomwrite((m_atomic_t *)slot, (m_atomic_t)slab);
                 }
-                thashadd(g_mem.hash, memblkid(ptr), (uintptr_t)slab);
+                tabhashadd(g_mem.hash, memblkid(ptr), (uintptr_t)slab);
             }
         }
         if (!ptr) {
@@ -101,7 +101,7 @@ memgetglob(size_t size)
     if (size > MEM_MAX_MID_SIZE) {
         ptr = mapanon(-1, membigsize(size));
         if (ptr) {
-            thashadd(g_mem.hash, memblkid(ptr), (uintptr_t)size);
+            tabhashadd(g_mem.hash, memblkid(ptr), (uintptr_t)size);
         }
     } else {
         _memcalcmidpool(size, pool);
@@ -129,7 +129,7 @@ memgetglob(size_t size)
                         if (n > 1) {
                             m_atomwrite((m_atomic_t *)slot, (m_atomic_t)slab);
                         }
-                        thashadd(g_mem.hash, memblkid(ptr), (uintptr_t)slab);
+                        tabhashadd(g_mem.hash, memblkid(ptr), (uintptr_t)slab);
                     }
                 }
             }
