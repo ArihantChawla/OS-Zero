@@ -9,7 +9,6 @@ tabhashadd(struct tabhashbuf **hash, uintptr_t key, uintptr_t val)
     unsigned long      hkey = TABHASH_FUNC(key);
     struct tabhashbuf *buf;
     TABHASH_ITEM_T    *item;
-    TABHASH_ITEM_T    *iptr;
     m_atomic_t         n;
     long               ni;
 
@@ -49,7 +48,8 @@ tabhashadd(struct tabhashbuf **hash, uintptr_t key, uintptr_t val)
 
 /*
  * array hash, chains tables of items instead of single ones to avoid excess
- * pointer data dependencies/chase
+ * pointer data dependencies/chase; if item is found and op is TABHASH_REMOVE,
+ * the object is removed from the hash table
  */
 static __inline__ uintptr_t
 tabhashsearch(struct tabhashbuf **hash, uintptr_t key, long op)
