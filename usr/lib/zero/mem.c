@@ -189,7 +189,7 @@ memzeroblk(void *ptr, size_t size)
 static void *
 memgetblk(size_t size, size_t align, long zero)
 {
-    void   *ptr;
+    void   *ptr = NULL;
     size_t  sz = max(size, MEM_MIN_SIZE);
     size_t  aln = max(align, MEM_MIN_ALIGN);
 
@@ -205,7 +205,8 @@ memgetblk(size_t size, size_t align, long zero)
     }
     if (memblkistls(sz)) {
         ptr = memgettls(sz);
-    } else {
+    }
+    if (!ptr) {
         ptr = memgetglob(sz);
     }
     if (zero) {
