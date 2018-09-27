@@ -13,7 +13,7 @@
 #include <mach/param.h>
 #include <mach/asm.h>
 
-typedef m_atomic_t zerofmtx;
+typedef volatile m_atomic_t zerofmtx;
 
 /*
  * Special thanks to Matthew 'kinetik'

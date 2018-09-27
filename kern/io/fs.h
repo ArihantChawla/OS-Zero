@@ -12,9 +12,9 @@
 #define FS_NO_DIRCACHE (1 << 0)
 /* struct dcent * mnt(struct fs *fs, long flg, const char *dev, void *opts); */
 struct fs {
-    struct mod      *mod;        // owner module
-    const char      *name;       // e.g., VFS
-    long             type;       // e.g. FSVFS
+    void            *drv;
+    const char      *name;      // e.g. VFS
+    long             type;      // e.g. FSVFS
     long             flg;
     struct supblk *(*sbget)(struct fs *, long, char *, void *);
     void           (*sbkill)(struct supblk *);

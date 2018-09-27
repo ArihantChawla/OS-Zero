@@ -54,15 +54,15 @@ tabhashadd(struct tabhashbuf **hash, uintptr_t key, uintptr_t val)
 static __inline__ uintptr_t
 tabhashsearch(struct tabhashbuf **hash, uintptr_t key, long op)
 {
-    unsigned long      hkey = TABHASH_FUNC(key);
+    unsigned long      hkey = TABHASH_FUNC(key); // hash table index
     uintptr_t          val;
     struct tabhashbuf *buf;
     TABHASH_ITEM_T    *item;
     TABHASH_ITEM_T    *iptr;
     uintptr_t          mask;
     m_atomic_t         src;
-    m_atomic_t         n;
-    long               ni;
+    m_atomic_t         n; // total number of table items
+    long               ni; // # of items
     long               ndx;
 
     tabhashlkbuf(&hash[hkey]);

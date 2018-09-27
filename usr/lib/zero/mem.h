@@ -116,7 +116,6 @@ memlkptr(m_atomicptr_t *ptr)
 }
 
 /* memory slab with buffer-stack */
-struct memslab;
 #define MEM_SLAB_SIZE (2 * PAGESIZE)
 #define MEM_SLAB_BLKS (PAGESIZE / sizeof(void *))
 struct memslab {

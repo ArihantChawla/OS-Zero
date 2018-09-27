@@ -12,15 +12,15 @@
 #include <kern/io/vfs.h>
 
 struct fileops {
-    struct mod  *mod;
-    long       (*open)(struct desc *, struct file *);
-    long       (*lock)(struct desc *, long op, struct filelock *); /* FIXME */
-    loff_t     (*seek)(struct desc *, loff_t, long);
-    ssize_t    (*read)(struct desc *, __user void *, size_t, loff_t *);
-    ssize_t    (*write)(struct desc *, const void __user *, size_t, loff_t *);
-    ssize_t    (*readv)(struct desc *, const struct iovec *, size_t, loff_t *);
-    ssize_t    (*writev)(struct desc *, const struct iovec *, size_t, loff_t *);
-    long       (*close)(struct desc *, struct file *);
+    void     *drv:
+    long    (*open)(struct desc *, struct file *);
+    long    (*lock)(struct desc *, long op, struct filelock *); /* FIXME */
+    loff_t  (*seek)(struct desc *, loff_t, long);
+    ssize_t (*read)(struct desc *, __user void *, size_t, loff_t *);
+    ssize_t (*write)(struct desc *, const void __user *, size_t, loff_t *);
+    ssize_t (*readv)(struct desc *, const struct iovec *, size_t, loff_t *);
+    ssize_t (*writev)(struct desc *, const struct iovec *, size_t, loff_t *);
+    long    (*close)(struct desc *, struct file *);
 };
 
 struct fileatr {

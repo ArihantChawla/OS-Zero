@@ -1,7 +1,7 @@
 # Thanks for this script go to pecorade; I just did cosmetic changes... // vendu
 
 #! /bin/sh
-ISO_DIRECTORY="zero_iso"
+ISO_DIRECTORY="zeroiso"
 KERN_IMAGE="zero"
 
 echo "Building GRUB2"

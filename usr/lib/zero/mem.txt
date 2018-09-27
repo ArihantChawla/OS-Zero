@@ -14,5 +14,9 @@ allocation classes
 - middle-size allocations are multiples of 4 * PAGESIZE up to 128 * PAGESIZE
 - big allocations are individuals memory-mappings and multiples of PAGESIZE
   bytes
+
+per-thread allocations
+----------------------
+
 - small and run allocations are queue in thread-local buckets
 
