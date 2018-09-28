@@ -3,7 +3,9 @@
 build()
 {
     echo "Configuring GRUB"
-    ./autogen.sh
+    if !test -f config.h
+       ./autogen.sh
+    fi
     ./configure --prefix="$topdir/build" --target=i686 || exit 1
     echo "Building GRUB"
     make -j 5 || exit 1
@@ -17,7 +19,7 @@ topdir=`pwd`
 if test -d grub ; then
     echo "Updating GRUB"
     cd grub
-    git pull || build
+    git pull && build
 else
     echo "Fetching GRUB"
     git clone git://git.savannah.gnu.org/grub.git && cd grub && build
