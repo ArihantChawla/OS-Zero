@@ -7,8 +7,12 @@
 #include <zero/trix.h>
 #include <zero/randklc.h>
 
+#define MEM_CACHELINE_ALIGNMENT 1 // we prefer this to align our locks etc.
+
 /* minimum allocation block size */
-#if defined(__BIGGEST_ALIGNMENT__)
+#if defined(MEM_CACHELINE_ALIGNMENT)
+#define MEM_ALIGN_SHIFT CLSIZELOG2
+#elif defined(__BIGGEST_ALIGNMENT__)
 #define MEM_MIN_ALIGN   __BIGGEST_ALIGNMENT__
 #if (__BIGGEST_ALIGNMENT__ == 8)
 #define MEM_ALIGN_SHIFT 3
@@ -18,10 +22,10 @@
 #define MEM_ALIGN_SHIFT 5
 #endif
 #else
-#define MEM_MIN_ALIGN   CLSIZE
 #define MEM_ALIGN_SHIFT CLSIZELOG2
 #endif
-#define MEM_MIN_SIZE    MEM_MIN_ALIGN
+#define MEM_MIN_SIZE    (1U << MEM_ALIGN_SHIFT)
+#define MEM_MIN_ALIGN   MEM_MIN_SIZE
 
 /* custom allocator types */
 /* size of machine word/integer */
@@ -88,7 +92,7 @@
         MEMUWORD_T _res = sz;                                           \
                                                                         \
         _res--;                                                         \
-        _res >>= MEM_MID_UNIT_SHIFT + PAGESIZELOG2;                     \
+        _res >>= MEM_MID_PAGE_SHIFT + PAGESIZELOG2;                     \
         (pool) = _res;                                                  \
     } while (0)
 

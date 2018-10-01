@@ -18,9 +18,10 @@ THREADLOCAL struct memtls *g_memtls;
 
 #define MEM_TLS_TRIES      8
 #define MEM_GLOB_TRIES     32
-#define memblkistls(sz)    ((sz) <= MEM_MAX_RUN_SIZE)
+#define memblkistls(sz)    ((sz) <= MEM_RUN_MAX_SIZE)
 
-struct memslab * memmapslab(size_t pool, size_t n, size_t bsz, uint8_t type);
+static struct memslab * memmapslab(size_t pool, size_t n,
+                                   size_t blksize, uintptr_t type);
 
 void
 meminit(void)
@@ -42,7 +43,7 @@ memgettls(size_t size)
     size_t           pool;
     intptr_t         n;
 
-    if (size <= MEM_MAX_BLK_SIZE) {
+    if (size <= MEM_BLK_MAX_SIZE) {
         _memcalcblkpool(size, pool);
         slot = &g_memtls->blktab[pool];
     } else {
@@ -59,7 +60,7 @@ memgettls(size_t size)
                 m_atomwrite((m_atomic_t *)slot, (m_atomic_t)head);
             }
         } else {
-            if (size <= MEM_MAX_BLK_SIZE) {
+            if (size <= MEM_BLK_MAX_SIZE) {
                 slab = memmapslab(pool,
                                   memnumblk(pool), memblksize(pool),
                                   MEM_BLK_SLAB);
@@ -98,7 +99,7 @@ memgetglob(size_t size)
     size_t           pool;
     intptr_t         n;
 
-    if (size > MEM_MAX_MID_SIZE) {
+    if (size > MEM_MID_MAX_SIZE) {
         ptr = mapanon(-1, membigsize(size));
         if (ptr) {
             tabhashadd(g_mem.hash, memblkid(ptr), (uintptr_t)size);
@@ -218,28 +219,56 @@ memgetblk(size_t size, size_t align, long zero)
 }
 
 struct memslab *
-memmapslab(size_t pool, size_t n, size_t bsz, uint8_t type)
+meminitslab(size_t blksize, size_t n)
 {
-    struct memslab  *slab = mapanon(-1, MEM_SLAB_SIZE);
-    uint8_t         *ptr = mapanon(-1, n * bsz);
-    void           **pptr;
+    struct memslab  *slab = mapanon(-1, sizeof(struct memslab));
+    void           **stk;
 
-    if (!slab || !ptr) {
+    if (n <= MEM_SLAB_TAB_ITEMS / 2) {
+        slab->stk = slab->tab;
+    } else {
+        stk = mapanon(-1, 2 * n * sizeof(void *));
+        if (!stk) {
+            unmapanon(slab, sizeof(struct memslab));
+
+            return NULL;
+        }
+        slab->stk = stk;
+    }
+
+    return slab;
+}
+
+static struct memslab *
+memmapslab(size_t pool, size_t n, size_t blksize, uintptr_t type)
+{
+    size_t           sz = n * blksize;
+    struct memslab  *slab = meminitslab(blksize, n);
+    uint8_t         *ptr;
+    void           **tab;
+
+    if (!slab) {
         fprintf(stderr, "MEM: failed to map slab header\n");
 
         exit(1);
     }
-    pptr = slab->tab;
+    ptr = mapanon(-1, sz);
+    if (!ptr) {
+        fprintf(stderr, "MEM: failed to map slab of %ld bytes\n", (long)sz);
+
+        exit(1);
+    }
+    tab = slab->stk;
     slab->base = ptr;
     slab->pool = pool;
     slab->nblk = n;
-    slab->bsz = bsz;
+    slab->bsz = blksize;
     slab->ndx = 0;
-    slab->type = type;
+    slab->info = type;
     while (n--) {
-        *pptr = ptr;
-        pptr++;
-        ptr += bsz;
+        *tab = ptr;
+        tab++;
+        ptr += blksize;
     }
 
     return slab;
