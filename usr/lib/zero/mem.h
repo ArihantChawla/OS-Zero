@@ -47,15 +47,18 @@
 #define MEM_TYPE_BITS       2 // # of bits used for slab type
 #define MEM_TYPE_MASK       ((1U << MEM_SLAB_TYPE_BITS) - 1)
 #define MEM_INFO_BITS       PAGESIZELOG2 // info, minimum 12
+/* small-size allocation blocks */
 #define MEM_BLK_BITS        (MEM_SLAB_INFO_BITS - MEM_SLAB_TYPE_BITS) // ID bits
 #define MEM_BLK_PAGE_BITS   (PTRBITS - MEM_INFO_BITS)
 #define MEM_BLK_MAX_SIZE    (PAGESIZE / 2)
 #define MEM_BLK_POOLS       PAGESIZELOG2
 #define MEM_BLK_SLAB_SIZE   (8 * PAGESIZE)
+/* multiples-of-page run allocations */
 #define MEM_RUN_MAX_PAGES   32
 #define MEM_RUN_POOLS       MEM_RUN_MAX_PAGES
 #define MEM_RUN_MAX_SIZE    (MEM_RUN_MAX_PAGES * PAGESIZE)
 #define MEM_RUN_SLAB_SIZE   MEM_RUN_MAX_SIZE
+/* mid-size allocations */
 #define MEM_MID_MIN_PAGES   (2 * MEM_RUN_MAX_PAGES)
 #define MEM_MID_MAX_PAGES   512
 #define MEM_MID_MIN_SIZE    (PAGESIZE * MEM_MID_MIN_PAGES)
@@ -66,21 +69,17 @@
 
 /* slab book-keeping info */
 #define MEM_PAGE_MASK       (~(((uintptr_t)1 << PAGESIZELOG2) - 1))
-#define memblkpage(adr)     ((uintptr_t)(ptr) & MEMPAGEMASK)
+#define memblkpage(adr)     ((uintptr_t)(ptr) & MEM_PAGE_MASK)
 #define mempagenum(adr)     ((uintptr_t)(ptr) >> PAGESIZELOG2)
 #define memblktype(adr)     ((uintptr_t)adr & MEM_BLK_TYPE_MASK)
 #define memblkid(adr)       ((uintptr_t)adr & MEM_BLK_MASK)
 
 /* per-pool # of allocation blocks */
 #define memnumblk(pool)                                                 \
-    (MEM_BLK_SLAB_SIZE >> (pool))
-#define memnumrun(pool)                                                 \
-    (memfastdiv(MEM_RUN_MAX_PAGES, (pool) + 1))
-#define memnummid(pool)                                                 \
-    (memfastdiv(MEM_MID_MAX_PAGES, ((pool) + 1) << MEM_MID_PAGE_SHIFT))
+    (MEM_BLK_SLAB_SIZE >> (MEM_ALIGN_SHIFT + (pool)))
 
 /* [per-pool] allocation sizes */
-#define memblksize(pool) ((size_t)1 << (pool))
+#define memblksize(pool) ((size_t)1 << (MEM_ALIGN_SHIFT + (pool)))
 #define memrunsize(pool) ((size_t)PAGESIZE * ((pool) + 1))
 #define memmidsize(pool) (MEM_MID_MIN_SIZE + (PAGESIZE << MEM_MID_PAGE_SHIFT) * pool)
 #define membigsize(sz)   rounduppow2(sz, PAGESIZE)
