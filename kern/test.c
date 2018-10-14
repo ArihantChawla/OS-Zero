@@ -4,7 +4,7 @@
 #include <kern/asm.h>
 #include <kern/unit/x86/pic.h>
 
-NOINLINE
+NOINLINE NORETURN
 void
 schedloop(void)
 {
@@ -18,8 +18,5 @@ schedloop(void)
         /* wait for interrupt */
         k_waitint();
     } while (1);
-
-    /* NOTREACHED */
-    return;
 }
 

@@ -306,7 +306,7 @@ schedsetzombie(struct proc *proc)
 
 /* switch tasks */
 //schedswitchtask(struct task *curtask)
-FASTCALL struct task *
+FASTCALL NORETURN void
 schedswitchtask(struct task *curtask)
 {
     //    long                   unit = k_curcpu->unit;
@@ -327,7 +327,7 @@ schedswitchtask(struct task *curtask)
     if (!curtask) {
         /* kernel initialisations are still taking place */
 
-        return NULL;
+        m_taskjmp(&curtask->m_task);
     }
     switch (state) {
         case TASKNEW:
@@ -375,8 +375,7 @@ schedswitchtask(struct task *curtask)
                         }
                         fmtxunlk(&set->lk);
 
-                        //                        m_taskjmp(&task->m_task);
-                        return task;
+                        m_taskjmp(&task->m_task);
                     }
                 }
             }
@@ -406,8 +405,7 @@ schedswitchtask(struct task *curtask)
                     }
                     fmtxunlk(&set->lk);
 
-                    //                    m_taskjmp(&task->m_task);
-                    return task;
+                    m_taskjmp(&task->m_task);
                 }
             }
         }
@@ -420,10 +418,7 @@ schedswitchtask(struct task *curtask)
         k_intron();
         m_waitint();
     } while (1);
-    //    m_taskjmp(&task->m_task);
-
-    /* NOTREACHED */
-    return curtask;
+    m_taskjmp(&task->m_task);
 }
 
 #if 0
@@ -436,7 +431,7 @@ schedyield(void)
 }
 #endif
 
-void
+NORETURN void
 schedyield(void)
 {
     struct task *oldtask = k_getcurtask();
@@ -447,8 +442,6 @@ schedyield(void)
     //    //    if (task != oldtask) {
     //    m_taskjmp(&task->m_task);
     //    }
-
-    return;
 }
 
 #endif /* ZEROSCHED */

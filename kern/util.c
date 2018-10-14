@@ -246,7 +246,7 @@ kbfill(void *adr, uint8_t byte, m_ureg_t len)
     return;
 }
 
-int
+PURE int
 kmemcmp(const void *ptr1,
         const void *ptr2,
         m_ureg_t nb)
@@ -268,7 +268,7 @@ kmemcmp(const void *ptr1,
     return retval;
 }
 
-int
+PURE int
 kstrcmp(const char *str1,
         const char *str2)
 {
@@ -322,7 +322,7 @@ kstrtok(void *ptr, int ch)
  * scan bitmap for first zero-bit past ofs
  * return -1 if not found, offset otherwise
  */
-long
+PURE long
 bfindzerol(long *bmap, long ofs, long nbit)
 {
     long *ptr;

@@ -1,7 +1,7 @@
 #include <kern/conf.h>
 #include <stddef.h>
 #include <stdint.h>
-#if (MEMTEST)
+#if defined(MEMTEST)
 #include <stdlib.h>
 #endif
 #include <errno.h>
@@ -21,7 +21,7 @@
 #include <kern/unit/x86/link.h>
 #include <kern/unit/x86/trap.h>
 #endif
-#if (MEMTEST)
+#if defined(MEMTEST)
 #include <stdio.h>
 #include <string.h>
 #define kprintf printf
@@ -61,7 +61,7 @@ memalloc(size_t nb, long flg)
     if (bktid >= MEMSLABSHIFT) {
         ptr = slaballoc(virtzone, sz, flg);
         if (ptr) {
-#if (!MEMTEST)
+#if !defined(MEMTEST)
             vminitvirt(ptr, sz, vmflg);
 #endif
             slab++;
@@ -86,7 +86,7 @@ memalloc(size_t nb, long flg)
         } else {
             ptr = slaballoc(virtzone, sz, flg);
             if (ptr) {
-#if (!MEMTEST)
+#if !defined(MEMTEST)
                 vminitvirt(ptr, sz, vmflg);
 #endif
                 u8ptr = ptr;

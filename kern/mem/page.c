@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
-#if (MEMTEST)
+#if defined(MEMTEST)
 #include <stdio.h>
 #endif
 #include <limits.h>

@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include <mach/param.h>
 
+/*
+ * NOTES
+ * -----
+ * - m_atomic_t must be big-enough to hold pointer values
+ */
+
 /* atomic types */
 #if (PTRSIZE == 8)
 typedef int64_t    m_atomic_t;

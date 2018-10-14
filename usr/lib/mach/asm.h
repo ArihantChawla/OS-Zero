@@ -1,12 +1,6 @@
 #ifndef __MACH_ASM_H__
 #define __MACH_ASM_H__
 
-/*
- * TODO
- * ----
- * - m_cmpswapbit() - bit-level atomic compare and swap
- */
-
 #include <mach/atomic.h>
 
 /* for systems without GNU C, we define these in e.g. <mach/ia32/asm.h> */

@@ -10,7 +10,7 @@
 static struct sys k_sys ALIGNED(PAGESIZE);
 
 void
-sysinit(void)
+sysinitconf(void)
 {
     volatile struct m_cpucacheinfo  cbuf;
     long                           *tab = k_sys.conf.tab;
@@ -65,7 +65,7 @@ sysinit(void)
     return;
 }
 
-long
+PURE long
 sysgetconf(int scval)
 {
     long *ptr = k_sys.conf.tab;

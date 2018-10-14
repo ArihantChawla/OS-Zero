@@ -23,7 +23,7 @@ _divu131071(unsigned int uval)
 /* hashpwj from the dragon book as supplied on the internet */
 //#define PRIME 131071    /* was 211 in the implementation I saw */
 
-unsigned int
+PURE unsigned int
 hashpjw(char *str)
 {
     unsigned char *ucp; // changed from char
@@ -47,7 +47,7 @@ hashpjw(char *str)
 
 #define MULT 31
 /* this one was on the net; said to be from the book programming pearls */
-unsigned int
+PURE unsigned int
 pphash(char *str)
 {
     unsigned char *ucp = (unsigned char *)str;
@@ -74,7 +74,7 @@ pphash(char *str)
 /* Ramakrishna & Zobel hash function, improvised for 32- and 64-bit keys*/
 #define SHLCNT 7
 #define SHRCNT 2
-uintptr_t
+PURE uintptr_t
 razohash(void *ptr, size_t len, size_t nbit)
 {
 #if (PTRSIZE == 8)
@@ -114,7 +114,7 @@ razohash(void *ptr, size_t len, size_t nbit)
 }
 
 /* this hash function is said to have come from Donald Knuth */
-uint32_t
+CONST uint32_t
 dkhash(unsigned long u)
 {
     unsigned long hash = u;
@@ -127,7 +127,7 @@ dkhash(unsigned long u)
 
 /* the following two snippets were posted on stackoverflow by Thomas Mueller */
 
-uint32_t
+CONST uint32_t
 tmhash32(uint32_t u)
 {
     u = ((u >> 16) ^ u) * 0x45d9f3b;
@@ -137,7 +137,7 @@ tmhash32(uint32_t u)
     return u;
 }
 
-uint64_t
+CONST uint64_t
 tmhash64(uint64_t u)
 {
     u = (u ^ (u >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
@@ -149,7 +149,7 @@ tmhash64(uint64_t u)
 
 /* this one is Austin Appleby's MurmurHash3 */
 
-uint64_t
+CONST uint64_t
 MurmurHash3Mixer(uint64_t u)
 {
     u ^= (u >> 33);
@@ -163,7 +163,7 @@ MurmurHash3Mixer(uint64_t u)
 
 /* I found these on the Internet, too - again, from Thomas Mueller */
 
-unsigned int
+CONST unsigned int
 tmhash2(unsigned int u)
 {
     u = ((u >> 16) ^ u) * 0x45d9f3b;
@@ -173,7 +173,7 @@ tmhash2(unsigned int u)
     return u;
 }
 
-unsigned int
+CONST unsigned int
 tmunhash2(unsigned int u)
 {
     u = ((u >> 16) ^ u) * 0x119de1f3;
@@ -185,7 +185,7 @@ tmunhash2(unsigned int u)
 
 /* here is a version of FNV1A (Fowler-Noll-Vo) by Georgi 'Kaze' 'Sanmayce' :) */
 
-uint32_t
+PURE uint32_t
 FNV1A_Hash_WHIZ(const char *str, size_t wsz)
 {
     const uint32_t  prime = 1607;
@@ -227,7 +227,7 @@ FNV1A_Hash_WHIZ(const char *str, size_t wsz)
  * 127, 8191, 131071, 524287, and 2147483647.
  */
 
-int
+CONST int
 mprimod(int k, int p, int s)
 {
     int i = (k & p) + (k >> s);
@@ -235,7 +235,7 @@ mprimod(int k, int p, int s)
     return (i >= p) ? i - p : i;
 }
 
-uint32_t
+CONST uint32_t
 hashint32(uint32_t key)
 {
     key ^= key >> 16;

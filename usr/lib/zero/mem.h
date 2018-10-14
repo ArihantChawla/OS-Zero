@@ -40,48 +40,70 @@
  *   - other allocations have page-entries in g_mem.hashtab
  */
 /* allocation types stored together with slab address */
-#define MEM_BLK_MASK        (~(MEM_MIN_SIZE - 1))
-#define MEM_BLK_SLAB        1
-#define MEM_RUN_SLAB        2
-#define MEM_MID_SLAB        3
-#define MEM_TYPE_BITS       2 // # of bits used for slab type
-#define MEM_TYPE_MASK       ((1U << MEM_SLAB_TYPE_BITS) - 1)
-#define MEM_INFO_BITS       PAGESIZELOG2 // info, minimum 12
+#define MEM_BLK_MASK       (~(MEM_MIN_SIZE - 1))
+#define MEM_BLK_SLAB       1 // small [TLS-buffered] allocations
+#define MEM_RUN_SLAB       2 // [TLS-buffered] page-run allocations
+#define MEM_MID_SLAB       3 // [global] mid-size allocations
+#define MEM_BIG_SLAB       4 // [global] big-size allocations
+#define MEM_TLS_SLAB_BIT   0x08
+#define MEM_TYPE_BITS      4 // # of bits used for slab type
+#define MEM_TYPE_MASK      ((1U << MEM_SLAB_TYPE_BITS) - 1)
+#define MEM_INFO_BITS      PAGESIZELOG2 // info, minimum 12
 /* small-size allocation blocks */
-#define MEM_BLK_BITS        (MEM_SLAB_INFO_BITS - MEM_SLAB_TYPE_BITS) // ID bits
-#define MEM_BLK_PAGE_BITS   (PTRBITS - MEM_INFO_BITS)
-#define MEM_BLK_MAX_SIZE    (PAGESIZE / 2)
-#define MEM_BLK_POOLS       PAGESIZELOG2
-#define MEM_BLK_SLAB_SIZE   (8 * PAGESIZE)
+#define MEM_BLK_BITS       (MEM_INFO_BITS - MEM_TYPE_BITS) // ID bits
+#define MEM_BLK_IDS        (1L << MEM_BLK_BITS)
+#define MEM_BLK_TAB_SIZE                                                \
+    rounduppow2(2 * MEM_BLK_MAX_IDS * sizeof(uintptr_t), PAGESIZE)
+#define MEM_BLK_PAGE_BITS  (PTRBITS - MEM_INFO_BITS)
+#define MEM_BLK_MAX_SIZE   (PAGESIZE / 2)
+#define MEM_BLK_POOLS      PAGESIZELOG2
+#define MEM_BLK_SLAB_SIZE  (4 * PAGESIZE)
+#define MEM_BLK_MAX_IDS    (min(MEM_BLK_IDS, MEM_BLK_SLAB_SIZE / MEM_MIN_SIZE))
 /* multiples-of-page run allocations */
-#define MEM_RUN_MAX_PAGES   32
-#define MEM_RUN_POOLS       MEM_RUN_MAX_PAGES
-#define MEM_RUN_MAX_SIZE    (MEM_RUN_MAX_PAGES * PAGESIZE)
-#define MEM_RUN_SLAB_SIZE   MEM_RUN_MAX_SIZE
+#define MEM_RUN_MAX_PAGES  32
+#define MEM_RUN_POOLS      MEM_RUN_MAX_PAGES
+#define MEM_RUN_MAX_SIZE   (MEM_RUN_MAX_PAGES * PAGESIZE)
+#define MEM_RUN_SLAB_SIZE  (2 * MEM_RUN_MAX_SIZE)
 /* mid-size allocations */
-#define MEM_MID_MIN_PAGES   (2 * MEM_RUN_MAX_PAGES)
-#define MEM_MID_MAX_PAGES   512
-#define MEM_MID_MIN_SIZE    (PAGESIZE * MEM_MID_MIN_PAGES)
-#define MEM_MID_MAX_SIZE    (MEM_MID_MAX_PAGES * PAGESIZE)
-#define MEM_MID_PAGE_SHIFT  2
-#define MEM_MID_POOLS       ((MEM_MID_MAX_PAGES - MEM_MID_MIN_PAGES) \
-                             >> MEM_MID_PAGE_SHIFT)
+#define MEM_MID_MIN_PAGES  (2 * MEM_RUN_MAX_PAGES)
+#define MEM_MID_MIN_SHIFT  6 // minimum of 64 pages
+#define MEM_MID_MAX_PAGES  512
+#define MEM_MID_POOLS                                                   \
+    ((MEM_MID_MAX_PAGES - MEM_MID_MIN_PAGES) >> MEM_MID_PAGE_SHIFT)
+#define MEM_MID_MIN_SIZE   (PAGESIZE * MEM_MID_MIN_PAGES)
+#define MEM_MID_MAX_SIZE   (MEM_MID_MAX_PAGES * PAGESIZE)
+#define MEM_MID_PAGE_SHIFT 2
+#define MEM_MID_UNIT_PAGES (1L << MEM_MID_PAGE_SHIFT)
+#define MEM_MID_POOLS      ((MEM_MID_MAX_PAGES - MEM_MID_MIN_PAGES) \
+                            >> MEM_MID_PAGE_SHIFT)
+#define MEM_MID_SLAB_PAGES (2 * MEM_MID_MAX_PAGES)
+#define MEM_MID_SLAB_SIZE  (MEM_MID_SLAB_PAGES * PAGESIZE)
+/* big allocations */
+#define MEM_BIG_SLAB_SHIFT 23
 
 /* slab book-keeping info */
-#define MEM_PAGE_MASK       (~(((uintptr_t)1 << PAGESIZELOG2) - 1))
-#define memblkpage(adr)     ((uintptr_t)(ptr) & MEM_PAGE_MASK)
-#define mempagenum(adr)     ((uintptr_t)(ptr) >> PAGESIZELOG2)
-#define memblktype(adr)     ((uintptr_t)adr & MEM_BLK_TYPE_MASK)
-#define memblkid(adr)       ((uintptr_t)adr & MEM_BLK_MASK)
+#define MEM_PAGE_MASK      (~(((uintptr_t)1 << PAGESIZELOG2) - 1))
+#define memblkpage(adr)    ((uintptr_t)(ptr) & MEM_PAGE_MASK)
+#define mempagenum(adr)    ((uintptr_t)(ptr) >> PAGESIZELOG2)
 
 /* per-pool # of allocation blocks */
-#define memnumblk(pool)                                                 \
-    (MEM_BLK_SLAB_SIZE >> (MEM_ALIGN_SHIFT + (pool)))
+#define memnumblk(pool) (MEM_BLK_SLAB_SIZE >> (3 + MEM_ALIGN_SHIFT + (pool)))
+#define memnumrun(pool)                                                 \
+    (fastu16divu16(MEM_RUN_SLAB_SIZE,                                   \
+                   ((pool) + 1) * PAGESIZE,                             \
+                   fastu16divu16tab))
+#define memnummid(pool)                                                 \
+    (fastu16divu16(MEM_MID_SLAB_PAGES,                                  \
+                   MEM_MID_MIN_PAGES + (pool) * MEM_MID_UNIT_PAGES,     \
+                   fastu16divu16tab))
+#define memnumbig(pool) (min(4, MEM_BIG_SLAB_SHIFT - (pool)))
 
 /* [per-pool] allocation sizes */
+
 #define memblksize(pool) ((size_t)1 << (MEM_ALIGN_SHIFT + (pool)))
 #define memrunsize(pool) ((size_t)PAGESIZE * ((pool) + 1))
-#define memmidsize(pool) (MEM_MID_MIN_SIZE + (PAGESIZE << MEM_MID_PAGE_SHIFT) * pool)
+#define memmidsize(pool)                                                \
+    (MEM_MID_MIN_SIZE + (pool) * (PAGESIZE << MEM_MID_PAGE_SHIFT))
 #define membigsize(sz)   rounduppow2(sz, PAGESIZE)
 
 /* allocation book-keeping */
@@ -111,33 +133,38 @@ memlkptr(m_atomicptr_t *ptr)
 }
 
 /* memory slab with buffer-stack */
-#define MEM_SLAB_SIZE (2 * PAGESIZE)
-#define MEM_SLAB_BLKS (PAGESIZE / sizeof(void *))
+#define MEM_SLAB_HDR_SIZE (2 * PAGESIZE)
+#define memmkinfo(pool, type) (((type) << 16) | pool)
+#define memgetpool(slab)      ((slab)->info & 0xffff)
+#define memgettype(slab)      ((slab)->info >> 16)
+#define memistls(type)        ((type) & MEM_TLS_SLAB_BIT)
 struct memslab {
-    void           **stk;  // allocation pointer table, used in stack-fashion
+    void           **stk;  // allocation pointer stack + table
     m_atomic_t       ndx;  // current index into allocation table
     uint8_t         *base; // slab/map base address
     struct memslab  *prev; // pointer to previous in list
     struct memslab  *next; // pointer to next in list
-    size_t           pool; // allocation pool
+    size_t           info; // allocation pool + type
     size_t           nblk; // number of total blocks
     size_t           bsz;  // block size in bytes
-    uintptr_t        info; // allocation pointer + type
-    void            *tab[VLA]; //
+    uintptr_t        tab[VLA]; // embedded pointer tabs where present
 };
 #define MEM_SLAB_TAB_ITEMS                                              \
-    ((PAGESIZE - sizeof(struct memslab)) / sizeof(void *))
+    ((MEM_SLAB_HDR_SIZE - offsetof(struct memslab, tab)) / sizeof(uintptr_t))
 
 #define MEM_TLS_SIZE PAGESIZE
 struct memtls {
-    struct memslab *blktab[MEM_BLK_POOLS];
-    struct memslab *runtab[MEM_RUN_POOLS];
+    struct memslab *blk[MEM_BLK_POOLS]; // tail is head->prev
+    struct memslab *run[MEM_RUN_POOLS]; // tail is head->prev
 };
 
-/* per-thread memory arena */
-struct memtlsqueue {
-    struct memtls  *tls;
-    struct memslab *queue;
+struct memglob {
+    struct lfq midq[MEM_MID_POOLS];
+}
+
+struct membuf {
+    struct memslab  *hdrq;
+    void           **tabq;
 };
 
 #define MEM_BLK_ID_BITS     16
@@ -162,7 +189,6 @@ struct memblk {
 #define MEM_HASH_ITEMS 16384
 struct mem {
     struct thashtab *hash[MEM_HASH_ITEMS];
-    struct memslab  *midtab[MEM_MID_POOLS];
     m_atomic_t       lk;
     uintptr_t        flg;
     uintptr_t        nbused;

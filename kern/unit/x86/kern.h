@@ -13,10 +13,12 @@ extern void picinit(void);
 extern void vgainitcon(int w, int h);
 extern void kbdinit(void);
 extern void mouseinit(void);
+extern void consinit(int w, int h);
+extern void mpinit(void);
 extern void logoprint(void);
 extern void tssinit(long id);
 extern void cpuinit(volatile struct cpu *cpu);
-extern long sysinit(void);
+extern long sysinitconf(void);
 extern long ioinitbuf(void);
 #if (VBE)
 extern void trapinitprot(void);

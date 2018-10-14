@@ -1,4 +1,4 @@
 #! /bin/sh
 
-rm -f *.o *.sym *~ zero *.s *.i *.bc
+rm -f *.o *.sym *~ zero *.s *.i *.bc *.log
 

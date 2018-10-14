@@ -82,7 +82,6 @@ SECTIONS {
 	util.o(.text)
 	util.o(.text.*)
 	util.o(.data)
-/*	util.o(.bss) */
 	ps2.o(.text)
 	ps2.o(.text.*)
 	ps2.o(.data)
@@ -92,17 +91,6 @@ SECTIONS {
 	vbe.o(.bss)
         test.o(.text)
         test.o(.text.*)
-/*
-	bmfonts.o(.text)
-	bmfonts.o(.data)
-	bmfonts.o(.bss)
-	tss.o(.text)
-	tss.o(.data)
-	tss.o(.bss)
-	debug.o(.text)
-	debug.o(.data)
-	debug.o(.bss)
-*/
 	. = ALIGN(PAGESIZE);
         _eboot = .;
     }

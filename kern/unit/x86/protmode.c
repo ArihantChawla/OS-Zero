@@ -11,7 +11,9 @@
 #include <kern/proc/kern.h>
 #include <kern/proc/proc.h>
 #include <kern/mem/mem.h>
+#include <kern/unit/x86/kern.h>
 #include <kern/mem/vm.h>
+#if 0
 #if 0
 #include <kern/mem/page.h>
 #endif
@@ -25,7 +27,6 @@
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/pic.h>
 #include <kern/unit/x86/pit.h>
-#include <kern/unit/x86/kern.h>
 #include <kern/unit/x86/link.h>
 #if (SMP) || (APIC)
 #include <kern/unit/ia32/mp.h>
@@ -40,6 +41,7 @@
 #include <kern/unit/x86/trap.h>
 #endif
 //#include <kern/unit/x86/asm.h>
+#endif
 
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
 extern uint8_t                   kernsysstktab[NCPU * KERNSTKSIZE];
@@ -182,7 +184,7 @@ kinitprot(unsigned long pmemsz)
             k_physmem.pagestat.nwire << (PAGESIZELOG2 - 10),
             k_physmem.pagestat.nphys << (PAGESIZELOG2 - 10));
 #endif
-    sysinit();
+    sysinitconf();
     schedinit();
 #if (HPET)
     /* initialise high precision event timers */

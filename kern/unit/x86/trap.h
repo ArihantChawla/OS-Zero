@@ -14,6 +14,8 @@
 
 #if !defined(__ASSEMBLER__)
 
+void trapinitidt(long unit);
+
 #if !defined(__x86_64__) && !defined(__amd64__)
 /* func is routine; ring is TRAPUSER or TRAPSYS */
 #define trapsetintrgate(p64, func, ring)                                \

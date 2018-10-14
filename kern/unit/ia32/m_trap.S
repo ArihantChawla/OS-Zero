@@ -543,6 +543,7 @@ _havestk:
 //	pushl	%eax			// store task pointer
 	call	schedswitchtask		// call scheduler function
 	/* schedswitchtask does not return normally */
+#if 0
 	/* continue the same task */
 //	popl	%ebx			// pop earlier task pointer
 	leal	20(%eax), %esp
@@ -555,6 +556,7 @@ _havestk:
 #endif
 	sti
 	iretl
+#endif
 
 .align	16
 

@@ -5,7 +5,7 @@
 
 struct k_mp k_mp;
 
-#if (SMP) || (APIC)
+#if defined(SMP) || defined(APIC)
 
 #include <stddef.h>
 #include <stdint.h>
@@ -76,7 +76,7 @@ mpprobe(uintptr_t adr, unsigned long len)
  * - the last KB of system base memory
  * - in the BIOS ROM between 0xf0000 and 0xfffff
  */
-struct mp *
+PURE struct mp *
 mpsearch(void)
 {
     uint32_t   adr = 0;

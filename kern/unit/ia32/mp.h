@@ -19,7 +19,6 @@
 #include <kern/unit/x86/mp.h>
 
 void          mpentry(void);
-void          mpinit(void);
 extern void * mpend;
 
 struct mp {

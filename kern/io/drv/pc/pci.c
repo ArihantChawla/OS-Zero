@@ -24,7 +24,7 @@ long                     pcifound;
 long                     pcindev;
 #endif
 
-struct pcidrvent *
+PURE struct pcidrvent *
 pcifinddrv(uint16_t vendor, uint16_t devid)
 {
     struct pcidrvent *ptr = pcidrvtab[vendor];

@@ -16,7 +16,7 @@ extern void schedyield(void);
 #if defined(ZEROSCHED)
 
 extern void                   schedinitset(void);
-extern FASTCALL struct task * schedswitchtask(struct task *curtask);
+extern FASTCALL NORETURN void schedswitchtask(struct task *curtask);
 extern void                   schedsetready(struct task *task);
 extern void                   schedsetstopped(struct task *task);
 extern void                   schedsetzombie(struct proc *proc);

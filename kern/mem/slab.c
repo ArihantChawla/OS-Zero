@@ -301,7 +301,7 @@ slabfree(struct memzone *zone, void *ptr)
     struct memmag *mag2;
 
     memlk(&zone->lk);
-#if (!MEMTEST)
+#if !defined(MEMTEST)
     vmfreephys(ptr, 1UL << bktid);
 #endif
     memsetmagfree(mag1);
