@@ -139,18 +139,25 @@ memlkptr(m_atomicptr_t *ptr)
 #define memgettype(slab)      ((slab)->info >> 16)
 #define memistls(type)        ((type) & MEM_TLS_SLAB_BIT)
 struct memslab {
-    void           **stk;  // allocation pointer stack + table
-    m_atomic_t       ndx;  // current index into allocation table
-    uint8_t         *base; // slab/map base address
     struct memslab  *prev; // pointer to previous in list
     struct memslab  *next; // pointer to next in list
     size_t           info; // allocation pool + type
+    m_atomic_t       ndx;  // current index into allocation table
+    void           **stk;  // allocation pointer stack + table
     size_t           nblk; // number of total blocks
+    uint8_t         *base; // slab/map base address
     size_t           bsz;  // block size in bytes
     uintptr_t        tab[VLA]; // embedded pointer tabs where present
 };
 #define MEM_SLAB_TAB_ITEMS                                              \
     ((MEM_SLAB_HDR_SIZE - offsetof(struct memslab, tab)) / sizeof(uintptr_t))
+
+#if (MEMTKTLK)
+struct mempool {
+    struct memslab    slabtab[ZEROTKTBKTITEMS];
+    struct zerotktbkt lkbkt;
+};
+#endif
 
 #define MEM_TLS_SIZE PAGESIZE
 struct memtls {
@@ -158,8 +165,13 @@ struct memtls {
     struct memslab *run[MEM_RUN_POOLS]; // tail is head->prev
 };
 
+#define MEMTKTLK 1
 struct memglob {
-    struct lfq midq[MEM_MID_POOLS];
+#if (MEMTKTLK)
+    struct mempool **midpool;
+#else
+    struct lfq     midq[MEM_MID_POOLS];
+#endif
 }
 
 struct membuf {

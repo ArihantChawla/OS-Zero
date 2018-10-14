@@ -227,6 +227,7 @@ memqueueslab(struct memslab *slab)
 static struct memslab *
 meminitslab(size_t pool, size_t n, size_t bsize, uintptr_t type)
 {
+    size_t           nleft = n;
     size_t           sz = n * bsize;
     struct memslab  *slab = memmapslab(n);
     uint8_t         *ptr;
@@ -249,7 +250,34 @@ meminitslab(size_t pool, size_t n, size_t bsize, uintptr_t type)
     slab->nblk = n;
     slab->bsz = bsize;
     slab->ndx = 0;
-    while (n--) {
+    do {
+        n = min(n, 8);
+        switch (n) {
+            case 8:
+                tab[7] = &ptr[7L * bsize];
+            case 7:
+                tab[6] = &ptr[6L * bsize];
+            case 6:
+                tab[5] = &ptr[5L * bsize];
+            case 5:
+                tab[4] = &ptr[4L * bsize];
+            case 4:
+                tab[3] = &ptr[3L * bsize];
+            case 3:
+                tab[2] = &ptr[2L * bsize];
+            case 2
+                tab[1] = &ptr[1L * bsize];
+            case 1:
+                tab[0] = &ptr[0L * bsize];
+            case 0:
+
+                break;
+        }
+        nleft -= n;
+        tab += 8;
+        ptr += 8 * bsize;
+    } while (nleft);
+    while (nleft--) {
         *tab = ptr;
         tab++;
         ptr += bsize;
@@ -414,6 +442,56 @@ memgetblk(size_t size, size_t align, long zero)
 
     return ptr;
 }
+
+#define memlkmidpool(mg, p)  zerotktlk(&(mg)->midpool[p].lkbkt)
+#define memgetmidslab(mg, p) (&(mg)->midpool[(p)].slab)
+
+#if (MEMTKTLK)
+#define MEMPOOLTRIES 64
+void *
+memgetpool(struct mempool *pool)
+{
+    void           *ptr = NULL;
+    struct memslab *slab = NULL;
+    long            ntry = MEMPOOLTRIES;
+    int32_t         rnd;
+    long            ndx;
+    long            nblk;
+
+    do {
+        rnd = qrand32();
+        rnd &= MEMTKTBKTITEMS - 1;
+        if (zerotkttrylk(&g_memglob.midpool[pool]->lkbkt.tab[rnd])) {
+            slab = &g_memglob.midpool[pool]->slabtab[rnd];
+            if (!slab) {
+                zerotktunlk(&g_memglob.midpool[pool]->lkbkt.tab[rnd]);
+
+                continue;
+            }
+
+            break;
+        } else {
+            m_waitspin();
+        }
+    } while (!slab && --ntry);
+    if (slab) {
+        ndx = slab->ndx;
+        nblk = slab->nblk;
+        ndx++;
+        if (ndx == nblk) {
+            if (slab->prev) {
+                slab->prev->next = slab->next;
+            } else {
+                g_memglob.midpool[pool]->slabtab[rnd]
+            }
+        }
+        ptr = slab->stk[ndx];
+        slab->ndx = ndx;
+    }
+
+    return ptr;
+}
+#endif
 
 /* action functions for lock-free queue */
 

@@ -15,8 +15,11 @@
 #endif
 #define TKTLKNSPIN 16384
 
+typedef TKTUNIONSIZE CLSIZE
+
 #if (TKTLKSIZE == 4)
 
+#define TKTSIZE    8
 union zerotktlk {
     volatile m_atomicu32_t uval;
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
@@ -30,11 +33,11 @@ union zerotktlk {
         uint16_t           val;
     } s;
 #endif
-    uint8_t           _pad[CLSIZE - sizeof(uint32_t) - 2 * sizeof(uint16_t)];
 };
 
 #elif (TKTLKSIZE == 8)
 
+#define TKTSIZE    16
 union zerotktlk {
     volatile m_atomicu64_t uval;
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
@@ -48,7 +51,11 @@ union zerotktlk {
         uint32_t           val;
     } s;
 #endif
-    uint8_t           _pad[CLSIZE - sizeof(uint64_t) - 2 * sizeof(uint32_t)];
+};
+
+#define ZEROTKTBKTITEMS (CLSIZE / TKTSIZE)
+struct zerotktbkt {
+    union zerotktlk tab[ZEROTKTBKTITEMS];
 };
 
 #endif /* TKTLKSIZE */
