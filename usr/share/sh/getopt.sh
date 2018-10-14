@@ -91,7 +91,6 @@ zero_setopt()
 	echo -n "invalid option $_OPT_"$opt
     else
 	if [ "$narg" -eq 1 ]; then
-	    echo "$opt = $val"
 	    if [ "$long" -eq 1 ]; then
 		if [ $# -eq 3 ]; then
 		    val=$3
@@ -173,13 +172,19 @@ zero_parseopt()
 			opt=""
 		    else
 			eval narg='$_HAVE_ARG_'$opt
-			if [ "$narg" -eq 0 ]; then
-			    zero_setopt $opt 0
-			fi
-			if [ -z "$_OPTS" ]; then
-			    _OPTS="$opt"
+			if [ ! -z "$narg" ]; then
+			    if [ "$narg" -eq 0 ]; then
+				zero_setopt $opt 0
+			    fi
+			    if [ -z "$_OPTS" ]; then
+				_OPTS="$opt"
+			    else
+				_OPTS=$_OPTS" $opt"
+			    fi
 			else
-			    _OPTS=$_OPTS" $opt"
+			    echo "invalid option $opt"
+
+			    exit 1
 			fi
 		    fi
 		fi
