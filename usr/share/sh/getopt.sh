@@ -83,8 +83,9 @@ zero_setopt()
     long=$2
     narg=0
 
-    eval narg='$_HAVE_ARG_'$opt
-    if [ -z "$narg" ]; then
+    if [ "$long" -eq 0 ]; then
+	eval narg='$_HAVE_ARG_'$opt
+    else
 	eval narg='$_HAVE_LONG_ARG_'$opt
     fi
     if [ -z "$narg" ]; then
@@ -145,13 +146,19 @@ zero_parseopt()
 			opt=""
 		    else
 			eval narg='$_HAVE_LONG_ARG_'$opt
-			if [ "$narg" -eq 0 ]; then
-			    zero_setopt $opt 1
-			fi
-			if [ -z "$_OPTS" ]; then
-			    _OPTS="$opt"
+			if [ ! -z "$narg" ]; then
+			    if [ "$narg" -eq 0 ]; then
+				zero_setopt $opt 1
+			    fi
+			    if [ -z "$_OPTS" ]; then
+				_OPTS="$opt"
+			    else
+				_OPTS=$_OPTS" $opt"
+			    fi
 			else
-			    _OPTS=$_OPTS" $opt"
+			    echo "invalid option $opt"
+
+			    exit 1
 			fi
 		    fi
 		fi
