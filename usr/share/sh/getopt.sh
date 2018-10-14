@@ -2,11 +2,11 @@
 
 zero_lastarg=""
 
-zero_printopt()
+debug_printopt()
 {
     opt=""
     long=0
-    narg=""
+    narg=0
 
     echo "OPTIONS"
     echo "-------"
@@ -23,17 +23,15 @@ zero_printopt()
 	if [ -z "$narg" ]; then
 	    eval narg='$_HAVE_LONG_ARG_'$opt
 	fi
-	if [ ! -z "$narg" ]; then
-	    if [ $narg -eq 1 ]; then
-		echo $opt" == $val"
-	    else
-		echo $opt
-	    fi
+	if [ "$narg" -eq 1 ]; then
+	    echo $opt" == $val"
+	else
+	    echo $opt
 	fi
     done
 }
 
-zero_printarg()
+debug_printarg()
 {
     arg=""
 
@@ -83,6 +81,7 @@ zero_setopt()
     long=$2
     narg=0
 
+    opt=`echo $opt | sed 's,^\([-]*\)\(.*\)\$,\2,'`
     if [ "$long" -eq 0 ]; then
 	eval narg='$_HAVE_ARG_'$opt
     else
@@ -125,46 +124,65 @@ zero_parseopt()
 {
     narg=0
     argsonly=0
-    opt=""
     arg=""
+    opt=""
+    val=""
+    long=0
 
     for arg
     do
 	case $arg in
 	    --*)
-		if [ "$argsonly" -eq 1 ]; then
-		    if [ -z "$_ARGS" ]; then
-			_ARGS="$arg"
-		    else
-			_ARGS=$_ARGS" $arg"
-		    fi
+		val=""
+		long=1
+		if [ "$narg" -eq 1 ]; then
+		    zero_setopt $opt 1 $arg
 		else
-		    opt=`echo $arg | sed 's,^\([-]*\)\(.*\)\$,\2,'`
-		    if [ "$narg" -eq 1 ]; then
-			zero_setopt $opt 1 $arg
-			narg=0
-			opt=""
+		    if [ "$argsonly" -eq 1 ]; then
+			if [ -z "$_ARGS" ]; then
+			    _ARGS="$arg"
+			else
+			    _ARGS=$_ARGS" $arg"
+			fi
 		    else
-			eval narg='$_HAVE_LONG_ARG_'$opt
-			if [ ! -z "$narg" ]; then
-			    if [ "$narg" -eq 0 ]; then
-				zero_setopt $opt 1
-			    fi
-			    if [ -z "$_OPTS" ]; then
-				_OPTS="$opt"
-			    else
-				_OPTS=$_OPTS" $opt"
+			arg=`echo $arg | sed 's,^\([-]*\)\(.*\)\$,\2,'`
+			eval narg='$_HAVE_LONG_ARG_'$arg
+			if [ -z "$nargs" ]; then
+			    opt=`echo $arg | sed 's,^\(.*\)\(\=\)\(.*\)\$,\1,'`
+			    val=`echo $arg | sed 's,^\(.*\)\(\=\)\(.*\)\$,\3,'`
+			    eval narg='$_HAVE_LONG_ARG_'$opt
+			    if [ ! -z "$val" ]; then
+				if [ "$opt" != "$val" ]; then
+				    if [ "$narg" -eq 1 ]; then
+					zero_setopt $opt 1 $val
+					narg=0
+					long=0
+				    else
+					zero_setopt $opt 1
+				    fi
+				else
+				    if [ "$narg" -eq 0 ]; then
+					zero_setopt $opt 1
+				    fi
+				fi
 			    fi
 			else
-			    echo "invalid option $opt"
-
-			    exit 1
+			    if [ "$nargs" -eq 1 ]; then
+				opt="$arg"
+			    else
+				zero_setopt $opt 1
+			    fi
 			fi
 		    fi
+		    if [ -z "$_OPTS" ]; then
+			_OPTS="$opt"
+		    else
+			_OPTS=$_OPTS" $opt"
+		    fi
 		fi
-		long=1
 		;;
 	    -*)
+		long=0
 		if [ "$argsonly" -eq 1 ]; then
 		    if [ -z "$_ARGS" ]; then
 			_ARGS="$arg"
@@ -195,7 +213,6 @@ zero_parseopt()
 			fi
 		    fi
 		fi
-		long=0
 		;;
 	    *)
 		if [ "$narg" -eq 1 ]; then
@@ -223,8 +240,8 @@ test()
     zero_regopt "--bar" 1 0
     zero_regopt "--xyzzy" 1
     zero_parseopt $@
-    zero_printopt
-    zero_printarg
+    debug_printopt
+    debug_printarg
 }
 
 test $@
