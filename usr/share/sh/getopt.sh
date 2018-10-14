@@ -135,6 +135,7 @@ zero_parseopt()
 	    --*)
 		val=""
 		long=1
+		arg=`echo $arg | sed 's,^\([-]*\)\(.*\)\$,\2,'`
 		if [ "$narg" -eq 1 ]; then
 		    zero_setopt $opt 1 $arg
 		else
@@ -145,7 +146,6 @@ zero_parseopt()
 			    _ARGS=$_ARGS" $arg"
 			fi
 		    else
-			arg=`echo $arg | sed 's,^\([-]*\)\(.*\)\$,\2,'`
 			eval narg='$_HAVE_LONG_ARG_'$arg
 			if [ -z "$nargs" ]; then
 			    opt=`echo $arg | sed 's,^\(.*\)\(\=\)\(.*\)\$,\1,'`
