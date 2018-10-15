@@ -2,6 +2,7 @@
 
 zero_lastarg=""
 
+# debugging routine
 debug_printopt()
 {
     opt=""
@@ -31,6 +32,7 @@ debug_printopt()
     done
 }
 
+# another debugging routine
 debug_printarg()
 {
     arg=""
@@ -43,7 +45,26 @@ debug_printarg()
     done
 }
 
+#
+# register option for program
+#
+# usage
+# -----
 # zero_regopt opt long takeval
+#
+# arguments
+# ---------
+# - opt - name of the option string (without hyphen-prefixes)
+# - long is true (non-zero) if this is an option with two hyphens, e.g. --foo
+#   (which can also be used like --foo=value)
+# - non-zero value for takeval means the option takes an argument value
+#
+# function
+# --------
+# - for each short option opt we declare
+#   _HAVE_ARG_opt holding the optional value for the option
+# - for each long option lopt we declare
+#   _HAVE_ARG_lopt holding the optional value for the option#
 zero_regopt()
 {
     opt=`echo $1 | sed 's,^\([-]*\)\(.*\)\$,\2,'`
@@ -74,7 +95,29 @@ zero_regopt()
     fi
 }
 
+#
+# set option value, either to "true" or the provided value if present
+#
+# usage
+# -----
 # zero_setopt opt long [val]
+#
+# arguments
+# ---------
+# - opt - name of the option string without hyphens in front
+# - if long is non-zero, option is of style --opt value or --opt=value
+# - if supplied, the value val will be assigned to opt (default "true")
+#
+# function
+# --------
+# - for all short options we declare _OPT_opt with boolean value "true" or
+#   a supplied value
+# - for all long options we declare _LONG_OPT_opt with the value of "true" or
+#   a supplied value
+#
+# TODO
+# ----
+# callback-support to manage in-program parameters
 zero_setopt()
 {
     opt=$1
@@ -110,8 +153,22 @@ zero_setopt()
     fi
 }
 
+#
+# add non-option argument to the current list; set zero_lastarg to the last one
+# supplied on the command line
+# - this could be used for, say, mv or cp with the last argument of a directory
+#
+# usage
+# -----
+# zero_addarg $arg
+#
+# arguments
+# ---------
+# - $1 - option string (may contain hyphens in front)
 zero_addarg()
 {
+    arg=$1
+
     if [ -z "$_ARGS" ]; then
 	_ARGS="$arg"
     else
@@ -120,6 +177,21 @@ zero_addarg()
     zero_lastarg="$arg"
 }
 
+#
+# parse and assign command-line options
+#
+# usage
+# -----
+# zero_parseopt $@
+#
+# function
+# --------
+# - we support the following types of options
+#   - boolean: "true" (default value) or "false"
+#   - short: -V, -V $val, -V=$val
+#   - long: --opt, --opt $val, --opt=$val
+# - argument "--" alone notifies the rest of the options are literal arguments
+#
 zero_parseopt()
 {
     narg=0
@@ -230,6 +302,7 @@ zero_parseopt()
     done
 }
 
+# test routine
 test()
 {
     zero_regopt "--foo" 1 1
