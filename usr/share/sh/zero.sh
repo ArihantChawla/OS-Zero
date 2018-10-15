@@ -1,3 +1,5 @@
+#! /bin/sh
+
 # Variables:
 #     zero_emulation		- shell emulation type.
 #     zero_exec_exts		- list of executable extensions.
@@ -25,4 +27,9 @@
 #     16 - not a socket				- zero_errnotsock
 #     17 - not a terminal			- zero_errnotty
 #     18 - broken pipe				- zero_errpipe
+
+. conf.sh
+. init.sh
+
+zero_init $@
 

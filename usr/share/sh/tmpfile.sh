@@ -11,17 +11,17 @@
 # adds name of temporary file into an internal list zero_tmpfiles
 zero_add_tmpfile()
 {
-    tmpfile="$1"
+    file="$1"
 
-    if [ -n "$tmpfile" ]; then
+    if [ -n "$file" ]; then
         if [ -z "$zero_tmpfiles" ]; then
-            zero_tmpfiles="$tmpfile"
+            zero_tmpfiles="$file"
         else
-            zero_tmpfiles="$zero_tmpfiles $tmpfile"
+            zero_tmpfiles="$zero_tmpfiles $file"
         fi
     fi
 
-    return 0;
+    return 0
 }
 
 # usage
@@ -33,98 +33,100 @@ zero_add_tmpfile()
 # adds a list of files into zero_tmpfiles
 zero_add_tmpfiles()
 {
-    tmpfiles="$@"
+    list="$@"
+    file=""
 
     if [ -n "$tmpfiles" ]; then
-        for tmpfile in $tmpfiles
+        for file in $list
         do
-            zero_add_tmpfile "$tmpfile"
+            zero_add_tmpfile "$file"
         done
     fi
 
-    return 0;
+    return 0
 }
 
 # usage
 # -----
-# zero_remove_tmpfile $file
+# zero_clean_tmpfile $file
 #
 # function
 # --------
-# scans zero_tmpfiles for $file and removes the file from both list and device
+# scans zero_tmpfiles for $file and cleans the file from both list and device
 # if found
-zero_remove_tmpfile() {
+zero_clean_tmpfile() {
     file="$1"
-    tmpfiles=
+    list=
 
     if [ -n "$zero_tmpfiles" ]; then
-        for tmpfile in $zero_tmpfiles
+        for file in $zero_tmpfiles
         do
-            if [ "$tmpfile" = "$file" ]; then
+            if [ "$file" = "$arg" ]; then
                 if [ -d "$tmpfile" ]; then
-                    rm -r "$tmpfile"
+                    rm -r "$file"
                 else
-                    rm "$tmpfile"
+                    rm "$file"
                 fi
             else
-                if [ -z "$tmpfiles" ]; then
-                    tmpfiles="$tmpfile"
+                if [ -z "$list" ]; then
+                    list="$file"
                 else
-                    tmpfiles="$tmpfiles $tmpfile"
+                    list="$list $file"
                 fi
             fi
         done
-        zero_tmpfiles="$tmpfiles"
+        zero_tmpfiles="$list"
     fi
 
-    return 0;
+    return 0
 }
 
 # usage
 # -----
-# zero_remove_tmpfiles
+# zero_clean_tmpfiles
 #
 # function
 # --------
-# remove all files in zero_tmpfiles from device and nullify the list
-zero_remove_tmpfiles() {
-    tmpfiles="$@"
+# clean all files in zero_tmpfiles from device and nullify the list
+zero_clean_tmpfiles() {
+    list="$@"
+    file=""
 
     if [ -n "$zero_tmpfiles" ]; then
         for tmpfile in $zero_tmpfiles
         do
-            if [ -d "$tmpfile" ]; then
-		rm -r "$tmpfile"
+            if [ -d "$file" ]; then
+		rm -r "$file"
 	    else
-		rm "$tmpfile"
+		rm "$file"
 	    fi
         done
 	zero_tmpfiles=""
     fi
 
-    return 0;
+    return 0
 }
 
 # usage
 # -----
-# zero_remove_tmpfiles
+# zero_wipe_tmpfiles
 #
 # function
 # --------
 # forcefully remove all files in zero_tmpfiles from device and nullify the list
-zero_clean_tmpfiles() {
+zero_wipe_tmpfiles() {
     if [ -n "$zero_tmpfiles" ]; then
         for tmpfile in $zero_tmpfiles
         do
-            if [ -d "$tmpfile" ]; then
-                rm -rf "$tmpfile"
+            if [ -d "$file" ]; then
+                rm -rf "$file"
             else
-                rm -f "$tmpfile"
+                rm -f "$file"
             fi
         done
         $zero_tmpfiles=
     fi
 
-    return 0;
+    return 0
 }
 

@@ -1,5 +1,6 @@
 #! /bin/sh
 
+# scrip environment
 ZERO_SRCDIR="@srcdir@"
 ZERO_SCRIPT_DIR="/home/vendu/personal/OS-Zero/usr/lib/sh"
 ZERO_PREFIX="/usr/local"
@@ -26,3 +27,19 @@ ZERO_MANEXT=".1"
 ZERO_MAN1EXT=".1"
 ZERO_MAN1EXT=".2"
 
+# signal numbers
+# The signals that are known to be safe to trap.
+ZERO_TRAPEXIT=0
+ZERO_SIGHUP=1
+ZERO_SIGINT=2
+ZERO_SIGPIPE=13
+ZERO_SIGTERM=15
+
+# Other signals.
+ZERO_SIGQUIT=3
+ZERO_SIGILL=4
+ZERO_SIGABRT=6
+ZERO_SIGFPE=8
+ZERO_SIGKILL=9
+ZERO_SIGSEGV=11
+ZERO_SIGALRM=14

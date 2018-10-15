@@ -2,51 +2,77 @@
 
 # exit-handling routines
 
-zero_exit() {
+# usage
+# -----
+# zero_exit $arg
+#
+# function
+# --------
+# call all exit handlers in order of addition with the argument $1;
+# finally, terminate the program with the exit status of $1
+zero_exit()
+{
+    arg="$1"
+    func=""
+
     if [ -n "$zero_exit_handlers" ]; then
-        for handler in $zero_exit_handlers
+        for func in $zero_exit_handlers
         do
-            $handler "$1"
+	    $func $arg
         done
-        zero_exit_handlers=
     fi
 
-    (exit "$1")
-    exit "$1";
+    exit "$arg"
 }
 
-zero_add_exit_handler() {
-    handler="$1"
+# usage
+# -----
+# zero_add_exit_handler $func
+#
+# function
+# --------
+# adds exit-handler func to the internal list zero_exit_handlers
+zero_add_exit_handler()
+{
+    func="$1"
 
-    if [ -n "$handler" ]; then
+    if [ -n "$func" ]; then
         if [ -z "$zero_exit_handlers" ]; then
-            zero_exit_handlers="$handler"
+            zero_exit_handlers="$func"
         else
-            zero_exit_handlers="$zero_exit_handlers $handler"
+            zero_exit_handlers="$zero_exit_handlers $func"
         fi
     fi
 
-    return 0;
+    return 0
 }
 
-zero_remove_exit_handler() {
-    handler="$1"
-    exithandlers=
+# usage
+# -----
+# zero_remove_exit_handler $func
+#
+# function
+# --------
+# remove exit-handler from internal list
+zero_remove_exit_handler()
+{
+    func="$1"
+    list=
 
-    if [ -n "$handler" ] && [ -n "$zero_exit_handlers" ]; then
+    if [ -n "$func" ] && [ -n "$zero_exit_handlers" ]; then
         for exithandler in $zero_exit_handlers
         do
-            if [ "$exithandler" = "$handler" ]; then
+            if [ "$exithandler" = "$func" ]; then
                 :
-            elif [ -z "$exithandlers" ]; then
-                exithandlers="$exithandler"
+            elif [ -z "$list" ]; then
+                list="$exithandler"
             else
-                exithandlers="$exithandlers $exithandler"
+                list="$list $exithandler"
             fi
         done
-        zero_exit_handlers="$exithandlers"
+        zero_exit_handlers="$list"
     fi
 
-    return 0;
+    return 0
 }
 

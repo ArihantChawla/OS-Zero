@@ -192,7 +192,6 @@ zero_init_defaults() {
 
 zero_init_scriptname() {
     zero_scriptname=`echo "$0" | sed 's,^.*/,,'`
-#   zero_scriptname=`echo "$zero_scriptname" | sed 's,[.]zero$,,'`
 
     return 0;
 }
