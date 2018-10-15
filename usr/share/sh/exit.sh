@@ -1,7 +1,9 @@
 #! /bin/sh
 
+# exit-handling routines
+
 zero_exit() {
-    if test -n "$zero_exit_handlers" ; then
+    if [ -n "$zero_exit_handlers" ]; then
         for handler in $zero_exit_handlers
         do
             $handler "$1"
@@ -16,8 +18,8 @@ zero_exit() {
 zero_add_exit_handler() {
     handler="$1"
 
-    if test -n "$handler" ; then
-        if test -z "$zero_exit_handlers" ; then
+    if [ -n "$handler" ]; then
+        if [ -z "$zero_exit_handlers" ]; then
             zero_exit_handlers="$handler"
         else
             zero_exit_handlers="$zero_exit_handlers $handler"
@@ -31,12 +33,12 @@ zero_remove_exit_handler() {
     handler="$1"
     exithandlers=
 
-    if test -n "$handler" && test -n "$zero_exit_handlers" ; then
+    if [ -n "$handler" ] && [ -n "$zero_exit_handlers" ]; then
         for exithandler in $zero_exit_handlers
         do
-            if test "$exithandler" = "$handler" ; then
+            if [ "$exithandler" = "$handler" ]; then
                 :
-            elif test -z "$exithandlers" ; then
+            elif [ -z "$exithandlers" ]; then
                 exithandlers="$exithandler"
             else
                 exithandlers="$exithandlers $exithandler"

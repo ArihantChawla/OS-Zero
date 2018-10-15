@@ -83,16 +83,14 @@ zero_regopt()
 		eval '_HAVE_ARG_'$opt=1
 	    fi
 	fi
+    elif [ $# -eq 2 ]; then
+	eval '_HAVE_LONG_ARG_'$opt=0
     else
-	if [ $# -eq 2 ]; then
+	takeval=$3
+	if [ -z "$takeval" ] || [ "$takeval" -eq 0 ]; then
 	    eval '_HAVE_LONG_ARG_'$opt=0
 	else
-	    takeval=$3
-	    if [ -z "$takeval" ] || [ "$takeval" -eq 0 ]; then
-		eval '_HAVE_LONG_ARG_'$opt=0
-	    else
-		eval '_HAVE_LONG_ARG_'$opt=1
-	    fi
+	    eval '_HAVE_LONG_ARG_'$opt=1
 	fi
     fi
 }
@@ -134,22 +132,20 @@ zero_setopt()
     fi
     if [ -z "$narg" ]; then
 	echo -n "invalid option $_OPT_"$opt
-    else
-	if [ "$narg" -eq 1 ]; then
-	    if [ "$long" -eq 1 ]; then
-		if [ $# -eq 3 ]; then
-		    val=$3
-		    eval '_LONG_OPT_'$opt=$val
-		else
-		    eval '_LONG_OPT_'$opt="true"
-		fi
+    elif [ "$narg" -eq 1 ]; then
+	if [ "$long" -eq 1 ]; then
+	    if [ $# -eq 3 ]; then
+		val=$3
+		eval '_LONG_OPT_'$opt=$val
 	    else
-		if [ $# -eq 3 ]; then
-		    val=$3
-		    eval '_OPT_'$opt=$val
-		else
-		    eval '_OPT_'$opt="true"
-		fi
+		eval '_LONG_OPT_'$opt="true"
+	    fi
+	else
+	    if [ $# -eq 3 ]; then
+		val=$3
+		eval '_OPT_'$opt=$val
+	    else
+		eval '_OPT_'$opt="true"
 	    fi
 	fi
     fi
@@ -211,44 +207,42 @@ zero_parseopt()
 		long=1
 		if [ "$narg" -eq 1 ]; then
 		    zero_setopt $opt 1 $arg
+		elif [ "$argsonly" -eq 1 ]; then
+		    zero_addarg $arg
 		else
-		    if [ "$argsonly" -eq 1 ]; then
-			zero_addarg $arg
-		    else
-			arg=`echo $arg | sed 's,^\([-]*\)\(.*\)\$,\2,'`
-			eval narg='$_HAVE_LONG_ARG_'$arg
-			if [ -z "$nargs" ]; then
-			    opt=`echo $arg | sed 's,^\(.*\)\(\=\)\(.*\)\$,\1,'`
-			    val=`echo $arg | sed 's,^\(.*\)\(\=\)\(.*\)\$,\3,'`
-			    eval narg='$_HAVE_LONG_ARG_'$opt
-			    if [ ! -z "$val" ]; then
-				if [ "$opt" != "$val" ]; then
-				    if [ "$narg" -eq 1 ]; then
-					zero_setopt $opt 1 $val
-					narg=0
-					long=0
-				    else
-					zero_setopt $opt 1
-				    fi
+		    arg=`echo $arg | sed 's,^\([-]*\)\(.*\)\$,\2,'`
+		    eval narg='$_HAVE_LONG_ARG_'$arg
+		    if [ -z "$nargs" ]; then
+			opt=`echo $arg | sed 's,^\(.*\)\(\=\)\(.*\)\$,\1,'`
+			val=`echo $arg | sed 's,^\(.*\)\(\=\)\(.*\)\$,\3,'`
+			eval narg='$_HAVE_LONG_ARG_'$opt
+			if [ ! -z "$val" ]; then
+			    if [ "$opt" != "$val" ]; then
+				if [ "$narg" -eq 1 ]; then
+				    zero_setopt $opt 1 $val
+				    narg=0
+				    long=0
 				else
-				    if [ "$narg" -eq 0 ]; then
-					zero_setopt $opt 1
-				    fi
+				    zero_setopt $opt 1
+				fi
+			    else
+				if [ "$narg" -eq 0 ]; then
+				    zero_setopt $opt 1
 				fi
 			    fi
+			fi
+		    else
+			if [ "$nargs" -eq 1 ]; then
+			    opt="$arg"
 			else
-			    if [ "$nargs" -eq 1 ]; then
-				opt="$arg"
-			    else
-				zero_setopt $opt 1
-			    fi
+			    zero_setopt $opt 1
 			fi
 		    fi
-		    if [ -z "$_OPTS" ]; then
-			_OPTS="$opt"
-		    else
-			_OPTS=$_OPTS" $opt"
-		    fi
+		fi
+		if [ -z "$_OPTS" ]; then
+		    _OPTS="$opt"
+		else
+		    _OPTS=$_OPTS" $opt"
 		fi
 		;;
 	    -*)
