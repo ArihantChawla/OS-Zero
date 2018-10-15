@@ -1,5 +1,7 @@
 #! /bin/sh
 
+# processing of command-line options
+
 zero_lastarg=""
 
 # debugging routine
