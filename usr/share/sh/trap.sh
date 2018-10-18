@@ -176,6 +176,7 @@ zero_signal_self()
 }
 
 # zero_signal_group $sig [$pidspec] [$verbose]
+# - pidspec: empty -> current group, "self" -> process group of current process
 zero_signal_group()
 {
     sig="$1"

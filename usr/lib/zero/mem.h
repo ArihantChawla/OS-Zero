@@ -39,6 +39,7 @@
  * - blocks are prefixed with allocation info structure struct memblk
  *   - other allocations have page-entries in g_mem.hashtab
  */
+
 /* allocation types stored together with slab address */
 #define MEM_BLK_MASK       (~(MEM_MIN_SIZE - 1))
 #define MEM_BLK_SLAB       1 // small [TLS-buffered] allocations
@@ -112,39 +113,20 @@
 /* in-slab allocation address for block # */
 #define memgetptr(slab, num) ((mem)->base + (num) * (slab)->bsz)
 
-/* lowest-order bit lock for pointers */
-#define memtrylkptr(ptr)                                                \
-    (!m_cmpsetbit((m_atomic_t *)(ptr), MEM_ADR_LK_BIT_POS))
-
-static __inline__ void
-memlkptr(m_atomicptr_t *ptr)
-{
-    do {
-        while (*(m_atomic_t *)ptr & MEM_ADR_LK_BIT) {
-            m_waitspin();
-        }
-        if (memtrylkptr(ptr)) {
-
-            break;
-        }
-    } while (1);
-
-    return;
-}
-
 /* memory slab with buffer-stack */
-#define MEM_SLAB_HDR_SIZE (2 * PAGESIZE)
-#define memmkinfo(pool, type) (((type) << 16) | pool)
-#define memgetpool(slab)      ((slab)->info & 0xffff)
-#define memgettype(slab)      ((slab)->info >> 16)
-#define memistls(type)        ((type) & MEM_TLS_SLAB_BIT)
+#define MEM_SLAB_HDR_SIZE           (2 * PAGESIZE)
+#define memmkinfo(pool, type, nblk) (((type) << 24) | ((pool) << 16) | (nblk))
+#define memgetnblk(slab)            ((slab)->info & 0xffff)
+#define memgetpool(slab)            (((slab)->info >> 16) & 0xff)
+#define memgettype(slab)            (((slab)->info >> 24) & 0xff)
+#define memistls(type)              ((type) & MEM_TLS_SLAB_BIT)
 struct memslab {
     struct memslab  *prev; // pointer to previous in list
     struct memslab  *next; // pointer to next in list
-    size_t           info; // allocation pool + type
+    uintptr_t        val; // # of slabs in pool or [TLS] pointer
+    size_t           info; // allocation pool + type + # of blocks
     m_atomic_t       ndx;  // current index into allocation table
-    void           **stk;  // allocation pointer stack + table
-    size_t           nblk; // number of total blocks
+    //    size_t           nblk; // number of total blocks
     uint8_t         *base; // slab/map base address
     size_t           bsz;  // block size in bytes
     uintptr_t        tab[VLA]; // embedded pointer tabs where present
@@ -168,7 +150,7 @@ struct memtls {
 #define MEMTKTLK 1
 struct memglob {
 #if (MEMTKTLK)
-    struct mempool **midpool;
+    struct mempool midpool[MEM_MID_POOLS];
 #else
     struct lfq     midq[MEM_MID_POOLS];
 #endif
@@ -212,7 +194,8 @@ static __inline__ void *
 mempopblk(struct memslab *slab, struct memslab **headret)
 {
     m_atomic_t  ndx = m_fetchadd(&slab->ndx, 1);
-    intptr_t    n = slab->nblk;
+    //    intptr_t    n = slab->nblk;
+    size_t      nblk = memgetnblk(slab);
     void       *ptr = NULL;
 
     if (ndx < n - 1) {
@@ -230,7 +213,8 @@ static __inline__ void
 mempushblk(struct memslab *slab, void *ptr, struct memslab **tailret)
 {
     m_atomic_t ndx = m_fetchadd(&slab->ndx, -1);
-    intptr_t   n = slab->nblk;
+    //    intptr_t   n = slab->nblk;
+    intptr_t   n = memgetnblk(slab);
 
     if (ndx > 0) {
         ndx--;

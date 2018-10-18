@@ -244,10 +244,13 @@ meminitslab(size_t pool, size_t n, size_t bsize, uintptr_t type)
 
         exit(1);
     }
+    if (type <= MEM_MID_SLAB) {
+        type |= MEM_TLS_SLAB_BIT;
+    }
     tab = slab->stk;
     slab->base = ptr;
-    slab->info = memmkinfo(pool, type);
-    slab->nblk = n;
+    slab->info = memmkinfo(pool, type, nblk);
+    //    slab->nblk = n;
     slab->bsz = bsize;
     slab->ndx = 0;
     do {
@@ -282,6 +285,9 @@ meminitslab(size_t pool, size_t n, size_t bsize, uintptr_t type)
         tab++;
         ptr += bsize;
     }
+    if (memistls(type)) {
+        slab->val = (uintptr_t)g_memtls;
+    }
 
     return slab;
 }
@@ -298,7 +304,7 @@ memgetblktls(size_t size)
     struct memslab  *slab;
     struct memslab  *head;
     size_t           pool;
-    intptr_t         n;
+    intptr_t         nblk;
 
     if (size <= MEM_BLK_MAX_SIZE) {
         _memcalcblkpool(size, pool);
@@ -327,10 +333,11 @@ memgetblktls(size_t size)
                                    MEM_RUN_SLAB);
             }
             if (slab) {
-                n = slab->nblk;
+                //                n = slab->nblk;
+                nblk = memgetnblk(slab);
                 ptr = slab->base;
                 slab->ndx = 1;
-                if (n > 1) {
+                if (nblk > 1) {
                     m_atomwrite((m_atomic_t *)slot, (m_atomic_t)slab);
                 }
                 tabhashadd(g_mem.hash, memblkid(ptr), (uintptr_t)slab);
@@ -347,6 +354,123 @@ memgetblktls(size_t size)
 
     return ptr;
 }
+
+#if (MEMTKTLK)
+
+#define MEMPOOLTRIES 64
+static void *
+memgetpool(struct mempool *pool)
+{
+    void           *ptr = NULL;
+    struct memslab *slab = NULL;
+    long            ntry = MEMPOOLTRIES;
+    int32_t         rnd;
+    long            ndx;
+    long            nblk;
+    uintptr_t       nbuf;
+
+    do {
+        rnd = qrand32();
+        rnd &= MEMTKTBKTITEMS - 1;
+        if (zerotkttrylk(&pool->lkbkt.tab[rnd])) {
+            slab = pool->slabtab[rnd];
+            if (!slab) {
+                zerotktunlk(&pool->lkbkt.tab[rnd]);
+
+                continue;
+            }
+
+            break;
+        } else {
+            m_waitspin();
+        }
+    } while (!slab && --ntry);
+    if (slab) {
+        ndx = slab->ndx;
+        //        nblk = slab->nblk;
+        nblk = memgetnblk(slab);
+        ptr = slab->stk[ndx];
+        nbuf = slab->val;
+        ndx++;
+        nbuf--;
+        slab->ndx = ndx;
+        if (ndx == nblk) {
+            if (slab->next) {
+                slab->next->prev = slab->prev;
+            }
+            if (slab->prev) {
+                slab->prev->next = slab->next;
+            } else {
+                pool->slabtab[rnd] = slab->next;
+            }
+            pool->slabtab[rnd]->nbuf = nbuf;
+        }
+        zerotktunlk(&pool->lkbkt.tab[rnd]);
+    }
+
+    return ptr;
+}
+
+#else
+
+static void *
+memgetmid(size_t size)
+{
+    void            *ptr = NULL;
+#if (MEM_GLOB_TRIES)
+    long             ntry = MEM_GLOB_TRIES;
+#endif
+    struct memslab **slot;
+    struct memslab  *slab;
+    struct memslab  *head;
+    size_t           pool;
+    intptr_t         nblk;
+
+    _memcalcmidpool(size, pool);
+    slot = &g_memglob.mid[pool];
+    do {
+        while ((m_atomic_t)*slot & MEM_ADR_LK_BIT) {
+            m_waitspin();
+        }
+        if (!m_cmpsetbit((m_atomic_t *)slot, MEM_ADR_LK_BIT_POS)) {
+            slab = *slot;
+            slab = (void *)((uintptr_t)slab & ~MEM_ADR_LK_BIT);
+            if (slab) {
+                head = NULL;
+                ptr = mempopblk(slab, &head);
+                if (head) {
+                    head->prev = NULL;
+                    m_atomwrite((m_atomic_t *)slot, (m_atomic_t)head);
+                }
+            } else {
+                slab = meminitslab(pool,
+                                   memnummid(pool), memmidsize(pool),
+                                   MEM_MID_SLAB);
+                if (slab) {
+                    //                    n = slab->nblk;
+                    nblk = memgetnblk(slab);
+                    ptr = slab->base;
+                    slab->ndx = 1;
+                    if (nblk > 1) {
+                        m_atomwrite((m_atomic_t *)slot, (m_atomic_t)slab);
+                    }
+                    tabhashadd(g_mem.hash, memblkid(ptr), (uintptr_t)slab);
+                }
+            }
+        }
+        if (!ptr) {
+            m_waitspin();
+        }
+    } while (!ptr
+#if (MEM_GLOB_TRIES)
+             --ntry
+#endif
+            );
+
+    return ptr;
+}
+
+#endif
 
 /* allocate process-global memory */
 static void *
@@ -368,45 +492,12 @@ memgetblkglob(size_t size)
             tabhashadd(g_mem.hash, memblkid(ptr), (uintptr_t)size);
         }
     } else {
+#if (MEMTKTLK)
         _memcalcmidpool(size, pool);
-        slot = &g_memglob.mid[pool];
-        do {
-            while ((m_atomic_t)*slot & MEM_ADR_LK_BIT) {
-                m_waitspin();
-            }
-            if (!m_cmpsetbit((m_atomic_t *)slot, MEM_ADR_LK_BIT_POS)) {
-                slab = *slot;
-                slab = (void *)((uintptr_t)slab & ~MEM_ADR_LK_BIT);
-                if (slab) {
-                    head = NULL;
-                    ptr = mempopblk(slab, &head);
-                    if (head) {
-                        head->prev = NULL;
-                        m_atomwrite((m_atomic_t *)slot, (m_atomic_t)head);
-                    }
-                } else {
-                    slab = meminitslab(pool,
-                                       memnummid(pool), memmidsize(pool),
-                                       MEM_MID_SLAB);
-                    if (slab) {
-                        n = slab->nblk;
-                        ptr = slab->base;
-                        slab->ndx = 1;
-                        if (n > 1) {
-                            m_atomwrite((m_atomic_t *)slot, (m_atomic_t)slab);
-                        }
-                        tabhashadd(g_mem.hash, memblkid(ptr), (uintptr_t)slab);
-                    }
-                }
-            }
-            if (!ptr) {
-                m_waitspin();
-            }
-        } while (!ptr
-#if (MEM_GLOB_TRIES)
-                 --ntry
+        ptr = memgetpool(&g_memglob.midpool[pool));
+#else
+        ptr = memgetmid(size);
 #endif
-                );
     }
 
     return ptr;
@@ -443,56 +534,6 @@ memgetblk(size_t size, size_t align, long zero)
     return ptr;
 }
 
-#define memlkmidpool(mg, p)  zerotktlk(&(mg)->midpool[p].lkbkt)
-#define memgetmidslab(mg, p) (&(mg)->midpool[(p)].slab)
-
-#if (MEMTKTLK)
-#define MEMPOOLTRIES 64
-void *
-memgetpool(struct mempool *pool)
-{
-    void           *ptr = NULL;
-    struct memslab *slab = NULL;
-    long            ntry = MEMPOOLTRIES;
-    int32_t         rnd;
-    long            ndx;
-    long            nblk;
-
-    do {
-        rnd = qrand32();
-        rnd &= MEMTKTBKTITEMS - 1;
-        if (zerotkttrylk(&g_memglob.midpool[pool]->lkbkt.tab[rnd])) {
-            slab = &g_memglob.midpool[pool]->slabtab[rnd];
-            if (!slab) {
-                zerotktunlk(&g_memglob.midpool[pool]->lkbkt.tab[rnd]);
-
-                continue;
-            }
-
-            break;
-        } else {
-            m_waitspin();
-        }
-    } while (!slab && --ntry);
-    if (slab) {
-        ndx = slab->ndx;
-        nblk = slab->nblk;
-        ndx++;
-        if (ndx == nblk) {
-            if (slab->prev) {
-                slab->prev->next = slab->next;
-            } else {
-                g_memglob.midpool[pool]->slabtab[rnd]
-            }
-        }
-        ptr = slab->stk[ndx];
-        slab->ndx = ndx;
-    }
-
-    return ptr;
-}
-#endif
-
 /* action functions for lock-free queue */
 
 /* pop item from queue entry stack */
@@ -501,14 +542,15 @@ mempopblk(LFQ_ITEM_T **itemptr)
 {
     LFQ_ITEM_T *item = (void *)((uintptr_t)*itemptr & ~LFQ_ADR_LK_BIT);
     uintptr_t   uptr;
-    m_atomic_t  n;
+    m_atomic_t  nblk;
     m_atomic_t  ndx;
 
-    n = item->nblk;
-    ndx = m_fetchadd(&item->ndx, -1);
-    ndx++;
+    //    n = item->nblk;
+    ndx = m_fetchadd(&item->ndx, 1);
+    nblk = memgetnblk(slab);
     uptr = item->stk[ndx];
-    if (ndx == n) {
+    ndx++;
+    if (ndx == nblk) {
         /* remove totally in-use slab from queue */
         if (*itemptr->next) {
             *itemptr->next->prev = NULL;
@@ -531,8 +573,9 @@ mempushblk(LFQ_ITEM_T **itemptr)
     m_atomic_t  n;
     m_atomic_t  ndx;
 
-    ndx = m_atomadd(&item->ndx, -1);
-    n = item->nblk;
+    ndx = m_fetchadd(&item->ndx, -1);
+    //    n = item->nblk;
+    n = memgetnblk(item);
     ndx--;
     item->stk[ndx] = uptr;
     if (ndx == n) {
@@ -617,7 +660,10 @@ mempushblk(LFQ_ITEM_T **itemptr)
         } else {
             switch (type) {
                 case MEM_MID_SLAB:
+#if (MEMTKTLK)
+#else
                     lfqrmitem(&g_memglob.mid[pool], item);
+#endif
 
                     break;
                 case MEM_BIG_SLAB:

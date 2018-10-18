@@ -30,25 +30,30 @@
 /* custom allocator types */
 /* size of machine word/integer */
 #if (WORDSIZE == 8)
-#define MEMWORD_T      int64_t
-#define MEMUWORD_T     uint64_t
+#define MEMWORD_T       int64_t
+#define MEMUWORD_T      uint64_t
 #elif (WORDSIZE == 4)
-#define MEMWORD_T      int32_t
-#define MEMUWORD_T     uint32_t
+#define MEMWORD_T       int32_t
+#define MEMUWORD_T      uint32_t
 #else
 #error WORDSIZE not supported in <zero/bits/mem.h>
 #endif
+
 /* byte-pointer for pointer-arithmetics */
-#define MEMPTR_T       uint8_t *
+#define MEMPTR_T        uint8_t *
 /* integer type for pointer values */
-#define MEMADR_T       uintptr_t
+#define MEMADR_T        uintptr_t
 /* buffer block ID type */
-#define MEMBLK_T       int16_t
+#define MEMBLK_T        int16_t
 
 /* argument flags for queue functions */
-#define MEMQUEUEGLOBAL (1L << 0)
+#define MEMQUEUEGLOBAL  (1L << 0)
+
+#if 0
 /* failure code for lock-routines */
-#define MEMLKFAIL        ((void *)(~((MEMADR_T)0)))
+#define MEMLKFAIL       ((void *)(~((MEMADR_T)0)))
+#endif
+
 /* lock-bit values */
 #define MEM_ADR_LK_BIT_POS 0
 #define MEM_ADR_LK_BIT     ((uintptr_t)1 << MEM_ADR_LK_BIT_POS)
@@ -110,9 +115,9 @@ memgenadr(MEMPTR_T ptr)
     MEMADR_T   dec;
 
 #if (CLSIZE == 32)
-    shift = 3;
+    shift = 2;
 #elif (CLSIZE == 64)
-    shift = 4;
+    shift = 3;
 #endif
     /* shift out some [mostly-aligned] low bits */
     res >>= MEM_ALIGN_SHIFT;
@@ -168,7 +173,6 @@ memgenofs(MEMPTR_T ptr)
     res <<= shift;
     /* round down to a multiple of cacheline */
     res &= ~(CLSIZE - 1);
-    /* add offset to original address */
 
     return res;
 }
@@ -199,7 +203,6 @@ memgentabadr(MEMWORD_T *adr)
     res <<= 2;
     /* add to original pointer */
     adr += res;
-    /* align to machine word boundary */
 
     return adr;
 }
