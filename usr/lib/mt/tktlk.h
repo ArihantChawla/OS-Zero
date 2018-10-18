@@ -6,18 +6,13 @@
 #include <stdint.h>
 #include <endian.h>
 #include <zero/cdefs.h>
-#include <mach/param.h>
 #include <mach/asm.h>
+#include <mach/param.h>
 #include <mt/thr.h>
 
-#if !defined(TKTLKSIZE)
-#define TKTLKSIZE  PTRSIZE
-#endif
 #define TKTLKNSPIN 16384
 
-typedef TKTUNIONSIZE CLSIZE
-
-#if (TKTLKSIZE == 4)
+#if (WORDSIZE == 4)
 
 #define TKTSIZE    8
 union zerotktlk {
@@ -35,7 +30,7 @@ union zerotktlk {
 #endif
 };
 
-#elif (TKTLKSIZE == 8)
+#elif (WORDSIZE == 8)
 
 #define TKTSIZE    16
 union zerotktlk {
@@ -53,16 +48,16 @@ union zerotktlk {
 #endif
 };
 
+#endif /* TKTLKSIZE */
+
 #define ZEROTKTBKTITEMS (CLSIZE / TKTSIZE)
 struct zerotktbkt {
     union zerotktlk tab[ZEROTKTBKTITEMS];
 };
 
-#endif /* TKTLKSIZE */
-
 typedef union zerotktlk zerotktlk;
 
-#if (TKTLKSIZE == 4)
+#if (WORDSIZE == 4)
 
 static INLINE void
 tktlk(union zerotktlk *tp)
@@ -103,7 +98,7 @@ tkttrylk(union zerotktlk *tp)
     return res;
 }
 
-#elif (TKTLKSIZE == 8)
+#elif (WORDSIZE == 8)
 
 static INLINE void
 tktlk(union zerotktlk *tp)
@@ -144,7 +139,7 @@ tkttrylk(union zerotktlk *tp)
     return res;
 }
 
-#endif /* TKTLKSIZE */
+#endif /* WORDSIZE */
 
 static INLINE long
 tktmaylk(union zerotktlk *tp)

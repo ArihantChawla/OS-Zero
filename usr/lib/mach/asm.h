@@ -25,10 +25,13 @@
 #include <zero/msc/win64.h>
 #elif defined(_WIN32)
 #include <zero/msc/win32.h>
-#elif (defined(__x86_64__) || defined(__amd64__)                      \
-       || (defined(__i386__) || defined(__i486__)                     \
-           || defined(__i586__) || defined(__i686__)))
+#elif (defined(__x86_64__) || defined(__amd64__))
 #include <mach/x86/asm.h>
+#include <mach/x86-64/asm.h>
+#elif (defined(__i386__) || defined(__i486__)                           \
+       || defined(__i586__) || defined(__i686__))
+#include <mach/x86/asm.h>
+#include <mach/ia32/asm.h>
 #elif defined(__arm__)
 #include <mach/arm/asm.h>
 #elif defined(__ppc__)

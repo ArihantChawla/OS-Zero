@@ -26,7 +26,7 @@ rbtinit(long (*cmp)(const void *, const void *))
     }
     if (!tree) {
         fprintf(stderr, "rbt failed to allocated memory\n");
-            
+
         exit(1);
     }
 #if !defined(RBT_INTPTR_DATA) && !defined(RBT_UINTPTR_DATA)
@@ -109,7 +109,7 @@ rbtfix(struct rbt *tree, struct rbtnode *node)
 {
     struct rbtnode *parent = node->parent;
     struct rbtnode *uncle;
-    
+
     while (rbtgetcolor(parent) == RBT_RED) {
         if (parent == parent->parent->left) {
             uncle = parent->parent->right;
@@ -187,7 +187,7 @@ rbtinsert(struct rbt *tree, void *data)
     struct rbtnode *parent = NULL;
     struct rbtnode *nil = &tree->nil;
     long            res;
-    
+
     while (node != nil) {
         parent = node;
 #if defined(RBT_INTPTR_DATA) || defined(RBT_UINTPTR_DATA)
@@ -196,7 +196,7 @@ rbtinsert(struct rbt *tree, void *data)
         res = tree->cmp(data, node->data);
 #endif
         if (!res) {
-            
+
             return node;
         }
         if (res < 0) {
@@ -208,7 +208,7 @@ rbtinsert(struct rbt *tree, void *data)
     node = rbtgetnode();
     if (!node) {
         fprintf(stderr, "rbt failed to allocated memory\n");
-        
+
         exit(1);
     }
     node->key = key;
@@ -234,7 +234,7 @@ rbtinsert(struct rbt *tree, void *data)
         parent->right = node;
     }
     rbtfix(tree, node);
-    
+
     return NULL;
 }
 
@@ -404,7 +404,7 @@ rbtrepair(struct rbt *tree, struct rbtnode *node)
                 rbtsetcolor(parent, RBT_BLACK);
                 rbtsetcolor(sibling->left, RBT_BLACK);
                 rbtrotright(tree, parent);
-                
+
                 break;
             }
         }
@@ -422,7 +422,7 @@ _rbtdestroy(struct rbt *tree, struct rbtnode *node, void (*destroy)(void *))
 #endif
 {
     struct rbtnode *nil = &tree->nil;
-    
+
     if (node != nil) {
 #if defined(RBT_INTPTR_DATA) || defined(RBT_UINTPTR_DATA)
         _rbtdestroy(tree, node->left);

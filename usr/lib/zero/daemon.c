@@ -28,7 +28,7 @@ daemonize(char *rootpath)
 
         exit(0);
     }
-    
+
     /* CHILD PROCESS */
 
     /* create new session */
@@ -46,7 +46,7 @@ daemonize(char *rootpath)
 
         exit(0);
     }
-    
+
     /* CHILD PROCESS */
 
     /* change current working directory */

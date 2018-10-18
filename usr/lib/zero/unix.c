@@ -52,11 +52,11 @@ zreadfile(char *filename, size_t *sizeret)
                 res = read(fd, buf, nleft);
                 if (res < 0) {
                     if (errno == EINTR) {
-                        
+
                         continue;
                     } else {
                         free(buf);
-                        
+
                         return NULL;
                     }
                 } else {
@@ -99,11 +99,11 @@ zwritefile(char *filename, void *buf, size_t nb, size_t *sizeret)
                 res = write(fd, buf, nleft);
                 if (res < 0) {
                     if (errno == EINTR) {
-                        
+
                         continue;
                     } else {
                         free(buf);
-                        
+
                         return -1;
                     }
                 } else {
@@ -134,13 +134,13 @@ zread(int fd, void *buf, size_t nb)
         res = read(fd, cptr, nb);
         if (res <= 0) {
             if (errno == EINTR) {
-                
+
                 continue;
             } else if (len == 0) {
-                
+
                 return -1;
             } else {
-                
+
                 return len;
             }
         }
@@ -166,13 +166,13 @@ zreadnb(int fd, void *buf, size_t nb)
         res = read(fd, cptr, nb);
         if (res <= 0) {
             if (errno == EINTR) {
-                
+
                 continue;
             } else if (errno == EAGAIN) {
-                
+
                 return len;
             } else {
-                
+
                 return -1;
             }
         }
@@ -198,10 +198,10 @@ zwrite(int fd, void *buf, size_t nb)
         res = write(fd, cptr, nb);
         if (res <= 0) {
             if (errno == EINTR) {
-                
+
                 continue;
             } else {
-                
+
                 return len;
             }
         }
@@ -227,13 +227,13 @@ zwritenb(int fd, void *buf, size_t nb)
         res = write(fd, cptr, nb);
         if (res <= 0) {
             if (errno == EINTR) {
-                
+
                 continue;
             } else if (errno == EAGAIN) {
-                
+
                 return len;
             } else {
-                
+
                 return -1;
             }
         }

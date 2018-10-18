@@ -5,7 +5,7 @@
 #include <mach/param.h>
 #include <zero/cdefs.h>
 #include <zero/trix.h>
-#include <zero/randklc.h>
+#include <prng/randklc.h>
 
 #define MEM_CACHELINE_ALIGNMENT 1 // we prefer this to align our locks etc.
 

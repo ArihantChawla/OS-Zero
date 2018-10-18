@@ -37,7 +37,7 @@ long
 mutex_destroy(mutex_t *mutex)
 {
     (void)mutex;
-    
+
     return 0;
 }
 
@@ -64,7 +64,7 @@ mutex_lock(mutex_t *mutex)
         futex(mutex, FUTEX_WAIT_PRIVATE, MUTEXCONTD, NULL, NULL, 0);
         mtx = m_xchg(mutex, MUTEXCONTD);
     }
-    
+
     return mtx;
 }
 
@@ -76,7 +76,7 @@ mutex_unlock(mutex_t *mutex)
 
     if (mtx != MUTEXCONTD
         || m_xchg(mutex, MUTEXUNLOCKED) == MUTEXLOCKED) {
-        
+
         return 0;
     }
     for (l = 0 ; l < 200; l++) {

@@ -126,6 +126,7 @@ struct memslab {
     uintptr_t        val; // # of slabs in pool or [TLS] pointer
     size_t           info; // allocation pool + type + # of blocks
     m_atomic_t       ndx;  // current index into allocation table
+    void           **stk; // pointer stack + aligned pointers
     //    size_t           nblk; // number of total blocks
     uint8_t         *base; // slab/map base address
     size_t           bsz;  // block size in bytes
@@ -134,10 +135,10 @@ struct memslab {
 #define MEM_SLAB_TAB_ITEMS                                              \
     ((MEM_SLAB_HDR_SIZE - offsetof(struct memslab, tab)) / sizeof(uintptr_t))
 
-#if (MEMTKTLK)
+#if defined(ZEROMEMTKTLK)
 struct mempool {
-    struct memslab    slabtab[ZEROTKTBKTITEMS];
-    struct zerotktbkt lkbkt;
+    struct memslab    *slabtab[ZEROTKTBKTITEMS];
+    struct zerotktbkt  lkbkt;
 };
 #endif
 
@@ -147,14 +148,13 @@ struct memtls {
     struct memslab *run[MEM_RUN_POOLS]; // tail is head->prev
 };
 
-#define MEMTKTLK 1
 struct memglob {
-#if (MEMTKTLK)
-    struct mempool midpool[MEM_MID_POOLS];
+#if defined(ZEROMEMTKTLK)
+    struct mempool mid[MEM_MID_POOLS];
 #else
     struct lfq     midq[MEM_MID_POOLS];
 #endif
-}
+};
 
 struct membuf {
     struct memslab  *hdrq;
@@ -198,9 +198,9 @@ mempopblk(struct memslab *slab, struct memslab **headret)
     size_t      nblk = memgetnblk(slab);
     void       *ptr = NULL;
 
-    if (ndx < n - 1) {
+    if (ndx < nblk - 1) {
         ptr = slab->tab[ndx];
-    } else if (ndx == n - 1) {
+    } else if (ndx == nblk - 1) {
         *headret = slab->next;
     } else {
         m_atomdec((m_atomic_t *)slab->ndx);
@@ -214,12 +214,12 @@ mempushblk(struct memslab *slab, void *ptr, struct memslab **tailret)
 {
     m_atomic_t ndx = m_fetchadd(&slab->ndx, -1);
     //    intptr_t   n = slab->nblk;
-    intptr_t   n = memgetnblk(slab);
+    intptr_t   nblk = memgetnblk(slab);
 
     if (ndx > 0) {
         ndx--;
         slab->tab[ndx] = ptr;
-        if (ndx == n - 1) {
+        if (ndx == nblk - 1) {
             *tailret = slab;
         }
     } else {

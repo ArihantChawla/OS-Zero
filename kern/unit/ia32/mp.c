@@ -1,9 +1,7 @@
 #if !defined(__x86_64__) && !defined(__amd64__)
 
 #include <kern/conf.h>
-#include <kern/unit/x86/mp.h>
-
-struct k_mp k_mp;
+//#include <kern/unit/x86/mp.h>
 
 #if defined(SMP) || defined(APIC)
 
@@ -38,6 +36,8 @@ extern void gdtinit(void);
 extern void idtset(void);
 
 extern uintptr_t *kernpagedir[NPDE];
+
+struct k_mp k_mp;
 
 static long
 mpchksum(uint8_t *ptr, unsigned long len)

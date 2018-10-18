@@ -47,7 +47,7 @@ hashq128(const void *ptr,
     register uint64_t rax = len ^ r8;
     register uint64_t rcx = r9;
     register uint64_t rdx;
-    
+
     while (len >= 16) {
         rax = (rax ^ ((uint64_t *)ptr)[0]) * r8;
         rcx = (rcx ^ ((uint64_t *)ptr)[1]) * r9;
@@ -81,13 +81,13 @@ hashq128(const void *ptr,
     mulq128(rax, rdx, r8);
     rcx = (rcx * r9) + rdx;
     rax ^= rcx;
-    
+
     if (nkeybit < 32) {
         rcx = rax >> 32;
         rax ^= rcx;
     }
     rax &= (1UL << nkeybit) - 1;
-    
+
     return rax;
 }
 
@@ -131,13 +131,13 @@ hashq128uptr(uintptr_t uptr,
     mulq128(rax, rdx, r8);
     rcx = (rcx * r9) + rdx;
     rax ^= rcx;
-    
+
     if (nkeybit < 32) {
         rcx = rax >> 32;
         rax ^= rcx;
     }
     rax &= (1UL << nkeybit) - 1;
-    
+
     return rax;
 }
 

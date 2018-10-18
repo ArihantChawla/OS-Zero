@@ -15,12 +15,10 @@
 #define PTRSIZELOG2    2
 #define PTRBITS        32
 #define ADRBITS        32
-#define PAGESIZELOG2   12
-
 #define CLSIZE         32
 #define CLSIZELOG2     5
 #define PAGESIZE       4096
-
+#define PAGESIZELOG2   12
 #define LONGDOUBLESIZE 80
 
 #endif /* __MACH_IA32_PARAM_H__ */
