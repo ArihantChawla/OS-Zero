@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <gfx/rgb.h>
 
-#define CONSNBUFROW 4096
+#define CONSBUFROWS 4096
 
 void consinit(int w, int h);
 
@@ -31,7 +31,7 @@ struct cons {
     void            *textbuf;   // text buffers
 };
 
-extern struct cons constab[NCONS];
+extern struct cons constab[CONSMAX];
 extern long        conscur;
 
 #endif /* __IO_DRV_CHR_CONS_H__ */

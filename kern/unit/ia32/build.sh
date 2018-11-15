@@ -1,6 +1,8 @@
 #! /bin/sh
 
 # clang doesn't support everything it would need to for the kernel to build
+CC=gcc
+AS=gcc
 #CC="clang -no-integrated-as"
 #AS="clang -integrated-as"
 

@@ -33,7 +33,7 @@ struct cpu {
     struct m_cpuinfo  info;
 };
 
-extern volatile struct cpu k_cputab[NCPU];
+extern volatile struct cpu k_cputab[CPUSMAX];
 
 #endif /* __KERN_CPU_H__ */
 

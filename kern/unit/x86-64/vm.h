@@ -124,28 +124,17 @@ vmsignadr(void *adr)
 #define vmpageid(adr) ((uintptr_t)(adr) >> PAGESIZELOG2)
 
 /* level #1 */
-#define NPTEPERPAGE (PAGESIZE / sizeof(pte_t))
-#define NPTESHIFT   9
+#define PTESPERPAGE (PAGESIZE / sizeof(pte_t))
 #define PTESHIFT    12
-#define PAGEMASK    (PAGESIZE - 1)
 /* levvel #2 */
-#define NPDEPERPAGE (PAGESIZE / sizeof(pde_t))
-#define NPDESHIFT   9
+#define PDESPERPAGE (PAGESIZE / sizeof(pde_t))
 #define PDESHIFT    21
-#define NPDE        (1 << PDESHIFT)
-#define PDEMASK     (NPDE - 1)
 /* level #3 */
-#define NPMDPERPAGE (PAGESIZE / sizeof(pmd_t))
-#define NPMDSHIFT   9
+#define PMDSPERPAGE (PAGESIZE / sizeof(pmd_t))
 #define PMDSHIFT    30
-#define NPMD        (1 << PMDSHIFT)
-#define PMDMASK     (NPMD - 1)
 /* level #4 */
-#define NPGDPERPAGE (PAGESIZE / sizeof(pgd_t))
-#define NPGSHIFT    9
+#define PGDSPERPAGE (PAGESIZE / sizeof(pgd_t))
 #define PGDSHIFT    39
-#define NPGD        (1UL << PGDSHIFT)
-#define PGDMASK     (NPGD - 1)
 
 #define kernvirtadr(l4, l3, l2, l1)                                     \
     (((uint64_t)-1 << (ADRBITS - 1))                                    \
@@ -160,18 +149,18 @@ vmsignadr(void *adr)
      | ((uint64_t)(l2) << PDESHIFT)                                     \
      | ((uint64_t)(l1) << PTESHIFT))
 
-#define NKERNPGD     4                         // # of kernel PGD slots
-#define NUSERPGD     (NPGDPERPAGE / 2)         // # of userland PGD pages
-#define NUSERPGDPAGE (NUSERPGD * NPMDPAGE)     // # of userland PGD pages
-#define NUSERPGDSLOT (NUSERPMDPAGE * NPGDPAGE) // # of userlaND PD entries
+#define KERNPGDS     4                         // # of kernel PGD slots
+#define USERPGDS     (PGDSPERPAGE / 2)         // # of userland PGD pages
+#define USERPGDPAGES (USERPGDS * PMDPAGES)     // # of userland PGD pages
+#define USERPGDSLOTS (USERPMDPAGES * PGDPAGES) // # of userlaND PD entries
 
-#define NPGDMAP      8                         //PGD entries for direct map
-#define PGDRECMAP   (NPGDPERPAGE / 2)          // index of recursive PGD mapping
+#define PGDMAPS      8                         // PGD entries for direct map
+#define PGDRECMAP    (NPGDPERPAGE / 2)         // index of recursive PGD mapping
 
-#define KERNPGDBASE (NPGDPERPAGE - NKERNPGD)   // KVM at highest addresses
-#define NMAPPGD     rounddown(KERNPGDBASE - NPGDMAP, NPGDMAP) // below KVM
+#define KERNPGDBASE (PGDSPERPAGE - KERNPGDS)   // KVM at highest addresses
+#define PGDSPERMAP  rounddown(KERNPGDBASE - NPGDMAP, NPGDMAP) // below KVM
 
-#define NKERNPGD    (NPGDPERPAGE - 1)
+#define KERNPGDS    (NPGDPERPAGE - 1)
 #define KERNPGD     (NPGDPERPAGE - 2)          // kernel base at -2GB
 
 #if defined(__KERNEL__)

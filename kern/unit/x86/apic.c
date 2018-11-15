@@ -18,8 +18,8 @@
 
 extern void      irqtmr(void);
 extern void      irqtmrcnt(void);
-extern uint64_t  kernidt[NINTR];
-extern void     *irqvec[NINTR];
+extern uint64_t  kernidt[TRAPSMAX];
+extern void     *irqvec[TRAPSMAX];
 
 volatile struct cpu *mpbootcpu;
 volatile uint32_t   *mpapic;

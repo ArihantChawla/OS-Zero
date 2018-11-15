@@ -80,7 +80,7 @@ struct tm {
     long        tm_gmtoff;	// seconds east (forward) of UTC/GMT
     const char *tm_zone;	// timezone abbreviation
 #else
-    long        __tm_gmtoff;    // seconds forward of UTC/GMTÂ§
+    long        __tm_gmtoff;    // seconds forward of UTC/GMT§
     const char *__tm_zone;
 #endif
 };

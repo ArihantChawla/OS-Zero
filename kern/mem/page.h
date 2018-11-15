@@ -6,7 +6,7 @@
 #include <mach/param.h>
 #include <mach/asm.h>
 #include <zero/trix.h>
-#include <mt/tktlk.h>
+//#include <mt/tktlk.h>
 #include <kern/types.h>
 #include <kern/perm.h>
 #include <kern/time.h>
@@ -58,10 +58,8 @@ struct swapdev {
     struct vmpage *freeq;
 };
 
-extern m_ureg_t        pageinitphyszone(uintptr_t base, struct vmpage **zone,
+extern m_ureg_t        pageinitphyszone(uintptr_t base, struct vmpage *zone,
                                         m_ureg_t nb);
-extern m_ureg_t        pageaddphyszone(uintptr_t base, struct vmpage **zone,
-                                       m_ureg_t nb);
 extern m_ureg_t        pageinitphys(uintptr_t base, m_ureg_t nb);
 extern struct vmpage * pageallocphys(void);
 extern void            pagefreephys(void *adr);

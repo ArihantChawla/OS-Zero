@@ -7,7 +7,7 @@
 #define ZERONEWSPIN 1
 #endif
 
-typedef m_atomic_t zerospin;
+typedef volatile m_atomic_t zerospin;
 
 #define ZEROSPININITVAL 0L
 #define ZEROSPINLKVAL   1L

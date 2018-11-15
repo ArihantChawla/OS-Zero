@@ -26,9 +26,9 @@
 #include <string.h>
 #define kprintf printf
 #define kbzero bzero
-#define panic(trap, err, frm) abort()
+//#define kpanic(trap, err, frm) abort()
 #endif
-//#define panic(pid, trap, err)
+//#define kpanic(pid, trap, err)
 
 extern struct memzone k_memzonetab[MEM_ZONES];
 
@@ -123,7 +123,7 @@ memalloc(size_t nb, long flg)
             kprintf("duplicate allocation %p (%ld/%ld)\n",
                     ptr, ndx, mag->n);
 
-            panic(TRAPNONE, -EINVAL, NULL);
+            kpanic(TRAPNONE, -EINVAL, NULL);
         }
         setbit(bmap, ndx);
 #endif /* defined(MEMPARANOIA) */
@@ -132,7 +132,7 @@ memalloc(size_t nb, long flg)
         }
     }
     if (!ptr) {
-        panic(TRAPNONE, -ENOMEM, NULL);
+        kpanic(TRAPNONE, -ENOMEM, NULL);
     }
     memunlkbkt(&bkt->lk);
 
@@ -192,7 +192,7 @@ kfree(void *ptr)
         kprintf("invalid free: %p (%ld/%ld)\n",
                 ptr, ndx, mag->n);
 
-        panic(TRAPNONE, -EINVAL, NULL);
+        kpanic(TRAPNONE, -EINVAL, NULL);
     }
 #endif
     mempush(mag, ptr);

@@ -16,7 +16,7 @@
 #include <kern/unit/x86/pic.h>
 #endif
 
-extern struct proc      *k_proczombietab[NTASK];
+extern struct proc      *k_proczombietab[TASKSMAX];
 extern struct tasktabl0  k_taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
 
 /* lookup table to convert nice values to priority offsets */
@@ -53,7 +53,7 @@ long k_schedslicetab[SCHEDNICERANGE] ALIGNED(CLSIZE)
 long                    *k_schedniceptr = &k_schednicetab[SCHEDNICEHALF];
 long                    *k_schedsliceptr = &k_schedslicetab[SCHEDNICEHALF];
 static struct tasktabl0  k_scheddeadlinetab[SCHEDNLVL0DL];
-static struct task      *k_schedstoppedtab[NTASK];
+static struct task      *k_schedstoppedtab[TASKSMAX];
 struct task             *k_schedreadytab0[SCHEDNQUEUE];
 struct task             *k_schedreadytab1[SCHEDNQUEUE];
 static struct task      *k_schedidletab[SCHEDNIDLE];
@@ -95,7 +95,7 @@ schedinit(void)
 void
 schedinitset(void)
 {
-    long                  lim = NCPU;
+    long                  lim = CPUSMAX;
     struct schedqueueset *set = &k_schedreadyset;
     //    long                  unit = k_curcpu->unit;
     long                  id;
@@ -348,7 +348,7 @@ schedswitchtask(struct task *curtask)
 
             break;
         default:
-            panic(-1, 0, NULL); /* FIXME: error # */
+            kpanic(-1, 0, NULL); /* FIXME: error # */
 
             break;
     }

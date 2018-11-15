@@ -89,9 +89,6 @@ SECTIONS {
 	vbe.o(.text.*)
 	vbe.o(.data)
 	vbe.o(.bss)
-        test.o(.text)
-        test.o(.text.*)
-	. = ALIGN(PAGESIZE);
         _eboot = .;
     }
 
@@ -105,18 +102,14 @@ SECTIONS {
 
     /* DMA buffers (below 16 megabytes) */
     .dma : AT(DMABUF) {
-	_dmabuf = .;
 	. += DMABUFSIZE;
-	_edmabuf = .;
     }
 
     . = PAGETAB;
 
     /* identity-mapped set of page tables */
     .pgtab : AT(PAGETAB) {
-        _pagetab = .;
   	. += PAGETABSIZE;
-	_epagetab = .;
     }
 
 /*    . = UPAGETAB; */
@@ -126,55 +119,47 @@ SECTIONS {
     /* sections mapped by virtual addresses */
 
     /* read-only segment; code and some data */
-    .text : AT(PAGETAB + SIZEOF(.pgtab)) {
-        _text = .;
-	_textvirt = PAGETAB + SIZEOF(.pgtab);
+    .text VIRTBASE : AT(PAGETAB + PAGETABSIZE) {
 	*(EXCLUDE_FILE(*usr.o) .text*)
 	*(.text)
 	*(.text.*)
+	*(.eh*)
+	. = ALIGN(PAGESIZE);
+    }
+
+    .rodata : AT(ADDR(.text) + PAGESIZE * ((SIZEOF(.text) + PAGESIZE - 1) / PAGESIZE))
 	*(.rodata*)
 	*(.rodata.*)
-	*(.eh*)
-        _etext = _text + SIZEOF(.text);
-	_etextvirt = _textvirt + SIZEOF(.text);
+	_text = ADDR(.text);
+	_etext = _text + PAGESIZE * ((SIZEOF(.text) + PAGESIZE - 1) / PAGESIZE);
+	_rodata = ADDR(.rodata);
+	_erodata = _rodata + PAGESIZE * ((SIZEOF(.rodata) + PAGESIZE - 1) / PAGESIZE);
+	_data = ADDR(.data);
+	_edata = _data + PAGESIZE * ((SIZEOF(.data) + PAGESIZE - 1) / PAGESIZE);
+	_bss = ADDR(.bss);
+	_ebss = _bss + PAGESIZE * ((SIZEOF(.bss) + PAGESIZE - 1) / PAGESIZE);
+        _usr = ADDR(.usr);
+	_eusr = _usr + PAGESIZE * ((SIZEOF(.usr) + PAGESIZE - 1) / PAGESIZE);
 	. = ALIGN(PAGESIZE);
     }
 
     /* read-write data segment; initialised global structures */
-    .data : AT(PAGETAB + SIZEOF(.pgtab) + SIZEOF(.text)) {
-    	_data = _etext;
-	_datavirt = _etextvirt;
+    .data : AT(_erodata) {
 	*(.data)
+	*(.data.*)
 	. = ALIGN(PAGESIZE);
     }
 
     /* bss segment; runtime-allocated, uninitialised data */
-    .bss : AT(PAGETAB + SIZEOF(.pgtab) + SIZEOF(.text) + SIZEOF(.data)) {
-        _bss = _data + SIZEOF(.data);
-	_bssvirt = _etextvirt + SIZEOF(.data) + SIZEOF(.text);
+    .bss : AT(_edata) {
 	*(.bss)
-	*(COMMON)
-        _ebss = _bss + SIZEOF(.bss);
-	_ebssvirt = _bssvirt + SIZEOF(.bss);
-/*	_ebssphys = LOADADDR(.bss) + SIZEOF(.bss); */
+	(COMMON)
 	. = ALIGN(PAGESIZE);
     }
 
-    .usr : AT(PAGETAB + SIZEOF(.pgtab) + SIZEOF(.text) + SIZEOF(.data)
-    	    + SIZEOF(.bss)) {
-        _usr = _bss + SIZEOF(.bss);
-	_usrvirt = _ebssvirt + SIZEOF(.bss);
+    .usr : AT(_ebss) {
 	usr.o(.text)
-	_eusr = _usr + SIZEOF(.usr);
-	_eusrvirt = _usrvirt + SIZEOF(.usr);
 	. = ALIGN(PAGESIZE);
     }
-
-    _kernsize = PAGETAB + PAGETABSIZE + SIZEOF(.text) + SIZEOF(.data)
-    	      + SIZEOF(.bss) + SIZEOF(.usr);
-/*
-    _kernsize = PAGETAB + PAGETABSIZE + SIZEOF(.text) + SIZEOF(.data)
-    	      + SIZEOF(.bss);
-*/
 }
 

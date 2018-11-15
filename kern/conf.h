@@ -17,29 +17,23 @@
 #define LONGMODE      0
 #define MEMBUFNOLK    0 // FIXME: implement lock-free data (stack?)
 
+#define RAMSIZE       (2U * 1024 * 1024 * 1024)
 #define MEMPARANOIA   0
 #define BUFDYNALLOC   0
 #if (PTRBITS == 32)
-#define MEMNBUFBLK    8192
+#define MEMBUFBLKS    8192
 #else
-#define MEMNBUFBLK    32768
+#define MEMBUFBLKS    32768
 #endif
 #define PERTHRSTACKS  0
-
-#define NEWBUFBLK     1
-#define BUFNEWHASH    1
-#define BUFMULTITAB   0
 
 #define VMFLATPHYSTAB 1
 #define USERMODE      0
 
-#define IOBUF         1
 #define NEWFONT       1
-#if !defined(BUFNMEG)
-#define BUFNMEG       256
+#if !defined(BUFMEGS)
+#define BUFMEGS       256
 #endif
-#define BUFNBYTE      (BUFNMEG * 1024 * 1024)
-#define BUFMINBYTES   (BUFNBYTE >> 2)
 
 #define INET4         1
 
@@ -50,22 +44,20 @@
 #define FASTHZ        1000      // fast timer frequency (interactive tasks etc.)
 #define ZEROSCHED     1         // default scheduler (based on FreeBSD ULE)
 #define ZEROINTSCHED  1         // scheduler with interactivity-scoring
-//#define NPROC       1024      // maximum number of running processes on system
-//#define NPROC       4096
-#define NTASK         4096      // maximum number of running tasks on system
-#define NPROCTASK     128       // maximum number of children per task
-#define NPROCFD       4096      // maximum number of descriptors per process
+#define TASKSMAX      4096      // maximum number of running tasks on system
+#define TASKCHILDREN  128       // maximum number of children per task
+#define PROCDESCS     4096      // maximum number of descriptors per process
 #define TASKSTKSIZE   1048576   // task user mode stack size
 #define KERNSTKSIZE   PAGESIZE  // task kernel mode stack size
 #if (SMP)
-#define NCPU          8
+#define CPUSMAX       8
 #else
-#define NCPU          1
+#define CPUSMAX       1
 #endif
 #if (SMT)
-#define NCORE         8
+#define CORESMAX      8
 #else
-#define NCORE         1
+#define CORESMAX      1
 #endif
 
 /* NOTE: it's not recommended to edit anything below unless you develop Zero */
@@ -76,12 +68,13 @@
 
 /* maximum number of physical pages */
 #if (PTRBITS == 32)
-#define NPAGEMAX      (1L << (PTRBITS - PAGESIZELOG2))
+#define PAGESMAX      (1L << (PTRBITS - PAGESIZELOG2))
 #endif
-#define NPAGEPHYS     (1L << (PTRBITS - PAGESIZELOG2))
+#define PAGESPHYS     (RAMSIZE / PAGESIZE)
+#define PAGESDEV      (PAGESMAX / 8)
 
 #define LOCORE        0
-#define NCONS         8
+#define CONSMAX       8
 
 #define BOCHS         1
 #define DEVEL         0         // debugging

@@ -278,6 +278,7 @@ m_setbit64(volatile m_atomic_t *p, long ndx)
 {
     int64_t mask = ~(INT64_C(1) << ndx);
 
+    m_membar();
     __asm__ __volatile__ ("lock andq %1, %0\n"
                           : "=m" (*(p))
                           : "Ir" (mask)
@@ -292,6 +293,7 @@ m_clrbit64(volatile m_atomic_t *p, long ndx)
 {
     int64_t bit = INT64_C(1) << ndx;
 
+    m_membar();
     __asm__ __volatile__ ("lock orq %1, %0\n"
                           : "=m" (*(p))
                           : "Ir" (bit));
@@ -303,6 +305,7 @@ m_clrbit64(volatile m_atomic_t *p, long ndx)
 static INLINE void
 m_flipbit64(volatile m_atomic_t *p, long ndx)
 {
+    m_membar();
     __asm__ __volatile__ ("lock btcq %1, %0\n"
                           : "=m" (*(p))
                           : "Ir" (ndx));

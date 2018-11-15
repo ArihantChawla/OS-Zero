@@ -14,7 +14,7 @@
 #define grubmemsz(hdr) ((1024 + (hdr)->himem) << 10)
 #endif
 
-#define MBMAGIC     0x1BADB002
+#define MBMAGIC     0x1bADb002
 #define MBPAGEALIGN (1 << 0)
 #define MBMEMINFO   (1 << 1)
 #define MBFLAGS     (MBPAGEALIGN | MBMEMINFO)
@@ -78,12 +78,12 @@ struct mboothdr {
 #define UTEXTSEG     4
 #define UDATASEG     5
 #define CPUSEG       6
-#define NGDT         7
+#define KERNSEGS     7
 #if (VBE)
-#undef NGDT
+#undef  KERNSEGS
 #define REALCODESEG  7
 #define REALDATASEG  8
-#define NGDT         9
+#define KERNSEGS     9
 #endif
 
 /* segment selectors */

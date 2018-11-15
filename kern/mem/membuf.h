@@ -13,7 +13,7 @@
 #include <kern/types.h>
 
 /* amount of memory to use for membufs */
-#define MEMNBUF              (4 * MEMNBUFBLK)
+#define MEMBUFSMAX          (4 * MEMBUFBLKS)
 
 /* membuf convenience macros */
 #define MEMBUF_SIZE         PAGESIZE                    // membuf size
@@ -118,8 +118,8 @@ struct membufctl {
 /* record/packet header in first mb of chain; MEMBUF_PKTHDR is set */
 struct mempkthdr {
     struct netif  *recvif;      // receiver interface
-    m_ureg_t         size;        // buffer length
-    m_ureg_t         len;         // packet length
+    m_ureg_t       size;        // buffer length
+    m_ureg_t       len;         // packet length
     uint8_t       *hdr;         // packet header
     int32_t        flg;         // checksum and other flags
     int32_t        chksum;      // checksum data
@@ -144,8 +144,8 @@ struct mempkthdr {
 struct memexthdr {
     volatile m_atomic_t   nref;
     uint8_t              *data; // buffer base address
-    m_ureg_t                size; // buffer size
-    m_ureg_t                len;  // buffer data length
+    m_ureg_t              size; // buffer size
+    m_ureg_t              len;  // buffer data length
     void                (*rel)(void *, void *); // optional custom free()
     void                 *args; // optional argument pointer
     long                  type; // storage type
@@ -153,8 +153,8 @@ struct memexthdr {
 
 struct membufhdr {
     uint8_t          *data;     // buffer data base address
-    m_ureg_t            size;     // buffer size
-    m_ureg_t            len;      // # of bytes in membuf
+    m_ureg_t          size;     // buffer size
+    m_ureg_t          len;      // # of bytes in membuf
     long              type;     // buffer type
     long              flg;      // flags
     struct membuf    *next;     // next buffer in chain

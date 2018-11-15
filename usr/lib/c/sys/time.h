@@ -3,7 +3,7 @@
 
 #include <features.h>
 #include <time.h>
-//#include <sys/types.h>
+#include <sys/types.h>
 
 #ifndef CLK_TCK
 #define CLK_TCK CLOCKS_PER_SEC
@@ -56,8 +56,8 @@ typedef void            *__restrict timezone_ptr_t;
 #if (USEZERO)
 #include <kern/conf.h>
 #endif
-#if defined(NPROCFD) && !defined(FD_SETSIZE)
-#define FD_SETSIZE NPROCFD
+#if defined(PROCDESCS) && !defined(FD_SETSIZE)
+#define FD_SETSIZE PROCDESCS
 #elif (defined(USEPOSIX))
 #define FD_SETSIZE _POSIX_FD_SETSIZE
 #elif (USEBSD) && !defined(NFDBITS)

@@ -29,12 +29,12 @@
  * ------------------
  * - minimum allocation size is a cacheline (may be wasteful; see <bits/mem.h>)
  * - blocks are 1..PAGESIZE bytes in size
- *   - allocated from thread-local pools
- * - runs are PAGESIZE..MEM_RUN_MAX_PAGES * PAGESIZE (64 * PAGESIZE) bytes
- *   - allocated from thread-local pools
+ *   - allocated from thread-local pools, multiples of CLSIZE (cacheline)
+ * - runs are PAGESIZE..MEM_RUN_MAX_PAGES * PAGESIZE (32 * PAGESIZE) bytes
+ *   - allocated from thread-local pools, multiples of CLSIZE
  * - middle-size blocks are multiples of PAGESIZE << MEM_MID_PAGE_SHIFT
- *   (4 * PAGE_SIZE) from 128 * PAGESIZE up to 256 * PAGESIZE bytes
- *   - allocated from global pools
+ *   (4 * PAGE_SIZE) from 64 * PAGESIZE up to 256 * PAGESIZE bytes
+ *   - allocated from global pools, multiples of PAGESIZE >> MEM_MID_PAGE_SHIFT
  * - big blocks are allocated individually
  * - blocks are prefixed with allocation info structure struct memblk
  *   - other allocations have page-entries in g_mem.hashtab
@@ -66,7 +66,7 @@
 #define MEM_RUN_MAX_SIZE   (MEM_RUN_MAX_PAGES * PAGESIZE)
 #define MEM_RUN_SLAB_SIZE  (2 * MEM_RUN_MAX_SIZE)
 /* mid-size allocations */
-#define MEM_MID_MIN_PAGES  (2 * MEM_RUN_MAX_PAGES)
+#define MEM_MID_MIN_PAGES  (1L << MEM_MID_MIN_SHIFT)
 #define MEM_MID_MIN_SHIFT  6 // minimum of 64 pages
 #define MEM_MID_MAX_PAGES  512
 #define MEM_MID_POOLS                                                   \
@@ -74,7 +74,6 @@
 #define MEM_MID_MIN_SIZE   (PAGESIZE * MEM_MID_MIN_PAGES)
 #define MEM_MID_MAX_SIZE   (MEM_MID_MAX_PAGES * PAGESIZE)
 #define MEM_MID_PAGE_SHIFT 2
-#define MEM_MID_UNIT_PAGES (1L << MEM_MID_PAGE_SHIFT)
 #define MEM_MID_POOLS      ((MEM_MID_MAX_PAGES - MEM_MID_MIN_PAGES) \
                             >> MEM_MID_PAGE_SHIFT)
 #define MEM_MID_SLAB_PAGES (2 * MEM_MID_MAX_PAGES)
@@ -115,6 +114,9 @@
 
 /* memory slab with buffer-stack */
 #define MEM_SLAB_HDR_SIZE           (2 * PAGESIZE)
+#define memblkid(slab, ptr, type, nblk)                                 \
+    ((uintptr_t)ptr
+
 #define memmkinfo(pool, type, nblk) (((type) << 24) | ((pool) << 16) | (nblk))
 #define memgetnblk(slab)            ((slab)->info & 0xffff)
 #define memgetpool(slab)            (((slab)->info >> 16) & 0xff)
@@ -157,8 +159,8 @@ struct memglob {
 };
 
 struct membuf {
-    struct memslab  *hdrq;
-    void           **tabq;
+    struct memslab *hdrq;
+    void           *tabq;
 };
 
 #define MEM_BLK_ID_BITS     16

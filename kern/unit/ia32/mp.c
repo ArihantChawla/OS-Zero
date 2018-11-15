@@ -35,7 +35,7 @@
 extern void gdtinit(void);
 extern void idtset(void);
 
-extern uintptr_t *kernpagedir[NPDE];
+extern uintptr_t *kernpagedir[PDESMAX];
 
 struct k_mp k_mp;
 

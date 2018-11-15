@@ -73,7 +73,7 @@ struct task {
     time_t           timelim;           // wakeup time or deadline
 };
 
-extern struct task k_tasktab[NTASK];
+extern struct task k_tasktab[TASKSMAX];
 
 #if (PTRSIZE == 8)
 #define TASKNLVLWAITLOG2 16

@@ -12,19 +12,12 @@
 .endm
 .macro	_trapleave
 	popal
-	addl	$8, %esp	// trap number and [possibly fake] error code
+	addl	$8, %esp	/* trap number and [possibly fake] error code */
 .endm
 .macro	_trapentererr
 	pushal
-	movl	32(%esp), %ecx	// move error code to %ecx
+	movl	32(%esp), %ecx	/* move error code to %ecx */
 .endm
-#if 0
-.macro	_trapleaveerr
-	/* TODO: check to see if we need to schedule another thread */
-	popal
-	addl	$4, %esp	// skip error code
-.endm
-#endif
 
 #if (APIC) || (SMP)
 .macro	_apiceoi

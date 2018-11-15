@@ -1,11 +1,11 @@
-#define __ASSEMBLER__ 1
+#define  __ASSEMBLER__ 1
 #include <kern/conf.h>
 #include <kern/unit/x86/boot.h>
 
 .globl	gdtinit, pginit, idtset, idtptr
 .globl	realgdtptr
 .globl	gdtptr, gdtptrtab
-.extern	kernpagedir
+.extern	k_pagedir
 
 .text	32
 
@@ -39,12 +39,12 @@ _gdtret:
 	 * - finish with a near jump
 	 */
 pginit:
-	movl	$kernpagedir, %eax
+	movl	$k_pagedir, %eax
 	movl	%eax, %cr3
 	movl	%cr0, %eax
-	orl	$CR0PG, %eax
+	orl		$CR0PG, %eax
 	movl	%eax, %cr0
-	jmp	_pgret
+	jmp		_pgret
 _pgret:
 	ret
 
@@ -59,7 +59,7 @@ realgdtptr:
 	.long	0x00000000
 gdtptr:
 gdtptrtab:
-	.space	8 * NCPU
+	.space	8 * CPUSMAX
 idtptr:
 	.short	0x0000
 	.long	0x00000000

@@ -58,6 +58,12 @@
 #define MEM_ADR_LK_BIT_POS 0
 #define MEM_ADR_LK_BIT     ((uintptr_t)1 << MEM_ADR_LK_BIT_POS)
 
+/* size for aligned block of sz */
+#define memalnsize(sz, aln)                                             \
+    (((aln) <= PAGESIZE && (aln) <= (sz))                               \
+     ? (sz)                                                             \
+     : ((sz) + (aln) - 1))
+
 /* align pointer to aln-byte boundary */
 #define memalignptr(ptr, aln)   ((void *)((uintptr_t)(ptr) & ~((align) - 1)))
 #define memptraligned(ptr, aln) (!(MEMADR_T(ptr) & ((aln) - 1)))

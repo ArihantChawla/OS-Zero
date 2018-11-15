@@ -144,5 +144,41 @@ typedef uint64_t trace_event_set_t;
 
 #define NODEV       ((dev_t)-1L)
 
+#if !defined(FD_SETSIZE)
+
+#if (_ZERO_SOURCE)
+#include <kern/conf.h>
+#endif
+#if defined(PROCDESCS) && !defined(FD_SETSIZE)
+#define FD_SETSIZE PROCDESCS
+#elif (_POSIX_SOURCE) && !defined(FD_SETSIZE)
+#define FD_SETSIZE _POSIX_FD_SET_SIZE
+#elif (USEBSD) && !defined(PROCDESCBITS)
+#include <sys/sysmacros.h>
+#define FD_SETSIZE PROCDESCBITS
+#endif
+
+typedef long         fd_mask;
+#define PROCDESCBITS (sizeof(fd_mask) * CHAR_BIT)
+
+struct fd_set {
+#if (USEXOPEN)
+    fd_mask fds_bits[FD_SETSIZE / PROCDESCBITS];
+#else
+    fd_mask __fds_bits[FD_SETSIZE / PROCDESCBITS];
+#endif
+};
+typedef struct fd_set fd_set;
+
+#define FD_SET(fd, set)    setbit(set->fd_bits, fd)
+#define FD_CLR(fd, set)    clrbit(set->fd_bits, fd)
+#define FD_ISSET(fd, set)  bitset(set->fd_bits, fd)
+#define FD_ZERO(set)       memset(set->fd_bits, 0, FD_SETSIZE / CHAR_BIT)
+#if (USEBSD)
+#define FD_COPY(src, dest) memcpy(dest, src, sizeof(fd_set))
+#endif
+
+#endif /* !defined(FD_SETSIZE) */
+
 #endif /* __SYS_TYPES_H__ */
 

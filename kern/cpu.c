@@ -7,8 +7,8 @@
 
 extern void         cpuprintinfo(void);
 
-volatile struct cpu k_cputab[NCPU] ALIGNED(PAGESIZE);
-extern uint8_t      kernusrstktab[NCPU * KERNSTKSIZE];
+volatile struct cpu k_cputab[CPUSMAX] ALIGNED(PAGESIZE);
+extern uint8_t      kernusrstktab[CPUSMAX * KERNSTKSIZE];
 
 void
 cpuinit(struct cpu *cpu)

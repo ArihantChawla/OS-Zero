@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <mach/param.h>
 #include <mach/types.h>
+#include <mach/asm.h>
 #include <kern/unit/x86/link.h>
 
 #define VMFLATPHYSTAB 1
@@ -17,9 +18,11 @@ void vmfreephys(void *virt, m_ureg_t size);
 void vmmapseg(uintptr_t virt, uintptr_t phys, m_ureg_t lim,
               m_ureg_t flg);
 
-#define KERNVIRTBASE      0xc0000000U
-#define KERNLOADBASE      0x01400000U
-#define vmvirtadr(adr)    ((uint32_t)adr - KERNLOADBASE)
+#define KERNVIRTBASE      0xc0000000U // 3 gigabytes
+#define KERNDEVBASE       (KERNVIRTBASE + 512 * 1024 * 1024)
+#define KERNLOADBASE      0x01400000U // 20 megs, beyond flat page-table
+//#define vmvirtadr(adr)    ((uint32_t)adr - KERNLOADBASE)
+#define vmvirtadr(adr)    ((uint32_t)adr)
 #define vmlinkadr(adr)    ((uint32_t)(adr) - KERNVIRTBASE)
 #define vmphysadr(adr)    ((uintptr_t)(((uint32_t *)&_pagetab)[vmpagenum(adr)]) & VMPAGEMASK)
 #define vmpagedirnum(adr) ((uint32_t)(adr) >> PDSHIFT)
@@ -42,10 +45,10 @@ vmflushtlb(void *adr)
 //#define DEVMEMBASE      0xe0000000      // 3.5 G
 
 /* virtual memory parameters */
-//#define NPAGEMAX        (NPDE * NPTE)   // # of virtual pages
-#define NPDE            1024            // per directory
-#define NPTE            1024            // per table
-#define PAGETABSIZE     (NPDE * NPTE * sizeof(uint32_t))
+//#define NPAGEMAX        (PDESMAX * PTESMAX)   // # of virtual pages
+#define PDESMAX         1024            // per directory
+#define PTESMAX         1024            // per table
+#define PAGETABSIZE     (PDESMAX * PTESMAX * sizeof(uint32_t))
 #define PDSHIFT         22
 #define PTSHIFT         12
 #define VMPDMASK        0xffc00000      // top 10 bits
@@ -53,6 +56,10 @@ vmflushtlb(void *adr)
 #define VMPAGEMASK      0xfffff000U     // page frame; 22 bits
 
 /* page structure setup */
+
+#define vmtrylkpte(tab, ndx) m_trylkbit(&tab[ndx], PAGELOCKBITPOS)
+#define vmlkpte(tab, ndx)    m_lkbit(&tab[ndx], PAGELOCKBITPOS)
+#define vmunlkpte(tab, ndx)  m_clrbit(&tab[ndx], PAGELOCKBITPOS)
 
 /*
  * page flags
@@ -70,17 +77,19 @@ vmflushtlb(void *adr)
 #define PAGESYS1        0x00000200U	// reserved for system
 #define PAGESYS2        0x00000400U	// reserved for system
 #define PAGESYS3        0x00000800U	// reserved for system
+#define PAGELOCKBITPOS  11
 #define PAGESUPERPMD    0x00001000U
 /* custom flags */
 #define PAGESWAPPED     PAGESYS1        // swapped out
-#define PAGEBUF         PAGESYS2        // buffer cache
-#define PAGEWIRED       PAGESYS3        // wired
-#define PAGESYSFLAGS    (PAGESWAPPED | PAGEBUF | PAGEWIRED)
+#define PAGEWIRED       PAGESYS2        // wired
+#define PAGELOCKED      PAGESYS3        // page-table entry locked
+//#define PAGEBUF         PAGESYS2        // buffer cache
+#define PAGESYSFLAGS    (PAGESWAPPED | PAGEWIRED | PAGELOCKED)
 
 /* page fault management */
 
 /* page fault exception */
-#define NPAGEDEV     16
+#define NSWAPDEV        16
 //#define pfltdev(adr)  (((adr) & PAGEFLTDEVMASK) >> 3)
 #define pagefltadr(adr) ((adr) & PAGEFLTPAGEMASK)
 #define PAGEFLTPRES     0x00000001U	// page is present
@@ -94,7 +103,7 @@ vmflushtlb(void *adr)
 
 struct vmpagemap {
     uintptr_t *dir; // page directory address
-    uintptr_t *tab; // flat page-table of NPDE * NPTE entries
+    uintptr_t *tab; // flat page-table of PDESMAX * PTESMAX entries
 };
 
 struct vmpagestat {

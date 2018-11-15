@@ -305,6 +305,7 @@ m_cmpxchgu32(volatile m_atomicu32_t *p,
 static INLINE void
 m_setbit32(volatile m_atomic32_t *p, int32_t ndx)
 {
+    m_membar();
     __asm__ __volatile__ ("lock btsl %1, %0\n"
                           : "=m" (*(p))
                           : "Ir" (ndx)
@@ -319,6 +320,7 @@ m_clrbit32(volatile m_atomic32_t *p, int32_t ndx)
 {
     int32_t mask = ~(INT32_C(1) << ndx);
 
+    m_membar();
     __asm__ __volatile__ ("lock andl %1, %0\n"
                           : "=m" (*((uint8_t *)(p) + (ndx >> 3)))
                           : "Ir" (mask));
@@ -332,6 +334,7 @@ m_flipbit32(volatile m_atomic32_t *p, int32_t ndx)
 {
     int32_t bit = INT32_C(1) << ndx;
 
+    m_membar();
     __asm__ __volatile__ ("lock orl %1, %0\n"
                           : "=m" (*((uint8_t *)(p) + (ndx >> 3)))
                           : "Ir" (bit));

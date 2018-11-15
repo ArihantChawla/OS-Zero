@@ -313,7 +313,7 @@ main(int argc, char *argv[])
         cnt += REG_BITS;
     }
 #endif
-    fprintf(stderr, "MUL: %lu, pre: %ud, post: %lu, incr %d\n",
+    fprintf(stderr, "MUL: %0xlx, pre: %ud, post: %lu, incr %d\n",
             (unsigned long)info.multiplier,
             info.pre_shift,
             cnt,
@@ -327,7 +327,7 @@ main(int argc, char *argv[])
     }
     printf("{\n");
     if (nbit == 32) {
-        printf("\tuint32_t mul = UINT32_C(%ld);\n",
+        printf("\tuint32_t mul = UINT32_C(0x%lx);\n",
                (unsigned long)info.multiplier);
         printf("\tuint32_t res = uval;\n");
         printf("\tuint32_t cnt = %lu;\n\n", cnt);

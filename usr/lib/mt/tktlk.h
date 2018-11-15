@@ -10,11 +10,12 @@
 #include <mach/param.h>
 #include <mt/thr.h>
 
-#define TKTLKNSPIN 16384
+#define TKTLKSPINS 16384
+
+#define TKTSIZE    WORDSIZE
 
 #if (WORDSIZE == 4)
 
-#define TKTSIZE    8
 union zerotktlk {
     volatile m_atomicu32_t uval;
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
@@ -32,7 +33,6 @@ union zerotktlk {
 
 #elif (WORDSIZE == 8)
 
-#define TKTSIZE    16
 union zerotktlk {
     volatile m_atomicu64_t uval;
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
@@ -55,12 +55,12 @@ struct zerotktbkt {
     union zerotktlk tab[ZEROTKTBKTITEMS];
 };
 
-typedef union zerotktlk zerotktlk;
+typedef volatile union zerotktlk zerotktlk;
 
 #if (WORDSIZE == 4)
 
 static INLINE void
-tktlk(union zerotktlk *tp)
+tktlk(zerotktlk *tp)
 {
     uint16_t val = m_fetchaddu16(&tp->s.cnt, 1);
 
@@ -72,7 +72,7 @@ tktlk(union zerotktlk *tp)
 }
 
 static INLINE void
-tktunlk(union zerotktlk *tp)
+tktunlk(zerotktlk *tp)
 {
     m_membar();
     tp->s.val++;

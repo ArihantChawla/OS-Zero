@@ -12,12 +12,12 @@
 FASTCALL void gdtinit(struct m_farptr *farptr);
 
 #if (SMP)
-extern uint64_t            kerngdt[NCPU][NGDT];
+extern uint64_t            kerngdttab[CPUSMAX][KERNSEGS];
 #else
-extern uint64_t            kerngdt[NGDT];
+extern uint64_t            kerngdttab[KERNSEGS];
 #endif
 //extern struct m_tss    tsstab[NTHR];
-extern struct m_farptr     gdtptrtab[NCPU];
+extern struct m_farptr     gdtptrtab[CPUSMAX];
 
 ASMLINK void
 seginit(long unit)
@@ -25,24 +25,24 @@ seginit(long unit)
     volatile struct cpu *cpu = &k_cputab[unit];
     struct m_farptr     *farptr = &gdtptrtab[unit];
 #if (SMP)
-    uint64_t            *gdt = &kerngdt[unit][0];
+    uint64_t            *gdt = &kerngdttab[unit][0];
 #else
-    uint64_t            *gdt = &kerngdt[0];
+    uint64_t            *gdt = &kerngdttab[0];
 #endif
 
     /* set descriptors */
 #if (SMP)
-    gdt = &kerngdt[unit][0];
+    gdt = &kerngdttab[unit][0];
 #else
-    gdt = kerngdt;
+    gdt = kerngdttab;
 #endif
-    segsetdesc(&gdt[TEXTSEG], 0, NPAGEMAX - 1,
+    segsetdesc(&gdt[TEXTSEG], 0, PAGESMAX - 1,
                SEGCODE);
-    segsetdesc(&gdt[DATASEG], 0, NPAGEMAX - 1,
+    segsetdesc(&gdt[DATASEG], 0, PAGESMAX - 1,
                SEGDATA);
-    segsetdesc(&gdt[UTEXTSEG], 0, NPAGEMAX - 1,
+    segsetdesc(&gdt[UTEXTSEG], 0, PAGESMAX - 1,
                SEGCODE | SEGUSER);
-    segsetdesc(&gdt[UDATASEG], 0, NPAGEMAX - 1,
+    segsetdesc(&gdt[UDATASEG], 0, PAGESMAX - 1,
                SEGDATA | SEGUSER);
     /* per-CPU data segment */
     segsetdesc(&gdt[CPUSEG], cpu, sizeof(struct cpu), SEGCPU);
@@ -51,7 +51,7 @@ seginit(long unit)
     gdt[REALDATASEG] = UINT64_C(0x000092000000ffff);
 #endif
     /* initialize segmentation */
-    farptr->lim = NGDT * sizeof(uint64_t) - 1;
+    farptr->lim = KERNSEGS * sizeof(uint64_t) - 1;
     farptr->adr = (uint32_t)gdt;
     gdtinit(farptr);
 

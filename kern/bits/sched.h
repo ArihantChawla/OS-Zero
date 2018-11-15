@@ -81,7 +81,7 @@
 #define SCHEDLOADMAPNWORD                                               \
     max(SCHEDNTOTALQUEUE / (CHAR_BIT * sizeof(long)), CLSIZE / sizeof(long))
 #define SCHEDIDLECOREMAPNWORD                                           \
-    max(NCPU / (CHAR_BIT * sizeof(long)), CLSIZE / sizeof(long))
+    max(CPUSMAX / (CHAR_BIT * sizeof(long)), CLSIZE / sizeof(long))
 
 /* data structures */
 
@@ -169,7 +169,7 @@ static INLINE volatile struct cpu *
 schedfindidlecore(long unit, long *retcore)
 {
     volatile struct cpu *cpu = &k_cputab[unit];
-    long                 nunit = NCPU;
+    long                 nunit = CPUSMAX;
     long                 ndx = 0;
     long                 val = 0;
 

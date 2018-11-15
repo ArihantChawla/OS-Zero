@@ -20,12 +20,12 @@ long dmatakechan(unsigned long chan);
 #define DMAREADOP       1
 #define DMAWRITEOP      2
 
-#define DMANCHAN        8
+#define DMACHANS        8
 #define DMACHANBUFSIZE  (1024 * 1024)
 #define DMAIOBUFSIZE    65536
 
-#define DMABUFBASE      (1024 * 1024)
-#define DMABUFSIZE      (DMANCHAN * DMACHANBUFSIZE)
+#define DMABUFBASE      (8 * 1024 * 1024)
+#define DMABUFSIZE      (DMACHANS * DMACHANBUFSIZE)
 //#define DMACBUFSIZE     (1U << DMACBUFSIZELOG2)
 #define DMABUFNPAGE     (DMACHANBUFSIZE >> PAGESIZELOG2)
 //#define DMACBUFSIZELOG2 17

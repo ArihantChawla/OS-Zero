@@ -3,8 +3,8 @@
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/bits/cpu.h>
-#include <kern/unit/ia32/macro.S>
 #include <kern/unit/ia32/task.h>
+#include "macro.S"
 
 /*
  * NOTE: we use interrupt gates, which automatically disable further
@@ -696,5 +696,5 @@ irqspurious:
 	/* 29		- IRQIPI */
 	/* 31		- IRQSPURIOUS */
 irqvec:
-	.space	(8 * NINTR)
+	.space	(8 * TRAPSMAX)
 

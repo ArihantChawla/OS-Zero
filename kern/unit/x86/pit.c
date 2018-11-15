@@ -11,7 +11,7 @@
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/pic.h>
 
-extern uint64_t      kernidt[NINTR];
+extern uint64_t      kernidt[TRAPSMAX];
 extern void         *irqvec[];
 extern void          irqtmr0(void);
 extern void          irqtmr(void);

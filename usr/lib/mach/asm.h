@@ -38,5 +38,18 @@
 #include <mach/ppc/asm.h>
 #endif
 
+#define m_trylkbit(p, ndx)           (!m_cmpsetbit(p, ndx))
+#define m_unlkbit(p, ndx)            m_clrbit(p, ndx)
+#define m_lkbit(p, ndx)                                                 \
+    do {                                                                \
+        long _pos = 1 << (ndx);                                         \
+        long _res = 0;                                                  \
+                                                                        \
+        while ((uintptr_t)(p) & _pos) {                                 \
+            m_waitspin();                                               \
+        }                                                               \
+        _res = m_cmpsetbit((p), ndx);                                   \
+    } while (!res)
+
 #endif /* __MACH_ASM_H__ */
 

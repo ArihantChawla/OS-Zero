@@ -8,7 +8,7 @@
 #include <kern/printf.h>
 #include <kern/io/drv/pc/dma.h>
 
-const uint8_t dmapageports[DMANCHAN] ALIGNED(PAGESIZE)
+const uint8_t dmapageports[DMACHANS] ALIGNED(PAGESIZE)
 = {
     0x00,
     DMAPAGE1,

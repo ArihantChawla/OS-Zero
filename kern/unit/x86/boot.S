@@ -1,4 +1,4 @@
-#define __ASSEMBLER__ 1
+#define  __ASSEMBLER__ 1
 #include <kern/conf.h>
 #include <kern/unit/x86/bios.h>
 #include <kern/unit/x86/boot.h>
@@ -11,23 +11,19 @@ _MBCHKSUM	= MBCHKSUM
 /* globals */
 .globl	_start, start
 #if !(LOCORE)
-.globl	kernidt
+.globl	k_intrvec
 #endif
-.globl	kerngdt, kernpagedir, kerniomap, kernpagetab4, kerntsstab
-.globl	kernsysstktab, kernusrstktab
+.globl	k_pagedir
+#if defined(__x86_64__) || defined(__amd64__)
+.globl	k_pagetab4, k_pagetab3, k_pagetab2, k_pagetab1
+#endif
+.globl	k_tsstab, k_gdttab, k_tsstab
+.globl	k_iomap, k_sysstk, k_usrstk
 .extern	kmain
 
 .text	32
 
 /* kernel entry */
-_start:
-start:
-	cli		// disable interrupts
-	movw	$BIOSWARMREBOOT, BIOSREBOOTMODE
-	jmp	    _start2	// flush CPU pipeline
-
-.align	4
-
 /* MULTIBOOT header; must be in first 8 kilobytes of kernel image */
 mboothdr:
 .long	_MBMAGIC
@@ -43,60 +39,72 @@ mboothdr:
 .long	GFXHEIGHT	// video height
 .long	GFXDEPTH	// video depth
 
+.align	4
+
 	/* kernel startup */
+_start:
+start:
+	cli										// disable interrupts
+	movw	$BIOSWARMREBOOT, BIOSREBOOTMODE
+	jmp	    _start2							// flush CPU pipeline
+	nop
+
 _start2:
 	/* set kernel stack up */
-	movl	$BOOTSTKTOP, %esp
-//	movl	$kernsysstktab, %eax
-//	addl	$(NCPU * KERNSTKSIZE), %eax
-//	movl	%eax, %esp
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%ebx			// store boot-header address
+	xorl	%ebp, %ebp						// zero frame pointer
+	movl	$BOOTSTKTOP, %esp				// set bootstrap stack up
+	pushl	%ebp							// push zero frame pointer
+	movl	%esp, %ebp						// store frame pointer
+	pushl	%ebx							// push boot-header address for kmain()
 #if (LONGMODE)
-  	call	_chkcpuid
-	call	_chklongmode
-#else
-    xorl    %eax, %eax
+  	call	_chkcpuid						// probe support for CPUID-instruction
+	cmp		$0, %eax						// return value 0?
+	jeq		_nolongmode						// yep, CPUID is not supported
 #endif
-	pushl	%eax			// store longmode argument for kmain()
-	call	kmain			// call kmain()
+_longmode:
+	call	_chklongmode					// check if we want 64-bit long mode
+	pushl	%eax							// push longmode argument for kmain()
+	call	kmain
+_nolongmode:
+    xorl    %eax, %eax						// zero longmode argument for kmain()
+	pushl	%eax							// push longmode argument
+	call	kmain							// call kmain()
 
-/* check for presence of CPUID by trying to flip bit 21 in %eflags */
+/*
+ * check for presence of CPUID by trying to flip bit 21 in %eflags
+ */
 _chkcpuid:
-	pushfl
-	popl	%eax
-	movl	%eax, %ecx
-	xorl	$(1 << 21), %eax
-	pushl	%eax
-	popfl
-	popl	%eax
-	pushl	%ecx
-	popfl
-	xorl	%ecx, %eax
-	ret
+	pushfl									// push EFLAGS
+	popl	%eax							// EAX = EFLAGS
+	movl	%eax, %ecx						// ECX = EFLAGS
+	xorl	$(1 << 21), %eax				// EAX = EFLAGS ^ (1 << 21)
+	pushl	%eax							// push EFLAGS ^ (1 << 21)
+	popfl									// pop EFLAGS
+	pushfl									// push EFLAGS with bit 21 flipped if CPUID
+	popl	%eax							// EAX = EFLAGS
+	pushl	%ecx							// push call-time EFLAGS
+	popfl									// pop call-time EFLAGS
+	xorl	%ecx, %eax						// check if bit 21 flipped?
+	ret										// return non-zero if CPUID is supported
 
 _chklongmode:
-	movl	$(1 << 31), %eax
+	movl	$(1 << 31), %eax				// call CPUID with EAX = 0x80000000
 	cpuid
-	cmp	$((1 << 31) | 1), %eax
-	jb	_nolongmode
-	movl	$1, %eax
-	ret
-_nolongmode:
-	movl	$0, %eax
+	cmp		$((1 << 31) | 1), %eax			// compare return value with 0x80000001
+	jge		_longmodefin					// at least equal, long mode supported
+	xorl	%eax, %eax						// long mode not supported, return zero
+_longmodefin:								// long mode supported, return non-zero
 	ret
 
-.data
+.bss
 
 .align	NBPG
 
-#if !(LOCORE)
 /* IDT; interrupt descriptor table; shared between processors */
-kernidt:
+k_intrvec:
 	.space	NBPG
 /* page directory index page */
-kernpagedir:
+k_pagedir:
 	.space	NBPG
 
 #if defined(__x86_64__) || defined(__amd64__)
@@ -104,51 +112,52 @@ kernpagedir:
 /* 64-bit memory management */
 
 /* page-map level-4 table */
-kernpagetab4:
+k_pagetab4:
 	.space	NBPG
 /* page directory pointer table */
-kernpagetab3:
+k_pagetab3:
 	.space	NBPG
 /* page directory table */
-kernpagetab2:
+k_pagetab2:
 	.space	NBPG
 /* page table */
-kernpagetab1:
+k_pagetab1:
 	.space	NBPG
 
 #endif /* 64-bit */
-#endif /* !LOCORE */
 
 /* per-CPU GDTs; kernel segment descriptor tables */
-.align	4096
-
-#if (SMP)
-
-kerngdt:
-#if (NGDT < 16)
-	.space	(16 * 8 * NCPU)
-#else
-	.space	(8 * NGDT * NCPU)
-#endif
-
-#else
-kerngdt:
-	.space	(8 * NGDT)
-#endif /* SMP */
+.align	NBPG
 
 /* kernel TSS structures */
-kerntsstab:
-	.space	(NCPU * TSSLEN)
+k_tsstab:
+	.space	(CPUSMAX * TSSLEN)
 
 	.align	NBPG
 
+#if (SMP)
+
+k_gdttab:
+#if (KERNSEGS < 16)
+	.space	(16 * 8 * CPUSMAX)
+#else
+	.space	(8 * KERNSEGS * CPUSMAX)
+#endif
+
+#else /* !SMP */
+
+k_gdttab:
+	.space	(8 * KERNSEGS)
+
+#endif /* SMP */
+
 /* kernel I/O protection bitmap */
-kerniomap:
+k_iomap:
 	.space	8192
 
 /* kernel stacks */
-kernsysstktab:
-	.space	(NCPU * KERNSTKSIZE)
-kernusrstktab:
-	.space	(NCPU * KERNSTKSIZE)
+k_sysstk:
+	.space	(CPUSMAX * KERNSTKSIZE)
+k_usrstk:
+	.space	(CPUSMAX * KERNSTKSIZE)
 

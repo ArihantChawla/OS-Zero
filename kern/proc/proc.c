@@ -17,9 +17,9 @@
 #include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/link.h>
 
-extern uintptr_t            kernpagedir[NPDE];
-struct proc                *k_proctab[NTASK] ALIGNED(PAGESIZE);
-volatile struct proc       *k_proczombietab[NTASK];
+extern uintptr_t      k_pagedir[PDESMAX];
+struct proc          *k_proctab[TASKSMAX] ALIGNED(PAGESIZE);
+volatile struct proc *k_proczombietab[TASKSMAX];
 
 long
 procinit(long unit, long id, long sched)
@@ -55,9 +55,9 @@ procinit(long unit, long id, long sched)
         task->flg |= CPUHASFXSR;
         if (task->state == TASKNEW) {
             /* initialise page directory */
-            ptr = kwalloc(NPDE * sizeof(uintptr_t));
+            ptr = kwalloc(PDESMAX * sizeof(uintptr_t));
             if (ptr) {
-                kbzero(ptr, NPDE * sizeof(uintptr_t));
+                kbzero(ptr, PDESMAX * sizeof(uintptr_t));
                 proc->pagedir = ptr;
             } else {
                 kfree(proc);
@@ -78,20 +78,20 @@ procinit(long unit, long id, long sched)
             }
 #endif
             /* initialise descriptor table */
-            ptr = kmalloc(NPROCFD * sizeof(struct desc));
+            ptr = kmalloc(PROCDESCS * sizeof(struct desc));
             if (ptr) {
-                kbzero(ptr, NPROCFD * sizeof(struct desc));
+                kbzero(ptr, PROCDESCS * sizeof(struct desc));
                 proc->desctab = ptr;
-                proc->ndesctab = NPROCFD;
+                proc->ndesctab = PROCDESCS;
             } else {
-                if (id >= TASKNPREDEF) {
+                if (id >= TASKPREDEFS) {
                     kfree(proc->pagetab);
                     kfree(proc->pagedir);
                     kfree(proc);
                 }
             }
         }
-    } else if (id < TASKNPREDEF) {
+    } else if (id < TASKPREDEFS) {
         task = &k_tasktab[id];
         kbzero(task, sizeof(struct task));
         proc = k_proctab[id];
@@ -101,7 +101,7 @@ procinit(long unit, long id, long sched)
         task->sched = SCHEDSYSTEM;
         task->flg |= CPUHASFXSR;
         task->prio = prio;
-        proc->pagedir = (uintptr_t *)kernpagedir;
+        proc->pagedir = (uintptr_t *)k_pagedir;
         proc->pagetab = (uintptr_t *)&_pagetab;
     }
     k_setcurcpu(cpu);

@@ -1,6 +1,7 @@
 #ifndef __KERN_MEM_BKT_H__
 #define __KERN_MEM_BKT_H__
 
+#include <mach/param.h>
 #include <kern/conf.h>
 #include <zero/trix.h>
 
@@ -11,14 +12,10 @@
 #define memcalcbkt(sz) __memcalcbkt(sz)
 #endif
 
-#define __STRUCT_MEMBKT_SIZE                                         \
-    (sizeof(long) + sizeof(void *))
-#define __STRUCT_MEMBKT_PAD                                          \
-    (rounduppow2(__STRUCT_MEMBKT_SIZE, CLSIZE) - __STRUCT_MEMBKT_SIZE)
+#define MEMBKTHDRSIZE CLSIZE
 struct membkt {
     MEM_LK_T    lk;
     void       *list;
-    uint8_t     _pad[__STRUCT_MEMBKT_PAD];
 };
 
 static __inline__ unsigned long

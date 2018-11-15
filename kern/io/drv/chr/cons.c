@@ -10,7 +10,7 @@
 #include <kern/io/drv/pc/vbe.h>
 #endif
 
-struct cons constab[NCONS] ALIGNED(PAGESIZE);
+struct cons constab[CONSMAX] ALIGNED(PAGESIZE);
 long        conscur;
 
 void
@@ -27,8 +27,8 @@ consinit(int w, int h)
 #endif
 #if 0
     cons = &constab[0];
-    bufsz = CONSNBUFROW * (w + 1) * sizeof(conschar_t);
-    for (l = 0 ; l < NCONS ; l++) {
+    bufsz = CONSBUFROWS * (w + 1) * sizeof(conschar_t);
+    for (l = 0 ; l < CONSMAX ; l++) {
         cons->textbuf = kmalloc(bufsz);
         if (!cons->textbuf) {
             kprintf("CONS failed to allocate text buffer\n");
@@ -50,9 +50,9 @@ consscroll(struct cons *cons, long nrow)
         row = cons->row;
         row += nrow;
         if (nrow > 0) {
-            row = min(row, CONSNBUFROW - 1);
+            row = min(row, CONSBUFROWS - 1);
         } else {
-            row = max(row, CONSNBUFROW - 1);
+            row = max(row, CONSBUFROWS - 1);
         }
         cons->row = row;
     }

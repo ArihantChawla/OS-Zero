@@ -30,13 +30,15 @@ typedef uint64_t   vmblkbits;
 #include <kern/unit/ia32/vm.h>
 
 #if (VMTKTLK)
+#include <mt/tktlk.h>
 #define VM_LK_T         zerotktlk
-#define vmlk(lp)        tktlk(lp)
-#define vmunlk(lp)      tktunlk(lp)
+#define vmlkpage(lp)    tktlk(lp)
+#define vmunlkpage(lp)  tktunlk(lp)
 #else
+#include <mt/mtx.h>
 #define VM_LK_T         zerofmtx
-#define vmlk(lp)        fmtxlk(lp)
-#define vmunlk(lp)      fmtxunlk(lp)
+#define vmlkpage(lp)    fmtxlk(lp)
+#define vmunlkpage(lp)  fmtxunlk(lp)
 #endif
 
 #define VM_PROT_NONE    0
@@ -49,23 +51,11 @@ typedef uint64_t   vmblkbits;
 #define VM_PROT_RW      (VM_PROT_READ | VM_PROT_WRITE)
 #define VM_PROT_DEFAULT VM_PROT_ALL
 
-#if (VMPAGETKTLK) || (VMTKTLK)
-#include <mt/tktlk.h>
-#define VMPAGE_LK_T     union zerotktlk
-#define vmlkpage(tp)    tktlk(tp)
-#define vmunlkpage(tp)  tktunlk(tp)
-#else
-#define VMPAGE_LK_T     zerofmtx
-#define vmlkpage(lp)    fmtxlk(lp)
-#define vmunlkpage(lp)  fmtxunlk(lp)
-#include <mt/mtx.h>
-#endif
-
 struct vmpage {
-    VMPAGE_LK_T       lk;       // mutual exclusion lock
-    m_ureg_t          adr;      // page [virtual] address
+    VM_LK_T           lk;       // page-lock
     m_atomic_t        nref;     // number of active references
     m_atomic_t        nmap;     // number of page-faults generated
+    m_ureg_t          adr;      // page [virtual] address
     struct vmpage    *prev;     // previous on queue
     struct vmpage    *next;     // next on queue
     struct perm      *perm;     // permissions
@@ -137,7 +127,6 @@ struct vmdomain {
 
 struct k_physmem {
     struct vmpage      lrutab[PTRBITS];
-    VM_LK_T            lk;
     intmax_t           pagefree;
     struct vmpage     *pagequeue;
     struct vmpage     *shmqueue;

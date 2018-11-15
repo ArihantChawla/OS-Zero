@@ -26,21 +26,17 @@
 
 void pginit(void);
 
-extern uint8_t     kernsysstktab[NCPU * KERNSTKSIZE];
-extern uint8_t     kernusrstktab[NCPU * KERNSTKSIZE];
-extern uintptr_t   kernpagedir[NPDE];
-extern uintptr_t   usrpagedir[NPDE];
+extern uint8_t   k_sysstk[CPUSMAX * KERNSTKSIZE];
+extern uint8_t   k_usrstk[CPUSMAX * KERNSTKSIZE];
+extern uintptr_t k_pagedir[PDESMAX];
+extern uintptr_t k_usrpagedir[PDESMAX];
 #if (VMFLATPHYSTAB)
-struct vmpage      k_vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
+struct vmpage    k_vmphystab[PAGESMAX] ALIGNED(PAGESIZE);
 #endif
-//m_atomic_t         k_vmlrulktab[PTRBITS];
+struct vmpage    k_vmdevtab[PAGESDEV];
 
-//static struct vmpage  k_vmpagetab[NPAGEMAX] ALIGNED(PAGESIZE);
-#if (PAGEDEV)
-static struct dev  k_vmdevtab[NPAGEDEV];
-static m_atomic_t  k_vmdevlktab[NPAGEDEV];
-#endif
-struct k_physmem   k_physmem;
+//static struct vmpage  k_vmpagetab[PAGESMAX] ALIGNED(PAGESIZE);
+struct k_physmem  k_physmem;
 
 /*
  * 32-bit page directory is flat 4-megabyte table of page-tables.
@@ -87,18 +83,18 @@ vminit(void)
     /* PHYSICAL MEMORY */
 
     /* initialize page directory index page */
-    pde = kernpagedir;
+    pde = k_pagedir;
     adr = (uintptr_t)&_pagetab;
-    n = NPDE;
+    n = PDESMAX;
     while (n--) {
         *pde = adr | PAGEPRES | PAGEWRITE;
-        adr += NPTE * sizeof(uintptr_t);
+        adr += PTESMAX * sizeof(uintptr_t);
         pde++;
     }
 
     /* map page directory index page */
-    pde = (uintptr_t *)&_pagetab + vmpagenum(kernpagedir);
-    adr = (uintptr_t)&kernpagedir;
+    pde = (uintptr_t *)&_pagetab + vmpagenum(k_pagedir);
+    adr = (uintptr_t)&k_pagedir;
     *pde = adr | PAGEUSER | PAGEPRES | PAGEWRITE;
 
     /* zero page tables */
@@ -106,16 +102,16 @@ vminit(void)
 
     /* zero stacks */
 #if 0
-    kbzero(kernsysstktab, NCPU * KERNSTKSIZE);
-    kbzero(kernusrstktab, NCPU * KERNSTKSIZE);
+    kbzero(k_sysstk, CPUSMAX * KERNSTKSIZE);
+    kbzero(k_usrstk, CPUSMAX * KERNSTKSIZE);
 #endif
     /* map kernel-mode stacks */
-    vmmapseg((uintptr_t)kernsysstktab, (uintptr_t)kernsysstktab,
-             (uintptr_t)kernsysstktab + NCPU * KERNSTKSIZE,
+    vmmapseg((uintptr_t)k_sysstk, (uintptr_t)k_sysstk,
+             (uintptr_t)k_sysstk + CPUSMAX * KERNSTKSIZE,
              PAGEPRES | PAGEWRITE);
     /* map user-mode stacks */
-    vmmapseg((uintptr_t)kernusrstktab, (uintptr_t)kernusrstktab,
-             (uintptr_t)kernusrstktab + NCPU * KERNSTKSIZE,
+    vmmapseg((uintptr_t)k_usrstk, (uintptr_t)k_usrstk,
+             (uintptr_t)k_usrstk + CPUSMAX * KERNSTKSIZE,
              PAGEUSER | PAGEPRES | PAGEWRITE);
 #if defined(__x86_64__) || defined(__amd64__)
     /* zero page structures */
@@ -165,13 +161,13 @@ vminit(void)
     /* VIRTUAL MEMORY */
 
     /* map kernel text/read-only segments */
-    vmmapseg(vmvirtadr((uintptr_t)&_textvirt), vmlinkadr((uintptr_t)&_textvirt),
-             (uintptr_t)&_etextvirt,
+    vmmapseg(vmvirtadr((uintptr_t)&_text), vmlinkadr((uintptr_t)&_text),
+             (uintptr_t)&_etext,
              PAGEPRES);
 
     /* map kernel DATA and BSS segments */
-    vmmapseg(vmvirtadr((uintptr_t)&_datavirt), vmlinkadr((uintptr_t)&_datavirt),
-             (uintptr_t)&_ebssvirt,
+    vmmapseg(vmvirtadr((uintptr_t)&_data), vmlinkadr((uintptr_t)&_data),
+             (uintptr_t)&_ebss,
              PAGEPRES | PAGEWRITE);
 
     /* identity-map 3.5G..4G */
@@ -265,7 +261,6 @@ vmpagefault(uintptr_t pid, uintptr_t adr, m_ureg_t error)
     if (!(adr & ~(PAGEFLTADRMASK | PAGESYSFLAGS))) {
         page = pageallocphys();
         if (page) {
-            vmlkpage(&page->lk);
             page->nref++;
             if (flg & PAGEWIRED) {
                 k_physmem.pagestat.nwire++;
@@ -279,7 +274,6 @@ vmpagefault(uintptr_t pid, uintptr_t adr, m_ureg_t error)
                     vmunlkpage(&k_physmem.lrutab[qid].lk);
                 }
             }
-            vmunlkpage(&page->lk);
             *pte = adr | flg | PAGEPRES;
         }
 #if (PAGEDEV)

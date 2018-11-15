@@ -12,7 +12,7 @@
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/ia32/task.h>
 
-extern long        k_trapsigmap[NCPU];
+extern long        k_trapsigmap[CPUSMAX];
 
 __sighandler_t     k_sigfunctab[NSIG] ALIGNED(PAGESIZE);
 long               k_traperrbits = TRAPERRBITS;
@@ -32,8 +32,8 @@ sigfunc(unsigned long pid, int32_t trap, long err, void *frame)
     struct proc    *proc = task->proc;
     __sighandler_t  func;
 
-    if (pid < TASKNPREDEF) {
-        panic(trap, err, frame);
+    if (pid < TASKPREDEFS) {
+        kpanic(trap, err, frame);
     }
     if (trap == TRAPUD
         || trap == TRAPGP

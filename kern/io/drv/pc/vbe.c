@@ -32,9 +32,9 @@ extern void            realint10(void);
 
 extern struct m_farptr realgdtptr;
 #if (SMP)
-extern uint64_t        kerngdt[NCPU][NGDT];
+extern uint64_t        kerngdttab[CPUSMAX][KERNSEGS];
 #else
-extern uint64_t        kerngdt[NGDT];
+extern uint64_t        kerngdttab[KERNSEGS];
 #endif
 extern FASTCALL void gdtinit(struct m_farptr *farptr);
 
@@ -72,12 +72,12 @@ vbeint10(void)
     }
     realint10();
 #if (SMP)
-    gdt = &kerngdt[id][0];
+    gdt = &kerngdttab[id][0];
 #else
-    gdt = kerngdt;
+    gdt = kerngdttab;
 #endif
     farptr = &realgdtptr;
-    farptr->lim = NGDT * sizeof(uint64_t) - 1;
+    farptr->lim = KERNSEGS * sizeof(uint64_t) - 1;
     farptr->adr = (uint32_t)gdt;
     gdtinit(farptr);
 
@@ -180,13 +180,13 @@ vbeinitcons(int w, int h)
     struct cons  *cons = constab;
     conschar_t  **buf;
     void         *ptr;
-    long          bufsz = CONSNBUFROW * sizeof(conschar_t *);
+    long          bufsz = CONSBUFROWS * sizeof(conschar_t *);
     long          rowsz = (w + 1) * sizeof(conschar_t);
     long          l;
     long          row;
     long          n = 0;
 
-    for (l = 0 ; l < NCONS ; l++) {
+    for (l = 0 ; l < CONSMAX ; l++) {
         cons->puts = vbeputs;
         cons->putchar = vbeputchar;
         cons->fg = GFX_WHITE;
@@ -196,7 +196,7 @@ vbeinitcons(int w, int h)
         cons->row = 0;
         cons->ncol = w;
         cons->nrow = h;
-        cons->nbufrow = CONSNBUFROW;
+        cons->nbufrow = CONSBUFROWS;
 #if 0
         /* TODO: allocate scrollback buffer */
         buf = kcalloc(bufsz);
@@ -207,7 +207,7 @@ vbeinitcons(int w, int h)
         }
         n++;
         cons->textbuf = buf;
-        for (row = 0 ; row < CONSNBUFROW ; row++) {
+        for (row = 0 ; row < CONSBUFROWS ; row++) {
             /* allocate NUL-terminated row */
             ptr = kcalloc(rowsz);
             if (!ptr) {

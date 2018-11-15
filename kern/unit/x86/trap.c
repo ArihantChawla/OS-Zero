@@ -43,14 +43,14 @@ extern void irqmouse(void);
 
 #if (SMP)
 extern volatile long   mpmultiproc;
-extern uint64_t        kernidt[NCPU][NINTR];
+extern uint64_t        k_intrvec[CPUSMAX][TRAPSMAX];
 #else
-extern uint64_t        kernidt[NINTR];
+extern uint64_t        k_intrvec[TRAPSMAX];
 #endif
 extern struct m_farptr idtptr;
 
-long                   k_trappriotab[NINTR];
-long                   k_trapsigmap[TRAPNCPU]
+long                   k_trappriotab[TRAPSMAX];
+long                   k_trapsigmap[TRAPSMAX]
 = {
     SIGFPE,
     0,
@@ -95,9 +95,9 @@ void
 trapinitidt(long unit)
 {
 #if (SMP)
-    uint64_t *idt = &kernidt[unit][0];
+    uint64_t *idt = &k_intrvec[unit][0];
 #else
-    uint64_t *idt = &kernidt[0];
+    uint64_t *idt = &k_intrvec[0];
 #endif
 
     trapsetintrgate(&idt[TRAPDE], trapde, TRAPSYS);
@@ -133,7 +133,7 @@ trapinitidt(long unit)
     trapsetintrgate(&idt[trapirqid(IRQSPURIOUS)], irqspurious, TRAPUSER);
 #endif
     /* initialize interrupts */
-    trapsetidt(NINTR, idt);
+    trapsetidt(TRAPSMAX, idt);
 
     return;
 }

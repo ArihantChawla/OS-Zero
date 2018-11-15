@@ -8,7 +8,7 @@
 #include <kern/unit/x86/link.h>
 #include <kern/unit/x86/trap.h>
 
-extern uint8_t kernusrstktab[NCPU * KERNSTKSIZE];
+extern uint8_t kernusrstktab[CPUSMAX * KERNSTKSIZE];
 
 extern void seginit(long id);
 #if (VBE)
@@ -18,7 +18,7 @@ extern void trapinit(long unit);
 extern void kinitprot(unsigned long pmemsz);
 extern void kinitlong(unsigned long pmemsz);
 
-extern uint64_t kernidt[NINTR];
+extern uint64_t kernidt[TRAPSMAX];
 
 long            kernlongmode;
 

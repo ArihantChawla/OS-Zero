@@ -7,4 +7,3 @@
 
 #endif /* __SYS_FCNTL_H__ */
 
-

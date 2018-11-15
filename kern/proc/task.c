@@ -10,8 +10,8 @@
 #define DEQ_TYPE struct taskid
 #include <zero/deq.h>
 
-struct task          k_tasktab[NTASK] ALIGNED(PAGESIZE);
-static struct taskid k_taskidtab[NTASK];
+struct task          k_tasktab[TASKSMAX] ALIGNED(PAGESIZE);
+static struct taskid k_taskidtab[TASKSMAX];
 static struct taskid k_taskidqueue;
 
 void
@@ -22,7 +22,7 @@ taskinitids(void)
     long           id;
 
     fmtxlk(&queue->lk);
-    for (id = TASKNPREDEF ; id < NTASK ; id++) {
+    for (id = TASKPREDEFS ; id < TASKSMAX ; id++) {
         taskid = &k_taskidtab[id];
         taskid->id = id;
         deqappend(taskid, &queue);

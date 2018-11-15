@@ -59,7 +59,7 @@ sysinitconf(void)
     ptr[_SC_L2_SIZE] = cpugetl2size(&cbuf);;
     ptr[_SC_L2_NWAY] = cpugetl2nway(&cbuf);;
 #endif
-    ptr[_SC_BUF_BLK_SIZE] = BUFMAXSIZE;
+    ptr[_SC_BUF_BLK_SIZE] = BUFBLKSIZE;
     k_sys.conf.ptr = ptr;
 
     return;

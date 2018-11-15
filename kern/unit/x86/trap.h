@@ -10,7 +10,7 @@
 #endif
 #include <kern/unit/x86/boot.h>
 
-#define NINTR 256
+#define TRAPSMAX 256
 
 #if !defined(__ASSEMBLER__)
 
@@ -58,6 +58,8 @@ m_lidt(struct m_farptr *fp)
 #define trapirqnum(i)    ((i) & 0x0f)
 #endif
 
+#endif /* __ASSEMBLER__ */
+
 #define TRAPERRBITS                                                     \
     ((1U << TRAPDF)                                                     \
      | (1U << TRAPTS)                                                   \
@@ -81,8 +83,6 @@ m_lidt(struct m_farptr *fp)
      | (1U << TRAPMC)                                                   \
      | (1U << TRAPXF))
 #define TRAPBITS ((1U << TRAPBP) | (1U << TRAPOF))
-
-#endif /* __ASSEMBLER__ */
 
 /*
  * fault: %eip points to fault instruction
@@ -110,7 +110,7 @@ m_lidt(struct m_farptr *fp)
 #define TRAPMC   0x12	// machine check; abort
 #define TRAPXF   0x13	// SIMD or floating-point exception; fault
 /* traps 0x14 through 0x1f are reserved */
-#define TRAPNCPU 0x20
+#define TRAPSCPU 0x20
 
 /* IRQs; names listed below */
 #define IRQBIT   0x20   // set if IRQ

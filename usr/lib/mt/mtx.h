@@ -65,7 +65,7 @@ typedef volatile struct __zeromtx zeromtx;
 static INLINE long
 fmtxtrylk(volatile m_atomic_t *lp)
 {
-    long res = 0;
+    m_atomic_t res = 0;
 
     if (*lp == FMTXINITVAL) {
         res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);

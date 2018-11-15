@@ -42,7 +42,7 @@
 #define MEMWRBACK    (MEMWRBIT | MEMCACHEBIT | MEMWRBUFBIT)
 
 /* allocator parameters */
-#define MEMNHDRHASH   (512 * 1024)     // # of entries in header hash table
+#define MEMHASHHDRS   (512 * 1024)     // # of entries in header hash table
 //#define MEMNHDRBUF     (roundup(__STRUCT_MEMBLK_SIZE, CLSIZE))
 #define MEMMINSIZE    (1U << MEMMINSHIFT)
 #define MEMSLABSIZE   (1U << MEMSLABSHIFT)
@@ -51,7 +51,8 @@
 #define MEMBKTBITS    8 // 8 low bits of info used for bucket ID (max 255)
 #define MEMNTYPEBIT   8 // up to 256 object types
 #define MEMBKTMASK    ((1UL << (MEMBKTBITS - 1)) - 1)
-#define MEMLKBIT      (1ULL << (WORDSIZE * CHAR_BIT - 1))
+#define MEMLKBIT      (1UL << (WORDSIZE * CHAR_BIT - 1))
+#define MEMLKBITPOS   (WORDSIZE * CHAR_BIT - 1)
 /* allocation flags */
 #define MEMFREE       0x00000001UL
 #define MEMZERO       0x00000002UL
@@ -61,23 +62,10 @@
 #define MEMNFLGBIT    4
 #define memslabsize(bkt)                                                \
     (1UL << (bkt))
-#define memtrylkhdr(hdr)                                                \
-    (!m_cmpsetbit(&hdr->info, MEMLKBIT))
-#define memlkhdr(hdr)                                                   \
-    do {                                                                \
-        volatile long res;                                              \
-                                                                        \
-        do {                                                            \
-            while (hdr->info & MEMLKBIT) {                              \
-                m_waitspin();                                           \
-            }                                                           \
-            res =  !m_cmpsetbit(&hdr->info, MEMLKBIT);                  \
-        } while (!res);                                                 \
-    } while (0)
-#define memunlkhdr(hdr)                                                 \
-    (m_clrbit(&(hdr)->info, MEMLKBIT))
-#define memgetbkt(hdr)                                                  \
-    (&(hdr)->info & ((1 << MEMBKTBITS) - 1))
+#define memtrylkhdr(hdr) m_trylkbit(&hdr->info, MEMLKBITPOS)
+#define memlkhdr(hdr)    m_lkbit(&hdr->info, MEMLKBITPOS)
+#define memunlkhdr(hdr)  m_unlkbit(&hdr->info, MEMLKBITPOS)
+#define memgetbkt(hdr)   ((hdr)->info & MEMBKTMASK)
 
 void meminit(m_ureg_t nbphys, m_ureg_t nbvirt);
 

@@ -11,6 +11,7 @@
 #include <kern/proc/kern.h>
 #include <kern/proc/proc.h>
 #include <kern/mem/mem.h>
+#include <kern/mem/page.h>
 #include <kern/unit/x86/kern.h>
 #include <kern/mem/vm.h>
 #if 0
@@ -19,7 +20,6 @@
 #endif
 #include <kern/io/drv/chr/cons.h>
 //#include <kern/task.h>
-#include <kern/io/drv/pc/dma.h>
 #include <kern/io/drv/pc/vga.h>
 #if (ACPI)
 #include <kern/io/drv/pc/acpi.h>
@@ -42,13 +42,15 @@
 #endif
 //#include <kern/unit/x86/asm.h>
 #endif
+#include <kern/io/drv/pc/dma.h>
 
-extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
-extern uint8_t                   kernsysstktab[NCPU * KERNSTKSIZE];
-extern uint8_t                   kernusrstktab[NCPU * KERNSTKSIZE];
-extern struct proc               proctab[NTASK];
+struct vmpage                    k_vmdevtab[PAGESDEV];
+extern uint8_t                   k_iomap[8192] ALIGNED(PAGESIZE);
+extern uint8_t                   k_sysstk[CPUSMAX * KERNSTKSIZE];
+extern uint8_t                   k_usrstk[CPUSMAX * KERNSTKSIZE];
+extern struct proc               k_proctab[TASKSMAX];
 #if (VBE)
-extern uint64_t                  kernidt[NINTR];
+extern uint64_t                  k_intrvec[TRAPSMAX];
 extern long                      vbefontw;
 extern long                      vbefonth;
 #endif
@@ -62,27 +64,29 @@ void
 kinitprot(unsigned long pmemsz)
 {
     uint32_t lim = min(pmemsz, KERNVIRTBASE);
-    uint32_t sp = (uint32_t)kernusrstktab + NCPU * KERNSTKSIZE;
+    uint32_t sp = (uint32_t)k_usrstk + CPUSMAX * KERNSTKSIZE;
 
+    __asm__ __volatile__ ("movl %0, %%esp\n"
+                          "pushl %%ebp\n"
+                          "movl %%esp, %%ebp\n"
+                          :
+                          : "rm" (sp));
     /* initialise virtual memory */
     //    vminit((uint32_t *)&_pagetab);
     vminit();
     //    trapinit(0);
     //    schedinit();
     /* zero kernel BSS segment */
-    kbzero((void *)&_bssvirt,
-           (uintptr_t)&_ebssvirt - (uintptr_t)&_bssvirt);
+    kbzero((void *)&_bss,
+           (uintptr_t)&_ebss - (uintptr_t)&_bss);
     /* set kernel I/O permission bitmap to all 1-bits */
-    kmemset(kerniomap, 0xff, sizeof(kerniomap));
+    kmemset(k_iomap, 0xff, sizeof(k_iomap));
     /* INITIALIZE CONSOLES AND SCREEN */
     /* TODO: use memory map from GRUB? */
     vminitphys((uintptr_t)&_epagetab, lim - (uint32_t)&_epagetab);
-    __asm__ __volatile__ ("movl %0, %%esp\n"
-                          "pushl %%ebp\n"
-                          "movl %%esp, %%ebp\n"
-                          :
-                          : "rm" (sp));
     meminit(min(pmemsz, lim), min(KERNVIRTBASE, lim));
+    /* allocate unused device regions (in 3.5G..4G) */
+    pageinitphyszone(KERNDEVBASE, k_vmdevtab, PAGESDEV);
     cpuinit(0);
     procinit(0, TASKKERN, SCHEDSYSTEM);
     taskinitenv();
@@ -153,8 +157,8 @@ kinitprot(unsigned long pmemsz)
     /* initialise ACPI subsystem */
     acpiinit();
 #endif
-#if (IOBUF) && 0
     /* initialise block I/O buffer cache */
+#if 0
     if (!ioinitbuf()) {
         kprintf("failed to allocate buffer cache\n");
 
@@ -162,28 +166,22 @@ kinitprot(unsigned long pmemsz)
             ;
         }
     }
+#endif
 #if 0
     kprintf("%lu kilobytes of buffer cache @ %p..%p\n",
             k_physmem.pagestat.nbuf << (PAGESIZELOG2 - 10),
             k_physmem.pagestat.buf, k_physmem.pagestat.bufend);
 #endif
-    /* allocate unused device regions (in 3.5G..4G) */
-//    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffffU - DEVMEMBASE + 1);
-//    taskinitenv();
-//    tssinit(0);
-//    machinit();
-    /* execution environment */
-    kprintf("DMA buffers (%ul x %ul kilobytes) @ 0x%p\n",
-            DMANCHAN, DMACHANBUFSIZE >> 10, DMABUFBASE);
-    kprintf("VM page tables @ 0x%p\n", (unsigned long)&_pagetab);
+    kprintf("DMA buffers (%ul x %ul kilobytes) @ 0x%x\n",
+            DMACHANS, DMACHANBUFSIZE >> 10, DMABUFBASE);
+    kprintf("VM page tables @ 0x%p\n", &_pagetab);
 //    kprintf("%ld kilobytes physical memory\n", pmemsz >> 10);
-    kprintf("%ld kilobytes kernel memory\n", (uint32_t)&_ebss >> 10);
+    kprintf("%d kilobytes kernel memory\n", (uint32_t)&_ebss >> 10);
     kprintf("%ld kilobytes allocated physical memory (%ld wired, %ld total)\n",
             ((k_physmem.pagestat.nwire + k_physmem.pagestat.nmap + k_physmem.pagestat.nbuf)
              << (PAGESIZELOG2 - 10)),
             k_physmem.pagestat.nwire << (PAGESIZELOG2 - 10),
             k_physmem.pagestat.nphys << (PAGESIZELOG2 - 10));
-#endif
     sysinitconf();
     schedinit();
 #if (HPET)

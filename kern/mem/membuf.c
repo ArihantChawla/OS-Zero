@@ -22,17 +22,17 @@ membufinit(void)
     intmax_t           n;
 
     /* allocate wired memory for membufs */
-    u8ptr1 = kwalloc(MEMNBUF * MEMBUF_SIZE);
+    u8ptr1 = kwalloc(MEMBUFBLKS * MEMBUF_SIZE);
     if (!u8ptr1) {
         kprintf("FAILED to allocate membufs\n");
 
         return 0;
     }
-    kbzero(u8ptr1, MEMNBUF * MEMBUF_SIZE);
+    kbzero(u8ptr1, MEMBUFBLKS * MEMBUF_SIZE);
     /* initialise global membuf container */
-    n = MEMNBUF;
+    n = MEMBUFBLKS;
     tab->nbuf = n;
-    u8ptr1 += MEMNBUF * MEMBUF_SIZE;
+    u8ptr1 += MEMBUFBLKS * MEMBUF_SIZE;
     last = NULL;
     while (n--) {
         u8ptr1 -= MEMBUF_SIZE;

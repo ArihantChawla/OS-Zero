@@ -18,8 +18,10 @@
 #define PERM_SETGID 0x00000400
 #define PERM_SETUID 0x00000800
 /* zero permissions */
-#define PERM_WIRE   0x80000000   // permission to wire memory
-#define PERM_SHM    0x40000000   // permission to share memory
+#define PERM_SYN    0x00010000  // permission for synchronous I/O
+#define PERM_BUF    0x00020000  // permission to use buffer-cache
+#define PERM_SHM    0x00040000  // permission to share memory
+#define PERM_WIRE   0x00080000  // permission to wire memory
 //#define PERM_RAWIO  0x20000000   // permission to do raw device I/O operations
 
 /* set permission object elements */

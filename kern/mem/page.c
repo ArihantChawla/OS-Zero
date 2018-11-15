@@ -17,72 +17,48 @@
 #include <kern/mem/page.h>
 
 #if (VMFLATPHYSTAB)
-extern struct vmpage      k_vmphystab[NPAGEMAX];
+extern struct vmpage k_vmphystab[PAGESMAX] ALIGNED(PAGESIZE);
+#endif
+#if (PAGEDEV) && 0
+static struct dev    k_pagedevtab[NPAGEDEV];
 #endif
 
 m_ureg_t
 pageinitphyszone(m_ureg_t base,
-                 struct vmpage **zone,
+                 struct vmpage *zone,
                  m_ureg_t nbphys)
 {
+    long           res = 0;
     struct vmpage *page = &k_vmphystab[pagenum(base)];
     m_ureg_t       adr = rounduppow2(base, PAGESIZE);
     m_ureg_t       n = rounddownpow2(nbphys - adr, PAGESIZE) >> PAGESIZELOG2;
     m_ureg_t       size = n * PAGESIZE;
-    m_ureg_t       end = base - 1;
+    m_ureg_t       end = base - PAGESIZE;
+    struct vmpage *hdr;
 
-#if 0
     adr += n << PAGESIZELOG2;
     page += n;
-#endif
     end += size;
     k_physmem.pagestat.nphys = n;
     k_physmem.pagestat.phys = (void *)base;
     k_physmem.pagestat.physend = (void *)end;
+    adr = rounddownpow2(end, PAGESIZE);
     while (n--) {
-//        page--;
         page->adr = adr;
         page->nmap = 0;
-//        deqpush(page, zone);
-//        adr -= PAGESIZE;
-        deqappend(page, zone);
-        adr += PAGESIZE;
-        page++;
-    }
-
-    return size;
-}
-
-m_ureg_t
-pageaddphyszone(m_ureg_t base,
-                struct vmpage **zone,
-                m_ureg_t nbphys)
-{
-    m_ureg_t      adr = rounduppow2(base, PAGESIZE);
-    struct vmpage *page = &k_vmphystab[pagenum(adr)];
-    uint32_t      *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
-    m_ureg_t       n  = rounduppow2(nbphys - adr, PAGESIZE) >> PAGESIZELOG2;
-    m_ureg_t       size = n * PAGESIZE;
-
-#if 0
-    adr += n << PAGESIZELOG2;
-    page += n;
-#endif
-    k_physmem.pagestat.nphys += n;
-    kprintf("reserving %ld (%lx) maps @ %p (%lx)\n",
-            (long)n, (long)n, k_vmphystab, (long)pagenum(base));
-    while (n--) {
-        if (!*pte) {
-//            page--;
-            page->adr = adr;
-            page->nmap = 0;
-//            deqpush(page, zone);
-//            adr -= PAGESIZE;
-            deqappend(page, zone);
-            adr += PAGESIZE;
-            page++;
+        page->prev = NULL;
+        vmlkpage(&zone[n].lk);
+        hdr = zone[n].next;
+        if (hdr) {
+            if (hdr->next) {
+                hdr->next->prev = page;
+            }
         }
-        pte++;
+        page->next = hdr;
+        zone[n].next = page;
+        vmunlkpage(&zone[n].lk);
+        page--;
+        adr -= PAGESIZE;
     }
 
     return size;
@@ -93,9 +69,7 @@ pageinitphys(m_ureg_t base, m_ureg_t nbphys)
 {
     m_ureg_t size;
 
-//    vmspinlk(&vmphyslk);
-    size = pageinitphyszone(base, &k_physmem.pagequeue, nbphys);
-//    vmunlkpage(&vmphyslk);
+    size = pageinitphyszone(base, k_physmem.pagequeue, nbphys);
 
     return size;
 }
@@ -127,9 +101,7 @@ pageallocphys(void)
     long            qid;
     long            q;
 
-    vmlk(&k_physmem.lk);
     page = deqpop(&k_physmem.pagequeue);
-    vmunlk(&k_physmem.lk);
     if (!page) {
         do {
             for (q = 0 ; q < LONGSIZE * CHAR_BIT ; q++) {
@@ -170,7 +142,6 @@ pagefreephys(void *adr)
     struct vmpage *page;
 
     /* free physical page */
-    vmlk(&k_physmem.lk);
     id = vmpagenum(adr);
     page = &k_vmphystab[id];
     vmlkpage(&page->lk);
@@ -179,7 +150,6 @@ pagefreephys(void *adr)
         deqpush(page, &k_physmem.pagequeue);
     }
     vmunlkpage(&page->lk);
-    vmunlk(&k_physmem.lk);
 
     return;
 }

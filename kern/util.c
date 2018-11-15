@@ -20,7 +20,7 @@
  *   code to avoid stack problems, at least for linker constants
  */
 
-const char *trapnametab[TRAPNCPU] ALIGNED(PAGESIZE)
+const char *trapnametab[TRAPSCPU] ALIGNED(PAGESIZE)
 = {
     "DE",
     "DB",
@@ -318,74 +318,10 @@ kstrtok(void *ptr, int ch)
     return u8ptr;
 }
 
-/*
- * scan bitmap for first zero-bit past ofs
- * return -1 if not found, offset otherwise
- */
-PURE long
-bfindzerol(long *bmap, long ofs, long nbit)
-{
-    long *ptr;
-    long  cnt = ofs & (((uintptr_t)1 << (LONGSIZELOG2 + 3)) - 1);
-    long  ndx = ofs >> (LONGSIZELOG2 + 3);
-    long  val;
-    long  ones = ~0L;
-    long  bit = 1;
-
-    ptr = bmap + ndx;
-    nbit -= ofs;
-    if (nbit > 0) {
-        if (cnt) {
-            val = *ptr;
-            val >>= cnt;
-            ptr++;
-            if (val != ones) {
-                while (val & bit) {
-                    val >>= 1;
-                    ofs++;
-                }
-                if (ofs < nbit) {
-
-                    return ofs;
-                } else {
-
-                    return -1;
-                }
-            } else {
-                ofs += CHAR_BIT * sizeof(long) - cnt;
-            }
-        }
-        while (ofs < nbit) {
-            val = *ptr;
-            if (!val) {
-
-                return ofs;
-            } else if (val != ones) {
-                while (val & bit) {
-                    val >>= 1;
-                    ofs++;
-                }
-                if (ofs < nbit) {
-
-                    return ofs;
-                } else {
-
-                    return -1;
-                }
-            } else {
-                ofs += CHAR_BIT * sizeof(long);
-                ptr++;
-            }
-        }
-    }
-
-    return -1;
-}
-
 #if defined(__KERNEL__) && (__KERNEL__)
 
 void
-rewind(void *frame, void *symmap)
+krewind2(void *frame, void *symmap)
 {
     while (frame) {
         frame = m_getfrmadr1(frame);
@@ -399,7 +335,7 @@ rewind(void *frame, void *symmap)
 }
 
 void
-panic(int32_t trap, long err, void *frame)
+kpanic(int32_t trap, long err, void *frame)
 {
     const char *name;
 
@@ -415,7 +351,7 @@ panic(int32_t trap, long err, void *frame)
         if (frame) {
             kprintf("STACK TRACE\n");
             kprintf("-----------\n");
-            rewind(frame, NULL);
+            krewind2(frame, NULL);
         }
     }
     k_halt();
