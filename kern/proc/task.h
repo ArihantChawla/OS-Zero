@@ -11,7 +11,8 @@
 #define tasklk(lp)   tktlk(lp)
 #define taskunlk(lp) tktunlk(lp)
 
-typedef int16_t      taskid_t;
+#define TASK_LK_BIT     (1L << TASK_LK_BIT_POS)
+#define TASK_LK_BIT_POS 0
 
 /* process states */
 #define TASKNEW      0
@@ -22,6 +23,15 @@ typedef int16_t      taskid_t;
 #define TASKZOMBIE   5
 #define TASKNSTATE   6
 
+struct tasktab {
+    TASK_LK_T  lk;
+    void      *tab;
+};
+
+struct tasklist {
+    struct task *ptr;
+};
+
 struct taskstk {
     uint8_t *top;
     void    *sp;
@@ -29,26 +39,26 @@ struct taskstk {
     size_t   size;
 };
 
-#define TASKWAITHASHTABITEMS 29
-#define TASKWAITHASHTABSIZE  (32 * PTRSIZE)
-struct taskwaithashtab {
-    uintptr_t               chan;
-    struct taskwaithashtab *next;
-    long                    n;
-    struct task            *buf[TASKWAITHASHTABITEMS];
+#define TASKWAITTABITEMS 29
+#define TASKWAITTABSIZE  (32 * WORDSIZE)
+struct taskwaittab {
+    uintptr_t           chan;
+    struct taskwaittab *next;
+    long                n;
+    struct task        *buf[TASKWAITTABITEMS];
 };
 
-#define TASKSWAITHASHITEMS (1U << TASKWAITHASHBITS)
+#define TASKWAITHASHITEMS  (1U << TASKWAITHASHBITS)
 #define TASKWAITHASHBITS   10
 
-#define TASKALLOCSIZE 1024
-#define TASKBUFITEMS  32
+#define TASKALLOCSIZE      1024
+#define TASKBUFITEMS       32
 /* process or thread attributes */
 /* bits for schedflg-member */
-#define TASKHASINPUT (1 << 0)   // pending HID input
-#define TASKISBOUND  (1 << 1)   // bound to a processor, cannot migrate
-#define TASKXFERABLE (1 << 2)   // task was added as transferable
-#define TASKCATCHSIG (1 << 3)   // sleeping thread awakened by signals
+#define TASKHASINPUT       (1 << 0)     // pending HID input
+#define TASKISBOUND        (1 << 1)     // bound to a processor, cannot migrate
+#define TASKXFERABLE       (1 << 2)     // task was added as transferable
+#define TASKCATCHSIG       (1 << 3)     // sleeping thread awakened by signals
 struct task {
     /* thread control block - KEEP THIS FIRST in the structure */
     struct m_task    m_task;            // machine thread control block
@@ -93,62 +103,12 @@ struct task {
     time_t           timelim;           // wakeup time or deadline
 };
 
-extern struct task k_tasktab[TASKSMAX];
-
-#if 0
-#if (PTRSIZE == 8)
-#define TASKNLVLWAITLOG2 16
-#elif (PTRSIZE == 4)
-#define TASKNLVLWAITLOG2 8
-#endif
-#define TASKNLVL0WAIT    (1 << TASKNLVLWAITLOG2)
-#define TASKNLVL1WAIT    (1 << TASKNLVLWAITLOG2)
-#define TASKNLVL2WAIT    (1 << TASKNLVLWAITLOG2)
-#define TASKNLVL3WAIT    (1 << TASKNLVLWAITLOG2)
-//#define TASKNWAITKEY     4
-
-#define taskwaitkey0(wc)                                                \
-    (((wc) >> (3 * TASKNLVLWAITLOG2)) & ((1UL << TASKNLVLWAITLOG2) - 1))
-#define taskwaitkey1(wc)                                                \
-    (((wc) >> (2 * TASKNLVLWAITLOG2)) & ((1UL << TASKNLVLWAITLOG2) - 1))
-#define taskwaitkey2(wc)                                                \
-    (((wc) >> (1 * TASKNLVLWAITLOG2)) & ((1UL << TASKNLVLWAITLOG2) - 1))
-#define taskwaitkey3(wc)                                                \
-    ((wc) & ((1UL << TASKNLVLWAITLOG2) - 1))
-
-struct tasktabl0 {
-    m_atomic_t      lk;
-    long            nref;
-    struct tasktab *tab;
-    uint8_t         _pad[CLSIZE - 2 * sizeof(long) - sizeof(struct tasktab *)];
-};
-
-struct tasktab {
-    long         nref;
-    struct task *tab;
-};
-
-/* this should be a single (aligned) cacheline */
-struct taskqueue {
-    m_atomic_t   lk;
-    struct task *list;
-    uint8_t      _pad[CLSIZE - sizeof(long) - sizeof(struct task *)];
-};
-#endif
+extern struct task *k_tasktab[TASKSMAX];
 
 taskid_t taskgetid(void);
 void     taskputid(taskid_t id);
 
 #define THRSTKSIZE  (64 * 1024)
-
-#if 0
-struct taskid {
-    m_atomic_t     lk;
-    long           id;
-    struct taskid *prev;
-    struct taskid *next;
-};
-#endif
 
 #define PIDSPEC_PID  0
 #define PIDSPEC_TGID 1

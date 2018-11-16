@@ -186,11 +186,11 @@ typedef intptr_t sysreg_t;
  * sysreg_t sys_mnt(char *path1, char *path2, void *arg);
  * - mount filesystem path2 to mountpoint path1
  * sysreg_t sys_umnt(char *path, sysreg_t flg);
- * - unmount filesystem mounted to pathÂ§
+ * - unmount filesystem mounted to path§
  * sysreg_t sys_readdir(sysreg_t desc, struct dirent *dirent, sysreg_t cnt);
  * - read directory contents
  * sysreg_t sys_open(char *path, sysreg_t flg, sysreg_t mode);
- * - open file path for operations as selected in modeÂ§
+ * - open file path for operations as selected in mode§
  * sysreg_t sys_trunc(char *path, off_t len);
  * - truncate file path to length len; toss contents behind len
  * sysreg_t sys_close(sysreg_t desc);
@@ -507,12 +507,12 @@ struct sysmsg {
     long        len;			// size of data field in bytes
 	struct msg *prev;
 	struct msg *next;
-    uint8_t     data[VLA];		// message dataÂ§
+    uint8_t     data[VLA];		// message data§
 };
 
 struct sysmq {
 	long         lk;		// access mutex
-	struct perm  perm;		// message queue permissionÂ§
+	struct perm  perm;		// message queue permission§
     uintptr_t    id;			// system-wide queue ID
 	struct msg  *head;		// first item in queue for this priority
 	struct msg  *tail;		// last item in queue for this priority

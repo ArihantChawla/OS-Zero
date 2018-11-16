@@ -9,7 +9,7 @@
 #include <mach/param.h>
 #include <zero/trix.h>
 #include <zero/fastudiv.h>
-#include <mt/spin.h>
+#include <mt/tktlk.h>
 #include <kern/cpu.h>
 #include <kern/proc/proc.h>
 #include <kern/proc/task.h>
@@ -17,12 +17,12 @@
 
 #define SCHEDDIVU16TABSIZE min(2 * SCHEDHISTORYSIZE, 65536)
 
-#define schedlkcpuntick(cpu)     (spinlk(&cpu->lk), (cpu)->ntick)
-#define schedlkcpu(cpu)          (spinlk(&cpu->lk))
-#define schedunlkcpu(cpu)        (spinunlk(&cpu->lk))
-#define schedlktaskruntime(task) (spinlk(&task->lk), (task)->runtime)
-#define schedlktask(task)        (spinlk(&task->lk))
-#define schedunlktask(task)      (spinunlk(&task->lk))
+#define schedlkcpuntick(cpu)     (tktlk(&cpu->lk), (cpu)->ntick)
+#define schedlkcpu(cpu)          (tktlk(&cpu->lk))
+#define schedunlkcpu(cpu)        (tktunlk(&cpu->lk))
+#define schedlktaskruntime(task) (tktlk(&task->lk), (task)->runtime)
+#define schedlktask(task)        (tktlk(&task->lk))
+#define schedunlktask(task)      (tktunlk(&task->lk))
 
 #if defined(ZEROSCHED)
 
@@ -33,7 +33,7 @@
 /* macros */
 #define schedcalctime(task)  ((task)->ntick >> SCHEDTICKSHIFT)
 #define schedcalcticks(task) (max((task)->lastrun - (task)->firstrun, kgethz()))
-#define schedcalcnice(val)   (k_schednicetab[(val)])
+#define schedcalcnice(val)   (k_schednicetab[(val)].nice)
 #if 0
 #define schedsetprio(task, pri)                                         \
     ((task)->prio = schedprioqueueid(pri))
@@ -85,8 +85,13 @@
 
 /* data structures */
 
+struct schednice {
+    long nice;
+    long slice;
+};
+
 struct schedqueueset {
-    m_atomic_t    lk;
+    zerotktlk     lk;
     long         *curmap;
     long         *nextmap;
     long         *idlemap;
@@ -101,10 +106,8 @@ extern struct task          *k_schedreadytab0[SCHEDNQUEUE];
 extern struct task          *k_schedreadytab1[SCHEDNQUEUE];
 extern struct schedqueueset  k_schedreadyset;
 extern struct divu16         k_fastu16divu16tab[SCHEDDIVU16TABSIZE];
-extern long                  k_schednicetab[SCHEDNICERANGE];
-extern long                  k_schedslicetab[SCHEDNICERANGE];
-extern long                 *k_schedniceptr;
-extern long                 *k_schedsliceptr;
+extern struct schednice      k_schednicetab[SCHEDNICERANGE];
+extern struct schednice     *k_schedniceptr;
 
 /* based on sched_pctcpu_update from ULE */
 static INLINE void
@@ -152,14 +155,14 @@ schedswapqueues(void)
     struct schedqueueset *set = &k_schedreadyset;
 
     if (k_mp.multiproc) {
-        spinlk(&set->lk);
+        tktlk(&set->lk);
     }
     set->next = set->cur;
     set->cur = set->next;
     set->nextmap = set->curmap;
     set->curmap = set->nextmap;
     if (k_mp.multiproc) {
-        spinunlk(&set->lk);
+        tktunlk(&set->lk);
     }
 
     return;
@@ -192,7 +195,7 @@ schedsetnice(struct task *task, long val)
 
     val = max(-20, val);
     val = min(19, val);
-    nice = k_schedniceptr[val];
+    nice = k_schedniceptr[val].nice;
     proc->nice = nice;
     proc->niceval = val;
 

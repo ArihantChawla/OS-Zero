@@ -6,22 +6,6 @@
 #include <sys/param.h>
 #include <mach/param.h>
 
-#if (PAGESIZE / DEV_BSIZE <= 8)
-#define VMBLKBITS 0xff
-typedef uint8_t    vmblkbits;
-#elif (PAGESIZE / DEV_BSIZE <= 16)
-#define VMBLKBITS 0xffff
-typedef uint16_t   vmblkbits;
-#elif (PAGESIZE / DEV_BSIZE <= 32)
-#define VMBLKBITS 0xffffffff
-typedef uint32_t   vmblkbits;
-#elif (PAGESIZE / DEV_BSIZE <= 64)
-#define VMBLKBITS UINT64_C(0xffffffffffffffff)
-typedef uint64_t   vmblkbits;
-#else
-#error define vmblkbits in <kern/mem/vm.h>
-#endif
-
 #if (defined(__i386__) || defined(__i486__)                             \
      || defined(__i586__) || defined(__i686__)                          \
      || defined(__x86_64__) || defined(__amd64__))
@@ -29,17 +13,29 @@ typedef uint64_t   vmblkbits;
 #endif
 #include <kern/unit/ia32/vm.h>
 
-#if (VMTKTLK)
 #include <mt/tktlk.h>
 #define VM_LK_T         zerotktlk
 #define vmlkpage(lp)    tktlk(lp)
 #define vmunlkpage(lp)  tktunlk(lp)
+
+#if 0
+#if (PAGESIZE / DEV_BSIZE <= 8)
+#define VMBLKBITS 0xff
+typedef uint8_t    vmblkid_t;
+#elif (PAGESIZE / DEV_BSIZE <= 16)
+#define VMBLKBITS 0xffff
+typedef uint16_t   vmblkid_t;
+#elif (PAGESIZE / DEV_BSIZE <= 32)
+#define VMBLKBITS 0xffffffff
+typedef uint32_t   vmblkid_t;
+#elif (PAGESIZE / DEV_BSIZE <= 64)
+#define VMBLKBITS UINT64_C(0xffffffffffffffff)
+typedef uint64_t   vmblkid_t;
 #else
-#include <mt/mtx.h>
-#define VM_LK_T         zerofmtx
-#define vmlkpage(lp)    fmtxlk(lp)
-#define vmunlkpage(lp)  fmtxunlk(lp)
+#error define vmblkid_t in <kern/mem/vm.h>
 #endif
+#endif
+typedef m_reg_t vmblkid_t;
 
 #define VM_PROT_NONE    0
 #define VM_PROT_EXECUTE (1 << 0)
@@ -51,6 +47,7 @@ typedef uint64_t   vmblkbits;
 #define VM_PROT_RW      (VM_PROT_READ | VM_PROT_WRITE)
 #define VM_PROT_DEFAULT VM_PROT_ALL
 
+#define VMPAGESIZE      (8 * WORDSIZE)
 struct vmpage {
     VM_LK_T           lk;       // page-lock
     m_atomic_t        nref;     // number of active references
@@ -85,16 +82,24 @@ struct vmpage {
 #define VM_QUEUE_INACTIVE   0x00
 #define VM_QUEUE_ACTIVE     0x01
 #define VM_QUEUE_COUNT      0x02
+
+#if (WORDSIZE == 8)
+#define VMPAGEATRPAD 6
+#else
+#define VMPAGEATRPAD 2
+#endif
+#define VMPAGEATRSIZE (8 * WORDSIZE)
 struct vmpageatr {
-    uint8_t    *phys;   // page physical-address
-    m_atomic_t  flg;    // page-flags
-    m_atomic_t  nwire;  // # of wires
-    m_atomic_t  nhold;  // # of holders
-    m_ureg_t    pid;    // process ID
-    vmblkbits   valid;  // map of valid device blocks
-    vmblkbits   dirty;  // map of dirty device blocks
-    uint8_t     qid;    // LRU-queue ID
-    uint8_t     zone;   // memory zone ID
+    uint8_t     *phys;  // page physical-address
+    m_atomic_t   flg;   // page-flags
+    m_atomic_t   nwire; // # of wires
+    m_atomic_t   nhold; // # of holders
+    m_ureg_t     pid;   // process ID
+    vmblkid_t    valid; // map of valid device blocks
+    vmblkid_t    dirty; // map of dirty device blocks
+    uint8_t      qid;   // LRU-queue ID
+    uint8_t      zone;  // memory zone ID
+    uint8_t      _pad[VMPAGEATRPAD];
 };
 
 struct vmaffinity {

@@ -16,55 +16,24 @@
 #include <kern/unit/x86/pic.h>
 #endif
 
-extern struct proc      *k_proczombietab[TASKSMAX];
-extern struct tasktabl0  k_taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
+extern struct proc     *k_proczombietab[TASKSMAX];
 
-/* lookup table to convert nice values to priority offsets */
-/* nice is between -20 and 19 inclusively */
-/* k_schedniceptr = &k_schednicetab[SCHEDNICEHALF]; */
-/* prio += k_schedniceptr[nice]; */
-long k_schednicetab[SCHEDNICERANGE] ALIGNED(CLSIZE)
-= {
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, -64, -60, -57, -54, -51,
-    -47, -44, -41, -38, -35, -31, -28, -25,
-    -22, -19, -15, -12, -9, -6, -3, 0,
-    3, 6, 9, 13, 16, 19, 23, 26,
-    29, 33, 36, 39, 43, 46, 49, 53,
-    56, 59, 63, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0
-};
-/* lookup table to convert nice values to slices in 4-ms ticks */
-/* nice is between -20 and 19 inclusively */
-/* k_schedsliceptr = &k_schedslicetab[SCHEDNICEHALF]; */
-/* slice = k_schedsliceptr[nice]; */
-long k_schedslicetab[SCHEDNICERANGE] ALIGNED(CLSIZE)
-= {
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 1, 1, 2, 2,
-    3, 3, 4, 4, 5, 5, 6, 6,
-    7, 7, 8, 8, 9, 9, 10, 10,
-    11, 11, 12, 12, 13, 13, 14, 14,
-    15, 15, 16, 16, 17, 17, 18, 18,
-    19, 19, 20, 20, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0,
-};
+#include <kern/nice.h>
 
-long                    *k_schedniceptr = &k_schednicetab[SCHEDNICEHALF];
-long                    *k_schedsliceptr = &k_schedslicetab[SCHEDNICEHALF];
-static struct tasktabl0  k_scheddeadlinetab[SCHEDNLVL0DL];
-static struct task      *k_schedstoppedtab[TASKSMAX];
-struct task             *k_schedreadytab0[SCHEDNQUEUE];
-struct task             *k_schedreadytab1[SCHEDNQUEUE];
-static struct task      *k_schedidletab[SCHEDNIDLE];
-static long              k_schedreadymap0[SCHEDREADYMAPNWORD];
-static long              k_schedreadymap1[SCHEDREADYMAPNWORD];
-static long              k_schedidlemap[SCHEDIDLEMAPNWORD];
+struct schednice       *k_schedniceptr = &k_schednicetab[SCHEDNICEHALF];
+static struct tasktab   k_scheddeadlinetab[SCHEDNLVL0DL];
+static struct task     *k_schedstoppedtab[TASKSMAX];
+struct task            *k_schedreadytab0[SCHEDNQUEUE];
+struct task            *k_schedreadytab1[SCHEDNQUEUE];
+static struct task     *k_schedidletab[SCHEDNIDLE];
+static long             k_schedreadymap0[SCHEDREADYMAPNWORD];
+static long             k_schedreadymap1[SCHEDREADYMAPNWORD];
+static long             k_schedidlemap[SCHEDIDLEMAPNWORD];
 /* SCHEDIDLE queues are not included in SCHEDNQUEUE */
-static long              k_schedloadmap[SCHEDLOADMAPNWORD];
-static long              k_scheddeadlinemap[SCHEDDEADLINEMAPNWORD];
-long                     k_schedidlecoremap[SCHEDIDLECOREMAPNWORD];
-struct schedqueueset     k_schedreadyset;
+static long             k_schedloadmap[SCHEDLOADMAPNWORD];
+static long             k_scheddeadlinemap[SCHEDDEADLINEMAPNWORD];
+long                    k_schedidlecoremap[SCHEDIDLECOREMAPNWORD];
+struct schedqueueset    k_schedreadyset;
 
 void
 schedinit(void)
@@ -117,33 +86,32 @@ schedinitset(void)
 }
 
 #define DEQ_SINGLE_TYPE
-#define DEQ_TYPE        struct task
+#define DEQ_TYPE struct task
 #include <zero/deq.h>
 
 void
 schedsetdeadline(struct task *task)
 {
-    struct tasktabl0  *l0tab;
-    struct tasktab    *tab;
-    time_t             deadline = task->timelim;
-    unsigned long      key0 = taskdlkey0(deadline);
-    unsigned long      key1 = taskdlkey1(deadline);
-    unsigned long      key2 = taskdlkey2(deadline);
-    long              *map = k_scheddeadlinemap;
-    void              *ptr = NULL;
-    void             **pptr = NULL;
-    long               fail = 0;
-    struct taskqueue  *queue;
-    void              *ptab[SCHEDNDLKEY - 1] = { NULL, NULL };
+    struct tasktab   *l0tab;
+    struct tasklist  *list;
+    time_t            deadline = task->timelim;
+    unsigned long     key0 = taskdlkey0(deadline);
+    unsigned long     key1 = taskdlkey1(deadline);
+    unsigned long     key2 = taskdlkey2(deadline);
+    long             *map = k_scheddeadlinemap;
+    void             *ptr = NULL;
+    void            **pptr = NULL;
+    long              fail = 0;
+    void             *ptab[SCHEDNDLKEY - 1] = { NULL, NULL };
 
-    fmtxlk(&k_scheddeadlinetab[key0].lk);
+    tktlk(&k_scheddeadlinetab[key0].lk);
     l0tab = &k_scheddeadlinetab[key0];
     ptr = l0tab->tab;
     pptr = ptr;
     if (!ptr) {
-        ptr = kmalloc(SCHEDNLVL1DL * sizeof(struct tasktab));
+        ptr = kmalloc(SCHEDNLVL1DL * sizeof(struct tasklist));
         if (ptr) {
-            kbzero(ptr, SCHEDNLVL1DL * sizeof(struct tasktab));
+            kbzero(ptr, SCHEDNLVL1DL * sizeof(struct tasklist));
         }
         l0tab->tab = ptr;
         ptab[0] = ptr;
@@ -152,28 +120,26 @@ schedsetdeadline(struct task *task)
     if (ptr) {
         ptr = pptr[key1];
         if (!ptr) {
-            queue = kmalloc(SCHEDNLVL2DL * sizeof(struct taskqueue));
-            if (queue) {
-                kbzero(queue, SCHEDNLVL2DL * sizeof(struct taskqueue));
+            list = kmalloc(SCHEDNLVL2DL * sizeof(struct tasklist));
+            if (list) {
+                kbzero(list, SCHEDNLVL2DL * sizeof(struct tasklist));
             }
-            ptab[1] = queue;
-            pptr[key1] = queue;
+            ptab[1] = list;
+            pptr[key1] = list;
         } else {
-            queue = pptr[key1];
+            list = pptr[key1];
         }
     } else {
         fail = 1;
     }
     if (!fail) {
-        queue = &queue[key2];
-        deqappend(task, &queue->list);
-        tab = ptab[0];
-        tab->nref++;
-        tab->tab = ptab[1];
-        tab = ptab[1];
-        tab->nref++;
+        list = &list[key2];
+        deqappend(task, &list->ptr);
+        list = ptab[0];
+        list->ptr = ptab[1];
+        list = ptab[1];
     }
-    fmtxunlk(&k_scheddeadlinetab[key0].lk);
+    tktunlk(&k_scheddeadlinetab[key0].lk);
 
     return;
 }
@@ -218,7 +184,7 @@ schedsetready(struct task *task)
             }
             qid = schedcalcqueue(SCHEDSYSTEM, prio);
         }
-        fmtxlk(&set->lk);
+        tktlk(&set->lk);
         map = set->curmap;
         queue = &set->cur[qid];
         setbit(map, qid);
@@ -246,12 +212,12 @@ schedsetready(struct task *task)
         qid = schedcalcqueue(type, prio);
         if (schedisinteract(score)) {
             /* if interactive, insert onto current queue */
-            fmtxlk(&set->lk);
+            tktlk(&set->lk);
             map = set->curmap;
             queue = &set->cur[qid];
         } else {
             /* if not interactive, insert onto next queue */
-            fmtxlk(&set->lk);
+            tktlk(&set->lk);
             map = set->nextmap;
             queue = &set->next[qid];
         }
@@ -265,7 +231,7 @@ schedsetready(struct task *task)
         }
         qid = schedcalcqueue(SCHEDIDLE, prio);
         ndx = qid - schedclassminqueue(SCHEDIDLE);
-        fmtxlk(&set->lk);
+        tktlk(&set->lk);
         map = set->idlemap;
         queue = &set->idle[ndx];
         setbit(map, ndx);
@@ -279,7 +245,7 @@ schedsetready(struct task *task)
         deqpush(task, queue);
     }
     set->loadmap[qid] = load;
-    fmtxunlk(&set->lk);
+    tktunlk(&set->lk);
 
     return;
 }
@@ -358,7 +324,7 @@ schedswitchtask(struct task *curtask)
             /* loop over current and next priority-queues */
             lim = SCHEDNQUEUE;
             lim >>= __LONGBITSLOG2;
-            fmtxlk(&set->lk);
+            tktlk(&set->lk);
             map = set->curmap;
             queue = &set->cur[SCHEDTRAPPRIOMIN];
             for (ndx = 0 ; ndx < lim ; ndx++) {
@@ -373,7 +339,7 @@ schedswitchtask(struct task *curtask)
                         if (!queue) {
                             m_clrbit((m_atomic_t *)map, ofs);
                         }
-                        fmtxunlk(&set->lk);
+                        tktunlk(&set->lk);
 
                         m_taskjmp(&task->m_task);
                     }
@@ -383,12 +349,12 @@ schedswitchtask(struct task *curtask)
                 /* if no task found during the first iteration, switch queues */
                 schedswapqueues();
             }
-            fmtxunlk(&set->lk);
+            tktunlk(&set->lk);
         } while (loop--);
         /* if both current and next queues are empty, look for an idle task */
         lim = SCHEDNIDLE;
         lim >>= __LONGBITSLOG2;
-        fmtxlk(&set->lk);
+        tktlk(&set->lk);
         map = &set->idlemap[0];
         queue = set->idle;
         for (ndx = 0 ; ndx < lim ; ndx++) {
@@ -403,7 +369,7 @@ schedswitchtask(struct task *curtask)
                     if (!queue) {
                         m_clrbit((m_atomic_t *)map, ofs);
                     }
-                    fmtxunlk(&set->lk);
+                    tktunlk(&set->lk);
 
                     m_taskjmp(&task->m_task);
                 }
@@ -414,7 +380,7 @@ schedswitchtask(struct task *curtask)
         /* mark the core as idle */
         map = &set->idlemap[0];
         setbit(map, unit);
-        fmtxunlk(&set->lk);
+        tktunlk(&set->lk);
         k_intron();
         m_waitint();
     } while (1);

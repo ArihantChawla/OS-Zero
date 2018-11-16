@@ -27,7 +27,7 @@ FASTCALL
 void
 sigfunc(unsigned long pid, int32_t trap, long err, void *frame)
 {
-    struct task    *task = &k_tasktab[pid];
+    struct task    *task = k_tasktab[pid];
     long            sig = k_trapsigmap[trap];
     struct proc    *proc = task->proc;
     __sighandler_t  func;

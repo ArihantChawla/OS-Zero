@@ -36,7 +36,7 @@ procinit(long unit, long id, long sched)
     cpu = &k_cputab[unit];
     if (id == PROCNEW) {
         id = taskgetid();
-        task = &k_tasktab[id];
+        task = k_tasktab[id];
         kbzero(task, sizeof(struct task));
         proc = k_proctab[id];
         kbzero(proc, sizeof(struct proc));
@@ -92,7 +92,7 @@ procinit(long unit, long id, long sched)
             }
         }
     } else if (id < TASKPREDEFS) {
-        task = &k_tasktab[id];
+        task = k_tasktab[id];
         kbzero(task, sizeof(struct task));
         proc = k_proctab[id];
         kbzero(proc, sizeof(struct proc));

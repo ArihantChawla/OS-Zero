@@ -1,6 +1,8 @@
 #ifndef __KERN_PERM_H__
 #define __KERN_PERM_H__
 
+#include <sys/types.h>
+
 /* unix-like permissions */
 #define PERM_READ   0x00000001
 #define PERM_WRITE  0x00000002
@@ -46,9 +48,10 @@
 #define permrawio(perm)           ((perm)->flg & PERM_RAWIO)
 
 struct perm {
-    long        uid;    // user ID
-    long        gid;    // group ID
-    long        flg;    // access bits
+    uid_t    uid; // user ID
+    gid_t    gid; // group ID
+    taskid_t tid; // task ID
+    long     flg; // access bits
 };
 
 #endif /* __KERN_PERM_H__ */

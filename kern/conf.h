@@ -21,7 +21,7 @@
 #define MEMPARANOIA   0
 #define BUFDYNALLOC   0
 #if (PTRBITS == 32)
-#define MEMBUFBLKS    8192
+#define MEMBUFBLKS    1024
 #else
 #define MEMBUFBLKS    32768
 #endif

@@ -6,8 +6,6 @@
 
 #define __EIPFRAMEOFS                4
 
-#if !defined(__x86_64__) && !defined(__amd64__)
-
 #define m_atominc(p)                 m_atominc32(p)
 #define m_atomdec(p)                 m_atomdec32(p)
 #define m_atomswap(p, val)           m_xchg32(p, val)
@@ -83,8 +81,6 @@ m_loadretadr(void *frm)
 
     return ptr;
 }
-
-#endif /* !64-bit */
 
 /* atomic increment operation */
 static __inline__ void

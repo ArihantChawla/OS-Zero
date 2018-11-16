@@ -10,7 +10,7 @@
 
 uint8_t         k_tsstab[CPUSMAX][PAGESIZE];
 extern uint8_t  k_iomap[8192];
-extern uint64_t k_gdttab[CPUSMAX][KERNSEGS];
+extern uint64_t k_segtab[CPUSMAX][KERNSEGS];
 /* FIXME: per-process kernel- and user-mode stacks */
 extern uint8_t  k_sysstk[CPUSMAX * KERNSTKSIZE];
 extern uint8_t  k_usrstk[CPUSMAX * KERNSTKSIZE];
@@ -35,7 +35,7 @@ tssinit(long unit)
     tss->cr3 = pdbr;
     tss->iomapofs = (uint16_t)((uint8_t *)k_iomap - (uint8_t *)tss);
     seginit(unit);
-    gdt = &k_gdttab[unit][0];
+    gdt = &k_segtab[unit][0];
     segsetdesc(&gdt[TSSSEG], (uintptr_t)tss, sizeof(struct m_tss),
                SEGTSS);
     sel = TSSSEL;

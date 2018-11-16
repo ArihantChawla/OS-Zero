@@ -10,7 +10,7 @@
 //static struct membufpool membufpooltab[NCPU] ALIGNED(PAGESIZE);
 static struct membufpool k_membufpool;
 
-intmax_t
+long
 membufinit(void)
 {
     struct membufpool *tab = &k_membufpool;

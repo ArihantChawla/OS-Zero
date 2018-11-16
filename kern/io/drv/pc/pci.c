@@ -16,7 +16,7 @@ extern void ac97init(struct pcidev *);
 #endif
 
 static struct pcidrvent *pcidrvtab[65536] ALIGNED(PAGESIZE);
-struct pcidev            pcidevtab[PCINDEV];
+struct pcidev            pcidevtab[PCIDEVS];
 struct pcidrv            pcidrv;
 #if 0
 long                     pcitype;
@@ -563,10 +563,10 @@ pciinit(void)
 #endif
         ndev = 0;
         for (bus = 0 ; bus < PCINBUS ; bus++) {
-            for (slot = 0 ; slot < PCINSLOT ; slot++) {
+            for (slot = 0 ; slot < PCISLOTS ; slot++) {
                 vendor = pcichkvendor(bus, slot, &devid);
                 if (vendor != 0xffff) {
-                    if (ndev < PCINDEV) {
+                    if (ndev < PCIDEVS) {
                         dev = &pcidevtab[ndev];
                         dev->vendor = vendor;
                         dev->id = devid;

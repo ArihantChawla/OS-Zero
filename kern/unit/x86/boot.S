@@ -17,7 +17,7 @@ _MBCHKSUM	= MBCHKSUM
 #if defined(__x86_64__) || defined(__amd64__)
 .globl	k_pagetab4, k_pagetab3, k_pagetab2, k_pagetab1
 #endif
-.globl	k_tsstab, k_gdttab, k_tsstab
+.globl	k_tsstab, k_segtab, k_tsstab
 .globl	k_iomap, k_sysstk, k_usrstk
 .extern	kmain
 
@@ -137,7 +137,7 @@ k_tsstab:
 
 #if (SMP)
 
-k_gdttab:
+k_segtab:
 #if (KERNSEGS < 16)
 	.space	(16 * 8 * CPUSMAX)
 #else
@@ -146,7 +146,7 @@ k_gdttab:
 
 #else /* !SMP */
 
-k_gdttab:
+k_segtab:
 	.space	(8 * KERNSEGS)
 
 #endif /* SMP */

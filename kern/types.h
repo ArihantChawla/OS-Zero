@@ -15,15 +15,5 @@ struct stkhdr {
     int8_t *sp;
 };
 
-/* the structures we wait on are prefixed by this one */
-/* for sleeping, waketm is wakeup-time (system tick ID) */
-/* wait-channel is simply the address of this header as a uintptr_t */
-struct waithdr {
-    volatile m_atomic_t  lk;          // mutex for modifying the queue
-    long                 cnt;         // # of items in queue
-    time_t               waketm;      // wakeup-tick
-    struct thr          *thrqueue;    // waiter queue
-};
-
 #endif /* __KERN_TYPES_H__ */
 

@@ -3,6 +3,7 @@
 #include <mach/param.h>
 #include <mt/mtx.h>
 #include <kern/cpu.h>
+#include <kern/malloc.h>
 #include <kern/proc/proc.h>
 #include <kern/proc/task.h>
 #include <kern/unit/ia32/task.h>
@@ -22,7 +23,7 @@ volatile m_atomic_t  k_tasknbuf;
 void
 taskinitids(void)
 {
-    taskid id;
+    taskid_t id;
 
     for (id = TASKPREDEFS ; id < TASKSMAX ; id++) {
         k_taskidstk[id] = id;
@@ -41,7 +42,7 @@ taskget(void)
     uintptr_t    uptr;
 
     m_lkbit((m_atomic_t *)&k_taskbuf, TASK_LK_BIT_POS);
-    uptr = k_taskbuf;
+    uptr = (uintptr_t)k_taskbuf;
     uptr &= ~TASK_LK_BIT;
     task = (void *)uptr;
     if (uptr) {
@@ -62,7 +63,7 @@ taskget(void)
                 cur = cur->next;
             }
             m_lkbit((m_atomic_t *)&k_taskbuf, TASK_LK_BIT_POS);
-            uptr = k_taskbuf;
+            uptr = (uintptr_t)k_taskbuf;
             uptr &= ~TASK_LK_BIT;
             cur->next = (struct task *)uptr;
             m_atomwrite((m_atomic_t *)&k_taskbuf, head);
@@ -97,13 +98,13 @@ taskinitenv(void)
 taskid_t
 taskgetid(void)
 {
-    long     ndx = m_fetchadd(k_taskidndx, 1);
+    long     ndx = m_fetchadd((m_atomic_t *)&k_taskidndx, 1);
     taskid_t id;
 
     if (ndx < TASKSMAX) {
         id = k_taskidstk[ndx];
     } else {
-        m_fetchadd(k_taskidndx, -1);
+        m_fetchadd((m_atomic_t *)&k_taskidndx, -1);
 
         return -1;
     }
@@ -114,9 +115,9 @@ taskgetid(void)
 void
 taskputid(taskid_t id)
 {
-    long ndx = m_fetchadd(k_taskidndx, -1);
+    long ndx = m_fetchadd((m_atomic_t *)&k_taskidndx, -1);
 
-    IF (ndx >= 0) {
+    if (ndx >= 0) {
         k_taskidstk[ndx] = id;
     }
 

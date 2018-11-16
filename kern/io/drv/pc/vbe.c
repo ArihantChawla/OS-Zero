@@ -32,9 +32,9 @@ extern void            realint10(void);
 
 extern struct m_farptr realgdtptr;
 #if (SMP)
-extern uint64_t        k_gdttab[CPUSMAX][KERNSEGS];
+extern uint64_t        k_segtab[CPUSMAX][KERNSEGS];
 #else
-extern uint64_t        k_gdttab[KERNSEGS];
+extern uint64_t        k_segtab[KERNSEGS];
 #endif
 extern FASTCALL void gdtinit(struct m_farptr *farptr);
 
@@ -72,9 +72,9 @@ vbeint10(void)
     }
     realint10();
 #if (SMP)
-    gdt = &k_gdttab[id][0];
+    gdt = &k_segtab[id][0];
 #else
-    gdt = k_gdttab;
+    gdt = k_segtab;
 #endif
     farptr = &realgdtptr;
     farptr->lim = KERNSEGS * sizeof(uint64_t) - 1;

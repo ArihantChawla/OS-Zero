@@ -28,8 +28,8 @@ void     pciwriteconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
     ((uint16_t)(0xc000 | ((slot) << 8) | (reg)))
 
 #define PCINBUS       256       // maximum number of buses
-#define PCINSLOT      32        // maximum number of slots on a bus
-#define PCINDEV       64
+#define PCISLOTS      32        // maximum number of slots on a bus
+#define PCIDEVS       64
 #define PCICONFADR1   0x0cf8
 #define PCICONFADR2   0x0cfa
 #define PCICONFDATA   0x0cfc
@@ -236,7 +236,7 @@ struct pcidrvent {
     long           devid;
 };
 
-extern struct pcidev pcidevtab[PCINDEV];
+extern struct pcidev pcidevtab[PCIDEVS];
 extern long          pcindev;
 
 #endif /* __KERN_IO_DRV_PC_PCI_H__ */

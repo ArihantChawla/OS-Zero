@@ -113,7 +113,7 @@ static __inline__ void
 taskinittls(long unit, long id)
 {
     volatile struct cpu *cpu = &k_cputab[unit];
-    struct task         *task = &k_tasktab[id];
+    struct task         *task = k_tasktab[id];
 
     k_setcurcpu(cpu);
     k_setcurunit(unit);
