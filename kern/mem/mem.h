@@ -67,7 +67,7 @@
 #define memunlkhdr(hdr)  m_unlkbit(&hdr->info, MEMLKBITPOS)
 #define memgetbkt(hdr)   ((hdr)->info & MEMBKTMASK)
 
-void meminit(m_ureg_t nbphys, m_ureg_t nbvirt);
+void meminit(m_ureg_t base, m_ureg_t nbphys, m_ureg_t nbvirt);
 
 #endif /* __KERN_MEM_MEM_H__ */
 

@@ -20,7 +20,7 @@
 extern struct vmpage k_vmphystab[PAGESMAX] ALIGNED(PAGESIZE);
 #endif
 #if (PAGEDEV) && 0
-static struct dev    k_pagedevtab[NPAGEDEV];
+static struct dev    k_pagedevtab[PAGEDEVS];
 #endif
 
 m_ureg_t
@@ -31,18 +31,15 @@ pageinitphyszone(m_ureg_t base,
     long           res = 0;
     struct vmpage *page = &k_vmphystab[pagenum(base)];
     m_ureg_t       adr = rounduppow2(base, PAGESIZE);
-    m_ureg_t       n = rounddownpow2(nbphys - adr, PAGESIZE) >> PAGESIZELOG2;
-    m_ureg_t       size = n * PAGESIZE;
-    m_ureg_t       end = base - PAGESIZE;
+    m_ureg_t       size = rounddownpow2(nbphys - adr, PAGESIZE);
+    m_ureg_t       n = size >> PAGESIZELOG2;
     struct vmpage *hdr;
 
-    adr += n << PAGESIZELOG2;
+    adr += size;;
     page += n;
-    end += size;
-    k_physmem.pagestat.nphys = n;
+    k_physmem.pagestat.nphys += n;
     k_physmem.pagestat.phys = (void *)base;
-    k_physmem.pagestat.physend = (void *)end;
-    adr = rounddownpow2(end, PAGESIZE);
+    k_physmem.pagestat.physend = (void *)adr;
     while (n--) {
         page->adr = adr;
         page->nmap = 0;

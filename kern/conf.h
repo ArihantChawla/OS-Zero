@@ -5,9 +5,9 @@
 
 #include <mach/param.h>
 
-#define PLASMA        0
-#define PLASMAFOREVER 0
-#define USYSINFO      1
+#define PLASMA        1
+#define PLASMAFOREVER 1
+#define USYSINFO      0
 #define MEMTKTLK      1
 #define VMTKTLK       1
 #define VMPAGETKTLK   1
@@ -44,8 +44,8 @@
 #define FASTHZ        1000      // fast timer frequency (interactive tasks etc.)
 #define ZEROSCHED     1         // default scheduler (based on FreeBSD ULE)
 #define ZEROINTSCHED  1         // scheduler with interactivity-scoring
-#define TASKSMAX      4096      // maximum number of running tasks on system
-#define TASKCHILDREN  128       // maximum number of children per task
+#define TASKSMAX      1024      // maximum number of running tasks on system
+#define TASKCHILDREN  16        // maximum number of children per task
 #define PROCDESCS     4096      // maximum number of descriptors per process
 #define TASKSTKSIZE   1048576   // task user mode stack size
 #define KERNSTKSIZE   PAGESIZE  // task kernel mode stack size
@@ -68,10 +68,10 @@
 
 /* maximum number of physical pages */
 #if (PTRBITS == 32)
-#define PAGESMAX      (1L << (PTRBITS - PAGESIZELOG2))
-#endif
-#define PAGESPHYS     (RAMSIZE / PAGESIZE)
+#define PAGESMAX      (KERNVIRTBASE / PAGESIZE)
+//#define PAGESPHYS     (RAMSIZE / PAGESIZE)
 #define PAGESDEV      (PAGESMAX / 8)
+#endif
 
 #define LOCORE        0
 #define CONSMAX       8

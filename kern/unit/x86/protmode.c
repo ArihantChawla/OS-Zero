@@ -60,11 +60,11 @@ extern volatile struct acpidesc *acpidesc;
 #endif
 #endif
 
-void
+NORETURN void
 kinitprot(unsigned long pmemsz)
 {
     uint32_t lim = min(pmemsz, KERNVIRTBASE);
-    uint32_t sp = (uint32_t)k_usrstk + CPUSMAX * KERNSTKSIZE;
+    uint32_t sp = (uint32_t)k_sysstk + KERNSTKSIZE;
 
     __asm__ __volatile__ ("movl %0, %%esp\n"
                           "pushl %%ebp\n"
@@ -83,8 +83,7 @@ kinitprot(unsigned long pmemsz)
     kmemset(k_iomap, 0xff, sizeof(k_iomap));
     /* INITIALIZE CONSOLES AND SCREEN */
     /* TODO: use memory map from GRUB? */
-    vminitphys((uintptr_t)&_epagetab, lim - (uint32_t)&_epagetab);
-    meminit(min(pmemsz, lim), min(KERNVIRTBASE, lim));
+    meminit((m_ureg_t)&_ebss, RAMSIZE, KERNVIRTBASE);
     /* allocate unused device regions (in 3.5G..4G) */
     pageinitphyszone(KERNDEVBASE, k_vmdevtab, PAGESDEV);
     cpuinit(0);
@@ -183,27 +182,29 @@ kinitprot(unsigned long pmemsz)
             k_physmem.pagestat.nwire << (PAGESIZELOG2 - 10),
             k_physmem.pagestat.nphys << (PAGESIZELOG2 - 10));
     sysinitconf();
-    schedinit();
+#if (PLASMA) && 0
+    plasmainit();
+#endif
 #if (HPET)
     /* initialise high precision event timers */
     hpetinit();
 #endif
-#if (PLASMA) && 0
-    plasmainit();
-#endif
+    schedinit();
 #if (APIC)
     apicstarttmr();
 #else
     pitinit();
 #endif
 //    usrinit(&_usysinfo);
+    do {
 #if (PLASMAFOREVER)
-    plasmaloop(-1);
+        plasmaloop(-1);
 #elif (USERMODE)
-    m_jmpusr(0, schedloop);
+        m_jmpusr(0, schedloop);
 #else
-    schedloop();
+        schedloop();
 #endif
+    } while (1);
 
     /* NOTREACHED */
 }

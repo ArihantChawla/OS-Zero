@@ -11,7 +11,7 @@
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/pic.h>
 
-extern uint64_t      kernidt[TRAPSMAX];
+extern uint64_t      k_intrvec[TRAPSMAX];
 extern void         *irqvec[];
 extern void          irqtmr0(void);
 extern void          irqtmr(void);
@@ -19,7 +19,7 @@ extern void          irqtmr(void);
 void
 pitinit(void)
 {
-    uint64_t *idt = kernidt;
+    uint64_t *idt = k_intrvec;
 
     kprintf("initialising timer interrupt to %d Hz\n", HZ);
     trapsetintrgate(&idt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
@@ -59,7 +59,7 @@ pitsleep(unsigned long msec)
     irqvec[IRQTMR] = NULL;
     outb(~0x01, PICMASK1);
     outb(~0x00, PICMASK2);
-    trapsetintrgate(&kernidt[trapirqid(IRQTMR)], irqtmr0, TRAPUSER);
+    trapsetintrgate(&k_intrvec[trapirqid(IRQTMR)], irqtmr0, TRAPUSER);
     outb(PITDUALBYTE | PITONESHOT, PITCTRL);
     pitsethz(hz, PITCHAN0);
     k_waitint();

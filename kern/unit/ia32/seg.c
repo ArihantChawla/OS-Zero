@@ -12,9 +12,9 @@
 FASTCALL void gdtinit(struct m_farptr *farptr);
 
 #if (SMP)
-extern uint64_t            kerngdttab[CPUSMAX][KERNSEGS];
+extern uint64_t            k_gdttab[CPUSMAX][KERNSEGS];
 #else
-extern uint64_t            kerngdttab[KERNSEGS];
+extern uint64_t            k_gdttab[KERNSEGS];
 #endif
 //extern struct m_tss    tsstab[NTHR];
 extern struct m_farptr     gdtptrtab[CPUSMAX];
@@ -25,16 +25,16 @@ seginit(long unit)
     volatile struct cpu *cpu = &k_cputab[unit];
     struct m_farptr     *farptr = &gdtptrtab[unit];
 #if (SMP)
-    uint64_t            *gdt = &kerngdttab[unit][0];
+    uint64_t            *gdt = &k_gdttab[unit][0];
 #else
-    uint64_t            *gdt = &kerngdttab[0];
+    uint64_t            *gdt = &k_gdttab[0];
 #endif
 
     /* set descriptors */
 #if (SMP)
-    gdt = &kerngdttab[unit][0];
+    gdt = &k_gdttab[unit][0];
 #else
-    gdt = kerngdttab;
+    gdt = k_gdttab;
 #endif
     segsetdesc(&gdt[TEXTSEG], 0, PAGESMAX - 1,
                SEGCODE);

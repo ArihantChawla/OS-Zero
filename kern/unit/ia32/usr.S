@@ -4,9 +4,9 @@
 
 _KERNSTKSIZE = KERNSTKSIZE
 
-.extern schedloop
+.extern k_usrstk
 
-.globl	m_jmpusr, usrpagedir, kernusrstktab
+.globl	m_jmpusr
 
 .text	32
 
@@ -17,30 +17,30 @@ m_jmpusr:
 	pushl	%ebp
 	movl	%ebp, %esp
 	incl	%eax
-	movl	$kernusrstktab, %esi
+	movl	$k_usrstk, %esi
 //	pushl	%eax
 	pushl	%edx
 	movl	$UDATASEL, %ebx		// user data segment
 	movl	$_KERNSTKSIZE, %edi
 	movl	$UTEXTSEL, %ecx		// user text segment
 	//	movl	$kernpagedir, %ecx	// page directory address
-	mull	%edi			// stack address
-//	movl	%esp, %esi		// stack pointer
-	movw	%bx, %ds		// data segment
-	movw	%bx, %es		// ES segment
+	mull	%edi				// stack address
+//	movl	%esp, %esi			// stack pointer
+	movw	%bx, %ds			// data segment
+	movw	%bx, %es			// ES segment
 	addl	$_KERNSTKSIZE, %eax
-	addl	%esi, %edi		// &kernuserstk[id]
+	addl	%esi, %edi			// &kernuserstk[id]
 	popl	%edx
-	movl	%edi, %ebp		// set frame pointer
+	movl	%edi, %ebp			// set frame pointer
 //	popl	%eax
-//	addl	$36, %esi		// adjust
+//	addl	$36, %esi			// adjust
 	///	movl	%eax, %esp
 	/* construct iret return frame (struct m_jmpframe) */
-	pushl	%ebx			// user stack segment
-	pushl	%edi			// user stack pointer
-	pushfl				// push machine status word
-	pushl	%ecx			// push user text/code segment selector
-	pushl	%edx			// function to trigger
+	pushl	%ebx				// user stack segment
+	pushl	%edi				// user stack pointer
+	pushfl						// push machine status word
+	pushl	%ecx				// push user text/code segment selector
+	pushl	%edx				// function to trigger
 //	movl	%ecx, %cr3
 //	movl	%esp, %ebp
 	iretl

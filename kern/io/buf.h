@@ -22,12 +22,12 @@
 typedef uint64_t               bufid_t;
 
 /* for locking hash chains */
-#define BUF_LK_BIT_POS 1
-#define BUF_LK_BIT     (1UL << BUF_LK_BIT_POS)
+#define BUF_LK_BIT_POS  0
+#define BUF_LK_BIT      (1UL << BUF_LK_BIT_POS)
 
 /* hash table parameters */
-#define BUFHASHBITS    16
-#define BUFHASHITEMS   (1UL << BUFHASHBITS)
+#define BUFHASHBITS     10
+#define BUFHASHITEMS    (1UL << BUFHASHBITS)
 
 /* buffer cache parameters */
 #define BUFBLKS         (BUFCACHESIZE / BUFBLKSIZE)

@@ -18,7 +18,7 @@
 
 extern void      irqtmr(void);
 extern void      irqtmrcnt(void);
-extern uint64_t  kernidt[TRAPSMAX];
+extern uint64_t  k_intrvec[TRAPSMAX];
 extern void     *irqvec[TRAPSMAX];
 
 volatile struct cpu *mpbootcpu;
@@ -139,9 +139,9 @@ apicinit(volatile uint32_t *base)
     vmmapseg((uint32_t)base, (uint32_t)base,
              (uint32_t)((uint8_t *)base + PAGESIZE),
              PAGEPRES | PAGEWRITE | PAGENOCACHE);
-    trapsetintrgate(&kernidt[IRQTMR], irqtmr, TRAPUSER);
-    trapsetintrgate(&kernidt[IRQERROR], irqerror, TRAPUSER);
-    trapsetintrgate(&kernidt[IRQSPURIOUS], irqspurious, TRAPUSER);
+    trapsetintrgate(&k_intrvec[IRQTMR], irqtmr, TRAPUSER);
+    trapsetintrgate(&k_intrvec[IRQERROR], irqerror, TRAPUSER);
+    trapsetintrgate(&k_intrvec[IRQSPURIOUS], irqspurious, TRAPUSER);
     apicinittmr(base);
 
     return;

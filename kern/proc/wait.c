@@ -1,173 +1,37 @@
 #include <stdint.h>
 #include <zero/cdefs.h>
+#include <zero/hash.h>
 #include <mach/param.h>
-#include <mt/mtx.h>
-#include <kern/malloc.h>
-#include <kern/util.h>
 #include <kern/sched.h>
 #include <kern/proc/task.h>
 
-#define DEQ_SINGLE_TYPE
-#define DEQ_TYPE        struct task
-#include <zero/deq.h>
-
-struct tasktabl0 k_taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
+struct task *k_taskwaithash[TASKWAITHASHITEMS] ALIGNED(PAGESIZE);
 
 /* add task to wait table */
 void
 schedsetwait(struct task *task)
 {
-    struct tasktabl0  *l0tab;
-    struct tasktab    *tab;
-    void              *ptr = NULL;
-    void             **pptr;
-    struct taskqueue  *queue;
-    uintptr_t          wtchan = task->waitchan;
-    long               fail = 0;
-    long               key0;
-    long               key1;
-    long               key2;
-    long               key3;
-    void              *ptab[TASKNWAITKEY - 1] = { NULL, NULL, NULL };
+    uintptr_t chan = task->waitchan;
+    uintptr_t uptr;
+    long      key = tmhash32((uint32_t)chan);
 
-    key0 = taskwaitkey0(wtchan);
-    key1 = taskwaitkey1(wtchan);
-    key2 = taskwaitkey2(wtchan);
-    key3 = taskwaitkey3(wtchan);
-    fmtxlk(&k_taskwaittab[key0].lk);
-    l0tab = &k_taskwaittab[key0];
-    ptr = l0tab->tab;
-    pptr = ptr;
-    if (!ptr) {
-        ptr = kmalloc(TASKNLVL1WAIT * sizeof(struct tasktab));
-        if (ptr) {
-            kbzero(ptr, TASKNLVL1WAIT * sizeof(struct tasktab));
-        }
-        l0tab->tab = ptr;
-        ptab[0] = ptr;
-        pptr = ptr;
+    key &= (TASKWAITHASHITEMS - 1);
+    m_lkbit((m_atomic_t *)&k_taskwaithash[key], TASK_LK_BIT_POS);
+    uptr = k_taskwaithash[key];
+    uptr &= ~TASK_LK_BIT;
+    task->next = (struct task *)uptr;
+    if (uptr) {
+        ((struct task *)uptr)->prev = task;
     }
-    if (ptr) {
-        ptr = pptr[key1];
-        if (!ptr) {
-            ptr = kmalloc(TASKNLVL2WAIT * sizeof(struct tasktab));
-            if (ptr) {
-                kbzero(ptr, TASKNLVL2WAIT * sizeof(struct tasktab));
-            }
-        }
-        ptab[1] = ptr;
-        pptr[key1] = ptr;
-        pptr = ptr;
-    } else {
-        fail = 1;
-    }
-    if (ptr) {
-        ptr = pptr[key2];
-        if (!ptr) {
-            queue = kmalloc(TASKNLVL3WAIT * sizeof(struct taskqueue));
-            if (queue) {
-                kbzero(queue, TASKNLVL3WAIT * sizeof(struct taskqueue));
-            }
-            ptab[2] = queue;
-            pptr[key2] = queue;
-        } else {
-            queue = pptr[key2];
-        }
-    } else {
-        fail = 1;
-    }
-    if (!fail) {
-        queue = &queue[key3];
-        deqappend(task, &queue->list);
-        tab = ptab[0];
-        tab->nref++;
-        tab->tab = ptab[1];
-        tab = ptab[1];
-        tab->nref++;
-        tab->tab = ptab[2];
-        tab = ptab[2];
-        tab->nref++;
-    }
-    fmtxunlk(&k_taskwaittab[key0].lk);
+    m_atomwrite((m_atomic_t *)&k_taskwaithash[key], task);
 
     return;
 }
 
-/* awaken tasks waiting on wtchan */
+/* wake up tasks waiting on chan */
 void
-schedwakeup(uintptr_t wtchan)
+schedwakeup(uintptr_t chan)
 {
-    struct tasktabl0  *l0tab;
-    struct tasktab    *tab;
-    void              *ptr = NULL;
-    struct taskqueue  *queue;
-    struct taskqueue  *runqueue;
-    struct task       *task1;
-    struct task       *task2;
-    long               key0 = taskwaitkey0(wtchan);
-    long               key1 = taskwaitkey1(wtchan);
-    long               key2 = taskwaitkey2(wtchan);
-    long               key3 = taskwaitkey3(wtchan);
-    void             **pptr;
-    void              *ptab[TASKNWAITKEY - 1] = { NULL, NULL, NULL };
-    void             **pptab[TASKNWAITKEY - 1] = { NULL, NULL, NULL };
-
-    fmtxlk(&k_taskwaittab[key0].lk);
-    l0tab = &k_taskwaittab[key0];
-    if (l0tab) {
-        ptab[0] = l0tab;
-        pptab[0] = (void **)&k_taskwaittab[key0];
-        tab = ((void **)l0tab)[key1];
-        if (tab) {
-            ptab[1] = tab;
-            pptab[1] = (void **)&tab[key1];
-            tab = ((void **)tab)[key2];
-            if (tab) {
-                ptab[2] = tab;
-                pptab[2] = (void **)&tab[key2];
-                queue = ((void **)tab)[key3];
-                if (queue) {
-                    task1 = queue->list;
-                    while (task1) {
-                        fmtxlk(&task1->lk);
-                        if (task1->next) {
-                            task1->next->prev = NULL;
-                        }
-                        queue->list = task1->next;
-                        task2 = task1->next;
-                        taskwakeup(task1);
-                        task1 = task2;
-                    }
-                    tab = ptab[2];
-                    if (tab) {
-                        if (!--tab->nref) {
-                            pptr = pptab[2];
-                            kfree(tab);
-                            *pptr = NULL;
-                        }
-                        tab = ptab[1];
-                        if (tab) {
-                            if (!--tab->nref) {
-                                pptr = pptab[1];
-                                kfree(tab);
-                                *pptr = NULL;
-                            }
-                            tab = ptab[0];
-                            if (tab) {
-                                if (!--tab->nref) {
-                                    pptr = pptab[0];
-                                    kfree(tab);
-                                    *pptr = NULL;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    fmtxunlk(&k_taskwaittab[key0].lk);
-
     return;
 }
 

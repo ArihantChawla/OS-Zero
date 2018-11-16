@@ -13,25 +13,23 @@ mkcfg()
     cat > $GRUB_CFG_FILE <<EOF
 set timeout=$GRUB_TIMEOUT # wait seconds before start
 set default=$GRUB_DEFAULT # default menu entry
+set gfxmode=$GRUB_GFXMODE
+set gfxpayload=$GRUB_GFXMODE
+EOF
 
+    echo "creating boot menu"
+    cat >> $GRUB_CFG_FILE <<EOF
+menuentry "zero" {
 EOF
     echo "insmod:"
     for mod in $GRUB_MODS
     do
 	echo " $mod"
-	echo "insmod $mod" >> $GRUB_CFG_FILE
+	echo "    insmod $mod" >> $GRUB_CFG_FILE
     done
     echo "configuring graphics mode"
 
     cat >> $GRUB_CFG_FILE <<EOF
-
-set gfxmode=$GRUB_GFXMODE
-set gfxpayload=$GRUB_GFXMODE
-EOF
-    echo "creating boot menu"
-    cat >> $GRUB_CFG_FILE <<EOF
-
-menuentry "zero" {
     multiboot /boot/zero
     boot
 }

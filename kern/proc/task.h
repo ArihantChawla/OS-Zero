@@ -3,18 +3,24 @@
 
 #include <kern/conf.h>
 #include <time.h>
+#include <mach/param.h>
 #include <mach/types.h>
 #include <kern/syscall.h>
+#include <mt/tktlk.h>
+#define TASK_LK_T    zerotktlk
+#define tasklk(lp)   tktlk(lp)
+#define taskunlk(lp) tktunlk(lp)
 
-#define TASK_LK_T volatile m_atomic_t
+typedef int16_t      taskid_t;
 
 /* process states */
 #define TASKNEW      0
 #define TASKREADY    1
 #define TASKSLEEPING 2
-#define TASKSTOPPED  3
-#define TASKZOMBIE   4
-#define TASKNSTATE   5
+#define TASKWAITING  3 // NEW
+#define TASKSTOPPED  4
+#define TASKZOMBIE   5
+#define TASKNSTATE   6
 
 struct taskstk {
     uint8_t *top;
@@ -23,6 +29,20 @@ struct taskstk {
     size_t   size;
 };
 
+#define TASKWAITHASHTABITEMS 29
+#define TASKWAITHASHTABSIZE  (32 * PTRSIZE)
+struct taskwaithashtab {
+    uintptr_t               chan;
+    struct taskwaithashtab *next;
+    long                    n;
+    struct task            *buf[TASKWAITHASHTABITEMS];
+};
+
+#define TASKSWAITHASHITEMS (1U << TASKWAITHASHBITS)
+#define TASKWAITHASHBITS   10
+
+#define TASKALLOCSIZE 1024
+#define TASKBUFITEMS  32
 /* process or thread attributes */
 /* bits for schedflg-member */
 #define TASKHASINPUT (1 << 0)   // pending HID input
@@ -62,7 +82,7 @@ struct task {
     long             score;             // interactivity score
     long             slice;             // timeslice in ticks
     long             runtime;           // # of ticks run
-    long             slptime;           // # of ticks  of slept voluntarily
+    long             slptime;           // # of ticks slept voluntarily
     long             slptick;           // ID of tick when sleeping started
     long             ntick;             // # of scheduler ticks received
     long             lastrun;           // last tick we ran on
@@ -75,6 +95,7 @@ struct task {
 
 extern struct task k_tasktab[TASKSMAX];
 
+#if 0
 #if (PTRSIZE == 8)
 #define TASKNLVLWAITLOG2 16
 #elif (PTRSIZE == 4)
@@ -84,7 +105,7 @@ extern struct task k_tasktab[TASKSMAX];
 #define TASKNLVL1WAIT    (1 << TASKNLVLWAITLOG2)
 #define TASKNLVL2WAIT    (1 << TASKNLVLWAITLOG2)
 #define TASKNLVL3WAIT    (1 << TASKNLVLWAITLOG2)
-#define TASKNWAITKEY     4
+//#define TASKNWAITKEY     4
 
 #define taskwaitkey0(wc)                                                \
     (((wc) >> (3 * TASKNLVLWAITLOG2)) & ((1UL << TASKNLVLWAITLOG2) - 1))
@@ -113,20 +134,21 @@ struct taskqueue {
     struct task *list;
     uint8_t      _pad[CLSIZE - sizeof(long) - sizeof(struct task *)];
 };
+#endif
 
-long taskgetid(void);
-void taskfreeid(long id);
+taskid_t taskgetid(void);
+void     taskputid(taskid_t id);
 
 #define THRSTKSIZE  (64 * 1024)
 
+#if 0
 struct taskid {
     m_atomic_t     lk;
     long           id;
     struct taskid *prev;
     struct taskid *next;
-    uint8_t        _pad[CLSIZE - 2 * sizeof(long)
-                        - 2 * sizeof(struct taskid *)];
 };
+#endif
 
 #define PIDSPEC_PID  0
 #define PIDSPEC_TGID 1
