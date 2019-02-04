@@ -256,7 +256,7 @@ strncat(char *dest,
 }
 
 /* TESTED OK */
-int
+PURE int
 memcmp(const void *ptr1,
        const void *ptr2,
        size_t n)
@@ -281,7 +281,7 @@ memcmp(const void *ptr1,
 #if !defined(__GLIBC__)
 
 /* TESTED OK */
-int
+PURE int
 strcmp(const char *str1,
        const char *str2)
 {
@@ -301,7 +301,7 @@ strcmp(const char *str1,
 }
 
 /* TESTED OK */
-int
+PURE int
 strncmp(const char *str1,
         const char *str2,
         size_t n)
@@ -325,7 +325,7 @@ strncmp(const char *str1,
 
 #endif /* !__GLIBC__ */
 
-int
+PURE int
 strcoll(const char *str1,
         const char *str2)
 {

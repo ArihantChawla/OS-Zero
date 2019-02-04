@@ -14,12 +14,12 @@
 #define __func__ __FUNCTION__
 #endif
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) && 0
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
 #include <stdalign.h>
-#define ALIGNED(x)    alignas(x)
+//#define ALIGNED(x)    alignas(x)
 #if !defined(__STDC_NO_THREADS__)
 #include <threads.h>
-#define THREADLOCAL   _Thread_local
+#define THREADLOCAL   __thread
 #endif
 #endif
 
@@ -28,7 +28,9 @@
 /* immediate argument test */
 #define IMMEDIATE(x)  __builtin_constant_p(x)
 /* align variables, aggregates, and tables to boundary of a */
+#if !defined(ALIGNED)
 #define ALIGNED(a)    __attribute__ ((__aligned__(a)))
+#endif
 #define ALIGNOF(x)    __alignof__ (x)
 /* ALWAYS inline the function */
 #define INLINE        __inline__ __attribute__ ((__always_inline__))

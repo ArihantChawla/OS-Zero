@@ -17,9 +17,9 @@
 #define LONGMODE      0
 #define MEMBUFNOLK    0 // FIXME: implement lock-free data (stack?)
 
-#define RAMSIZE       (2U * 1024 * 1024 * 1024)
+#define RAMSIZE       (1U * 1024 * 1024 * 1024)
 #define MEMPARANOIA   0
-#define BUFDYNALLOC   0
+#define BUFDYNALLOC   1
 #if (PTRBITS == 32)
 #define MEMBUFBLKS    1024
 #else
@@ -32,7 +32,7 @@
 
 #define NEWFONT       1
 #if !defined(BUFMEGS)
-#define BUFMEGS       256
+#define BUFMEGS       128
 #endif
 
 #define INET4         1

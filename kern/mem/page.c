@@ -19,7 +19,7 @@
 #if (VMFLATPHYSTAB)
 extern struct vmpage k_vmphystab[PAGESMAX] ALIGNED(PAGESIZE);
 #endif
-#if (PAGEDEV) && 0
+#if 0
 static struct dev    k_pagedevtab[PAGEDEVS];
 #endif
 

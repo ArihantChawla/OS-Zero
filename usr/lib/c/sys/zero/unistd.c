@@ -21,7 +21,7 @@
 
 long sysconftab[NSYSCONF]
 = {
-    BUFMINSIZE,                 /* _SC_BLKSIZE */
+    BUFBLKSIZE,                 /* _SC_BLKSIZE */
     0,                          /* _SC_L2_NWAY */
     0,                          /* _SC_L2_SIZE */
     0,                          /* _SC_L1NWAYDATA */

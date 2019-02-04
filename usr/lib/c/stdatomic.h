@@ -16,6 +16,9 @@
 #include <arm/stdatomic.h>
 #endif
 
+#define _Atomic    volatile
+#define _Atomic(t) volatile t
+
 /* atomic types */
 typedef volatile _Bool                atomic_bool;
 typedef volatile char                 atomic_char;
@@ -51,19 +54,26 @@ typedef enum memory_order memory_order;
 
 /* lock-free structure type */
 
-#define ATOMIC_FLAG_INIT     { 0L }
+#define ATOMIC_FLAG_INIT     { ATOMIC_FLAG_UNSET }
 #define ATOMIC_VAR_INIT(val) { (val) }
+#define ATOMIC_FLAG_CLEAR    0L
+#define ATOMIC_FLAG_SET      1L
 
 typedef struct {
     long __flg;
 } atomic_flag;
 
+#if 0
 bool atomic_flag_test_and_set(volatile atomic_flag *obj);
 bool atomic_flag_test_and_set_explicit(volatile atomic_flag *obj,
                                        memory_order order);
 bool atomic_flag_test_and_set_explicit(volatile atomic_flag *obj,
                                        memory_order order,
                                        memory_order scope);
+#endif
+#define atomic_flag_test_and_set(obj) m_cmpswap((obj)->__flg,           \
+                                                ATOMIC_FLAG_CLEAR,      \
+                                                ATOMIC_FLAG_SET)
 
 /* TODO: type kill_dependency(type)? */
 

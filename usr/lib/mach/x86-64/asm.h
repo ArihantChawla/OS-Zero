@@ -14,6 +14,7 @@
 #define m_fetchswapptr(p, want, val) m_cmpxchg64ptr(p, want, val)
 #define m_cmpswap(p, want, val)      (m_cmpxchg64(p, want, val) == want)
 #define m_cmpswapu(p, want, val)     (m_cmpxchgu64(p, want, val) == want)
+#define m_cmpswapu64(p, want, val)   (m_cmpxchgu64(p, want, val) == want)
 #define m_cmpswapptr(p, want, val)   (m_cmpxchg64ptr(p, want, val) == want)
 #define m_cmpswapdbl(p, want, val)   m_cmpxchg128(p, want, val)
 #define m_setbit(p, ndx)             m_setbit64(p, ndx)
@@ -141,8 +142,8 @@ m_xadd64(volatile m_atomic_t *p,
  * - return original *p
  */
 static __inline__ uint64_t
-m_xaddu64(uint64_t *p,
-          uint64_t val)
+m_xaddu64(m_atomicu64_t *p,
+          m_atomicu64_t val)
 {
     __asm__ __volatile__ ("lock xaddq %1, %q0\n"
                           : "+m" (*(p)), "=a" (val)
@@ -178,9 +179,9 @@ m_cmpxchg64(volatile m_atomic_t *p,
  * - return nonzero on success, zero on failure
  */
 static __inline__ uint64_t
-m_cmpxchgu64(uint64_t *p,
-             uint64_t want,
-             uint64_t val)
+m_cmpxchgu64(m_atomicu64_t *p,
+             m_atomicu64_t want,
+             m_atomicu64_t val)
 {
     uint64_t res;
 

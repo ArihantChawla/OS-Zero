@@ -2,7 +2,8 @@
 #define __SYS_RESOURCE_H__
 
 #include <features.h>
-#include <sys/types.h>
+//#include <sys/types.h>
+#include <time.h>
 #include <sys/time.h>
 
 #define RUSAGE_SELF     0

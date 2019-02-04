@@ -3,7 +3,6 @@
 
 #include <features.h>
 #include <time.h>
-#include <sys/types.h>
 
 #ifndef CLK_TCK
 #define CLK_TCK CLOCKS_PER_SEC
@@ -15,6 +14,8 @@
 #if !defined(__struct_timeval_defined)
 #include <sys/share/time.h>
 #endif
+
+#include <sys/types.h>
 
 /* support for getitimer() and setitimer() */
 

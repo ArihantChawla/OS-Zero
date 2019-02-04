@@ -88,14 +88,8 @@
 
 /* per-pool # of allocation blocks */
 #define memnumblk(pool) (MEM_BLK_SLAB_SIZE >> (3 + MEM_ALIGN_SHIFT + (pool)))
-#define memnumrun(pool)                                                 \
-    (fastu16divu16(MEM_RUN_SLAB_SIZE,                                   \
-                   ((pool) + 1) * PAGESIZE,                             \
-                   fastu16divu16tab))
-#define memnummid(pool)                                                 \
-    (fastu16divu16(MEM_MID_SLAB_PAGES,                                  \
-                   MEM_MID_MIN_PAGES + (pool) * MEM_MID_UNIT_PAGES,     \
-                   fastu16divu16tab))
+#define memnumrun(pool) (MEM_RUN_SLAB_SIZE / ((pool + 1) * PAGESIZE))
+#define memnummid(pool) (MEM_MID_SLAB_PAGES / (MEM_MID_MIN_PAGES + (pool) * MEM_MID_UNIT_PAGES))
 #define memnumbig(pool) (min(4, MEM_BIG_SLAB_SHIFT - (pool)))
 
 /* [per-pool] allocation sizes */
@@ -132,15 +126,18 @@ struct memslab {
     //    size_t           nblk; // number of total blocks
     uint8_t         *base; // slab/map base address
     size_t           bsz;  // block size in bytes
-    uintptr_t        tab[VLA]; // embedded pointer tabs where present
+    void            *tab[VLA]; // embedded pointer tabs where present
 };
 #define MEM_SLAB_TAB_ITEMS                                              \
     ((MEM_SLAB_HDR_SIZE - offsetof(struct memslab, tab)) / sizeof(uintptr_t))
 
 #if defined(ZEROMEMTKTLK)
 struct mempool {
+#if 0
     struct memslab    *slabtab[ZEROTKTBKTITEMS];
-    struct zerotktbkt  lkbkt;
+    struct zerotktbkt lkbkt;
+#endif
+    struct lfq        lfq;
 };
 #endif
 
@@ -195,10 +192,10 @@ struct mem {
 static __inline__ void *
 mempopblk(struct memslab *slab, struct memslab **headret)
 {
-    m_atomic_t  ndx = m_fetchadd(&slab->ndx, 1);
+    size_t  ndx = m_fetchadd(&slab->ndx, 1);
     //    intptr_t    n = slab->nblk;
-    size_t      nblk = memgetnblk(slab);
-    void       *ptr = NULL;
+    size_t  nblk = memgetnblk(slab);
+    void   *ptr = NULL;
 
     if (ndx < nblk - 1) {
         ptr = slab->tab[ndx];

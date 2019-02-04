@@ -157,7 +157,6 @@ kinitprot(unsigned long pmemsz)
     acpiinit();
 #endif
     /* initialise block I/O buffer cache */
-#if 0
     if (!ioinitbuf()) {
         kprintf("failed to allocate buffer cache\n");
 
@@ -165,7 +164,6 @@ kinitprot(unsigned long pmemsz)
             ;
         }
     }
-#endif
 #if 0
     kprintf("%lu kilobytes of buffer cache @ %p..%p\n",
             k_physmem.pagestat.nbuf << (PAGESIZELOG2 - 10),

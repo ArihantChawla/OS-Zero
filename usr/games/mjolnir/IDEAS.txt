@@ -60,7 +60,7 @@ stairway up	| <		| go up one level
 statue	 	| &		| e.g. Buddha
 trap		| ^		| trap
 wand		| \		| magic wand
-scroll		| ?		| spells and other scrolls
+scroll		| ?		| spell or other scroll
 ring		| =		| ring
 whip		| /		| whip
 armor		| ]		| suit or armor

@@ -9,7 +9,7 @@
 
 #define _signocatch(sig)    (g_signocatchbits & (UINT64_C(1) << (sig)))
 /* NOTE: SIG_DFL is 0 */
-static THREADLOCAL sigset_t sigmasktab[NPROCTASK] ALIGNED(PAGESIZE);
+static THREADLOCAL sigset_t sigmasktab[TASKSMAX] ALIGNED(PAGESIZE);
 static __sighandler_t       sigfunctab[_NSIG] = { 0 };
 static const uint64_t       g_signocatchbits = __SIGNOCATCHBITS;
 

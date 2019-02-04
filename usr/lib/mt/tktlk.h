@@ -17,16 +17,16 @@
 #if (WORDSIZE == 4)
 
 union zerotktlk {
-    volatile m_atomicu32_t uval;
+    m_atomicu32_t uval;
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
     struct {
-        uint16_t           val;
-        uint16_t           cnt;
+        uint16_t  val;
+        uint16_t  cnt;
     } s;
 #else
     struct {
-        uint16_t           cnt;
-        uint16_t           val;
+        uint16_t  cnt;
+        uint16_t  val;
     } s;
 #endif
 };
@@ -34,16 +34,16 @@ union zerotktlk {
 #elif (WORDSIZE == 8)
 
 union zerotktlk {
-    volatile m_atomicu64_t uval;
+    m_atomicu64_t uval;
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
     struct {
-        uint32_t           val;
-        uint32_t           cnt;
+        uint32_t  val;
+        uint32_t  cnt;
     } s;
 #else
     struct {
-        uint32_t           cnt;
-        uint32_t           val;
+        uint32_t  cnt;
+        uint32_t  val;
     } s;
 #endif
 };

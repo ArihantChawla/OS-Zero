@@ -8,10 +8,10 @@
 
 #include <zero/hash.h>
 #if (PTHREAD_KEY_SIZE == 4)
-#define __pthreadhashkey(k)                                             \
+#define __pthreadhash(k)                                             \
     (tmhash32(k) & ((UINT32_C(1) << __PTHREAD_KEY_NHASHBIT) - 1))
 #elif (PTHREAD_KEY_SIZE == 8)
-#define __pthreadhashkey(k)                                             \
+#define __pthreadhash(k)                                             \
     (tmhash64(k) & ((UINT64_C(1) << __PTHREAD_KEY_NHASHBIT) - 1))
 #endif
 
@@ -25,7 +25,7 @@ static int
 __pthread_hashkey(struct __pthread_key *data)
 {
     struct __pthread_key **ptr;
-    unsigned long          hash = __pthreadhashkey(data->key);
+    unsigned long          hash = __pthreadhash(data->key);
     struct __pthread_key **tab;
 
     tab = g_pthread.keyhash;
